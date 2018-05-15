@@ -1,0 +1,12 @@
+{
+	"main":"fr.openent.zimbra.Zimbra",
+	"port": 8009,
+	"mode": "dev",
+	"auto-redeploy": false,
+    "host" : "http://localhost:8009",
+    "sql": true,
+    "app-name" : "Messagerie",
+    "app-address" : "http://localhost:8009/zimbra/zimbra",
+    "app-icon" : "conversation-large",
+	"max-folder-depth": 2
+}

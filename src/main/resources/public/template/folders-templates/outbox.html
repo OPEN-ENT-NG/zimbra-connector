@@ -1,0 +1,89 @@
+<h3 whereami></h3>
+<nav class="twelve bottom-spacing-twice">
+	<div class="">
+		<switch-search
+			ng-model="searchField.words"
+			ng-change="search(words)"
+			cancel="cancelSearch()">
+			<button class="cell-ellipsis right-magnet" ng-click="template.open('main', 'mail-actions/write-mail')">
+				<i18n>new.message</i18n>
+			</button>
+		</switch-search>
+	</div>
+</nav>
+
+
+<div class="mailbox-tools notification twelve flex-row align-center centered-text zero-mobile-fat-mobile no-margin" ng-if="conversation.currentFolder.mails.all.length > 0 || state.searching">
+	<div class="check-col">
+		<label class="wrapping-checkbox relative">
+			<input type="checkbox" ng-model="state.selectAll" ng-change="switchSelectAll()" />
+			<i18n></i18n>
+		</label>
+	</div>
+	<div class="status-filter">
+		<!-- keep empty -->
+	</div>
+	<div class="flex-all-remains cell horizontal-margin">
+		<div class="search-pagination flex-row align-center horizontal-spacing-twicen">
+			<a ng-class="{'show-close': searchField.words.length > 0 || state.searching}" ng-click='searchField.words="";cancelSearch()'><i class="close horizontal-spacing cell-ellipsis"></i></a>
+			<div class="cell twelve">
+				<input class="twelve" name="searchField.words" type="text" ng-model="searchField.words"
+				ng-keyup="$event.keyCode == 13 ? search(searchField.words) : null"
+				i18n-placeholder="search.condition"/>
+				<i class="search" ng-click="search(searchField.words)"></i>
+				<div class="cell small-text warning-color" ng-if="state.searchFailed"><i18n>search.failed</i18n></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<div class="mailbox simple-notifications">
+
+	<div ng-if="isLoading()">
+		<div class="info fade-in"><i18n>loading</i18n></div>
+	</div>
+	<div ng-if="!isLoading() && conversation.currentFolder.mails.all.length === 0">
+		<div class="info fade-in"><i18n>[[state.emptyMessage]]</i18n></div>
+	</div>
+
+	<div class="notification relative no-margin" ng-if="!isLoading()"
+		ng-repeat="mail in conversation.currentFolder.mails.all"
+		ng-class="{checked: mail.selected}"
+		dragstart="drag(mail, $originalEvent)">
+
+		<article ng-click="viewMail(mail);$event.stopPropagation();">
+			<div class="flex-row align-center">
+				<label class="wrapping-checkbox">
+					<div class="avatar" ng-click="$event.stopPropagation();">
+						<img ng-if="mail.isAvatarAlone()" ng-src="[[ mail.matchAvatar() ]]"/>
+						<img ng-if="!mail.isAvatarAlone()" skin-src="[[ mail.matchAvatar() ]]"/>
+						<input type="checkbox" ng-model="mail.selected" ng-click="refreshSelectionState(mail)"/>
+						<i18n></i18n>
+					</div>
+				</label>
+
+				<div class="states">
+					<i class="undo" ng-if="mail.response" tooltip="you.answered"></i>
+				</div>
+				<div class="flex-all-remains horizontal-margin cell-ellipsis" ng-init="recs = allReceivers(mail)">
+					<span class="strong" ng-repeat="receiver in receivers = (recs | limitTo:5 | filter: filterUsers(mail))">
+						<span>[[mail.map(receiver).displayName]]</span><span ng-if="$index < (receivers.length - 1) && receivers.length > 1">, </span>
+					</span>
+					<br>
+					<span class="small-text">[[mail.subject]]</span>
+				</div>
+			</div>
+
+			<div class="notification-date">
+				<em class="low-importance right-magnet">[[mail.notifDate()]]</em>
+			</div>
+			<div class="notification-attachment">
+				<i class="attachment" ng-if="mail.attachments.length"></i>
+			</div>
+
+		</article>
+	</div>
+</div>
+
+<container template="toaster"></container>
