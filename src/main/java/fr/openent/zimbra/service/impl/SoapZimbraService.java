@@ -21,12 +21,18 @@ import java.util.Map;
 
 public class SoapZimbraService {
 
+    private static final Long LIFETIME_OFFSET = (long)3600000; // 1h
+
     private String preauthKey;
     private Vertx vertx;
     private static final Logger log = LoggerFactory.getLogger(Renders.class);
     private UserService userService;
     private HttpClient httpClient = null;
-    private Map<String, JsonObject> authedUsers;
+
+    private static Map<String, JsonObject> authedUsers = new HashMap<>();
+    private static final String MAP_AUTH_TOKEN = "authToken";
+    private static final String MAP_LIFETIME = "lifetime";
+    private static final String MAP_ADDRESS = "emailAddress";
 
     private String zimbraUri;
 
@@ -34,7 +40,6 @@ public class SoapZimbraService {
         this.userService = us;
         this.zimbraUri = config.getString("zimbra-uri", "");
         this.vertx = vertx;
-        this.authedUsers = new HashMap<>();
 
         preauthKey = config.getString("preauth-key","");
         if( preauthKey.isEmpty() ) {
@@ -153,6 +158,42 @@ public class SoapZimbraService {
     }
 
     /**
+     * Call zimbra SOAP API with user infos
+     * If user has up to date authentication in "authedUsers" use it
+     * Else authenticate user beforehand
+     * @param params inner data to send to zimbra
+     *  {
+     *      "name" : name of the zimbra soap request,
+     *      "content" : data for the request
+     *  }
+     * @param user User connected
+     * @param handler process result
+     */
+    public void callUserSoapAPI(JsonObject params, UserInfos user, Handler<Either<String,JsonObject>> handler) {
+        String userId = user.getUserId();
+        boolean authed = false;
+        if( authedUsers.containsKey(userId) ) {
+            JsonObject authInfo = authedUsers.get(userId);
+            Long timestamp = System.currentTimeMillis();
+            if(timestamp < authInfo.getLong(MAP_LIFETIME)) {
+                String authToken = authInfo.getString(MAP_AUTH_TOKEN);
+                params.put("authToken", authToken);
+                authed = true;
+                callSoapAPI(params, handler);
+            }
+        }
+        if(!authed) {
+            auth(user, response -> {
+                if(response.isLeft()) {
+                    handler.handle(response);
+                } else {
+                    callUserSoapAPI(params, user, handler);
+                }
+            });
+        }
+    }
+
+    /**
      * Authenticate user. Send Json through Zimbra API
      * {
      *     "name" : "AuthRequest",
@@ -172,10 +213,8 @@ public class SoapZimbraService {
      * @param handler handler after authentication
      */
     public void auth(UserInfos user, Handler<Either<String, JsonObject>> handler) {
-        String userId = user.getUserId();
-        String userDomain = userService.getUserDomain(user);
-
-        JsonObject preauthInfos = PreauthHelper.generatePreauth(userId, userDomain, preauthKey);
+        String emailAddress = userService.getUserZimbraAddress(user);
+        JsonObject preauthInfos = PreauthHelper.generatePreauth(emailAddress, preauthKey);
         if(preauthInfos == null) {
             handler.handle(new Either.Left<>("Error when computing preauth key"));
         } else {
@@ -235,8 +274,7 @@ public class SoapZimbraService {
                 JsonObject respValue = response.right().getValue();
                 try  {
                     String userId = user.getUserId();
-                    String userDomain = userService.getUserDomain(user);
-                    String userAddress = userId + "@" + userDomain;
+                    String userAddress = userService.getUserZimbraAddress(user);
 
                     String authToken = respValue
                             .getJsonObject("Body").getJsonObject("AuthResponse")
@@ -245,10 +283,11 @@ public class SoapZimbraService {
                     Long lifetime = respValue
                             .getJsonObject("Body").getJsonObject("AuthResponse")
                             .getLong("lifetime");
+                    lifetime = lifetime - LIFETIME_OFFSET + System.currentTimeMillis();
                     JsonObject authUserData = new JsonObject()
-                            .put("authToken", authToken)
-                            .put("lifetime", lifetime)
-                            .put("mailAddress", userAddress);
+                            .put(MAP_AUTH_TOKEN, authToken)
+                            .put(MAP_LIFETIME, lifetime)
+                            .put(MAP_ADDRESS, userAddress);
 
                     authedUsers.put(userId, authUserData);
                     handler.handle(new Either.Right<>(authUserData));

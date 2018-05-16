@@ -4,6 +4,7 @@ import fr.wseduc.webutils.http.Renders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.user.UserInfos;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -35,8 +36,7 @@ public class PreauthHelper {
         return getHmac(prepraredPreauth.toString(), key.getBytes());
     }
 
-    public static JsonObject generatePreauth(String userId, String domain, String preauthKey) {
-        String emailAddress = userId + "@" + domain;
+    public static JsonObject generatePreauth(String emailAddress, String preauthKey) {
         //todo : remove placeholder
         emailAddress = "thomas.lecocq2@ng.preprod-ent.fr";
         String timestamp = System.currentTimeMillis()+"";

@@ -4,7 +4,11 @@ import org.entcore.common.user.UserInfos;
 
 public class UserService {
 
-    public String getUserDomain(UserInfos user) {
+    private String getUserDomain(UserInfos user) {
         return "";
+    }
+
+    public String getUserZimbraAddress(UserInfos user) {
+        return user.getUserId() + "@" + getUserDomain(user);
     }
 }

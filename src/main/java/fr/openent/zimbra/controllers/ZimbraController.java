@@ -21,6 +21,7 @@ package fr.openent.zimbra.controllers;
 
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.service.impl.FolderService;
 import fr.openent.zimbra.service.impl.Neo4jZimbraService;
 import fr.openent.zimbra.service.impl.SoapZimbraService;
 import fr.openent.zimbra.service.impl.UserService;
@@ -53,6 +54,8 @@ import org.vertx.java.core.http.RouteMatcher;
 import java.util.*;
 
 import static fr.wseduc.webutils.request.RequestUtils.bodyToJson;
+import static org.entcore.common.http.response.DefaultResponseHandler.arrayResponseHandler;
+import static org.entcore.common.http.response.DefaultResponseHandler.defaultResponseHandler;
 import static org.entcore.common.user.UserUtils.getUserInfos;
 
 public class ZimbraController extends BaseController {
@@ -62,6 +65,7 @@ public class ZimbraController extends BaseController {
 	private final String exportPath;
 	private SoapZimbraService soapService;
 	private UserService userService;
+	private FolderService folderService;
 
 	public ZimbraController(String exportPath) {
 		this.exportPath = exportPath;
@@ -76,12 +80,30 @@ public class ZimbraController extends BaseController {
 		this.userService = new UserService();
 		this.soapService = new SoapZimbraService(vertx, config, userService);
 		notification = new TimelineHelper(vertx, eb, config);
+
+		this.folderService = new FolderService(soapService);
 	}
 
 	@Get("zimbra")
 	@SecuredAction("conversation.view")
 	public void view(HttpServerRequest request) {
 		renderView(request);
+	}
+
+
+
+	@Get("testcount")
+	@SecuredAction("conversation.view")
+	public void testCount(HttpServerRequest request) {
+		getUserInfos(eb, request, user -> {
+			folderService.countMessages("INBOX", false, user, event -> {
+				if(event.isLeft()) {
+					renderError(request, new JsonObject().put("error", event.left().getValue()));
+				} else {
+					renderJson(request, event.right().getValue());
+				}
+			});
+		});
 	}
 
 	@Get("zimbra/testauth")
@@ -95,7 +117,6 @@ public class ZimbraController extends BaseController {
 				}
 			});
 		});
-
 	}
 
 	@Post("draft")
@@ -248,10 +269,38 @@ public class ZimbraController extends BaseController {
 		}
 	}
 
+	/**
+	 * Count number of messages in a folder.
+	 * If unread is true, filter only unread messages.
+	 * In case of success, return Json :
+	 * {
+	 *     data: count // number of (unread) messages
+	 * }
+	 * @param request http request containing info
+	 *                Users infos
+	 *                folder name or id
+	 *                unread ? filter only unread messages
+	 */
 	@Get("count/:folder")
 	@SecuredAction(value = "conversation.count", type = ActionType.AUTHENTICATED)
 	public void count(final HttpServerRequest request) {
-
+		final String folder = request.params().get("folder");
+		final String unread = request.params().get("unread");
+		if (folder == null || folder.trim().isEmpty()) {
+			badRequest(request);
+			return;
+		}
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				Boolean b = null;
+				if (unread != null && !unread.isEmpty()) {
+					b = Boolean.valueOf(unread);
+				}
+				folderService.countMessages(folder, b, user, defaultResponseHandler(request));
+			} else {
+				unauthorized(request);
+			}
+		});
 	}
 
 	@Get("visible")
@@ -327,10 +376,38 @@ public class ZimbraController extends BaseController {
 		renderJson(request, new JsonObject().put("max-depth", Config.getConf().getInteger("max-folder-depth", Zimbra.DEFAULT_FOLDER_DEPTH)));
 	}
 
-	//List folders at a given depth, or trashed folders at depth 1 only.
+	/**
+	 * List folders at root level, under parent folder, or trashed folders at depth 1 only.
+	 * In case of success, return Json Array of folders :
+	 * [
+	 * 	{
+	 * 	    "id" : "folder-id",
+	 * 	    "parent_id : "parent-folder-id" or null,
+	 * 	    "user_id" : "id of owner of folder",
+	 * 	    "name" : "folder-name",
+	 * 	    "depth" : "folder-depth",
+	 * 	    "trashed" : "is-folder-trashed"
+	 * 	}
+	 * ]
+	 * @param request http request containing info
+	 *                Users infos
+	 *                parent id (optional)
+	 *                trash ? ignore parent id and get trashed folders
+	 */
 	@Get("folders/list")
 	@SecuredAction(value = "conversation.folder.list", type = ActionType.AUTHENTICATED)
 	public void listFolders(final HttpServerRequest request){
+		final String parentId = request.params().get("parentId");
+		final String listTrash = request.params().get("trash");
+
+		UserUtils.getUserInfos(eb, request,  user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			Boolean trashed = (listTrash != null);
+			folderService.listFolders(parentId, trashed, user, arrayResponseHandler(request));
+		});
 
 	}
 
