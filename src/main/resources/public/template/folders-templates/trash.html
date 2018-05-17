@@ -13,13 +13,13 @@
 		</div>
 	</nav>
 
-	<div class="row" ng-if="folders.trash.userFolders.all.length > 0 || conversation.currentFolder.mails.all.length > 0  || state.searching">
+	<div class="row" ng-if="folders.trash.userFolders.all.length > 0 || zimbra.currentFolder.mails.all.length > 0  || state.searching">
 		<a href="#" class="cell flex-row align-center justify-start horizontal-spacing bottom-spacing zero-mobile" ng-click="emptyTrash()">
 			<i class="trash small-text"></i>
 			<span class="horizontal-margin small-text"><i18n>empty.trash</i18n></span>
 		</a>
 	</div>
-	<div class="mailbox-tools notification twelve flex-row align-center centered-text zero-mobile-fat-mobile no-margin" ng-if="folders.trash.userFolders.all.length > 0 || conversation.currentFolder.mails.all.length > 0 || state.searching">
+	<div class="mailbox-tools notification twelve flex-row align-center centered-text zero-mobile-fat-mobile no-margin" ng-if="folders.trash.userFolders.all.length > 0 || zimbra.currentFolder.mails.all.length > 0 || state.searching">
 		<div class="check-col">
 			<label class="wrapping-checkbox relative">
 				<input type="checkbox" ng-model="state.selectAll" ng-change="switchSelectAll()" />
@@ -29,11 +29,11 @@
 		<div class="status-filter">
 			<label class="chip"
 			tooltip="filter.unread"
-			ng-if="conversation.currentFolder.nbUnread > 0"
-			ng-class="{ selected: state.filterUnread && conversation.currentFolder.nbUnread > 0}">
+			ng-if="zimbra.currentFolder.nbUnread > 0"
+			ng-class="{ selected: state.filterUnread && zimbra.currentFolder.nbUnread > 0}">
 				<i class="mail"></i>
-				<span ng-model="conversation.currentFolder.nbUnread">([[conversation.currentFolder.nbUnread]])</span>
-				<input type="checkbox" ng-model="state.filterUnread" ng-change="filterUnread()" ng-if="conversation.currentFolder.nbUnread > 0" />
+				<span ng-model="zimbra.currentFolder.nbUnread">([[zimbra.currentFolder.nbUnread]])</span>
+				<input type="checkbox" ng-model="state.filterUnread" ng-change="filterUnread()" ng-if="zimbra.currentFolder.nbUnread > 0" />
 			</label>
 		</div>
 		<div class="flex-all-remains cell horizontal-margin">
@@ -57,7 +57,7 @@
 		<div ng-if="isLoading()">
 			<div class="info fade-in"><i18n>loading</i18n></div>
 		</div>
-		<div ng-if="!isLoading() && conversation.currentFolder.mails.all.length === 0 && conversation.currentFolder.userFolders.all.length === 0">
+		<div ng-if="!isLoading() && zimbra.currentFolder.mails.all.length === 0 && zimbra.currentFolder.userFolders.all.length === 0">
 			<div class="info fade-in"><i18n>[[state.emptyMessage]]</i18n></div>
 		</div>
 
@@ -85,8 +85,8 @@
 
 		<!-- mails -->
 		<div class="notification relative no-margin" ng-if="!isLoading()"
-			ng-repeat="mail in conversation.currentFolder.mails.all"
-			ng-class="{ checked: mail.selected, 'new-element': mail.isUnread(conversation.currentFolder) }" >
+			ng-repeat="mail in zimbra.currentFolder.mails.all"
+			ng-class="{ checked: mail.selected, 'new-element': mail.isUnread(zimbra.currentFolder) }" >
 
 			<article ng-click="viewMail(mail);$event.stopPropagation();">
 				<div class="flex-row align-center">
@@ -101,7 +101,7 @@
 
 					<div class="states">
 						<i class="undo" ng-if="mail.response" tooltip="you.answered"></i>
-						<i class="mail" ng-if="mail.isUnread(conversation.currentFolder)" tooltip="unread.mail"></i>
+						<i class="mail" ng-if="mail.isUnread(zimbra.currentFolder)" tooltip="unread.mail"></i>
 					</div>
 					<div class="flex-all-remains horizontal-margin cell-ellipsis">
 

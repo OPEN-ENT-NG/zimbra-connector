@@ -1,7 +1,7 @@
 ﻿import { model, notify, idiom as lang, toFormData, moment, _, $ } from 'entcore';
 
 import { User } from './user';
-import { Conversation } from './conversation';
+import { Zimbra } from './zimbra';
 import { quota } from './quota';
 import { SystemFolder, UserFolder, Folder } from './folder';
 
@@ -62,9 +62,9 @@ export class Mail implements Selectable {
     }
 
     getSystemFolder(): string {
-        if (Conversation.instance.currentFolder.getName() !== 'OUTBOX' && (this.isMeInsideGroup(this.to) || this.isMeInsideGroup(this.cc)) && this.state === "SENT")
+        if (Zimbra.instance.currentFolder.getName() !== 'OUTBOX' && (this.isMeInsideGroup(this.to) || this.isMeInsideGroup(this.cc)) && this.state === "SENT")
             return 'INBOX';
-        if (Conversation.instance.currentFolder.getName() !== 'INBOX' && this.isUserAuthor() && this.state === "SENT")
+        if (Zimbra.instance.currentFolder.getName() !== 'INBOX' && this.isUserAuthor() && this.state === "SENT")
             return 'OUTBOX';
         if (this.from === model.me.userId && this.state === "DRAFT")
             return 'DRAFT';
@@ -266,7 +266,7 @@ export class Mail implements Selectable {
             data.to = _.pluck(this.to, 'id');
             data.cc = _.pluck(this.cc, 'id');
 
-            var path = '/conversation/draft';
+            var path = '/zimbra/draft';
             if (this.id) {
                 const response = await http.put(path + '/' + this.id, data);
                 Mix.extend(this, response.data);
@@ -285,12 +285,12 @@ export class Mail implements Selectable {
         data.to = _.pluck(this.to, 'id');
         data.cc = _.pluck(this.cc, 'id');
         if (data.to.indexOf(model.me.userId) !== -1) {
-            Conversation.instance.folders['inbox'].nbUnread++;
+            Zimbra.instance.folders['inbox'].nbUnread++;
         }
         if (data.cc.indexOf(model.me.userId) !== -1) {
-            Conversation.instance.folders['inbox'].nbUnread++;
+            Zimbra.instance.folders['inbox'].nbUnread++;
         }
-        var path = '/conversation/send?';
+        var path = '/zimbra/send?';
         if (!data.subject) {
             data.subject = lang.translate('nosubject');
         }
@@ -304,8 +304,8 @@ export class Mail implements Selectable {
         try{
             const response = await http.post(path, data);
             const result = response.data;
-            Conversation.instance.folders['outbox'].mails.refresh();
-            Conversation.instance.folders['draft'].mails.refresh();
+            Zimbra.instance.folders['outbox'].mails.refresh();
+            Zimbra.instance.folders['draft'].mails.refresh();
 
             if (parseInt(result.sent) > 0) {
                 this.state = "SENT";
@@ -322,10 +322,10 @@ export class Mail implements Selectable {
 
     async open(forPrint? : boolean) {
         if(this.unread && this.state !== "DRAFT"){
-            Conversation.instance.currentFolder.nbUnread --;
+            Zimbra.instance.currentFolder.nbUnread --;
         }
         this.unread = false;
-        let response = await http.get('/conversation/message/' + this.id)
+        let response = await http.get('/zimbra/message/' + this.id)
         Mix.extend(this, response.data);
         this.to = this.to.map(user => (
             Mix.castAs(User, {
@@ -341,7 +341,7 @@ export class Mail implements Selectable {
             })
         ));
         if(!forPrint) {
-            await Conversation.instance.folders['inbox'].countUnread();
+            await Zimbra.instance.folders['inbox'].countUnread();
             await this.updateAllowReply();
         }
     };
@@ -349,14 +349,14 @@ export class Mail implements Selectable {
     async remove() {
         if(!this.id)
             return;
-        if ((Conversation.instance.currentFolder as SystemFolder).folderName !== 'trash') {
-            await http.put('/conversation/trash?id=' + this.id);
-            Conversation.instance.currentFolder.mails.refresh();
-            Conversation.instance.folders['trash'].mails.refresh();
+        if ((Zimbra.instance.currentFolder as SystemFolder).folderName !== 'trash') {
+            await http.put('/zimbra/trash?id=' + this.id);
+            Zimbra.instance.currentFolder.mails.refresh();
+            Zimbra.instance.folders['trash'].mails.refresh();
         }
         else {
-            await http.delete('/conversation/delete?id=' + this.id);
-            Conversation.instance.folders['trash'].mails.refresh();
+            await http.delete('/zimbra/delete?id=' + this.id);
+            Zimbra.instance.folders['trash'].mails.refresh();
         }
     };
 
@@ -365,20 +365,20 @@ export class Mail implements Selectable {
     }
 
     async restore() {
-        await http.put('/conversation/restore?id=' + this.id);
-        Conversation.instance.folders['trash'].mails.refresh();
+        await http.put('/zimbra/restore?id=' + this.id);
+        Zimbra.instance.folders['trash'].mails.refresh();
     }
 
     async move(destinationFolder) {
         await http.put('move/userfolder/' + destinationFolder.id + '?id=' + this.id);
-        await Conversation.instance.currentFolder.mails.refresh();
-        await Conversation.instance.folders.draft.mails.refresh();
+        await Zimbra.instance.currentFolder.mails.refresh();
+        await Zimbra.instance.folders.draft.mails.refresh();
     }
 
     async trash() {
-        await http.put('/conversation/trash?id=' + this.id);
-        await Conversation.instance.currentFolder.mails.refresh();
-        await Conversation.instance.folders.draft.mails.refresh();
+        await http.put('/zimbra/trash?id=' + this.id);
+        await Zimbra.instance.currentFolder.mails.refresh();
+        await Zimbra.instance.folders.draft.mails.refresh();
     }
 
     postAttachments($scope) {
@@ -507,7 +507,7 @@ export class Mails {
         if (!data.selectAll) {
             data.selectAll = false;
         }
-        const response = await http.get('/conversation/list/' + this.userFolder.id + '?restrain=&page=' + data.pageNumber + "&unread=" + data.filterUnread + data.searchText);
+        const response = await http.get('/zimbra/list/' + this.userFolder.id + '?restrain=&page=' + data.pageNumber + "&unread=" + data.filterUnread + data.searchText);
         if(data.emptyList !== false){
             this.all.splice(0, this.all.length);
         }
@@ -557,8 +557,8 @@ export class Mails {
     }
 
     async toTrash() {
-        await http.put('/conversation/trash?' + toFormData({ id: _.pluck(this.selection.selected, 'id') }));
-        Conversation.instance.folders.trash.mails.refresh();
+        await http.put('/zimbra/trash?' + toFormData({ id: _.pluck(this.selection.selected, 'id') }));
+        Zimbra.instance.folders.trash.mails.refresh();
         quota.refresh();
         this.selection.removeSelection();
     }
@@ -589,7 +589,7 @@ export class Mails {
         var paramUnread = `unread=${unread}`;
 
         try{
-            await http.post(`/conversation/toggleUnread?${paramsIds}&${paramUnread}`);
+            await http.post(`/zimbra/toggleUnread?${paramsIds}&${paramUnread}`);
             quota.refresh();
             selected.forEach(mail => mail.unread = unread);
         }
@@ -611,11 +611,11 @@ let mailFormat = {
     }
 };
 
-http.get('/conversation/public/template/mail-content/transfer.html').then(response => {
+http.get('/zimbra/public/template/mail-content/transfer.html').then(response => {
     format.transfer.content = response.data;
 });
 
-http.get('/conversation/public/template/mail-content/reply.html').then(response => {
+http.get('/zimbra/public/template/mail-content/reply.html').then(response => {
     format.reply.content = response.data;
 });
 

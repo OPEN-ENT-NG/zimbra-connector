@@ -1,5 +1,5 @@
 ﻿import { notify, toFormData, _ } from 'entcore';
-import { Conversation } from './conversation';
+import { Zimbra } from './zimbra';
 import { Mail, Mails } from './mail';
 import { quota } from './quota';
 
@@ -70,7 +70,7 @@ export abstract class Folder implements Selectable {
         if (this instanceof UserFolder) {
             restrain = '&restrain=';
         }
-        const response = await http.get('/conversation/count/' + name + '?unread=true' + restrain)
+        const response = await http.get('/zimbra/count/' + name + '?unread=true' + restrain)
         this.nbUnread = parseInt(response.data.count);
     }
 
@@ -98,7 +98,7 @@ export class Trash extends SystemFolder {
     userFolders: Selection<UserFolder> = new Selection<UserFolder>([]);
     constructor() {
         super({
-            get: '/conversation/list/trash'
+            get: '/zimbra/list/trash'
         });
 
         this.folderName = 'trash';
@@ -149,28 +149,28 @@ export class Trash extends SystemFolder {
         if(!this.mails.selection.length){
             return;
         }
-        await http.put('/conversation/restore?' + toFormData({
+        await http.put('/zimbra/restore?' + toFormData({
             id: _.pluck(this.mails.selection.selected, 'id')
         }));
         this.mails.removeSelection();
     }
 
     async removeMails () {
-        const response = await http.delete('/conversation/delete?' + toFormData({
+        const response = await http.delete('/zimbra/delete?' + toFormData({
             id: _.pluck(this.mails.selection.selected, 'id')
         }));
         this.mails.removeSelection();
     }
 
     async removeAll() {
-        const response = await http.delete('/conversation/emptyTrash');
+        const response = await http.delete('/zimbra/emptyTrash');
     }
 }
 
 export class Inbox extends SystemFolder {
     constructor() {
         super({
-            get: '/conversation/list/inbox'
+            get: '/zimbra/list/inbox'
         });
 
         this.folderName = 'inbox';
@@ -199,7 +199,7 @@ export class Draft extends SystemFolder {
 
     constructor() {
         super({
-            get: '/conversation/list/draft'
+            get: '/zimbra/list/draft'
         });
 
         this.folderName = 'draft';
@@ -247,7 +247,7 @@ export class Draft extends SystemFolder {
     }
 
     async countTotal () {
-        const response = await http.get('/conversation/count/DRAFT?unread=false')
+        const response = await http.get('/zimbra/count/DRAFT?unread=false')
         this.totalNb = parseInt(response.data.count);
     }
 }
@@ -255,7 +255,7 @@ export class Draft extends SystemFolder {
 export class Outbox extends SystemFolder {
     constructor() {
         super({
-            get: '/conversation/list/outbox'
+            get: '/zimbra/list/outbox'
         });
 
         this.folderName = 'outbox';
@@ -303,7 +303,7 @@ export class UserFolder extends Folder {
         this.pageNumber = 0;
         this.searchText = null;
         this.filter = false;
-        Conversation.instance.currentFolder = this;
+        Zimbra.instance.currentFolder = this;
         await this.sync();
     }
 
@@ -421,12 +421,12 @@ export class SystemFolders {
     }
     
     async openFolder (folderName) {
-        Conversation.instance.currentFolder = this[folderName];
-        Conversation.instance.currentFolder.searchText = null;
-        Conversation.instance.currentFolder.filter = false;
-        await Conversation.instance.currentFolder.sync();
-        Conversation.instance.currentFolder.pageNumber = 0;
-        Conversation.instance.currentFolder.mails.full = false;
-        Conversation.instance.currentFolder.eventer.trigger('change');
+        Zimbra.instance.currentFolder = this[folderName];
+        Zimbra.instance.currentFolder.searchText = null;
+        Zimbra.instance.currentFolder.filter = false;
+        await Zimbra.instance.currentFolder.sync();
+        Zimbra.instance.currentFolder.pageNumber = 0;
+        Zimbra.instance.currentFolder.mails.full = false;
+        Zimbra.instance.currentFolder.eventer.trigger('change');
     }
 }

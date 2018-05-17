@@ -25,7 +25,7 @@ import { Eventer } from 'entcore-toolkit';
 
 import http from 'axios';
 
-export class Conversation {
+export class Zimbra {
     folders: SystemFolders;
     userFolders: UserFolders;
     users: Users;
@@ -35,10 +35,10 @@ export class Conversation {
     eventer = new Eventer();
     preference = {useSignature: false, signature: ""};
 
-    static _instance: Conversation;
-    static get instance(): Conversation{
+    static _instance: Zimbra;
+    static get instance(): Zimbra{
         if(!this._instance){
-            this._instance = new Conversation();
+            this._instance = new Zimbra();
         }
         return this._instance;
     }
@@ -62,7 +62,7 @@ export class Conversation {
 
     async getPreference() {
         try{
-            let response = await http.get('/userbook/preference/conversation')
+            let response = await http.get('/userbook/preference/zimbra')
             if(response.data.preference)
                 this.preference = JSON.parse(response.data.preference)
         }
@@ -72,6 +72,6 @@ export class Conversation {
     }
 
     async putPreference() {
-        await http.put('/userbook/preference/conversation', this.preference);
+        await http.put('/userbook/preference/zimbra', this.preference);
     }
 }

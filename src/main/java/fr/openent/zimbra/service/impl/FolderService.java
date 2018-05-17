@@ -168,6 +168,9 @@ public class FolderService {
 
             JsonArray resultArray = new JsonArray();
 
+            if(sourceFolders == null) {
+                sourceFolders = new JsonArray();
+            }
             for(Object o : sourceFolders)  {
                 if( !(o instanceof JsonObject) ) continue;
                 JsonObject sFolder = (JsonObject)o;

@@ -58,7 +58,7 @@ export class Users {
 
     async sync(search: string){
         let newArr = [];
-        const response = await http.get('/conversation/visible?search=' + search);
+        const response = await http.get('/zimbra/visible?search=' + search);
         response.data.groups.forEach(group => {
             group.isGroup = true;
             newArr.push(Mix.castAs(User, group));

@@ -1,25 +1,25 @@
-<section class="toggle-buttons" ng-class="{ hide: conversation.currentFolder.mails.selection.length === 0 && (!conversation.currentFolder.userFolders || conversation.currentFolder.userFolders.selected.length === 0) }">
+<section class="toggle-buttons" ng-class="{ hide: zimbra.currentFolder.mails.selection.length === 0 && (!zimbra.currentFolder.userFolders || zimbra.currentFolder.userFolders.selected.length === 0) }">
     <div class="toggle">
         <div class="row">
-            <button ng-click="removeSelection()" ng-if="conversation.currentFolder.mails.selection.length || conversation.currentFolder.userFolders.selected.length">
+            <button ng-click="removeSelection()" ng-if="zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length">
                 <i18n>remove</i18n>
             </button>
-            <button ng-click="restore()" ng-if="(conversation.currentFolder.mails.selection.length || conversation.currentFolder.userFolders.selected.length) && conversation.currentFolder.folderName === 'trash'">
+            <button ng-click="restore()" ng-if="(zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length) && zimbra.currentFolder.folderName === 'trash'">
                 <i18n>restore</i18n>
             </button>
-            <button ng-click="moveSelection()" ng-if="conversation.currentFolder.mails.selection.length && conversation.currentFolder.folderName !== 'trash'">
+            <button ng-click="moveSelection()" ng-if="zimbra.currentFolder.mails.selection.length && zimbra.currentFolder.folderName !== 'trash'">
                 <i18n>move.inside.folder</i18n>
             </button>
-            <button ng-click="removeFromUserFolder()" ng-if="conversation.currentFolder.mails.selection.length && conversation.currentFolder.id">
+            <button ng-click="removeFromUserFolder()" ng-if="zimbra.currentFolder.mails.selection.length && zimbra.currentFolder.id">
                 <i18n>remove.from.folder</i18n>
             </button>
             <button ng-click="toggleUnreadSelection(false)" ng-if="
-                    conversation.currentFolder.mails.selection.length && (conversation.currentFolder.folderName === 'inbox' || conversation.currentFolder.id) &&
+                    zimbra.currentFolder.mails.selection.length && (zimbra.currentFolder.folderName === 'inbox' || zimbra.currentFolder.id) &&
                     canMarkRead() ">
                 <i18n>tag.read</i18n>
             </button>
             <button ng-click="toggleUnreadSelection(true)" ng-if="
-                    conversation.currentFolder.mails.selection.length && (conversation.currentFolder.folderName === 'inbox' || conversation.currentFolder.id) &&
+                    zimbra.currentFolder.mails.selection.length && (zimbra.currentFolder.folderName === 'inbox' || zimbra.currentFolder.id) &&
                     canMarkUnread()">
                 <i18n>tag.unread</i18n>
             </button>

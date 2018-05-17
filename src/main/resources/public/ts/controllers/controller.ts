@@ -1,7 +1,7 @@
 import { ng, notify, idiom as lang, template, skin, moment, Document, $, _ } from 'entcore';
-import { Mail, User, UserFolder, quota, Conversation, Trash, SystemFolder } from '../model';
+import { Mail, User, UserFolder, quota, Zimbra, Trash, SystemFolder } from '../model';
 
-export let conversationController = ng.controller('ConversationController', [
+export let zimbraController = ng.controller('ZimbraController', [
     '$scope', '$timeout', '$compile', '$sanitize', 'model', 'route', function ($scope, $timeout, $compile, $sanitize, model, route) {
         $scope.state = {
             selectAll: false,
@@ -16,21 +16,21 @@ export let conversationController = ng.controller('ConversationController', [
             draftSaveDate: null
     };
 
-        $scope.conversation = Conversation.instance;
+        $scope.zimbra = Zimbra.instance;
 
         route({
             readMail: async function (params) {
-                Conversation.instance.folders.openFolder('inbox');
+                Zimbra.instance.folders.openFolder('inbox');
                 template.open('page', 'folders');
                 $scope.readMail(new Mail(params.mailId));
-                await Conversation.instance.sync();
-                await Conversation.instance.folders.draft.countTotal();
+                await Zimbra.instance.sync();
+                await Zimbra.instance.folders.draft.countTotal();
                 $scope.constructNewItem();
                 $scope.$apply();
             },
             writeMail: async function (params) {
-                Conversation.instance.folders.openFolder('inbox');
-                await Conversation.instance.sync();
+                Zimbra.instance.folders.openFolder('inbox');
+                await Zimbra.instance.sync();
                 template.open('page', 'folders');
                 let user = new User(params.userId)
                 await user.findData();
@@ -41,9 +41,9 @@ export let conversationController = ng.controller('ConversationController', [
             },
             inbox: async () => {
                 template.open('page', 'folders');
-                await Conversation.instance.folders.openFolder('inbox');
-                await Conversation.instance.sync();
-                await Conversation.instance.folders.draft.countTotal();
+                await Zimbra.instance.folders.openFolder('inbox');
+                await Zimbra.instance.sync();
+                await Zimbra.instance.folders.draft.countTotal();
                 $scope.constructNewItem()
                 $scope.$apply();
             }
@@ -51,9 +51,9 @@ export let conversationController = ng.controller('ConversationController', [
 
         $scope.lang = lang;
         $scope.notify = notify;
-        $scope.folders = Conversation.instance.folders;
-        $scope.userFolders = Conversation.instance.userFolders;
-        $scope.users = { list: Conversation.instance.users, search: '', found: [], foundCC: [] };
+        $scope.folders = Zimbra.instance.folders;
+        $scope.userFolders = Zimbra.instance.userFolders;
+        $scope.users = { list: Zimbra.instance.users, search: '', found: [], foundCC: [] };
         template.open('main', 'folders-templates/inbox');
         template.open('toaster', 'folders-templates/toaster');
         $scope.formatFileType = Document.role;
@@ -88,32 +88,32 @@ export let conversationController = ng.controller('ConversationController', [
         }
 
         $scope.getSignature = () => {
-            if(Conversation.instance.preference.useSignature)
-                return Conversation.instance.preference.signature.replace(new RegExp('\n', 'g'),'<br>');
+            if(Zimbra.instance.preference.useSignature)
+                return Zimbra.instance.preference.signature.replace(new RegExp('\n', 'g'),'<br>');
             return '';
         }
 
 
         $scope.openFolder = async folderName => {
             if (!folderName) {
-                if (Conversation.instance.currentFolder instanceof UserFolder) {
-                    $scope.openUserFolder(Conversation.instance.currentFolder, {});
+                if (Zimbra.instance.currentFolder instanceof UserFolder) {
+                    $scope.openUserFolder(Zimbra.instance.currentFolder, {});
                     return;
                 }
-                folderName = (Conversation.instance.currentFolder as SystemFolder).folderName;
+                folderName = (Zimbra.instance.currentFolder as SystemFolder).folderName;
             }
             $scope.state.newItem = new Mail();
             $scope.state.newItem.setMailSignature($scope.getSignature());
             template.open('main', 'folders-templates/' + folderName);
             $scope.resetState();
-            await Conversation.instance.folders.openFolder(folderName);
-            await Conversation.instance.currentFolder.countUnread();
+            await Zimbra.instance.folders.openFolder(folderName);
+            await Zimbra.instance.currentFolder.countUnread();
             $scope.$apply();
             $scope.updateWherami();
         };
 
         $scope.openUserFolderOnDragover = async (folder: UserFolder, obj) => {
-            if((Conversation.instance.currentFolder as UserFolder).id != folder.id)
+            if((Zimbra.instance.currentFolder as UserFolder).id != folder.id)
                 await $scope.openUserFolder(folder, obj);
         }
 
@@ -153,27 +153,27 @@ export let conversationController = ng.controller('ConversationController', [
         }
 
         $scope.removeFromUserFolder = async (event, mail) => {
-            if(Conversation.instance.currentFolder instanceof UserFolder){
-                await Conversation.instance.currentFolder.removeMailsFromFolder();
-                await Conversation.instance.folders.inbox.countUnread();
-                await Conversation.instance.folders.draft.countTotal();
+            if(Zimbra.instance.currentFolder instanceof UserFolder){
+                await Zimbra.instance.currentFolder.removeMailsFromFolder();
+                await Zimbra.instance.folders.inbox.countUnread();
+                await Zimbra.instance.folders.draft.countTotal();
                 $scope.$apply();
             }
         };
 
         $scope.nextPage = async () => {
             if(template.containers.main.indexOf('mail-actions') < 0) {
-                await Conversation.instance.currentFolder.nextPage($scope.state.selectAll);
+                await Zimbra.instance.currentFolder.nextPage($scope.state.selectAll);
                 $scope.$apply();
             }
         };
 
         $scope.switchSelectAll = function () {
             if ($scope.state.selectAll) {
-                Conversation.instance.currentFolder.selectAll();
+                Zimbra.instance.currentFolder.selectAll();
             }
             else {
-                Conversation.instance.currentFolder.deselectAll();
+                Zimbra.instance.currentFolder.deselectAll();
             }
         };
 
@@ -184,7 +184,7 @@ export let conversationController = ng.controller('ConversationController', [
 
         function setCurrentMail(mail: Mail, doNotSelect?: boolean) {
             $scope.state.current = mail;
-            Conversation.instance.currentFolder.deselectAll();
+            Zimbra.instance.currentFolder.deselectAll();
             if (!doNotSelect)
                 $scope.state.current.selected = true;
             $scope.mail = mail;
@@ -205,8 +205,8 @@ export let conversationController = ng.controller('ConversationController', [
 
         $scope.refresh = async function () {
             notify.info('updating');
-            await Conversation.instance.currentFolder.mails.refresh();
-            await Conversation.instance.folders.inbox.countUnread();
+            await Zimbra.instance.currentFolder.mails.refresh();
+            await Zimbra.instance.folders.inbox.countUnread();
             $scope.$apply();
         };
 
@@ -229,7 +229,7 @@ export let conversationController = ng.controller('ConversationController', [
                 $scope.state.searching = true;
                 $scope.state.emptyMessage = lang.translate('no.result');
                 setTimeout(async function() {
-                    await Conversation.instance.currentFolder.search(text);
+                    await Zimbra.instance.currentFolder.search(text);
                     $scope.$apply();
                 }, 1);
             }else{
@@ -241,24 +241,24 @@ export let conversationController = ng.controller('ConversationController', [
             $scope.state.searching = false;
             $scope.state.searchFailed = false;
             setTimeout(async function() {
-                await Conversation.instance.currentFolder.search("");
+                await Zimbra.instance.currentFolder.search("");
                 $scope.$apply();
             }, 1);
         }
 
         $scope.filterUnread = async () => {
             setTimeout(async function() {
-                await Conversation.instance.currentFolder.filterUnread($scope.state.filterUnread);
+                await Zimbra.instance.currentFolder.filterUnread($scope.state.filterUnread);
                 $scope.$apply();
             }, 1);
         }
 
         $scope.isLoading = () => {
-            return Conversation.instance.currentFolder.mails.loading;
+            return Zimbra.instance.currentFolder.mails.loading;
         };
 
         $scope.nextMail = async (trash?: boolean) => {
-            var mails = Conversation.instance.currentFolder.mails.all;
+            var mails = Zimbra.instance.currentFolder.mails.all;
             var idx = mails.findIndex((mail) => { return mail.id === $scope.state.current.id});
             var nextMail = null;
             if(idx > -1 && idx < mails.length-1)
@@ -273,13 +273,13 @@ export let conversationController = ng.controller('ConversationController', [
                 }
             }
             if(idx === mails.length-2 && nextMail.count > mails.length){
-                await Conversation.instance.currentFolder.nextPage($scope.state.selectAll);
+                await Zimbra.instance.currentFolder.nextPage($scope.state.selectAll);
                 $scope.$apply();
             }
         }
 
         $scope.previousMail = async (trash?: boolean) => {
-            var mails = Conversation.instance.currentFolder.mails.all;
+            var mails = Zimbra.instance.currentFolder.mails.all;
             var idx = mails.findIndex((mail) => { return mail.id === $scope.state.current.id});
             var previousMail = null;
             if(idx > -1 && idx > 0)
@@ -300,7 +300,7 @@ export let conversationController = ng.controller('ConversationController', [
             const mail = $scope.state.newItem as Mail;
             mail.parentConversation = $scope.mail;
             await mail.setMailContent($scope.mail, 'transfer', $compile, $sanitize, $scope, $scope.getSignature());
-            await Conversation.instance.folders.draft.transfer(mail.parentConversation, $scope.state.newItem);
+            await Zimbra.instance.folders.draft.transfer(mail.parentConversation, $scope.state.newItem);
             $scope.$apply();
         };
 
@@ -348,7 +348,7 @@ export let conversationController = ng.controller('ConversationController', [
 
         $scope.saveDraft = async (item) => {
             try {
-                await Conversation.instance.folders.draft.saveDraft(item);
+                await Zimbra.instance.folders.draft.saveDraft(item);
                 $scope.state.draftError = false;
                 $scope.state.draftSaveDate = moment();
             }
@@ -371,7 +371,7 @@ export let conversationController = ng.controller('ConversationController', [
         };
 
         $scope.refreshSignature = async(use: boolean) => {
-            Conversation.instance.putPreference();
+            Zimbra.instance.putPreference();
             var body = $($scope.state.newItem.body);
             var signature = $scope.getSignature();
             if(body.filter('.new-signature').length > 0){
@@ -392,39 +392,39 @@ export let conversationController = ng.controller('ConversationController', [
             $scope.result = await mail.send();
             $scope.state.newItem = new Mail();
             $scope.state.newItem.setMailSignature($scope.getSignature());
-            await $scope.openFolder(Conversation.instance.folders.inbox.folderName);
+            await $scope.openFolder(Zimbra.instance.folders.inbox.folderName);
             $scope.sending = false;
         };
 
 
         $scope.restore = async () => {
-            await Conversation.instance.folders.trash.restore();
-            await Conversation.instance.folders.draft.mails.refresh();
-            await Conversation.instance.folders.inbox.countUnread();
+            await Zimbra.instance.folders.trash.restore();
+            await Zimbra.instance.folders.draft.mails.refresh();
+            await Zimbra.instance.folders.inbox.countUnread();
             await $scope.userFolders.countUnread();
-            await Conversation.instance.folders.draft.countTotal();
+            await Zimbra.instance.folders.draft.countTotal();
             $scope.$apply();
         };
 
         $scope.removeSelection = async () => {
-            await Conversation.instance.currentFolder.removeSelection();
-            await Conversation.instance.currentFolder.countUnread();
+            await Zimbra.instance.currentFolder.removeSelection();
+            await Zimbra.instance.currentFolder.countUnread();
             $scope.$apply();
         };
 
         $scope.toggleUnreadSelection = async (unread) => {
-            await Conversation.instance.currentFolder.toggleUnreadSelection(unread);
+            await Zimbra.instance.currentFolder.toggleUnreadSelection(unread);
             $scope.$apply();
         };
 
         $scope.canMarkUnread = () => {
-          return  Conversation.instance.currentFolder.mails.selection.selected.find(e => e.getSystemFolder() !== 'INBOX') == undefined &&
-            Conversation.instance.currentFolder.mails.selection.selected.find(e => !e.unread)
+          return  Zimbra.instance.currentFolder.mails.selection.selected.find(e => e.getSystemFolder() !== 'INBOX') == undefined &&
+            Zimbra.instance.currentFolder.mails.selection.selected.find(e => !e.unread)
         }
 
         $scope.canMarkRead = () => {
-          return  Conversation.instance.currentFolder.mails.selection.selected.find(e => e.getSystemFolder() !== 'INBOX') == undefined &&
-            Conversation.instance.currentFolder.mails.selection.selected.find(e => e.unread)
+          return  Zimbra.instance.currentFolder.mails.selection.selected.find(e => e.getSystemFolder() !== 'INBOX') == undefined &&
+            Zimbra.instance.currentFolder.mails.selection.selected.find(e => e.unread)
         }
 
         $scope.allReceivers = function (mail) {
@@ -456,7 +456,7 @@ export let conversationController = ng.controller('ConversationController', [
                     return new User(item[0], item[1]);
                 });
             }
-            var users = await Conversation.instance.users.findUser(search, include, exclude);
+            var users = await Zimbra.instance.users.findUser(search, include, exclude);
             Object.assign(founds, users, { length: users.length });
             $scope.$apply();
         };
@@ -476,10 +476,10 @@ export let conversationController = ng.controller('ConversationController', [
         }
 
         $scope.refreshFolder = async () => {
-            await Conversation.instance.currentFolder.sync();
+            await Zimbra.instance.currentFolder.sync();
             $scope.state.selectAll = false;
-            if(Conversation.instance.currentFolder instanceof UserFolder){
-                $scope.openUserFolder(Conversation.instance.currentFolder, {});
+            if(Zimbra.instance.currentFolder instanceof UserFolder){
+                $scope.openUserFolder(Zimbra.instance.currentFolder, {});
             }
             else
                 $scope.updateWherami();
@@ -518,9 +518,9 @@ export let conversationController = ng.controller('ConversationController', [
         $scope.moveMessages = async (folderTarget) => {
             $scope.lightbox.show = false;
             template.close('lightbox');
-            await Conversation.instance.currentFolder.mails.moveSelection(folderTarget);
-            if (!(await $scope.countDraft(Conversation.instance.currentFolder, folderTarget))) {
-                await Conversation.instance.currentFolder.countUnread();
+            await Zimbra.instance.currentFolder.mails.moveSelection(folderTarget);
+            if (!(await $scope.countDraft(Zimbra.instance.currentFolder, folderTarget))) {
+                await Zimbra.instance.currentFolder.countUnread();
                 await folderTarget.countUnread();
             }
             $scope.$apply();
@@ -529,8 +529,8 @@ export let conversationController = ng.controller('ConversationController', [
 
         $scope.openNewFolderView = function () {
             $scope.newFolder = new UserFolder();
-            if (Conversation.instance.currentFolder instanceof UserFolder) {
-                $scope.newFolder.parentFolderId = (Conversation.instance.currentFolder as UserFolder).id;
+            if (Zimbra.instance.currentFolder instanceof UserFolder) {
+                $scope.newFolder.parentFolderId = (Zimbra.instance.currentFolder as UserFolder).id;
             }
 
             $scope.lightbox.show = true
@@ -561,7 +561,7 @@ export let conversationController = ng.controller('ConversationController', [
         $scope.trashFolder = async (folder: UserFolder) => {
             await folder.trash();
             await $scope.refreshFolders();
-            await Conversation.instance.folders.trash.sync();
+            await Zimbra.instance.folders.trash.sync();
             await $scope.openFolder('trash');
         }
         $scope.restoreFolder = function (folder) {
@@ -579,9 +579,9 @@ export let conversationController = ng.controller('ConversationController', [
         letterIcon.src = skin.theme + "../../img/icons/message-icon.png"
         $scope.drag = function (item, $originalEvent) {
             var selected = [];
-            $scope.state.dragFolder = Conversation.instance.currentFolder;
-            if(Conversation.instance.currentFolder.mails.selection.selected.indexOf(item) > -1)
-                selected = Conversation.instance.currentFolder.mails.selection.selected;
+            $scope.state.dragFolder = Zimbra.instance.currentFolder;
+            if(Zimbra.instance.currentFolder.mails.selection.selected.indexOf(item) > -1)
+                selected = Zimbra.instance.currentFolder.mails.selection.selected;
             else
                 selected.push(item);
 
@@ -661,7 +661,7 @@ export let conversationController = ng.controller('ConversationController', [
         $scope.postAttachments = async () => {
             const mail = $scope.state.newItem as Mail;
             if (!mail.id) {
-                await Conversation.instance.folders.draft.saveDraft(mail);
+                await Zimbra.instance.folders.draft.saveDraft(mail);
                 await mail.postAttachments($scope);
             } else {
                 await mail.postAttachments($scope);
@@ -677,7 +677,7 @@ export let conversationController = ng.controller('ConversationController', [
         $scope.countDraft = async (folderSource, folderTarget) => {
             var draft = (folderSource.getName() === 'DRAFT' || folderTarget.getName() === 'DRAFT');
             if (draft)
-                await Conversation.instance.folders.draft.countTotal();
+                await Zimbra.instance.folders.draft.countTotal();
             return draft;
         }
 
@@ -688,9 +688,9 @@ export let conversationController = ng.controller('ConversationController', [
 
         $scope.removeTrashMessages = async () => {
             $scope.lightbox.show = false;
-            await Conversation.instance.folders.trash.removeAll();
+            await Zimbra.instance.folders.trash.removeAll();
             await $scope.refreshFolders();
-            await Conversation.instance.folders.trash.countUnread();
+            await Zimbra.instance.folders.trash.countUnread();
         }
 
         $scope.updateWherami = () => {
