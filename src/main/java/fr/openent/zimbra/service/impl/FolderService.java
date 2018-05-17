@@ -93,7 +93,7 @@ public class FolderService {
             }
 
             JsonObject finalResponse = new JsonObject()
-                    .put("data", nbMsg);
+                    .put("count", nbMsg);
 
             result.handle(new Either.Right<>(finalResponse));
 
