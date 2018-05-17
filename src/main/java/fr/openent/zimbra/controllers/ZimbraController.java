@@ -30,6 +30,7 @@ import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
+import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.http.BaseController;
 
@@ -220,9 +221,9 @@ public class ZimbraController extends BaseController {
 	}
 
 	@Get("list/:folder")
-	@SecuredAction(value = "conversation.list", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "zimbra.list", type = ActionType.AUTHENTICATED)
 	public void list(final HttpServerRequest request) {
-
+		arrayResponseHandler(request).handle(new Either.Right<>(new JsonArray()));
 	}
 
 	private void translateGroupsNames(JsonObject message, HttpServerRequest request) {
@@ -282,7 +283,7 @@ public class ZimbraController extends BaseController {
 	 *                unread ? filter only unread messages
 	 */
 	@Get("count/:folder")
-	@SecuredAction(value = "conversation.count", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "zimbra.count", type = ActionType.AUTHENTICATED)
 	public void count(final HttpServerRequest request) {
 		final String folder = request.params().get("folder");
 		final String unread = request.params().get("unread");
@@ -304,7 +305,7 @@ public class ZimbraController extends BaseController {
 	}
 
 	@Get("visible")
-	@SecuredAction(value = "conversation.visible", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "zimbra.visible", type = ActionType.AUTHENTICATED)
 	public void visible(final HttpServerRequest request) {
 
 	}
@@ -358,7 +359,7 @@ public class ZimbraController extends BaseController {
 	}
 
 	@Delete("emptyTrash")
-	@SecuredAction(value="conversation.empty.trash", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value="zimbra.empty.trash", type = ActionType.AUTHENTICATED)
 	public void emptyTrash(final HttpServerRequest request) {
 	}
 
@@ -371,7 +372,7 @@ public class ZimbraController extends BaseController {
 
 	//Get max folder depth
 	@Get("max-depth")
-	@SecuredAction(value="conversation.max.depth", type=ActionType.AUTHENTICATED)
+	@SecuredAction(value="zimbra.max.depth", type=ActionType.AUTHENTICATED)
 	public void getMaxDepth(final HttpServerRequest request){
 		renderJson(request, new JsonObject().put("max-depth", Config.getConf().getInteger("max-folder-depth", Zimbra.DEFAULT_FOLDER_DEPTH)));
 	}
@@ -395,7 +396,7 @@ public class ZimbraController extends BaseController {
 	 *                trash ? ignore parent id and get trashed folders
 	 */
 	@Get("folders/list")
-	@SecuredAction(value = "conversation.folder.list", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "zimbra.folder.list", type = ActionType.AUTHENTICATED)
 	public void listFolders(final HttpServerRequest request){
 		final String parentId = request.params().get("parentId");
 		final String listTrash = request.params().get("trash");
@@ -413,7 +414,7 @@ public class ZimbraController extends BaseController {
 
 	//Create a new folder at root level or inside a user folder.
 	@Post("folder")
-	@SecuredAction(value = "conversation.folder.create", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "zimbra.folder.create", type = ActionType.AUTHENTICATED)
 	public void createFolder(final HttpServerRequest request) {
 	}
 
@@ -497,7 +498,7 @@ public class ZimbraController extends BaseController {
 	}
 
 	@Get("/print")
-	@SecuredAction(value = "conversation.print", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "zimbra.print", type = ActionType.AUTHENTICATED)
 	public void print(final HttpServerRequest request) {
 		renderView(request, null, "print.html", null);
 	}
