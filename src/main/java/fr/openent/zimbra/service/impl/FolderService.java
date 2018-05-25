@@ -118,8 +118,9 @@ public class FolderService {
             folderReq.put("l", ZimbraConstants.FOLDER_TRASH_ID);
         } else if(parentId == null) {
             folderReq.put("l", ZimbraConstants.FOLDER_INBOX_ID);
+        } else {
+            folderReq.put("l", parentId);
         }
-        folderReq.put("l", parentId);
 
         JsonObject getFolderRequest = new JsonObject()
                 .put("name", "GetFolderRequest")
