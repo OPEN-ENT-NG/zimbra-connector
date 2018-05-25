@@ -34,6 +34,7 @@ import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.http.BaseController;
 
+import fr.wseduc.webutils.request.RequestUtils;
 import org.entcore.common.http.request.JsonHttpServerRequest;
 import org.entcore.common.notification.TimelineHelper;
 import org.entcore.common.user.UserInfos;
@@ -412,16 +413,64 @@ public class ZimbraController extends BaseController {
 
 	}
 
-	//Create a new folder at root level or inside a user folder.
+	/**
+	 * Create a new folder at root level or inside a user folder.
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                Body :
+	 *                	createFolder.json
+	 */
 	@Post("folder")
 	@SecuredAction(value = "zimbra.folder.create", type = ActionType.AUTHENTICATED)
 	public void createFolder(final HttpServerRequest request) {
+		UserUtils.getUserInfos(eb, request,  user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			RequestUtils.bodyToJson(request, pathPrefix + "createFolder", body -> {
+					final String name = body.getString("name");
+					final String parentId = body.getString("parentId", null);
+
+					if(name == null || name.trim().length() == 0){
+						badRequest(request);
+						return;
+					}
+					folderService.createFolder(name, parentId, user, defaultResponseHandler(request, 201));
+				});
+			});
 	}
 
-	//Update a folder
+	/**
+	 * Update a folder.
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                folder id
+	 *                Body :
+	 *                	updateFolder.json
+	 */
 	@Put("folder/:folderId")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void updateFolder(final HttpServerRequest request) {
+        final String folderId = request.params().get("folderId");
+
+        UserUtils.getUserInfos(eb, request, user -> {
+            if(user == null){
+                unauthorized(request);
+                return;
+            }
+            RequestUtils.bodyToJson(request, pathPrefix + "updateFolder", body -> {
+				final String name = body.getString("name");
+
+				if(name == null || name.trim().length() == 0){
+					badRequest(request);
+					return;
+				}
+                folderService.updateFolder(folderId, name, user, defaultResponseHandler(request, 200));
+            });
+        });
 
 	}
 
@@ -439,28 +488,69 @@ public class ZimbraController extends BaseController {
 
 	}
 
-	//Trash a folder
+	/**
+	 * Trash a folder.
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                folder id
+	 */
 	@Put("folder/trash/:folderId")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void trashFolder(final HttpServerRequest request) {
-
-	}
-
-	//Restore a trashed folder
-	@Put("folder/restore/:folderId")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
-	public void restoreFolder(final HttpServerRequest request) {
-
-	}
-
-	//Delete a trashed folder
-	@Delete("folder/:folderId")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
-	public void deleteFolder(final HttpServerRequest request) {
 		final String folderId = request.params().get("folderId");
 
+		UserUtils.getUserInfos(eb, request,  user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			folderService.trashFolder(folderId, user, defaultResponseHandler(request));
+		});
+
 	}
 
+	/**
+	 * Restore a trashed folder in Inbox.
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                folder id
+	 */
+	@Put("folder/restore/:folderId")
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	public void restoreFolder(final HttpServerRequest request) {
+		final String folderId = request.params().get("folderId");
+
+        UserUtils.getUserInfos(eb, request, user -> {
+				if(user == null){
+					unauthorized(request);
+					return;
+				}
+				folderService.restoreFolder(folderId, user, defaultResponseHandler(request));
+			});
+	}
+
+	/**
+	 * Delete a trashed folder.
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                folder id
+	 */
+	@Delete("folder/:folderId")
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+    public void deleteFolder(final HttpServerRequest request) {
+        final String folderId = request.params().get("folderId");
+
+		UserUtils.getUserInfos(eb, request,  user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			folderService.deleteFolder(folderId, user, defaultResponseHandler(request));
+		});
+	}
 
 
 	//Post an new attachment to a drafted message

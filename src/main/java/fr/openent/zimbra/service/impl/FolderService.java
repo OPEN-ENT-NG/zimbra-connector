@@ -31,20 +31,20 @@ public class FolderService {
 
         switch (folderId) {
             case FrontConstants.FOLDER_INBOX :
-                folderReq.put("path", ZimbraConstants.FOLDER_INBOX);
+                folderId = ZimbraConstants.FOLDER_INBOX_ID;
                 break;
             case FrontConstants.FOLDER_OUTBOX :
-                folderReq.put("path", ZimbraConstants.FOLDER_INBOX);
+                folderId = ZimbraConstants.FOLDER_OUTBOX_ID;
                 break;
             case FrontConstants.FOLDER_DRAFT :
-                folderReq.put("path", ZimbraConstants.FOLDER_DRAFT);
+                folderId = ZimbraConstants.FOLDER_DRAFT_ID;
                 break;
             case FrontConstants.FOLDER_TRASH :
-                folderReq.put("path", ZimbraConstants.FOLDER_TRASH);
+                folderId = ZimbraConstants.FOLDER_TRASH_ID;
                 break;
-            default:
-                folderReq.put("uuid", folderId);
         }
+
+        folderReq.put("l", folderId);
 
         JsonObject getFolderRequest = new JsonObject()
                 .put("name", "GetFolderRequest")
@@ -105,23 +105,21 @@ public class FolderService {
     /**
      * List folders at root level, under one specifique folder or trashed, depending on parameters
      * Only get depth 1 folders
-     * @param parentId [optional] uuid of parent folder
+     * @param parentId [optional] id of parent folder
      * @param trashed [optional] only depth 1 trashed folders
      * @param user User infos
      * @param handler Result handler
      */
-    public void listFolders(String parentId, Boolean trashed, UserInfos user,
+    public void listFolders(final String parentId, Boolean trashed, UserInfos user,
                             Handler<Either<String,JsonArray>> handler) {
         JsonObject folderReq = new JsonObject()
                 .put("view", "messages");
-
         if(trashed) {
-            folderReq.put("path", ZimbraConstants.FOLDER_TRASH);
+            folderReq.put("l", ZimbraConstants.FOLDER_TRASH_ID);
         } else if(parentId == null) {
-            folderReq.put("path", ZimbraConstants.FOLDER_INBOX);
-        } else {
-            folderReq.put("uuid", parentId);
+            folderReq.put("l", ZimbraConstants.FOLDER_INBOX_ID);
         }
+        folderReq.put("l", parentId);
 
         JsonObject getFolderRequest = new JsonObject()
                 .put("name", "GetFolderRequest")
@@ -181,7 +179,7 @@ public class FolderService {
                 resultFolder.put("trashed", (trashed != null));
                 // todo process depth ?
                 resultFolder.put("depth", 1);
-                resultFolder.put("id", sFolder.getString("uuid"));
+                resultFolder.put("id", sFolder.getString("id"));
                 resultFolder.put("name", sFolder.getString("name"));
 
                 resultArray.add(resultFolder);
@@ -191,4 +189,154 @@ public class FolderService {
             handler.handle(new Either.Left<>("Error when reading response"));
         }
     }
+
+
+    /**
+     * Create folder
+     * Process response from Zimbra API to list subfolders in folder
+     * In case of success, return an empty Json Array.
+     * @param parentId Id of parent folder
+     * @param newFolderName New Folder Name
+     * @param user User infos
+     * @param handler Empty JsonObject returned, no process needed
+     */
+    public void createFolder(String newFolderName, String parentId, UserInfos user,
+                             Handler<Either<String, JsonObject>> handler) {
+
+        if(parentId == null) {
+            parentId = ZimbraConstants.FOLDER_INBOX_ID;
+        }
+
+        JsonObject actionReq = new JsonObject()
+                .put("l", parentId)
+                .put("name", newFolderName)
+                .put("view", "message");
+
+        JsonObject createFolderRequest = new JsonObject()
+                .put("name", "CreateFolderRequest")
+                .put("content", new JsonObject()
+                        .put("folder", actionReq)
+                        .put("_jsns", "urn:zimbraMail"));
+
+        soapService.callUserSoapAPI(createFolderRequest, user, response -> {
+            if(response.isLeft()) {
+                handler.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                handler.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
+    }
+
+    /**
+     * Trash folder
+     * @param folderId Id of folder
+     * @param user User infos
+     * @param handler Empty JsonObject returned, no process needed
+     */
+    public void trashFolder(String folderId, UserInfos user,
+                            Handler<Either<String,JsonObject>> handler) {
+        JsonObject actionReq = new JsonObject()
+                .put("id", folderId)
+                .put("op", ZimbraConstants.OP_TRASH);
+
+        JsonObject folderActionRequest = new JsonObject()
+                .put("name", "FolderActionRequest")
+                .put("content", new JsonObject()
+                    .put("action", actionReq)
+                    .put("_jsns", "urn:zimbraMail"));
+
+        soapService.callUserSoapAPI(folderActionRequest, user, response -> {
+            if(response.isLeft()) {
+                handler.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                handler.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
+    }
+
+    /**
+     * Update folder
+     * @param folderId Folder id
+     * @param name New folder Name
+     * @param user User infos
+     * @param handler Empty JsonObject returned, no process needed
+     */
+    public void updateFolder(String folderId, String name, UserInfos user,
+                             Handler<Either<String,JsonObject>> handler) {
+        JsonObject actionReq = new JsonObject()
+                .put("id", folderId)
+                .put("name", name)
+                .put("op", ZimbraConstants.OP_RENAME);
+
+        JsonObject folderActionRequest = new JsonObject()
+                .put("name", "FolderActionRequest")
+                .put("content", new JsonObject()
+                        .put("action", actionReq)
+                        .put("_jsns", "urn:zimbraMail"));
+
+        soapService.callUserSoapAPI(folderActionRequest, user, response -> {
+            if(response.isLeft()) {
+                handler.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                handler.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
+    }
+
+    /**
+     * Restore folder in Inbox
+     * @param folderId Folder id
+     * @param user User infos
+     * @param handler Empty JsonObject returned, no process needed
+     */
+    public void restoreFolder(String folderId, UserInfos user,
+                             Handler<Either<String,JsonObject>> handler) {
+        JsonObject actionReq = new JsonObject()
+                .put("id", folderId)
+                .put("l", ZimbraConstants.FOLDER_INBOX_ID)
+                .put("op", ZimbraConstants.OP_MOVE);
+
+        JsonObject folderActionRequest = new JsonObject()
+                .put("name", "FolderActionRequest")
+                .put("content", new JsonObject()
+                        .put("action", actionReq)
+                        .put("_jsns", "urn:zimbraMail"));
+
+        soapService.callUserSoapAPI(folderActionRequest, user, response -> {
+            if(response.isLeft()) {
+                handler.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                handler.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
+    }
+
+
+    /**
+     * Delete folder
+     * @param folderId Id of folder
+     * @param user User infos
+     * @param handler Empty JsonObject returned, no process needed
+     */
+    public void deleteFolder(String folderId, UserInfos user,
+                            Handler<Either<String,JsonObject>> handler) {
+        JsonObject actionReq = new JsonObject()
+                .put("id", folderId)
+                .put("op", ZimbraConstants.OP_DELETE);
+
+        JsonObject folderActionRequest = new JsonObject()
+                .put("name", "FolderActionRequest")
+                .put("content", new JsonObject()
+                        .put("action", actionReq)
+                        .put("_jsns", "urn:zimbraMail"));
+
+        soapService.callUserSoapAPI(folderActionRequest, user, response -> {
+            if(response.isLeft()) {
+                handler.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                handler.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
+    }
+
 }
