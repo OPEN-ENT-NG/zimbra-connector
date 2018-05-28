@@ -21,17 +21,14 @@ package fr.openent.zimbra.controllers;
 
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.service.impl.FolderService;
-import fr.openent.zimbra.service.impl.Neo4jZimbraService;
-import fr.openent.zimbra.service.impl.SoapZimbraService;
-import fr.openent.zimbra.service.impl.UserService;
+import fr.openent.zimbra.service.impl.*;
 import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
-import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
+import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 
 import fr.wseduc.webutils.request.RequestUtils;
@@ -68,6 +65,7 @@ public class ZimbraController extends BaseController {
 	private SoapZimbraService soapService;
 	private UserService userService;
 	private FolderService folderService;
+	private MessageService messageService;
 
 	public ZimbraController(String exportPath) {
 		this.exportPath = exportPath;
@@ -85,6 +83,7 @@ public class ZimbraController extends BaseController {
 		notification = new TimelineHelper(vertx, eb, config);
 
 		this.folderService = new FolderService(soapService);
+		this.messageService = new MessageService(soapService, folderService);
 	}
 
 	@Get("zimbra")
@@ -229,10 +228,46 @@ public class ZimbraController extends BaseController {
 		notification.notifyTimeline(request, "messagerie.send-message", user, recipients, id, params);
 	}
 
+	/**
+	 * List messages in folders
+	 * If unread is true, filter only unread messages.
+	 * If search is set, must be at least 3 characters. Then filter by search.
+	 * @param request http request containing info
+	 *                Users infos
+  	 *                folder name or id
+  	 *                unread ? filter only unread messages
+	 *                search ? filter only searched messages
+	 */
 	@Get("list/:folder")
-	@SecuredAction(value = "zimbra.list", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "zimbra.listMessages", type = ActionType.AUTHENTICATED)
 	public void list(final HttpServerRequest request) {
-		arrayResponseHandler(request).handle(new Either.Right<>(new JsonArray()));
+		final String folder = request.params().get("folder");
+		final String unread = request.params().get("unread");
+		final String search = request.params().get("search");
+		if(search != null  && search.trim().length() < 3){
+			badRequest(request);
+			return;
+		}
+		final String pageStr = Utils.getOrElse(request.params().get("page"), "0", false);
+		if (folder == null || folder.trim().isEmpty()) {
+			badRequest(request);
+			return;
+		}
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				int page;
+				try {
+					page = Integer.parseInt(pageStr);
+				} catch (NumberFormatException e) { page = 0; }
+				Boolean b = null;
+				if (unread != null && !unread.isEmpty()) {
+					b = Boolean.valueOf(unread);
+				}
+				messageService.listMessages(folder, b, user, page, search, arrayResponseHandler(request));
+			} else {
+				unauthorized(request);
+			}
+		});
 	}
 
 	private void translateGroupsNames(JsonObject message, HttpServerRequest request) {
@@ -404,8 +439,8 @@ public class ZimbraController extends BaseController {
 	 *                parent id (optional)
 	 *                trash ? ignore parent id and get trashed folders
 	 */
-	@Get("folders/list")
-	@SecuredAction(value = "zimbra.folder.list", type = ActionType.AUTHENTICATED)
+	@Get("folders/listMessages")
+	@SecuredAction(value = "zimbra.folder.listMessages", type = ActionType.AUTHENTICATED)
 	public void listFolders(final HttpServerRequest request){
 		final String parentId = request.params().get("parentId");
 		final String listTrash = request.params().get("trash");

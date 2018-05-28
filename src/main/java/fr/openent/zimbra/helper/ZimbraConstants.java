@@ -20,6 +20,15 @@ public class ZimbraConstants {
 
     public static final String GETFOLDER_UNREAD = "u";
     public static final String GETFOLDER_NBMSG = "n";
+    public static final String GETFOLDER_FOLDERPATH = "absFolderPath";
+
+    public static final String SEARCH_MESSAGES = "m";
+    public static final String SEARCH_MSG_ID = "id";
+    public static final String SEARCH_MSG_SUBJECT = "su";
+    public static final String SEARCH_MSG_EMAILS = "e";
+    public static final String SEARCH_MSG_EMAIL_TYPE = "t";
+    public static final String SEARCH_MSG_EMAIL_ADDR = "a";
+    public static final String SEARCH_MSG_EMAIL_COMMENT = "p";
 
     public static final String NAMESPACE_ZIMBRA = "urn:zimbra";
     public static final String NAMESPACE_ADMIN = "urn:zimbraAdmin";

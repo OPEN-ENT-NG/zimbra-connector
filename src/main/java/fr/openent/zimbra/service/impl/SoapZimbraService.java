@@ -168,7 +168,7 @@ public class SoapZimbraService {
      * Call zimbra SOAP API
      * @param params inner data to send to zimbra
      * {
-     *      "authToken" : [optionnal] user auth token if already connected,
+     *      "authToken" : [optional] user auth token if already connected,
      *      "name" : name of the zimbra soap request,
      *      "content" : data for the request
      *      "isAuthRequest" : boolean indicating if it is an authRequest,

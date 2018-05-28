@@ -26,25 +26,12 @@ public class FolderService {
      */
     public void countMessages(String folderId, Boolean unread, UserInfos user,
                               Handler<Either<String, JsonObject>> result) {
+
+        folderId = getZimbraFolderId(folderId);
+
         JsonObject folderReq = new JsonObject()
-                .put("view", "messages");
-
-        switch (folderId) {
-            case FrontConstants.FOLDER_INBOX :
-                folderId = ZimbraConstants.FOLDER_INBOX_ID;
-                break;
-            case FrontConstants.FOLDER_OUTBOX :
-                folderId = ZimbraConstants.FOLDER_OUTBOX_ID;
-                break;
-            case FrontConstants.FOLDER_DRAFT :
-                folderId = ZimbraConstants.FOLDER_DRAFT_ID;
-                break;
-            case FrontConstants.FOLDER_TRASH :
-                folderId = ZimbraConstants.FOLDER_TRASH_ID;
-                break;
-        }
-
-        folderReq.put("l", folderId);
+                .put("view", "messages")
+                .put("l", folderId);
 
         JsonObject getFolderRequest = new JsonObject()
                 .put("name", "GetFolderRequest")
@@ -139,7 +126,7 @@ public class FolderService {
     }
 
     /**
-     * Process response from Zimbra API to list subfolders in folder
+     * Process response from Zimbra API to listMessages subfolders in folder
      * In case of success, return Json Array of folders :
      * [
      * 	{
@@ -194,7 +181,7 @@ public class FolderService {
 
     /**
      * Create folder
-     * Process response from Zimbra API to list subfolders in folder
+     * Process response from Zimbra API to listMessages subfolders in folder
      * In case of success, return an empty Json Array.
      * @param parentId Id of parent folder
      * @param newFolderName New Folder Name
@@ -340,4 +327,47 @@ public class FolderService {
         });
     }
 
+    /**
+     * Get folder information from Zimbra
+     * @param folderId folder id
+     * @param user User infos
+     * @param handler Result handler
+     */
+    void getFolderInfos(String folderId, UserInfos user, Handler<Either<String,JsonObject>> handler) {
+
+        folderId = getZimbraFolderId(folderId);
+
+        JsonObject folderReq = new JsonObject()
+                .put("view", "messages")
+                .put("l", folderId);
+
+        JsonObject getFolderRequest = new JsonObject()
+                .put("name", "GetFolderRequest")
+                .put("content", new JsonObject()
+                        .put("depth", 0)
+                        .put("folder", folderReq)
+                        .put("_jsns", "urn:zimbraMail"));
+
+        soapService.callUserSoapAPI(getFolderRequest, user, handler);
+    }
+
+    private String getZimbraFolderId(String frontFolderId) {
+        String folderId = frontFolderId;
+        // fixme front is not consistent with case
+        switch (folderId.toUpperCase()) {
+            case FrontConstants.FOLDER_INBOX :
+                folderId = ZimbraConstants.FOLDER_INBOX_ID;
+                break;
+            case FrontConstants.FOLDER_OUTBOX :
+                folderId = ZimbraConstants.FOLDER_OUTBOX_ID;
+                break;
+            case FrontConstants.FOLDER_DRAFT :
+                folderId = ZimbraConstants.FOLDER_DRAFT_ID;
+                break;
+            case FrontConstants.FOLDER_TRASH :
+                folderId = ZimbraConstants.FOLDER_TRASH_ID;
+                break;
+        }
+        return folderId;
+    }
 }
