@@ -111,11 +111,18 @@ public class ZimbraController extends BaseController {
 	@Get("zimbra/testauth")
 	public void testAuth(HttpServerRequest request) {
 		getUserInfos(eb, request, user -> {
-			soapService.auth(user, event -> {
+			soapService.auth("admin@ng.preprod-ent.fr", "admin@ng.preprod-ent.fr", event -> {
 				if(event.isLeft()) {
 					renderError(request, new JsonObject().put("error", event.left().getValue()));
 				} else {
-					renderJson(request, event.right().getValue());
+					JsonObject authInfo = event.right().getValue();
+					soapService.adminAuth("admin@ng.preprod-ent.fr", authInfo, response -> {
+						if(response.isLeft()) {
+							renderError(request, new JsonObject().put("error", response.left().getValue()));
+						} else {
+							renderJson(request, response.right().getValue());
+						}
+					});
 				}
 			});
 		});

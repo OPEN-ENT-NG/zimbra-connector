@@ -37,8 +37,6 @@ public class PreauthHelper {
     }
 
     public static JsonObject generatePreauth(String emailAddress, String preauthKey) {
-        //todo : remove placeholder
-        emailAddress = "thomas.lecocq2@ng.preprod-ent.fr";
         String timestamp = System.currentTimeMillis()+"";
         String computedPreauth = computeDefaultPreAuth(emailAddress, timestamp, preauthKey);
 

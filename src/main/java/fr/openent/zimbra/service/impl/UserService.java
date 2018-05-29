@@ -9,6 +9,8 @@ public class UserService {
     }
 
     public String getUserZimbraAddress(UserInfos user) {
-        return user.getUserId() + "@" + getUserDomain(user);
+        //todo replace placeholder
+        return "thomas.lecocq2@ng.preprod-ent.fr";
+        //return user.getUserId() + "@" + getUserDomain(user);
     }
 }

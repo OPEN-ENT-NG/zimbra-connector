@@ -51,7 +51,7 @@ public class FolderService {
                 .put("content", new JsonObject()
                         .put("depth", 0)
                         .put("folder", folderReq)
-                        .put("_jsns", "urn:zimbraMail"));
+                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(getFolderRequest, user, response -> {
             if(response.isLeft()) {
@@ -127,7 +127,7 @@ public class FolderService {
                 .put("content", new JsonObject()
                         .put("depth", 1)
                         .put("folder", folderReq)
-                        .put("_jsns", "urn:zimbraMail"));
+                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(getFolderRequest, user, response -> {
             if(response.isLeft()) {
@@ -217,7 +217,7 @@ public class FolderService {
                 .put("name", "CreateFolderRequest")
                 .put("content", new JsonObject()
                         .put("folder", actionReq)
-                        .put("_jsns", "urn:zimbraMail"));
+                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(createFolderRequest, user, response -> {
             if(response.isLeft()) {
@@ -244,7 +244,7 @@ public class FolderService {
                 .put("name", "FolderActionRequest")
                 .put("content", new JsonObject()
                     .put("action", actionReq)
-                    .put("_jsns", "urn:zimbraMail"));
+                    .put("_jsns", ZimbraConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(folderActionRequest, user, response -> {
             if(response.isLeft()) {
@@ -273,7 +273,7 @@ public class FolderService {
                 .put("name", "FolderActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
-                        .put("_jsns", "urn:zimbraMail"));
+                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(folderActionRequest, user, response -> {
             if(response.isLeft()) {
@@ -301,7 +301,7 @@ public class FolderService {
                 .put("name", "FolderActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
-                        .put("_jsns", "urn:zimbraMail"));
+                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(folderActionRequest, user, response -> {
             if(response.isLeft()) {
@@ -329,7 +329,7 @@ public class FolderService {
                 .put("name", "FolderActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
-                        .put("_jsns", "urn:zimbraMail"));
+                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(folderActionRequest, user, response -> {
             if(response.isLeft()) {

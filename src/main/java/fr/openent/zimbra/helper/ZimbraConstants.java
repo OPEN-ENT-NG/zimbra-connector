@@ -20,4 +20,9 @@ public class ZimbraConstants {
 
     public static final String GETFOLDER_UNREAD = "u";
     public static final String GETFOLDER_NBMSG = "n";
+
+    public static final String NAMESPACE_ZIMBRA = "urn:zimbra";
+    public static final String NAMESPACE_ADMIN = "urn:zimbraAdmin";
+    public static final String NAMESPACE_ACCOUNT = "urn:zimbraAccount";
+    public static final String NAMESPACE_MAIL = "urn:zimbraMail";
 }

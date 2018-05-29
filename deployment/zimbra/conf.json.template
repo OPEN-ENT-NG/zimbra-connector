@@ -14,7 +14,9 @@
         "app-registry.port" : 8012,
         "mode" : "${mode}",
         "zimbra-uri" : "$zimbraUri",
+        "zimbra-admin-uri" : "$zimbraAdminUri",
         "preauth-key" : "$zimbraPreauthKey",
+        "admin-account" : "$zimbraAdminAccount",
         "entcore.port" : 8009
       }
     }
