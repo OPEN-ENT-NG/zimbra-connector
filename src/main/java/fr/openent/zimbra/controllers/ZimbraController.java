@@ -239,7 +239,7 @@ public class ZimbraController extends BaseController {
 	 *                search ? filter only searched messages
 	 */
 	@Get("list/:folder")
-	@SecuredAction(value = "zimbra.listMessages", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "zimbra.list", type = ActionType.AUTHENTICATED)
 	public void list(final HttpServerRequest request) {
 		final String folder = request.params().get("folder");
 		final String unread = request.params().get("unread");
@@ -439,8 +439,8 @@ public class ZimbraController extends BaseController {
 	 *                parent id (optional)
 	 *                trash ? ignore parent id and get trashed folders
 	 */
-	@Get("folders/listMessages")
-	@SecuredAction(value = "zimbra.folder.listMessages", type = ActionType.AUTHENTICATED)
+	@Get("folders/list")
+	@SecuredAction(value = "zimbra.folder.list", type = ActionType.AUTHENTICATED)
 	public void listFolders(final HttpServerRequest request){
 		final String parentId = request.params().get("parentId");
 		final String listTrash = request.params().get("trash");

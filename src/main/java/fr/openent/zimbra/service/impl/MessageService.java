@@ -86,7 +86,7 @@ public class MessageService {
     }
 
     /**
-     * Process a zimbra searchResult and transform it to Front Message
+     * Process recursively a zimbra searchResult and transform it to Front Message
      * Form of Front message returned :
      * {
      *     "id" : "message_id",
@@ -127,6 +127,7 @@ public class MessageService {
         final JsonObject frontMsg = new JsonObject();
         frontMsg.put("id", zimbraMsg.getString(ZimbraConstants.SEARCH_MSG_ID));
         frontMsg.put("subject", zimbraMsg.getString(ZimbraConstants.SEARCH_MSG_SUBJECT));
+        frontMsg.put("date", zimbraMsg.getLong(ZimbraConstants.SEARCH_MSG_DATE));
         JsonObject zimbraFrom = zimbraMsg.getJsonArray(ZimbraConstants.SEARCH_MSG_EMAILS).getJsonObject(0);
         frontMsg.put("from", zimbraFrom.getString(ZimbraConstants.SEARCH_MSG_EMAIL_ADDR));
         frontMsg.put("displayNames", new JsonArray()
