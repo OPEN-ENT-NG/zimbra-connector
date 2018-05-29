@@ -79,8 +79,9 @@ public class ZimbraController extends BaseController {
 		super.init(vertx, config, rm, securedActions);
 
 		this.neoConversationService = new Neo4jZimbraService();
-		this.userService = new UserService();
-		this.soapService = new SoapZimbraService(vertx, config, userService);
+		this.soapService = new SoapZimbraService(vertx, config);
+		this.userService = new UserService(soapService);
+		soapService.setUserService(userService);
 		notification = new TimelineHelper(vertx, eb, config);
 
 		this.folderService = new FolderService(soapService);
@@ -621,4 +622,28 @@ public class ZimbraController extends BaseController {
 		notification.notifyTimeline(new JsonHttpServerRequest(new JsonObject()),
 				"messagerie.storage", null, recipients, null, new JsonObject());
 	}
+
+
+	/**
+	 * Quota for a user.
+	 * In case of success, return a Json Object :
+	 * {
+	 * 	    "storage" : "quotaUsed"
+	 * 	    "quota" : "quotaTotalAllowed"
+	 * }
+	 * @param request http request containing info
+	 *                Users infos
+	 */
+	@Get("quota")
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	public void quotaUser(final HttpServerRequest request) {
+		UserUtils.getUserInfos(eb, request,  user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			userService.getQuota(user, defaultResponseHandler(request));
+		});
+	}
+
 }

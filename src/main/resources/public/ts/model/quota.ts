@@ -34,7 +34,7 @@ class Quota {
     }
 
     async refresh () {
-        const response = await http.get('/workspace/quota/user/' + model.me.userId);
+        const response = await http.get('/zimbra/quota');
         const data = response.data;
         data.quota = data.quota / (1024 * 1024);
         data.storage = data.storage / (1024 * 1024);

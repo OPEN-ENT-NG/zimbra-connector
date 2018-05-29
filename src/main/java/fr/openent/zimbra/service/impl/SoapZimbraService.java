@@ -48,8 +48,8 @@ public class SoapZimbraService {
 
     private String zimbraAdminAccount;
 
-    public SoapZimbraService(Vertx vertx, JsonObject config, UserService us) {
-        this.userService = us;
+    public SoapZimbraService(Vertx vertx, JsonObject config) {
+        this.userService = null;
         this.zimbraUri = config.getString("zimbra-uri", "");
         this.zimbraAdminUri = config.getString("zimbra-admin-uri", "");
         this.zimbraAdminAccount = config.getString("admin-account","");
@@ -62,9 +62,11 @@ public class SoapZimbraService {
         if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()) {
             log.fatal("Zimbra : Missing configuration in conf.properties");
         }
-
     }
 
+    public void setUserService(UserService us) {
+        this.userService = us;
+    }
     /**
      * Add generic info to Json before sending to Zimbra
      * {
