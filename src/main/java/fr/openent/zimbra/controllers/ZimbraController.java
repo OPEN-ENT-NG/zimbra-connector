@@ -66,6 +66,7 @@ public class ZimbraController extends BaseController {
 	private UserService userService;
 	private FolderService folderService;
 	private MessageService messageService;
+	private SqlZimbraService sqlService;
 
 	public ZimbraController(String exportPath) {
 		this.exportPath = exportPath;
@@ -77,8 +78,9 @@ public class ZimbraController extends BaseController {
 		super.init(vertx, config, rm, securedActions);
 
 		this.neoConversationService = new Neo4jZimbraService();
+		this.sqlService = new SqlZimbraService(config.getString("db-schema", "zimbra"));
 		this.soapService = new SoapZimbraService(vertx, config);
-		this.userService = new UserService(soapService);
+		this.userService = new UserService(log, soapService, sqlService);
 		soapService.setUserService(userService);
 		notification = new TimelineHelper(vertx, eb, config);
 

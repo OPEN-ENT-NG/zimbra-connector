@@ -13,6 +13,8 @@
         "integration-mode" : "HTTP",
         "app-registry.port" : 8012,
         "mode" : "${mode}",
+        "sql": true,
+        "db-schema": "zimbra",
         "zimbra-uri" : "$zimbraUri",
         "zimbra-admin-uri" : "$zimbraAdminUri",
         "preauth-key" : "$zimbraPreauthKey",

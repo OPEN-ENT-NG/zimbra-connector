@@ -3,22 +3,27 @@ package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
 import org.entcore.common.user.UserInfos;
 
 public class UserService {
 
     private SoapZimbraService soapService;
+    private SqlZimbraService sqlService;
+    private Logger log;
 
-    public UserService(SoapZimbraService soapService) {
+    public UserService(Logger log, SoapZimbraService soapService, SqlZimbraService sqlService) {
         this.soapService = soapService;
+        this.sqlService = sqlService;
     }
 
     private String getUserDomain(UserInfos user) {
         return "";
     }
 
-    public String getUserZimbraAddress(UserInfos user) {
+    String getUserZimbraAddress(UserInfos user) {
         //todo replace placeholder
         return "thomas.lecocq2@ng.preprod-ent.fr";
         //return user.getUserId() + "@" + getUserDomain(user);
@@ -33,14 +38,9 @@ public class UserService {
     public void getQuota(UserInfos user,
                          Handler<Either<String, JsonObject>> handler) {
 
-        JsonObject getInfoRequest = new JsonObject()
-                .put("name", "GetInfoRequest")
-                .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT));
-
-        soapService.callUserSoapAPI(getInfoRequest, user, response -> {
+        getUserInfo(user, response -> {
             if(response.isLeft()) {
-                handler.handle(new Either.Left<>(response.left().getValue()));
+                handler.handle(response);
             } else {
                 processGetQuota(response.right().getValue(), handler);
             }
@@ -60,25 +60,48 @@ public class UserService {
      */
     private void processGetQuota(JsonObject jsonResponse,
                                  Handler<Either<String,JsonObject>> handler) {
-        try {
-            Long quotaUsed = jsonResponse.getJsonObject("Body")
-                    .getJsonObject("GetInfoResponse")
-                    .getLong("used");
 
-            String totalQuota = jsonResponse.getJsonObject("Body")
-                    .getJsonObject("GetInfoResponse")
-                    .getJsonObject("attrs")
-                    .getJsonObject("_attrs")
-                    .getString("zimbraMailQuota");
-
-            JsonObject resultQuotas = new JsonObject()
-                    .put("storage", quotaUsed)
-                    .put("quota", totalQuota);
-
-            handler.handle(new Either.Right<>(resultQuotas));
-        } catch (NullPointerException e) {
-            handler.handle(new Either.Left<>("Error when reading response"));
+        if(jsonResponse.containsKey(UserInfoService.QUOTA)) {
+            handler.handle(new Either.Right<>(jsonResponse.getJsonObject(UserInfoService.QUOTA)));
+        } else {
+            handler.handle(new Either.Left<>("Could not get Quota from GetInfoRequest"));
         }
+    }
+
+    private void getUserInfo(UserInfos user,
+                             Handler<Either<String, JsonObject>> handler) {
+        JsonObject getInfoRequest = new JsonObject()
+                .put("name", "GetInfoRequest")
+                .put("content", new JsonObject()
+                        .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT));
+
+        soapService.callUserSoapAPI(getInfoRequest, user, response -> {
+            if(response.isLeft()) {
+                handler.handle(response);
+            } else {
+                processGetUserInfo(response.right().getValue(), user, handler);
+            }
+        });
+    }
+
+    private void processGetUserInfo(JsonObject jsonResponse, UserInfos user,
+                                    Handler<Either<String, JsonObject>> handler) {
+
+        JsonObject getInfoResp = jsonResponse.getJsonObject("Body")
+              .getJsonObject("GetInfoResponse");
+        JsonObject frontData = new JsonObject();
+
+        UserInfoService.processQuota(getInfoResp, frontData);
+        UserInfoService.processAliases(getInfoResp, frontData);
+
+        sqlService.updateUsers(new JsonArray().add(frontData.getJsonObject(UserInfoService.ALIAS)),
+                                sqlResponse -> {
+            if(sqlResponse.isLeft()) {
+                log.error("Error when updating Zimbra users : " + sqlResponse.left().getValue());
+            }
+        });
+
+        handler.handle(new Either.Right<>(frontData));
     }
 
 }
