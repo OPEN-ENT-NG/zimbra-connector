@@ -411,4 +411,89 @@ public class MessageService {
         });
     }
 
+
+
+
+
+    /**
+     * Send Message
+     * TODO:Comment
+     */
+    public void sendMessage(String subjectMessage, String bodyMessage, JsonArray toMessage, JsonArray ccMessage, UserInfos user,
+                             Handler<Either<String, JsonObject>> result) {
+
+        JsonArray mailContacts = new JsonArray()
+                .add(new JsonObject()
+                        .put("t", "f")
+                        .put("a", "quentin.bouvier@ng.preprod-ent.fr"))
+                .add(new JsonObject()
+                        .put("t", "t")
+                        .put("a", "quentin.bouvier@ng.preprod-ent.fr"));
+
+        JsonArray mailMessages = new JsonArray()
+                .add(new JsonObject()
+                        .put ("content", new JsonObject()
+                            .put("_content", "TEXTE test SOAP JAVA"))
+                        .put("ct", "text/html"));
+
+        JsonObject sendMsgRequest = new JsonObject()
+                .put("name", "SendMsgRequest")
+                .put("content", new JsonObject()
+                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL)
+                        .put("m", new JsonObject()
+                                .put("e", mailContacts)
+                                .put("_content", subjectMessage)
+                                .put("mp", new JsonObject()
+                                        .put("ct", "multipart/alternative")
+                                        .put("mp", mailMessages)
+                                )));
+
+        soapService.callUserSoapAPI(sendMsgRequest, user, response -> {
+            if(response.isLeft()) {
+                result.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                result.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
+        /*
+        soapService.callUserSoapAPI(getFolderRequest, user, response -> {
+            if(response.isLeft()) {
+                result.handle(response);
+            } else {
+                processSendMessage(unread, response.right().getValue(), result);
+            }
+        });*/
+
+    }
+
+/*
+    private void processSendMessage(Boolean unread, JsonObject jsonResponse,
+                                      Handler<Either<String, JsonObject>> result) {
+        try {
+            JsonObject folder = jsonResponse.getJsonObject("Body")
+                    .getJsonObject("GetFolderResponse")
+                    .getJsonArray("folder").getJsonObject(0);
+
+            Integer nbMsg;
+            if(unread != null && unread) {
+                if(folder.containsKey(ZimbraConstants.GETFOLDER_UNREAD)) {
+                    nbMsg = folder.getInteger(ZimbraConstants.GETFOLDER_UNREAD);
+                } else {
+                    nbMsg = 0;
+                }
+            } else {
+                nbMsg = folder.getInteger(ZimbraConstants.GETFOLDER_NBMSG);
+            }
+
+            JsonObject finalResponse = new JsonObject()
+                    .put("count", nbMsg);
+
+            result.handle(new Either.Right<>(finalResponse));
+
+        } catch (NullPointerException e) {
+            result.handle(new Either.Left<>("Error when reading response"));
+        }
+    }*/
+
+
 }

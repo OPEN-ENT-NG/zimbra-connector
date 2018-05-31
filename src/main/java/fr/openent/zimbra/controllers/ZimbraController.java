@@ -19,9 +19,10 @@
 
 package fr.openent.zimbra.controllers;
 
-
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.service.impl.*;
+import fr.openent.zimbra.filters.VisiblesFilter;
+
 import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
@@ -33,6 +34,7 @@ import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 
 import fr.wseduc.webutils.request.RequestUtils;
+import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.http.request.JsonHttpServerRequest;
 import org.entcore.common.notification.TimelineHelper;
 import org.entcore.common.user.UserInfos;
@@ -167,9 +169,24 @@ public class ZimbraController extends BaseController {
 
 
 	@Post("send")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@ResourceFilter(VisiblesFilter.class)
 	public void send(final HttpServerRequest request) {
-		final String messageId = request.params().get("id");
+		//final String messageId = request.params().get("id");
+		getUserInfos(eb, request, user -> {
+				if (user != null) {
+					//final String parentMessageId = request.params().get("In-Reply-To");
+					bodyToJson(request, message -> {
+						final String bodyMessage = message.getString("body");
+						final String subjectMessage = message.getString("subject");
+						final JsonArray toMessage = message.getJsonArray("to");
+						final JsonArray ccMessage = message.getJsonArray("cc");
+						messageService.sendMessage(bodyMessage, subjectMessage, toMessage, ccMessage, user, defaultResponseHandler(request));
+					});
+				} else {
+					unauthorized(request);
+				}
+		});
 	}
 
 	private void timelineNotification(HttpServerRequest request, JsonObject sentMessage, UserInfos user) {
@@ -323,7 +340,15 @@ public class ZimbraController extends BaseController {
 	@Get("visible")
 	@SecuredAction(value = "zimbra.visible", type = ActionType.AUTHENTICATED)
 	public void visible(final HttpServerRequest request) {
-
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				String parentMessageId = request.params().get("In-Reply-To");
+				sqlService.findVisibleRecipients(parentMessageId, user,
+						I18n.acceptLanguage(request), request.params().get("search"), defaultResponseHandler(request));
+			} else {
+				unauthorized(request);
+			}
+		});
 	}
 
 	/**

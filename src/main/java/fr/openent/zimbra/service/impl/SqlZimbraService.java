@@ -1,14 +1,22 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.wseduc.webutils.Either;
+import fr.wseduc.webutils.Server;
+import fr.wseduc.webutils.Utils;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.entcore.common.sql.Sql;
 import org.entcore.common.sql.SqlResult;
+import org.entcore.common.user.UserInfos;
+import org.entcore.common.user.UserUtils;
+import org.entcore.common.validation.StringValidation;
 
 public class SqlZimbraService {
 
+    private final EventBus eb;
     private final Sql sql;
 
 
@@ -17,7 +25,8 @@ public class SqlZimbraService {
     static final String USER_ZIMBRA_NAME = "mailzimbra";
     static final String USER_NEO4J_UID = "uuidneo";
 
-    public SqlZimbraService(String schema) {
+    public SqlZimbraService(Vertx vertx, String schema) {
+        this.eb = Server.getEventBus(vertx);
         this.sql = Sql.getInstance();
         this.userTable = schema + ".users";
     }
@@ -97,4 +106,74 @@ public class SqlZimbraService {
             sql.prepared(query.toString(), new JsonArray(), SqlResult.validUniqueResultHandler(handler));
         }
     }
+
+
+    public void findVisibleRecipients(final String parentMessageId, final UserInfos user,
+                                      final String acceptLanguage, final String search, final Handler<Either<String, JsonObject>> result) {
+        if (validationParamsError(user, result))
+            return;
+
+        final JsonObject visible = new JsonObject();
+
+        final JsonObject params = new JsonObject();
+
+        final String preFilter;
+        if (Utils.isNotEmpty(search)) {
+            preFilter = "AND (m:Group OR m.displayNameSearchField CONTAINS {search}) ";
+            params.put("search", StringValidation.removeAccents(search.trim()).toLowerCase());
+        } else {
+            preFilter = null;
+        }
+
+
+            String customReturn =
+                    "RETURN DISTINCT visibles.id as id, visibles.name as name, " +
+                            "visibles.displayName as displayName, visibles.groupDisplayName as groupDisplayName, " +
+                            "visibles.profiles[0] as profile";
+            callFindVisibles(user, acceptLanguage, result, visible, params, preFilter, customReturn);
+    }
+
+    private void callFindVisibles(UserInfos user, final String acceptLanguage, final Handler<Either<String, JsonObject>> result,
+                                  final JsonObject visible, JsonObject params, String preFilter, String customReturn) {
+        UserUtils.findVisibles(eb, user.getUserId(), customReturn, params, true, true, true, acceptLanguage, preFilter, new Handler<JsonArray>() {
+            @Override
+            public void handle(JsonArray visibles) {
+                JsonArray users = new fr.wseduc.webutils.collections.JsonArray();
+                JsonArray groups = new fr.wseduc.webutils.collections.JsonArray();
+                visible.put("groups", groups).put("users", users);
+                for (Object o: visibles) {
+                    if (!(o instanceof JsonObject)) continue;
+                    JsonObject j = (JsonObject) o;
+                    if (j.getString("name") != null) {
+                        j.remove("displayName");
+                        UserUtils.groupDisplayName(j, acceptLanguage);
+                        groups.add(j);
+                    } else {
+                        j.remove("name");
+                        users.add(j);
+                    }
+                }
+                result.handle(new Either.Right<String,JsonObject>(visible));
+            }
+        });
+    }
+
+
+    private boolean validationParamsError(UserInfos user,
+                                          Handler<Either<String, JsonObject>> result, String ... params) {
+        if (user == null) {
+            result.handle(new Either.Left<String, JsonObject>("zimbra.invalid.user"));
+            return true;
+        }
+        if (params.length > 0) {
+            for (String s : params) {
+                if (s == null) {
+                    result.handle(new Either.Left<String, JsonObject>("zimbra.invalid.parameter"));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }
