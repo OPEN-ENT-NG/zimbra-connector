@@ -27,6 +27,7 @@ import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
+import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
@@ -66,7 +67,6 @@ public class ZimbraController extends BaseController {
 	private UserService userService;
 	private FolderService folderService;
 	private MessageService messageService;
-	private SqlZimbraService sqlService;
 
 	public ZimbraController(String exportPath) {
 		this.exportPath = exportPath;
@@ -76,16 +76,16 @@ public class ZimbraController extends BaseController {
 	public void init(Vertx vertx, JsonObject config, RouteMatcher rm,
 			Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
 		super.init(vertx, config, rm, securedActions);
-
-		this.neoConversationService = new Neo4jZimbraService();
-		this.sqlService = new SqlZimbraService(config.getString("db-schema", "zimbra"));
-		this.soapService = new SoapZimbraService(vertx, config);
-		this.userService = new UserService(log, soapService, sqlService);
-		soapService.setUserService(userService);
 		notification = new TimelineHelper(vertx, eb, config);
 
+		this.neoConversationService = new Neo4jZimbraService();
+		SqlZimbraService sqlService = new SqlZimbraService(config.getString("db-schema", "zimbra"));
+		this.soapService = new SoapZimbraService(vertx, config);
+		this.userService = new UserService(log, soapService, sqlService);
 		this.folderService = new FolderService(soapService);
-		this.messageService = new MessageService(soapService, folderService);
+		this.messageService = new MessageService(log, soapService, folderService, sqlService, userService);
+
+		soapService.setUserService(userService);
 	}
 
 	@Get("zimbra")
@@ -113,20 +113,7 @@ public class ZimbraController extends BaseController {
 	@Get("zimbra/testauth")
 	public void testAuth(HttpServerRequest request) {
 		getUserInfos(eb, request, user -> {
-			soapService.auth("admin@ng.preprod-ent.fr", "admin@ng.preprod-ent.fr", event -> {
-				if(event.isLeft()) {
-					renderError(request, new JsonObject().put("error", event.left().getValue()));
-				} else {
-					JsonObject authInfo = event.right().getValue();
-					soapService.adminAuth("admin@ng.preprod-ent.fr", authInfo, response -> {
-						if(response.isLeft()) {
-							renderError(request, new JsonObject().put("error", response.left().getValue()));
-						} else {
-							renderJson(request, response.right().getValue());
-						}
-					});
-				}
-			});
+			defaultResponseHandler(request).handle(new Either.Right<>(new JsonObject()));
 		});
 	}
 

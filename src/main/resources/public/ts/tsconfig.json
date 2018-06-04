@@ -6,6 +6,7 @@
     "moduleResolution": "node",
     "sourceMap":  true,
     "noImplicitAny": false,
+    "lib": ["es6"],
     "typeRoots": [
       "../../../../node-modules/@types"
     ],

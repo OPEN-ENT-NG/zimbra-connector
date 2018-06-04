@@ -26,10 +26,35 @@ public class ZimbraConstants {
     public static final String SEARCH_MSG_ID = "id";
     public static final String SEARCH_MSG_SUBJECT = "su";
     public static final String SEARCH_MSG_DATE = "d";
+
     public static final String SEARCH_MSG_EMAILS = "e";
     public static final String SEARCH_MSG_EMAIL_TYPE = "t";
     public static final String SEARCH_MSG_EMAIL_ADDR = "a";
     public static final String SEARCH_MSG_EMAIL_COMMENT = "p";
+
+    public static final String SEARCH_MSG_FLAGS = "f";
+    public static final String SEARCH_MSG_FLAG_UNREAD = "u";
+    public static final String SEARCH_MSG_FLAG_FLAGGED = "f";
+    public static final String SEARCH_MSG_FLAG_HASATTACHMENT = "a";
+    public static final String SEARCH_MSG_FLAG_REPLIED = "r";
+    public static final String SEARCH_MSG_FLAG_SENTBYME = "s";
+    public static final String SEARCH_MSG_FLAG_FORWARDED = "w";
+    public static final String SEARCH_MSG_FLAG_CALENDARINVITE = "v";
+    public static final String SEARCH_MSG_FLAG_DRAFT = "d";
+    public static final String SEARCH_MSG_FLAG_IMAP_DELETED = "x";
+    public static final String SEARCH_MSG_FLAG_NOTIFICATIONSENT = "n";
+    public static final String SEARCH_MSG_FLAG_URGENT = "!";
+    public static final String SEARCH_MSG_FLAG_LOWPRIORITY = "?";
+    public static final String SEARCH_MSG_FLAG_PRIORITY = "+";
+
+    public static final String ADDR_TYPE_FROM = "f";
+    public static final String ADDR_TYPE_TO = "t";
+    public static final String ADDR_TYPE_CC = "c";
+    public static final String ADDR_TYPE_BCC = "b";
+    public static final String ADDR_TYPE_REPLYTO = "r";
+    public static final String ADDR_TYPE_SENDER = "s";
+    public static final String ADDR_TYPE_READRECEIPT = "n";
+    public static final String ADDR_TYPE_RESENT_FROM = "rf";
 
     public static final String NAMESPACE_ZIMBRA = "urn:zimbra";
     public static final String NAMESPACE_ADMIN = "urn:zimbraAdmin";

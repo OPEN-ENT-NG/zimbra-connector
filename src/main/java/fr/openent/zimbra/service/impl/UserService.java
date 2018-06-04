@@ -17,6 +17,7 @@ public class UserService {
     public UserService(Logger log, SoapZimbraService soapService, SqlZimbraService sqlService) {
         this.soapService = soapService;
         this.sqlService = sqlService;
+        this.log = log;
     }
 
     private String getUserDomain(UserInfos user) {
@@ -68,6 +69,11 @@ public class UserService {
         }
     }
 
+    /**
+     * Get info from connected user
+     * @param user Connected user
+     * @param handler result handler
+     */
     private void getUserInfo(UserInfos user,
                              Handler<Either<String, JsonObject>> handler) {
         JsonObject getInfoRequest = new JsonObject()
@@ -79,12 +85,22 @@ public class UserService {
             if(response.isLeft()) {
                 handler.handle(response);
             } else {
-                processGetUserInfo(response.right().getValue(), user, handler);
+                processGetUserInfo(response.right().getValue(), handler);
             }
         });
     }
 
-    private void processGetUserInfo(JsonObject jsonResponse, UserInfos user,
+    /**
+     * Process response from Zimbra API to get Info of user logged in
+     * Return Json :
+     * {
+     *     "quota" : {quota_infos}, // see UserInfoService.processQuota
+     *     "alias" : {alias_infos}  // see UserInfoService.processAliases
+     * }
+     * @param jsonResponse Zimbra API Response
+     * @param handler result handler
+     */
+    private void processGetUserInfo(JsonObject jsonResponse,
                                     Handler<Either<String, JsonObject>> handler) {
 
         JsonObject getInfoResp = jsonResponse.getJsonObject("Body")
@@ -103,5 +119,7 @@ public class UserService {
 
         handler.handle(new Either.Right<>(frontData));
     }
+
+
 
 }

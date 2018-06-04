@@ -8,10 +8,20 @@ class UserInfoService {
     static final String QUOTA = "quota";
     static final String ALIAS = "alias";
 
-    static void processQuota(JsonObject getInfoRequest, JsonObject data) {
+    /**
+     * Process quota information from Zimbra GetInfoResponse
+     * Add Json to data :
+     * {
+     *     "storage" : used data,
+     *     "quota" : max data usage allowed
+     * }
+     * @param getInfoResponse Zimbra GetInfoResponse Json object
+     * @param data JsonObject where result must be added under "quota" entry
+     */
+    static void processQuota(JsonObject getInfoResponse, JsonObject data) {
         try {
-            Long quotaUsed = getInfoRequest.getLong("used");
-            String totalQuota = getInfoRequest.getJsonObject("attrs")
+            Long quotaUsed = getInfoResponse.getLong("used");
+            String totalQuota = getInfoResponse.getJsonObject("attrs")
                     .getJsonObject("_attrs")
                     .getString("zimbraMailQuota");
 
@@ -23,10 +33,23 @@ class UserInfoService {
         }
     }
 
-    static void processAliases(JsonObject getInfoRequest, JsonObject data) {
+    /**
+     * Process aliases information from Zimbra GetInfoResponse
+     * Add Json to data :
+     * {
+     *     "name" : user mail address from Zimbra,
+     *     "aliases" :
+     *      [
+     *          "alias"
+     *      ]
+     * }
+     * @param getInfoResponse Zimbra GetInfoResponse Json object
+     * @param data JsonObject where result must be added under "quota" entry
+     */
+    static void processAliases(JsonObject getInfoResponse, JsonObject data) {
         try {
-            String name = getInfoRequest.getString("name");
-            JsonObject attrs = getInfoRequest.getJsonObject("attrs")
+            String name = getInfoResponse.getString("name");
+            JsonObject attrs = getInfoResponse.getJsonObject("attrs")
                     .getJsonObject("_attrs");
             JsonArray aliases = new JsonArray();
             if(attrs.containsKey("zimbraMailAlias")) {

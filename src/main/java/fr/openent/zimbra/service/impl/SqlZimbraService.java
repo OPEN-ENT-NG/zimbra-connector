@@ -14,8 +14,8 @@ public class SqlZimbraService {
 
     private final String userTable;
 
-    private static final String USER_ZIMBRA_NAME = "mailzimbra";
-    private static final String USER_NEO4J_UID = "uuidneo";
+    static final String USER_ZIMBRA_NAME = "mailzimbra";
+    static final String USER_NEO4J_UID = "uuidneo";
 
     public SqlZimbraService(String schema) {
         this.sql = Sql.getInstance();
@@ -26,6 +26,34 @@ public class SqlZimbraService {
         return mail.split("@")[0];
     }
 
+    /**
+     * Get user uuid from mail in database
+     * @param mail Zimbra mail
+     * @param handler result handler
+     */
+    void getUserIdFromMail(String mail, Handler<Either<String, JsonArray>> handler) {
+
+        String query = "SELECT " + USER_NEO4J_UID + " FROM "
+                + userTable + " WHERE " + USER_ZIMBRA_NAME + " = ?";
+        JsonArray values = new JsonArray().add(mail);
+
+        sql.prepared(query, values, SqlResult.validResultHandler(handler));
+    }
+
+    /**
+     * Update users mails in database if not already present
+     * @param users Array of users :
+     *              [
+     *                {
+     *                  "name" : user address in Zimbra,
+     *                  "aliases :
+     *                      [
+     *                          "alias"
+     *                      ]
+     *                }
+     *              ]
+     * @param handler result handler
+     */
     void updateUsers(JsonArray users, Handler<Either<String, JsonObject>> handler) {
 
         boolean atLeastOne = false;
