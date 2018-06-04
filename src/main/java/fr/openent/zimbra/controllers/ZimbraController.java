@@ -391,9 +391,21 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
+    /**
+     * Empty trash folder
+     * @param request http request containing info
+     *                 Users infos
+     */
 	@Delete("emptyTrash")
 	@SecuredAction(value="zimbra.empty.trash", type = ActionType.AUTHENTICATED)
 	public void emptyTrash(final HttpServerRequest request) {
+        getUserInfos(eb, request, user -> {
+            if (user != null) {
+                messageService.emptyTrash(user, defaultResponseHandler(request));
+            } else {
+                unauthorized(request);
+            }
+        });
 	}
 
 	//Mark messages as unread / read

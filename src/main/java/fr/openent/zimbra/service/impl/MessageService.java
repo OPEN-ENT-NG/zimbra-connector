@@ -252,4 +252,32 @@ public class MessageService {
     private String pathToQuery(String path) {
         return "in:\"" + path + "\"";
     }
+
+    /**
+     * Empty trash
+     * @param user User infos
+     * @param handler Empty JsonObject returned, no process needed
+     */
+    public void emptyTrash(UserInfos user,
+                           Handler<Either<String,JsonObject>> handler) {
+        JsonObject actionReq = new JsonObject()
+                .put("id", "3")
+                .put("op", "empty")
+                .put("recursive", "true");
+
+        JsonObject folderActionRequest = new JsonObject()
+                .put("name", "FolderActionRequest")
+                .put("content", new JsonObject()
+                        .put("action", actionReq)
+                        .put("_jsns", "urn:zimbraMail"));
+
+        soapService.callUserSoapAPI(folderActionRequest, user, response -> {
+            if(response.isLeft()) {
+                handler.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                handler.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
+    }
+
 }
