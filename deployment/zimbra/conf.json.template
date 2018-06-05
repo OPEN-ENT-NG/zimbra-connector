@@ -16,9 +16,10 @@
         "sql": true,
         "db-schema": "zimbra",
         "zimbra-uri" : "$zimbraUri",
-        "zimbra-admin-uri" : "$zimbraAdminUri",
         "preauth-key" : "$zimbraPreauthKey",
+        "zimbra-admin-uri" : "$zimbraAdminUri",
         "admin-account" : "$zimbraAdminAccount",
+        "admin-password" : "$zimbraAdminPassword",
         "entcore.port" : 8009
       }
     }

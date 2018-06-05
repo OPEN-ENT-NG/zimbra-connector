@@ -72,7 +72,7 @@ public class MessageService {
                         if(searchResult.isLeft()) {
                             result.handle(new Either.Left<>(searchResult.left().getValue()));
                         } else {
-                            processListMessages(user, searchResult.right().getValue(), result);
+                            processListMessages(searchResult.right().getValue(), result);
                         }
                     });
 
@@ -85,11 +85,10 @@ public class MessageService {
 
     /**
      * Start processing message list. Forward each message to processSearchResult
-     * @param user User infos
      * @param zimbraResponse Response from Zimbra API
      * @param result result handler
      */
-    private void processListMessages(UserInfos user, JsonObject zimbraResponse,
+    private void processListMessages(JsonObject zimbraResponse,
                                      Handler<Either<String, JsonArray>> result)  {
         JsonArray zimbraMessages;
         try {
@@ -102,7 +101,7 @@ public class MessageService {
         }
 
         JsonArray frontMessages = new JsonArray();
-        processSearchResult(user, zimbraMessages, frontMessages, result);
+        processSearchResult(zimbraMessages, frontMessages, result);
     }
 
     /**
@@ -130,7 +129,7 @@ public class MessageService {
      * @param frontMessages array of processed messages
      * @param result final handler
      */
-    private void processSearchResult(UserInfos user, JsonArray zimbraMessages, JsonArray frontMessages,
+    private void processSearchResult(JsonArray zimbraMessages, JsonArray frontMessages,
                                      Handler<Either<String, JsonArray>> result) {
         if(zimbraMessages.isEmpty()) {
             result.handle(new Either.Right<>(frontMessages));
@@ -141,7 +140,7 @@ public class MessageService {
             zimbraMsg = zimbraMessages.getJsonObject(0);
         } catch (ClassCastException e) {
             zimbraMessages.remove(0);
-            processSearchResult(user, zimbraMessages, frontMessages, result);
+            processSearchResult(zimbraMessages, frontMessages, result);
             return;
         }
         final JsonObject frontMsg = new JsonObject();
@@ -162,21 +161,20 @@ public class MessageService {
         frontMsg.put("displayNames", new JsonArray());
         frontMsg.put("attachments", new JsonArray());
 
-        translateMaillistToUidlist(user, frontMsg, zimbraMails, response -> {
+        translateMaillistToUidlist(frontMsg, zimbraMails, response -> {
             zimbraMessages.remove(0);
             frontMessages.add(response);
-            processSearchResult(user, zimbraMessages, frontMessages, result);
+            processSearchResult(zimbraMessages, frontMessages, result);
         });
     }
 
     /**
      * Process list of mail address in a mail and transform it in Front data
-     * @param user User infos
      * @param frontMsg JsonObject receiving Front-formatted data
      * @param zimbraMails JsonObject containing mail addresses
      * @param handler result handler
      */
-    private void translateMaillistToUidlist(UserInfos user, JsonObject frontMsg, JsonArray zimbraMails,
+    private void translateMaillistToUidlist(JsonObject frontMsg, JsonArray zimbraMails,
                                             Handler<JsonObject> handler) {
         if(zimbraMails.isEmpty()) {
             handler.handle(frontMsg);
@@ -189,12 +187,12 @@ public class MessageService {
             && !(type.equals(ZimbraConstants.ADDR_TYPE_CC))
             && !(type.equals(ZimbraConstants.ADDR_TYPE_TO))) {
             zimbraMails.remove(0);
-            translateMaillistToUidlist(user, frontMsg, zimbraMails, handler);
+            translateMaillistToUidlist(frontMsg, zimbraMails, handler);
             return;
         }
 
         String zimbraMail = zimbraUser.getString(ZimbraConstants.SEARCH_MSG_EMAIL_ADDR);
-        translateMail(zimbraMail, user, userUuid -> {
+        translateMail(zimbraMail, userUuid -> {
             if(userUuid == null) {
                 userUuid = zimbraMail;
             }
@@ -214,7 +212,7 @@ public class MessageService {
                                     .add(userUuid)
                                     .add(zimbraUser.getString(ZimbraConstants.SEARCH_MSG_EMAIL_COMMENT, zimbraMail))));
             zimbraMails.remove(0);
-            translateMaillistToUidlist(user, frontMsg, zimbraMails, handler);
+            translateMaillistToUidlist(frontMsg, zimbraMails, handler);
         });
     }
 
@@ -223,15 +221,27 @@ public class MessageService {
      * Request database first
      * Then if not present, request Zimbra (not implemented)
      * @param mail Zimbra mail
-     * @param user User infos
      * @param handler result handler
      */
-    private void translateMail(String mail, UserInfos user, Handler<String> handler) {
+    private void translateMail(String mail, Handler<String> handler) {
         sqlService.getUserIdFromMail(mail, sqlResponse -> {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
-                //todo request zimbra
                 log.debug("no user in database for address : " + mail);
-                handler.handle(null);
+                userService.getAliases(mail, zimbraResponse -> {
+                    if(zimbraResponse.isRight()) {
+                        JsonArray aliases = zimbraResponse.right().getValue().getJsonArray("aliases");
+                        if(aliases.size() > 1) {
+                            log.warn("More than one alias for address : " + mail);
+                        }
+                        if(aliases.isEmpty()) {
+                            handler.handle(null);
+                        } else {
+                            handler.handle(aliases.getString(0));
+                        }
+                    } else {
+                        handler.handle(null);
+                    }
+                });
             } else {
                 JsonArray results = sqlResponse.right().getValue();
                 if(results.size() > 1) {

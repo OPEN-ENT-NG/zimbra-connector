@@ -1,5 +1,6 @@
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.helper.ZimbraConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -66,5 +67,47 @@ class UserInfoService {
         } catch (NullPointerException|ClassCastException e) {
             data.remove(ALIAS);
         }
+    }
+
+    /**
+     * Process aliases information from Zimbra GetInfoResponse
+     * Add Json to data :
+     * {
+     *      "quota" : {quota_infos}, // see UserInfoService.processQuota
+     *      "alias" : {alias_infos}  // see UserInfoService.processAliases
+     * }
+     * @param getAccountResponse Zimbra GetInfoResponse Json object
+     * @param data JsonObject where result must be added
+     */
+    static void processAccountInfo(JsonObject getAccountResponse, JsonObject data) {
+        JsonObject alias = new JsonObject();
+        JsonObject account;
+        try {
+            account = getAccountResponse.getJsonArray("account").getJsonObject(0);
+        } catch (Exception e) {
+            account = new JsonObject();
+        }
+        alias.put("name", account.getString(ZimbraConstants.ACCT_NAME, ""));
+        alias.put("aliases", new JsonArray());
+
+        JsonArray attributes = account.getJsonArray(ZimbraConstants.ACCT_ATTRIBUTES, new JsonArray());
+        for(Object o : attributes) {
+            if(!(o instanceof JsonObject)) continue;
+            JsonObject attr = (JsonObject)o;
+            String key = attr.getString(ZimbraConstants.ACCT_ATTRIBUTES_NAME, "");
+            String value = attr.getString(ZimbraConstants.ACCT_ATTRIBUTES_CONTENT, "");
+
+            switch (key) {
+                case "zimbraMailQuota":
+                    data.put(QUOTA, new JsonObject()
+                            .put("quota", value));
+                    break;
+                case "zimbraMailAlias":
+                    JsonArray aliases = alias.getJsonArray("aliases").add(value);
+                    alias.put("aliases", aliases);
+                    break;
+            }
+        }
+        data.put(ALIAS, alias);
     }
 }

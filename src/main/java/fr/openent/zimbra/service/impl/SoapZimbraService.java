@@ -47,19 +47,19 @@ public class SoapZimbraService {
     private String zimbraAdminUri;
 
     private String zimbraAdminAccount;
+    private String zimbraAdminPassword;
 
     public SoapZimbraService(Vertx vertx, JsonObject config) {
         this.userService = null;
         this.zimbraUri = config.getString("zimbra-uri", "");
         this.zimbraAdminUri = config.getString("zimbra-admin-uri", "");
         this.zimbraAdminAccount = config.getString("admin-account","");
+        this.zimbraAdminPassword = config.getString("admin-password","");
+        this.preauthKey = config.getString("preauth-key","");
         this.vertx = vertx;
 
-        preauthKey = config.getString("preauth-key","");
-        if( preauthKey.isEmpty() ) {
-            log.fatal("Zimbra : No preauth key in conf");
-        }
-        if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()) {
+        if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
+                || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty()) {
             log.fatal("Zimbra : Missing configuration in conf.properties");
         }
     }
@@ -67,6 +67,7 @@ public class SoapZimbraService {
     public void setUserService(UserService us) {
         this.userService = us;
     }
+
     /**
      * Add generic info to Json before sending to Zimbra
      * {
@@ -106,18 +107,11 @@ public class SoapZimbraService {
 
         } else {
             context.put("authToken", params.getString(PARAM_AUTH_TOKEN));
-
-            if(params.getBoolean(PARAM_ISADMIN)) {
-                context.put("_jsns", ZimbraConstants.NAMESPACE_ADMIN);
-            }
         }
 
         JsonObject header = new JsonObject();
-        if(params.getBoolean(PARAM_ISADMIN)) {
-            header.put("ctxt", context);
-        } else {
-            header.put("context", context);
-        }
+        header.put("context", context);
+
         header.put("format", new JsonObject().put("type", "js"));
 
         JsonObject body = new JsonObject();
@@ -247,7 +241,7 @@ public class SoapZimbraService {
                                  Handler<Either<String,JsonObject>> handler) {
         boolean authed = false;
         boolean adminAuthed = false;
-        JsonObject authInfo = null;
+        JsonObject authInfo = new JsonObject();
         if( authedUsers.containsKey(userId) ) {
             authInfo = authedUsers.get(userId);
             Long timestamp = System.currentTimeMillis();
@@ -258,25 +252,32 @@ public class SoapZimbraService {
                 if(authInfo.getBoolean(MAP_ADMIN)) {
                     adminAuthed = true;
                 }
-                callSoapAPI(params, handler);
             }
         }
-        if(!authed) {
-            auth(userId, userAddress, response -> {
-                if(response.isLeft()) {
-                    handler.handle(response);
-                } else {
-                    callUserSoapAPI(params, userId, userAddress, handler);
-                }
-            });
-        } else if(!adminAuthed && params.getBoolean(PARAM_ISADMIN)) {
-            adminAuth( userId, authInfo, response -> {
-                if(response.isLeft()) {
-                    handler.handle(response);
-                } else {
-                    callUserSoapAPI(params, userId, userAddress, handler);
-                }
-            });
+        if(params.getBoolean(PARAM_ISADMIN)) {
+            if(adminAuthed) {
+                callSoapAPI(params, handler);
+            } else {
+                adminAuth(userId, userAddress, authInfo, response -> {
+                    if(response.isLeft()) {
+                        handler.handle(response);
+                    } else {
+                        callUserSoapAPI(params, userId, userAddress, handler);
+                    }
+                });
+            }
+        } else  {
+            if(authed) {
+                callSoapAPI(params, handler);
+            } else {
+                auth(userId, userAddress, response -> {
+                    if(response.isLeft()) {
+                        handler.handle(response);
+                    } else {
+                        callUserSoapAPI(params, userId, userAddress, handler);
+                    }
+                });
+            }
         }
     }
 
@@ -345,21 +346,22 @@ public class SoapZimbraService {
      * @param authInfo user auth info from map
      * @param handler handler after authentication
      */
-    public void adminAuth(String userId, JsonObject authInfo, Handler<Either<String, JsonObject>> handler) {
-        String userAddress = authInfo.getString(MAP_ADDRESS);
+    private void adminAuth(String userId, String userAddress, JsonObject authInfo,
+                           Handler<Either<String, JsonObject>> handler) {
 
-        JsonArray authContent = new JsonArray()
-            .add(new JsonObject()
-                .put("_content", authInfo.getString(MAP_AUTH_TOKEN)));
-
+        JsonObject authContent = new JsonObject();
+        authContent.put("by", "name");
+        authContent.put("_content", userId);
 
         JsonObject body = new JsonObject();
         body.put("_jsns", ZimbraConstants.NAMESPACE_ADMIN);
-        body.put("authToken", authContent);
+        body.put("account", authContent);
+        body.put("password", new JsonObject()
+                .put("_content", zimbraAdminPassword));
 
         JsonObject params = new JsonObject()
-                .put("name", "AuthRequest")
-                .put("content", body)
+                .put(PARAM_NAME, "AuthRequest")
+                .put(PARAM_CONTENT, body)
                 .put(PARAM_ISADMIN, true);
 
         callSoapAPI(params, authHandler(userId, userAddress, true, handler));
