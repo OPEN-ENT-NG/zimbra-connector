@@ -412,28 +412,31 @@ public class MessageService {
     }
 
 
-
-
-
     /**
      * Send Message
-     * TODO:Comment
+     * @param subjectMessage Email subject content
+     * @param bodyMessage Email body content
+     * @param toMessage Contacts emails destination
+     * @param ccMessage Contacts emails in Copy Cc
+     * @param user User infos
+     * @param result result handler
      */
     public void sendMessage(String subjectMessage, String bodyMessage, JsonArray toMessage, JsonArray ccMessage, UserInfos user,
                              Handler<Either<String, JsonObject>> result) {
 
+        //todo: Loop array toMessage & ccMessage
         JsonArray mailContacts = new JsonArray()
                 .add(new JsonObject()
-                        .put("t", "f")
+                        .put("t", "t")
                         .put("a", "quentin.bouvier@ng.preprod-ent.fr"))
                 .add(new JsonObject()
-                        .put("t", "t")
+                        .put("t", "c")
                         .put("a", "quentin.bouvier@ng.preprod-ent.fr"));
 
         JsonArray mailMessages = new JsonArray()
                 .add(new JsonObject()
                         .put ("content", new JsonObject()
-                            .put("_content", "TEXTE test SOAP JAVA"))
+                            .put("_content", bodyMessage))
                         .put("ct", "text/html"));
 
         JsonObject sendMsgRequest = new JsonObject()
@@ -442,7 +445,9 @@ public class MessageService {
                         .put("_jsns", ZimbraConstants.NAMESPACE_MAIL)
                         .put("m", new JsonObject()
                                 .put("e", mailContacts)
-                                .put("_content", subjectMessage)
+                                .put("su", new JsonObject()
+                                        .put("_content", subjectMessage)
+                                    )
                                 .put("mp", new JsonObject()
                                         .put("ct", "multipart/alternative")
                                         .put("mp", mailMessages)
@@ -455,45 +460,140 @@ public class MessageService {
                 result.handle(new Either.Right<>(new JsonObject()));
             }
         });
-        /*
-        soapService.callUserSoapAPI(getFolderRequest, user, response -> {
+    }
+
+
+    /**
+     * Save Draft
+     * @param subjectMessage Email subject content
+     * @param bodyMessage Email body content
+     * @param toMessage Contacts emails destination
+     * @param ccMessage Contacts emails in Copy Cc
+     * @param user User infos
+     * @param result result handler
+     */
+    public void saveDraft(String subjectMessage, String bodyMessage, JsonArray toMessage, JsonArray ccMessage, UserInfos user,
+                            Handler<Either<String, JsonObject>> result) {
+
+        //todo: Loop array toMessage & ccMessage
+        JsonArray mailContacts = new JsonArray()
+                .add(new JsonObject()
+                        .put("t", "t")
+                        .put("a", "quentin.bouvier@ng.preprod-ent.fr"))
+                .add(new JsonObject()
+                        .put("t", "c")
+                        .put("a", "quentin.bouvier@ng.preprod-ent.fr"));
+
+        JsonArray mailMessages = new JsonArray()
+                .add(new JsonObject()
+                        .put ("content", new JsonObject()
+                                .put("_content", bodyMessage))
+                        .put("ct", "text/html"));
+
+        JsonObject saveDraftRequest = new JsonObject()
+                .put("name", "SaveDraftRequest")
+                .put("content", new JsonObject()
+                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL)
+                        .put("m", new JsonObject()
+                                .put("e", mailContacts)
+                                .put("su", new JsonObject()
+                                        .put("_content", subjectMessage)
+                                )
+                                .put("mp", new JsonObject()
+                                        .put("ct", "multipart/alternative")
+                                        .put("mp", mailMessages)
+                                )));
+
+        soapService.callUserSoapAPI(saveDraftRequest, user, response -> {
             if(response.isLeft()) {
                 result.handle(response);
             } else {
-                processSendMessage(unread, response.right().getValue(), result);
+                processSaveDraft(response.right().getValue(), result);
             }
-        });*/
-
+        });
     }
 
-/*
-    private void processSendMessage(Boolean unread, JsonObject jsonResponse,
-                                      Handler<Either<String, JsonObject>> result) {
-        try {
-            JsonObject folder = jsonResponse.getJsonObject("Body")
-                    .getJsonObject("GetFolderResponse")
-                    .getJsonArray("folder").getJsonObject(0);
 
-            Integer nbMsg;
-            if(unread != null && unread) {
-                if(folder.containsKey(ZimbraConstants.GETFOLDER_UNREAD)) {
-                    nbMsg = folder.getInteger(ZimbraConstants.GETFOLDER_UNREAD);
-                } else {
-                    nbMsg = 0;
-                }
-            } else {
-                nbMsg = folder.getInteger(ZimbraConstants.GETFOLDER_NBMSG);
-            }
+    /**
+     * Process response from Zimbra API to draft an email
+     * In case of success, return Json Object :
+     * {
+     * 	    "id" : "new-email-zimbra-id"
+     * }
+     * @param zimbraResponse Zimbra API Response
+     * @param handler Handler result
+     */
+    private void processSaveDraft(JsonObject zimbraResponse,
+                                  Handler<Either<String, JsonObject>> handler) {
+        try {
+            String idNewDraftEmail = zimbraResponse.getJsonObject("Body")
+                    .getJsonObject("SaveDraftResponse")
+                    .getJsonArray("m").getJsonObject(0)
+                    .getString("id");
 
             JsonObject finalResponse = new JsonObject()
-                    .put("count", nbMsg);
+                    .put("id", idNewDraftEmail);
 
-            result.handle(new Either.Right<>(finalResponse));
-
+            handler.handle(new Either.Right<>(finalResponse));
         } catch (NullPointerException e) {
-            result.handle(new Either.Left<>("Error when reading response"));
+            handler.handle(new Either.Left<>("Error when reading response"));
         }
-    }*/
+    }
+
+
+    /**
+     * Update Draft
+     * Empty JsonObject returned, no process needed
+     * @param idMessage ID Email
+     * @param subjectMessage Email subject content
+     * @param bodyMessage Email body content
+     * @param toMessage Contacts emails destination
+     * @param ccMessage Contacts emails in Copy Cc
+     * @param user User infos
+     * @param result result handler
+     */
+    public void updateDraft(String idMessage, String subjectMessage, String bodyMessage, JsonArray toMessage, JsonArray ccMessage, UserInfos user,
+                          Handler<Either<String, JsonObject>> result) {
+
+        //todo: Loop array toMessage & ccMessage
+        JsonArray mailContacts = new JsonArray()
+                .add(new JsonObject()
+                        .put("t", "t")
+                        .put("a", "quentin.bouvier@ng.preprod-ent.fr"))
+                .add(new JsonObject()
+                        .put("t", "c")
+                        .put("a", "quentin.bouvier@ng.preprod-ent.fr"));
+
+        JsonArray mailMessages = new JsonArray()
+                .add(new JsonObject()
+                        .put ("content", new JsonObject()
+                                .put("_content", bodyMessage))
+                        .put("ct", "text/html"));
+
+        JsonObject saveDraftRequest = new JsonObject()
+                .put("name", "SaveDraftRequest")
+                .put("content", new JsonObject()
+                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL)
+                        .put("m", new JsonObject()
+                                .put("id", idMessage)
+                                .put("e", mailContacts)
+                                .put("su", new JsonObject()
+                                        .put("_content", subjectMessage)
+                                )
+                                .put("mp", new JsonObject()
+                                        .put("ct", "multipart/alternative")
+                                        .put("mp", mailMessages)
+                                )));
+
+        soapService.callUserSoapAPI(saveDraftRequest, user, response -> {
+            if(response.isLeft()) {
+                result.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                result.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
+    }
+
 
 
 }

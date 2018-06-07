@@ -1,5 +1,6 @@
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.helper.HttpClientHelper;
 import fr.openent.zimbra.helper.PreauthHelper;
 import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.wseduc.webutils.Either;
@@ -123,22 +124,6 @@ public class SoapZimbraService {
                 .put("Body", body);
     }
 
-    /**
-     * Create default HttpClient
-     * @return new HttpClient
-     */
-    private HttpClient createHttpClient() {
-        final HttpClientOptions options = new HttpClientOptions();
-        if (System.getProperty("httpclient.proxyHost") != null) {
-            ProxyOptions proxyOptions = new ProxyOptions()
-                    .setHost(System.getProperty("httpclient.proxyHost"))
-                    .setPort(Integer.parseInt(System.getProperty("httpclient.proxyPort")))
-                    .setUsername(System.getProperty("httpclient.proxyUsername"))
-                    .setPassword(System.getProperty("httpclient.proxyPassword"));
-            options.setProxyOptions(proxyOptions);
-        }
-        return vertx.createHttpClient(options);
-    }
 
     /**
      * Create default response handler for zimbra api requests
@@ -172,7 +157,7 @@ public class SoapZimbraService {
      */
     private void callSoapAPI(JsonObject params, Handler<Either<String,JsonObject>> handler) {
         if(httpClient == null) {
-            httpClient = createHttpClient();
+            httpClient = HttpClientHelper.createHttpClient(vertx);
         }
         String finalUrl = params.getBoolean(PARAM_ISADMIN) ? zimbraAdminUri : zimbraUri;
         HttpClientRequest request;

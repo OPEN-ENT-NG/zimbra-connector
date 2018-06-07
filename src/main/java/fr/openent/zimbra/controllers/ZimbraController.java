@@ -68,7 +68,9 @@ public class ZimbraController extends BaseController {
 	private SoapZimbraService soapService;
 	private UserService userService;
 	private FolderService folderService;
+	private AttachmentService attachmentService;
 	private MessageService messageService;
+	private SqlZimbraService sqlService;
 
 	public ZimbraController(String exportPath) {
 		this.exportPath = exportPath;
@@ -81,10 +83,11 @@ public class ZimbraController extends BaseController {
 		notification = new TimelineHelper(vertx, eb, config);
 
 		this.neoConversationService = new Neo4jZimbraService();
-		SqlZimbraService sqlService = new SqlZimbraService(config.getString("db-schema", "zimbra"));
+		this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
 		this.soapService = new SoapZimbraService(vertx, config);
 		this.userService = new UserService(soapService, sqlService);
 		this.folderService = new FolderService(soapService);
+		this.attachmentService = new AttachmentService(log, soapService, vertx, config);
 		this.messageService = new MessageService(soapService, folderService, sqlService, userService);
 
 		soapService.setUserService(userService);
@@ -95,7 +98,6 @@ public class ZimbraController extends BaseController {
 	public void view(HttpServerRequest request) {
 		renderView(request);
 	}
-
 
 
 	@Get("testcount")
@@ -119,29 +121,41 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
+
+	/**
+	 * Create a Draft email
+	 * In case of success, return Json Object :
+	 * {
+	 * 	    "id" : "new-zimbra-email-id"
+	 * }
+	 * @param request
+	 */
 	@Post("draft")
 	@SecuredAction("conversation.create.draft")
 	public void createDraft(final HttpServerRequest request) {
-		getUserInfos(eb, request, new Handler<UserInfos>() {
-			@Override
-			public void handle(final UserInfos user) {
+		getUserInfos(eb, request, user -> {
 				if (user != null) {
-					final String parentMessageId = request.params().get("In-Reply-To");
-					bodyToJson(request, new Handler<JsonObject>() {
-						@Override
-						public void handle(final JsonObject message) {
-
-						}
+					bodyToJson(request, message -> {
+						final String bodyMessage = message.getString("body");
+						final String subjectMessage = message.getString("subject");
+						final JsonArray toMessage = message.getJsonArray("to");
+						final JsonArray ccMessage = message.getJsonArray("cc");
+						messageService.saveDraft(subjectMessage, bodyMessage, toMessage, ccMessage, user, defaultResponseHandler(request));
 					});
 				} else {
 					unauthorized(request);
 				}
-			}
 		});
 	}
 
+
+	/**
+	 * Update a Draft email
+	 * In case of success, return empty Json Object.
+	 * @param request
+	 */
 	@Put("draft/:id")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void updateDraft(final HttpServerRequest request) {
 		final String messageId = request.params().get("id");
 
@@ -150,24 +164,26 @@ public class ZimbraController extends BaseController {
 			return;
 		}
 
-		getUserInfos(eb, request, new Handler<UserInfos>() {
-			@Override
-			public void handle(final UserInfos user) {
+		getUserInfos(eb, request, user -> {
 				if (user != null) {
-					bodyToJson(request, new Handler<JsonObject>() {
-						@Override
-						public void handle(JsonObject message) {
-
-						}
+					bodyToJson(request, message -> {
+						final String bodyMessage = message.getString("body");
+						final String subjectMessage = message.getString("subject");
+						final JsonArray toMessage = message.getJsonArray("to");
+						final JsonArray ccMessage = message.getJsonArray("cc");
+						messageService.updateDraft(messageId, subjectMessage, bodyMessage, toMessage, ccMessage, user, defaultResponseHandler(request));
 					});
 				} else {
 					unauthorized(request);
 				}
-			}
 		});
 	}
 
-
+	/**
+	 * Send an email
+	 * In case of success, return empty Json Object.
+	 * @param request
+	 */
 	@Post("send")
 	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	@ResourceFilter(VisiblesFilter.class)
@@ -181,7 +197,7 @@ public class ZimbraController extends BaseController {
 						final String subjectMessage = message.getString("subject");
 						final JsonArray toMessage = message.getJsonArray("to");
 						final JsonArray ccMessage = message.getJsonArray("cc");
-						messageService.sendMessage(bodyMessage, subjectMessage, toMessage, ccMessage, user, defaultResponseHandler(request));
+						messageService.sendMessage(subjectMessage, bodyMessage, toMessage, ccMessage, user, defaultResponseHandler(request));
 					});
 				} else {
 					unauthorized(request);
@@ -631,11 +647,27 @@ public class ZimbraController extends BaseController {
 	}
 
 
-	//Post an new attachment to a drafted message
+	/**
+	 * Post an new attachment to a drafted message.
+	 * In case of success, return Json Object :
+	 * {
+	 * 	    "id" : "new-zimbra-attachment-id"
+	 * }
+	 * @param request
+	 */
 	@Post("message/:id/attachment")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void postAttachment(final HttpServerRequest request){
+		final String messageId = request.params().get("id");
+		//final JsonObject uploaded = new JsonObject();
 
+				UserUtils.getUserInfos(eb, request, user -> {
+					if (user == null) {
+						unauthorized(request);
+						return;
+					}
+					attachmentService.addAttachment(messageId, user, request, defaultResponseHandler(request));
+				});
 	}
 
 	//Download an attachment

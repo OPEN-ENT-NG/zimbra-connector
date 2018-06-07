@@ -1,5 +1,6 @@
 import { ng, notify, idiom as lang, template, skin, moment, Document, $, _ } from 'entcore';
 import { Mail, User, UserFolder, quota, Zimbra, Trash, SystemFolder } from '../model';
+import { Mix } from "entcore-toolkit";
 
 export let zimbraController = ng.controller('ZimbraController', [
     '$scope', '$timeout', '$compile', '$sanitize', 'model', 'route', function ($scope, $timeout, $compile, $sanitize, model, route) {
@@ -388,7 +389,9 @@ export let zimbraController = ng.controller('ZimbraController', [
 
         $scope.sendMail = async () => {
             $scope.sending = true; //Blocks submit button while message hasn't been send
-            const mail: Mail = $scope.state.newItem;
+            // todo qmer : has been modified
+            // const mail: Mail = $scope.state.newItem;
+            const mail: Mail = Mix.castAs(Mail, $scope.state.newItem);
             $scope.result = await mail.send();
             $scope.state.newItem = new Mail();
             $scope.state.newItem.setMailSignature($scope.getSignature());

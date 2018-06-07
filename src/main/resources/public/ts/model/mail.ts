@@ -292,7 +292,7 @@ export class Mail implements Selectable {
         }
         var path = '/zimbra/send?';
         if (!data.subject) {
-            data.subject = lang.translate('nosubject');
+            data.subject = lang.translate('nosubject')
         }
         if (this.id) {
             path += 'id=' + this.id + '&';
@@ -391,7 +391,10 @@ export class Mail implements Selectable {
             const formData = new FormData()
             formData.append('file', attachmentObj.file)
 
-            const promise = http.post("message/" + this.id + "/attachment", formData, {
+            //const promise = http.post("message/" + this.id + "/attachment", formData, {
+            //todo: modify headers
+            const promise = http.post("message/" + this.id + "/attachment", attachmentObj.file, {
+                headers: {'Content-Type': 'image/jpeg','Content-Disposition': 'attachment; filename="wallpapers.jpg"'},
                 onUploadProgress: (e: ProgressEvent) => {
                     if (e.lengthComputable) {
                         var percentage = Math.round((e.loaded * 100) / e.total);
