@@ -22,30 +22,34 @@ public class ZimbraConstants {
     public static final String GETFOLDER_NBMSG = "n";
     public static final String GETFOLDER_FOLDERPATH = "absFolderPath";
 
-    public static final String SEARCH_MESSAGES = "m";
-    public static final String SEARCH_MSG_ID = "id";
-    public static final String SEARCH_MSG_SUBJECT = "su";
-    public static final String SEARCH_MSG_DATE = "d";
+    public static final String MSG = "m";
+    public static final String MSG_ID = "id";
+    public static final String MSG_CONVERSATION_ID = "id";
+    public static final String MSG_SUBJECT = "su";
+    public static final String MSG_DATE = "d";
+    public static final String MSG_LOCATION = "l";
+    public static final String MSG_MULTIPART = "mp";
+    public static final String MSG_MPART_ISBODY = "body";
 
-    public static final String SEARCH_MSG_EMAILS = "e";
-    public static final String SEARCH_MSG_EMAIL_TYPE = "t";
-    public static final String SEARCH_MSG_EMAIL_ADDR = "a";
-    public static final String SEARCH_MSG_EMAIL_COMMENT = "p";
+    public static final String MSG_EMAILS = "e";
+    public static final String MSG_EMAIL_TYPE = "t";
+    public static final String MSG_EMAIL_ADDR = "a";
+    public static final String MSG_EMAIL_COMMENT = "p";
 
-    public static final String SEARCH_MSG_FLAGS = "f";
-    public static final String SEARCH_MSG_FLAG_UNREAD = "u";
-    public static final String SEARCH_MSG_FLAG_FLAGGED = "f";
-    public static final String SEARCH_MSG_FLAG_HASATTACHMENT = "a";
-    public static final String SEARCH_MSG_FLAG_REPLIED = "r";
-    public static final String SEARCH_MSG_FLAG_SENTBYME = "s";
-    public static final String SEARCH_MSG_FLAG_FORWARDED = "w";
-    public static final String SEARCH_MSG_FLAG_CALENDARINVITE = "v";
-    public static final String SEARCH_MSG_FLAG_DRAFT = "d";
-    public static final String SEARCH_MSG_FLAG_IMAP_DELETED = "x";
-    public static final String SEARCH_MSG_FLAG_NOTIFICATIONSENT = "n";
-    public static final String SEARCH_MSG_FLAG_URGENT = "!";
-    public static final String SEARCH_MSG_FLAG_LOWPRIORITY = "?";
-    public static final String SEARCH_MSG_FLAG_PRIORITY = "+";
+    public static final String MSG_FLAGS = "f";
+    public static final String MSG_FLAG_UNREAD = "u";
+    public static final String MSG_FLAG_FLAGGED = "f";
+    public static final String MSG_FLAG_HASATTACHMENT = "a";
+    public static final String MSG_FLAG_REPLIED = "r";
+    public static final String MSG_FLAG_SENTBYME = "s";
+    public static final String MSG_FLAG_FORWARDED = "w";
+    public static final String MSG_FLAG_CALENDARINVITE = "v";
+    public static final String MSG_FLAG_DRAFT = "d";
+    public static final String MSG_FLAG_IMAP_DELETED = "x";
+    public static final String MSG_FLAG_NOTIFICATIONSENT = "n";
+    public static final String MSG_FLAG_URGENT = "!";
+    public static final String MSG_FLAG_LOWPRIORITY = "?";
+    public static final String MSG_FLAG_PRIORITY = "+";
 
     public static final String ADDR_TYPE_FROM = "f";
     public static final String ADDR_TYPE_TO = "t";
@@ -65,4 +69,6 @@ public class ZimbraConstants {
     public static final String ACCT_ATTRIBUTES = "a";
     public static final String ACCT_ATTRIBUTES_NAME = "n";
     public static final String ACCT_ATTRIBUTES_CONTENT = "_content";
+
+
 }

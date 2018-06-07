@@ -370,4 +370,15 @@ public class FolderService {
         }
         return folderId;
     }
+
+    String getFrontFolderId(String folderId) {
+        if(FrontConstants.FOLDER_INBOX.equals(folderId)
+                || FrontConstants.FOLDER_DRAFT.equals(folderId)
+                || FrontConstants.FOLDER_OUTBOX.equals(folderId)
+                || FrontConstants.FOLDER_DRAFT.equals(folderId)) {
+            return null;
+        } else {
+            return folderId;
+        }
+    }
 }

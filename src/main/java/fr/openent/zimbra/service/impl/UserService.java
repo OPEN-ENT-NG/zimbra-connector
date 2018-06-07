@@ -6,18 +6,18 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.user.UserInfos;
 
 public class UserService {
 
     private SoapZimbraService soapService;
     private SqlZimbraService sqlService;
-    private Logger log;
+    private static Logger log = LoggerFactory.getLogger(UserService.class);
 
-    public UserService(Logger log, SoapZimbraService soapService, SqlZimbraService sqlService) {
+    public UserService(SoapZimbraService soapService, SqlZimbraService sqlService) {
         this.soapService = soapService;
         this.sqlService = sqlService;
-        this.log = log;
     }
 
     private String getUserDomain(UserInfos user) {
@@ -125,7 +125,7 @@ public class UserService {
      * @param account Zimbra account name or alias
      * @param handler Result handler
      */
-    public void getAliases(String account, Handler<Either<String, JsonObject>> handler) {
+    void getAliases(String account, Handler<Either<String, JsonObject>> handler) {
 
         getUserAccount(account, response -> {
             if(response.isLeft()) {

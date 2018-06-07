@@ -1,13 +1,15 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.user.UserInfos;
+
+import static fr.openent.zimbra.helper.ZimbraConstants.*;
 
 public class MessageService {
 
@@ -15,15 +17,14 @@ public class MessageService {
     private FolderService folderService;
     private SqlZimbraService sqlService;
     private UserService userService;
-    private Logger log;
+    private static Logger log = LoggerFactory.getLogger(MessageService.class);
 
-    public MessageService(Logger log, SoapZimbraService soapService, FolderService folderService,
+    public MessageService(SoapZimbraService soapService, FolderService folderService,
                           SqlZimbraService sqlService, UserService userService) {
         this.soapService = soapService;
         this.folderService = folderService;
         this.sqlService = sqlService;
         this.userService = userService;
-        this.log = log;
     }
 
     /**
@@ -50,7 +51,7 @@ public class MessageService {
                             .getJsonObject("GetFolderResponse")
                             .getJsonArray("folder").getJsonObject(0);
 
-                    String folderPath = folder.getString(ZimbraConstants.GETFOLDER_FOLDERPATH);
+                    String folderPath = folder.getString(GETFOLDER_FOLDERPATH);
 
                     String query = pathToQuery(folderPath);
                     if(unread) {
@@ -94,7 +95,7 @@ public class MessageService {
         try {
             zimbraMessages = zimbraResponse.getJsonObject("Body")
                                 .getJsonObject("SearchResponse")
-                                .getJsonArray(ZimbraConstants.SEARCH_MESSAGES, new JsonArray());
+                                .getJsonArray(MSG, new JsonArray());
         } catch (NullPointerException e) {
             result.handle(new Either.Left<>("Error when processing search result"));
             return;
@@ -121,7 +122,7 @@ public class MessageService {
      *      "user_id",
      *      "user_display_name",
      *     ],
-     *     "date" : datesent, // format ??
+     *     "date" : datesent,
      *     "unread" : boolean_unread
      *
      * }
@@ -144,28 +145,72 @@ public class MessageService {
             return;
         }
         final JsonObject frontMsg = new JsonObject();
-        frontMsg.put("id", zimbraMsg.getString(ZimbraConstants.SEARCH_MSG_ID));
-        frontMsg.put("subject", zimbraMsg.getString(ZimbraConstants.SEARCH_MSG_SUBJECT));
-        frontMsg.put("date", zimbraMsg.getLong(ZimbraConstants.SEARCH_MSG_DATE));
-        JsonArray zimbraMails = zimbraMsg.getJsonArray(ZimbraConstants.SEARCH_MSG_EMAILS);
 
-        String flags = zimbraMsg.getString(ZimbraConstants.SEARCH_MSG_FLAGS, "");
 
-        String state = flags.contains(ZimbraConstants.SEARCH_MSG_FLAG_DRAFT) ? "DRAFT" : "SENT";
-        frontMsg.put("state", state);
-
-        frontMsg.put("unread", flags.contains(ZimbraConstants.SEARCH_MSG_FLAG_UNREAD));
-
-        frontMsg.put("to", new JsonArray());
-        frontMsg.put("cc", new JsonArray());
-        frontMsg.put("displayNames", new JsonArray());
-        frontMsg.put("attachments", new JsonArray());
-
-        translateMaillistToUidlist(frontMsg, zimbraMails, response -> {
+        transformMessageZimbraToFront(zimbraMsg, frontMsg, response -> {
             zimbraMessages.remove(0);
             frontMessages.add(response);
             processSearchResult(zimbraMessages, frontMessages, result);
         });
+    }
+
+    /**
+     * Transform a JsonObject Received from Zimbra to a JsonObject that can be sent to Front
+     * @param msgZimbra object to transform
+     * @param msgFront initial object sent to Front
+     * @param result handler result
+     */
+    private void transformMessageZimbraToFront(JsonObject msgZimbra, JsonObject msgFront,
+                                               Handler<JsonObject> result) {
+        msgFront.put("id", msgZimbra.getString(MSG_ID));
+        msgFront.put("date", msgZimbra.getLong(MSG_DATE));
+        msgFront.put("subject", msgZimbra.getString(MSG_SUBJECT));
+        String folderId = msgZimbra.getString(MSG_LOCATION);
+        folderId = folderService.getFrontFolderId(folderId);
+        msgFront.put("parent_id", folderId);
+        if (msgZimbra.containsKey(MSG_CONVERSATION_ID)) {
+            msgFront.put("thread_id", msgZimbra.getString(MSG_CONVERSATION_ID));
+        }
+
+        String flags = msgZimbra.getString(MSG_FLAGS, "");
+        String state = flags.contains(MSG_FLAG_DRAFT) ? "DRAFT" : "SENT";
+        msgFront.put("state", state);
+        msgFront.put("unread", flags.contains(MSG_FLAG_UNREAD));
+
+        msgFront.put("to", new JsonArray());
+        msgFront.put("cc", new JsonArray());
+        msgFront.put("displayNames", new JsonArray());
+        msgFront.put("attachments", new JsonArray());
+
+
+        JsonArray zimbraMails = msgZimbra.getJsonArray(MSG_EMAILS);
+
+        if(msgZimbra.containsKey(MSG_MULTIPART)) {
+            JsonArray multiparts = msgZimbra.getJsonArray(MSG_MULTIPART);
+            processMessageMultipart(msgFront, multiparts);
+        }
+
+        translateMaillistToUidlist(msgFront, zimbraMails, result);
+    }
+
+    /**
+     * Process multiparts from a Zimbra message, and add relevant info to Front JsonObject
+     * Process recursively every multipart
+     * @param msgFront Front JsonObject
+     * @param multiparts Array of multipart structure
+     */
+    private void processMessageMultipart(JsonObject msgFront, JsonArray multiparts) {
+        for(Object obj : multiparts) {
+            if(!(obj instanceof JsonObject)) continue;
+            JsonObject mpart = (JsonObject)obj;
+            if(mpart.containsKey(MSG_MPART_ISBODY) && mpart.getBoolean(MSG_MPART_ISBODY)) {
+                msgFront.put("body", mpart.getString("content", ""));
+            }
+            if(mpart.containsKey(MSG_MULTIPART)) {
+                JsonArray innerMultiparts = mpart.getJsonArray(MSG_MULTIPART);
+                processMessageMultipart(msgFront, innerMultiparts);
+            }
+        }
     }
 
     /**
@@ -181,39 +226,44 @@ public class MessageService {
             return;
         }
         JsonObject zimbraUser = zimbraMails.getJsonObject(0);
-        String type = (zimbraUser==null) ? "" :  zimbraUser.getString(ZimbraConstants.SEARCH_MSG_EMAIL_TYPE);
+        String type = (zimbraUser==null) ? "" :  zimbraUser.getString(MSG_EMAIL_TYPE);
 
-        if(!(type.equals(ZimbraConstants.ADDR_TYPE_FROM))
-            && !(type.equals(ZimbraConstants.ADDR_TYPE_CC))
-            && !(type.equals(ZimbraConstants.ADDR_TYPE_TO))) {
+        if(!(type.equals(ADDR_TYPE_FROM))
+            && !(type.equals(ADDR_TYPE_CC))
+            && !(type.equals(ADDR_TYPE_TO))) {
             zimbraMails.remove(0);
             translateMaillistToUidlist(frontMsg, zimbraMails, handler);
             return;
         }
 
-        String zimbraMail = zimbraUser.getString(ZimbraConstants.SEARCH_MSG_EMAIL_ADDR);
-        translateMail(zimbraMail, userUuid -> {
-            if(userUuid == null) {
-                userUuid = zimbraMail;
-            }
-            switch (type) {
-                case ZimbraConstants.ADDR_TYPE_FROM:
-                    frontMsg.put("from", userUuid);
-                    break;
-                case ZimbraConstants.ADDR_TYPE_TO:
-                    frontMsg.put("to", frontMsg.getJsonArray("to").add(userUuid));
-                    break;
-                case ZimbraConstants.ADDR_TYPE_CC:
-                    frontMsg.put("cc", frontMsg.getJsonArray("cc").add(userUuid));
-                    break;
-            }
-            frontMsg.put("displayNames", frontMsg.getJsonArray("displayNames")
-                            .add(new JsonArray()
-                                    .add(userUuid)
-                                    .add(zimbraUser.getString(ZimbraConstants.SEARCH_MSG_EMAIL_COMMENT, zimbraMail))));
+        String zimbraMail = zimbraUser.getString(MSG_EMAIL_ADDR, "");
+        if(zimbraMail.isEmpty()) {
             zimbraMails.remove(0);
             translateMaillistToUidlist(frontMsg, zimbraMails, handler);
-        });
+        } else {
+            translateMail(zimbraMail, userUuid -> {
+                if (userUuid == null) {
+                    userUuid = zimbraMail;
+                }
+                switch (type) {
+                    case ADDR_TYPE_FROM:
+                        frontMsg.put("from", userUuid);
+                        break;
+                    case ADDR_TYPE_TO:
+                        frontMsg.put("to", frontMsg.getJsonArray("to").add(userUuid));
+                        break;
+                    case ADDR_TYPE_CC:
+                        frontMsg.put("cc", frontMsg.getJsonArray("cc").add(userUuid));
+                        break;
+                }
+                frontMsg.put("displayNames", frontMsg.getJsonArray("displayNames")
+                        .add(new JsonArray()
+                                .add(userUuid)
+                                .add(zimbraUser.getString(MSG_EMAIL_COMMENT, zimbraMail))));
+                zimbraMails.remove(0);
+                translateMaillistToUidlist(frontMsg, zimbraMails, handler);
+            });
+        }
     }
 
     /**
@@ -264,6 +314,77 @@ public class MessageService {
     }
 
     /**
+     * Get a specific message content and metadata
+     * @param messageId Id of message to get
+     * @param user User infos
+     * @param handler Final handler
+     */
+    public void getMessage(String messageId, UserInfos user, Handler<Either<String,JsonObject>> handler) {
+        JsonObject messageReq = new JsonObject()
+                .put("html", 1)
+                .put("read", 1)
+                .put("needExp", 1)
+                .put("id", messageId);
+
+        JsonObject getMsgRequest = new JsonObject()
+                .put("name", "GetMsgRequest")
+                .put("content", new JsonObject()
+                    .put(MSG, messageReq)
+                    .put("_jsns", NAMESPACE_MAIL));
+
+        soapService.callUserSoapAPI(getMsgRequest, user, response -> {
+            if(response.isLeft()) {
+                handler.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                processGetMessage(response.right().getValue(), handler);
+            }
+        });
+    }
+
+    /**
+     * Process Zimbra message and return JsonObject to Front
+     Form of Front message returned :
+     * {
+     *     "id" : "message_id",
+     *     "subject" : "message_subject",
+     *     "from" : "user_id_from",
+     *     "to" : [
+     *      "user_id_to",
+     *     ],
+     *     "cc" : [
+     *      "user_id_cc",
+     *     ],
+     *     "display_names" : [
+     *      "user_id",
+     *      "user_display_name",
+     *     ],
+     *     "date" : datesent,
+     *     "unread" : boolean_unread
+     *
+     * }
+     * @param response Zimbra API Response
+     * @param handler final handler
+     */
+    private void processGetMessage(JsonObject response, Handler<Either<String,JsonObject>> handler) {
+        JsonObject msgFront = new JsonObject();
+        JsonArray listMessages;
+
+        try {
+            listMessages = response.getJsonObject("Body").getJsonObject("GetMsgResponse")
+                    .getJsonArray(MSG);
+            if (listMessages.size() > 1) {
+                log.warn("More than one message");
+            }
+        } catch (NullPointerException|ClassCastException e) {
+            handler.handle(new Either.Left<>("Could not process message from Zimbra"));
+            return;
+        }
+        JsonObject msgZimbra = listMessages.getJsonObject(0);
+
+        transformMessageZimbraToFront(msgZimbra, msgFront, result -> handler.handle(new Either.Right<>(msgFront)) );
+    }
+
+    /**
      * Empty trash
      * @param user User infos
      * @param handler Empty JsonObject returned, no process needed
@@ -279,7 +400,7 @@ public class MessageService {
                 .put("name", "FolderActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
-                        .put("_jsns", "urn:zimbraMail"));
+                        .put("_jsns", NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(folderActionRequest, user, response -> {
             if(response.isLeft()) {

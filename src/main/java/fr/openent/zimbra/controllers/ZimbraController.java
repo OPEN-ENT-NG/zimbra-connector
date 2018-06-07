@@ -81,9 +81,9 @@ public class ZimbraController extends BaseController {
 		this.neoConversationService = new Neo4jZimbraService();
 		SqlZimbraService sqlService = new SqlZimbraService(config.getString("db-schema", "zimbra"));
 		this.soapService = new SoapZimbraService(vertx, config);
-		this.userService = new UserService(log, soapService, sqlService);
+		this.userService = new UserService(soapService, sqlService);
 		this.folderService = new FolderService(soapService);
-		this.messageService = new MessageService(log, soapService, folderService, sqlService, userService);
+		this.messageService = new MessageService(soapService, folderService, sqlService, userService);
 
 		soapService.setUserService(userService);
 	}
@@ -170,23 +170,6 @@ public class ZimbraController extends BaseController {
 	@SecuredAction(value = "", type = ActionType.RESOURCE)
 	public void send(final HttpServerRequest request) {
 		final String messageId = request.params().get("id");
-
-		getUserInfos(eb, request, new Handler<UserInfos>() {
-			@Override
-			public void handle(final UserInfos user) {
-				if (user != null) {
-					final String parentMessageId = request.params().get("In-Reply-To");
-					bodyToJson(request, new Handler<JsonObject>() {
-						@Override
-						public void handle(final JsonObject message) {
-
-						}
-					});
-				} else {
-					unauthorized(request);
-				}
-			}
-		});
 	}
 
 	private void timelineNotification(HttpServerRequest request, JsonObject sentMessage, UserInfos user) {
@@ -343,18 +326,44 @@ public class ZimbraController extends BaseController {
 
 	}
 
+	/**
+	 * Get a message content
+	 * Form of Front message returned :
+	 * {
+	 *     "id" : "message_id",
+	 *     "subject" : "message_subject",
+	 *     "from" : "user_id_from",
+	 *     "to" : [
+	 *      "user_id_to",
+	 *     ],
+	 *     "cc" : [
+	 *      "user_id_cc",
+	 *     ],
+	 *     "display_names" : [
+	 *      "user_id",
+	 *      "user_display_name",
+	 *     ],
+	 *     "date" : datesent,
+	 *     "unread" : boolean_unread
+	 *
+	 * }
+	 * @param request http request containing info
+	 *                id : message id
+	 *                 Users infos
+	 */
 	@Get("message/:id")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
 	public void getMessage(final HttpServerRequest request) {
 		final String id = request.params().get("id");
 		if (id == null || id.trim().isEmpty()) {
 			badRequest(request);
 			return;
 		}
-		getUserInfos(eb, request, new Handler<UserInfos>() {
-			@Override
-			public void handle(final UserInfos user) {
-
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				messageService.getMessage(id, user, defaultResponseHandler(request));
+			} else {
+				unauthorized(request);
 			}
 		});
 	}
