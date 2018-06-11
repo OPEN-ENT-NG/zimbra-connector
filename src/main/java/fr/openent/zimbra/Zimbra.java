@@ -27,6 +27,7 @@ public class Zimbra extends BaseServer {
 
 	public final static int DEFAULT_FOLDER_DEPTH = 3;
 	public static final int MAIL_LIST_LIMIT = 25;
+	public static final String URL = "/zimbra";
 
 	@Override
 	public void start() throws Exception {

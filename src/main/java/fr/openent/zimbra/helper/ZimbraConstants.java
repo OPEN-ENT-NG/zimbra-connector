@@ -31,6 +31,18 @@ public class ZimbraConstants {
     public static final String MSG_MULTIPART = "mp";
     public static final String MSG_MPART_ISBODY = "body";
 
+    public static final String MULTIPART_CONTENT_DISPLAY = "cd";
+    public static final String MULTIPART_CONTENT_TYPE = "ct";
+    public static final String MULTIPART_CONTENT_INLINE = "ci";
+    public static final String MULTIPART_PART_ID = "part";
+    public static final String MULTIPART_FILENAME = "filename";
+    public static final String MULTIPART_SIZE = "s";
+
+    public static final String MULTIPART_INLINE = "inline";
+    public static final String MULTIPART_ATTACHMENT = "attachment";
+
+
+
     public static final String MSG_EMAILS = "e";
     public static final String MSG_EMAIL_TYPE = "t";
     public static final String MSG_EMAIL_ADDR = "a";
@@ -69,6 +81,9 @@ public class ZimbraConstants {
     public static final String ACCT_ATTRIBUTES = "a";
     public static final String ACCT_ATTRIBUTES_NAME = "n";
     public static final String ACCT_ATTRIBUTES_CONTENT = "_content";
+
+    public static final String DISPLAY_INLINE = "i";
+    public static final String DISPLAY_ATTACHMENT = "a";
 
 
 }

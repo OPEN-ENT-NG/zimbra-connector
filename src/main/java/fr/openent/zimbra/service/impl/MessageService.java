@@ -176,6 +176,7 @@ public class MessageService {
         String state = flags.contains(MSG_FLAG_DRAFT) ? "DRAFT" : "SENT";
         msgFront.put("state", state);
         msgFront.put("unread", flags.contains(MSG_FLAG_UNREAD));
+        msgFront.put("hasAttachment", flags.contains(MSG_FLAG_HASATTACHMENT));
 
         msgFront.put("to", new JsonArray());
         msgFront.put("cc", new JsonArray());
@@ -187,7 +188,9 @@ public class MessageService {
 
         if(msgZimbra.containsKey(MSG_MULTIPART)) {
             JsonArray multiparts = msgZimbra.getJsonArray(MSG_MULTIPART);
-            processMessageMultipart(msgFront, multiparts);
+            JsonArray attachments = new JsonArray();
+            processMessageMultipart(msgFront, multiparts, attachments);
+            AttachmentService.processAttachments(msgFront, attachments);
         }
 
         translateMaillistToUidlist(msgFront, zimbraMails, result);
@@ -199,19 +202,24 @@ public class MessageService {
      * @param msgFront Front JsonObject
      * @param multiparts Array of multipart structure
      */
-    private void processMessageMultipart(JsonObject msgFront, JsonArray multiparts) {
+    private void processMessageMultipart(JsonObject msgFront, JsonArray multiparts, JsonArray attachments) {
         for(Object obj : multiparts) {
             if(!(obj instanceof JsonObject)) continue;
             JsonObject mpart = (JsonObject)obj;
-            if(mpart.containsKey(MSG_MPART_ISBODY) && mpart.getBoolean(MSG_MPART_ISBODY)) {
+            if(mpart.getBoolean(MSG_MPART_ISBODY, false)) {
                 msgFront.put("body", mpart.getString("content", ""));
+            }
+            if(mpart.containsKey(MULTIPART_CONTENT_DISPLAY)) {
+                attachments.add(mpart);
             }
             if(mpart.containsKey(MSG_MULTIPART)) {
                 JsonArray innerMultiparts = mpart.getJsonArray(MSG_MULTIPART);
-                processMessageMultipart(msgFront, innerMultiparts);
+                processMessageMultipart(msgFront, innerMultiparts, attachments);
             }
         }
     }
+
+
 
     /**
      * Process list of mail address in a mail and transform it in Front data
@@ -421,8 +429,8 @@ public class MessageService {
      * @param user User infos
      * @param result result handler
      */
-    public void sendMessage(String subjectMessage, String bodyMessage, JsonArray toMessage, JsonArray ccMessage, UserInfos user,
-                             Handler<Either<String, JsonObject>> result) {
+    public void sendMessage(String subjectMessage, String bodyMessage, JsonArray toMessage, JsonArray ccMessage,
+                            UserInfos user, Handler<Either<String, JsonObject>> result) {
 
         //todo: Loop array toMessage & ccMessage
         JsonArray mailContacts = new JsonArray()
@@ -442,7 +450,7 @@ public class MessageService {
         JsonObject sendMsgRequest = new JsonObject()
                 .put("name", "SendMsgRequest")
                 .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL)
+                        .put("_jsns", NAMESPACE_MAIL)
                         .put("m", new JsonObject()
                                 .put("e", mailContacts)
                                 .put("su", new JsonObject()
@@ -472,8 +480,8 @@ public class MessageService {
      * @param user User infos
      * @param result result handler
      */
-    public void saveDraft(String subjectMessage, String bodyMessage, JsonArray toMessage, JsonArray ccMessage, UserInfos user,
-                            Handler<Either<String, JsonObject>> result) {
+    public void saveDraft(String subjectMessage, String bodyMessage, JsonArray toMessage, JsonArray ccMessage,
+                          UserInfos user, Handler<Either<String, JsonObject>> result) {
 
         //todo: Loop array toMessage & ccMessage
         JsonArray mailContacts = new JsonArray()
@@ -493,7 +501,7 @@ public class MessageService {
         JsonObject saveDraftRequest = new JsonObject()
                 .put("name", "SaveDraftRequest")
                 .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL)
+                        .put("_jsns", NAMESPACE_MAIL)
                         .put("m", new JsonObject()
                                 .put("e", mailContacts)
                                 .put("su", new JsonObject()
@@ -573,7 +581,7 @@ public class MessageService {
         JsonObject saveDraftRequest = new JsonObject()
                 .put("name", "SaveDraftRequest")
                 .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL)
+                        .put("_jsns", NAMESPACE_MAIL)
                         .put("m", new JsonObject()
                                 .put("id", idMessage)
                                 .put("e", mailContacts)
@@ -593,7 +601,5 @@ public class MessageService {
             }
         });
     }
-
-
 
 }

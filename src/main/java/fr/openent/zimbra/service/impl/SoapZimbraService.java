@@ -8,14 +8,12 @@ import fr.wseduc.webutils.http.Renders;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.core.net.ProxyOptions;
 import org.entcore.common.user.UserInfos;
 
 import java.util.HashMap;
@@ -46,13 +44,16 @@ public class SoapZimbraService {
 
     private String zimbraUri;
     private String zimbraAdminUri;
+    private static final String URI_SOAP = "/service/soap";
 
     private String zimbraAdminAccount;
     private String zimbraAdminPassword;
 
     public SoapZimbraService(Vertx vertx, JsonObject config) {
         this.userService = null;
-        this.zimbraUri = config.getString("zimbra-uri", "");
+
+        String zimbraBaseUri = config.getString("zimbra-uri", "");
+        this.zimbraUri = zimbraBaseUri + URI_SOAP;
         this.zimbraAdminUri = config.getString("zimbra-admin-uri", "");
         this.zimbraAdminAccount = config.getString("admin-account","");
         this.zimbraAdminPassword = config.getString("admin-password","");
@@ -226,9 +227,8 @@ public class SoapZimbraService {
                                  Handler<Either<String,JsonObject>> handler) {
         boolean authed = false;
         boolean adminAuthed = false;
-        JsonObject authInfo = new JsonObject();
         if( authedUsers.containsKey(userId) ) {
-            authInfo = authedUsers.get(userId);
+            JsonObject authInfo = authedUsers.get(userId);
             Long timestamp = System.currentTimeMillis();
             if(timestamp < authInfo.getLong(MAP_LIFETIME)) {
                 String authToken = authInfo.getString(MAP_AUTH_TOKEN);
@@ -243,7 +243,7 @@ public class SoapZimbraService {
             if(adminAuthed) {
                 callSoapAPI(params, handler);
             } else {
-                adminAuth(userId, userAddress, authInfo, response -> {
+                adminAuth(userId, userAddress, response -> {
                     if(response.isLeft()) {
                         handler.handle(response);
                     } else {
@@ -328,10 +328,10 @@ public class SoapZimbraService {
      *     }
      * }
      * @param userId id of user
-     * @param authInfo user auth info from map
+     * @param userAddress Admin user address
      * @param handler handler after authentication
      */
-    private void adminAuth(String userId, String userAddress, JsonObject authInfo,
+    private void adminAuth(String userId, String userAddress,
                            Handler<Either<String, JsonObject>> handler) {
 
         JsonObject authContent = new JsonObject();
@@ -410,5 +410,80 @@ public class SoapZimbraService {
                 }
             }
         };
+    }
+
+    /**
+     * Get authToken for a user
+     * If already in map, return existing authInfo
+     * Else, auth from Zimbra
+     * @param userId User Id
+     * @param userAddress User Zimbra address
+     * @param isAdmin Need AdminAuthToken ?
+     * @param handler result handler
+     */
+    private void getAuthToken(String userId, String userAddress, boolean isAdmin,
+                              Handler<Either<String,JsonObject>> handler) {
+        boolean authed = false;
+        boolean adminAuthed = false;
+        if( authedUsers.containsKey(userId) ) {
+            JsonObject authInfo = authedUsers.get(userId);
+            Long timestamp = System.currentTimeMillis();
+            if(timestamp < authInfo.getLong(MAP_LIFETIME)) {
+                authed = true;
+                if(authInfo.getBoolean(MAP_ADMIN)) {
+                    adminAuthed = true;
+                }
+            }
+        }
+        if((isAdmin && adminAuthed) || (!isAdmin && authed)) {
+            generateAuthResponse(userId, handler);
+        } else {
+            if(isAdmin) {
+                adminAuth(userId, userAddress, response -> {
+                    if(response.isLeft()) {
+                        handler.handle(response);
+                    } else {
+                        generateAuthResponse(userId, handler);
+                    }
+                });
+            } else {
+                auth(userId, userAddress, response -> {
+                    if(response.isLeft()) {
+                        handler.handle(response);
+                    } else {
+                        generateAuthResponse(userId, handler);
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Return authInfos for specified user from Map data
+     * @param userId User id
+     * @param handler result Handler
+     */
+    private void generateAuthResponse(String userId, Handler<Either<String, JsonObject>> handler) {
+        JsonObject authInfo = authedUsers.get(userId);
+        handler.handle(new Either.Right<>(authInfo));
+    }
+
+    /**
+     * Get auth token for connected User
+     * @param user User infos
+     * @param handler result handler
+     */
+    void getUserAuthToken(UserInfos user, Handler<Either<String,JsonObject>> handler) {
+        String userId = user.getUserId();
+        String userAddress = userService.getUserZimbraAddress(user);
+        getAuthToken(userId, userAddress, false, handler);
+    }
+
+    /**
+     * Get admin auth token
+     * @param handler result handler
+     */
+    void getAdminAuthToken(Handler<Either<String,JsonObject>> handler) {
+        getAuthToken(zimbraAdminAccount, zimbraAdminAccount, true, handler);
     }
 }

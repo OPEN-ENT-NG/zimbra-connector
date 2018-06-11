@@ -25,11 +25,9 @@ import fr.wseduc.webutils.request.RequestUtils;
 public class VisiblesFilter implements ResourcesProvider{
 
     private Neo4j neo;
-    private Sql sql;
 
     public VisiblesFilter() {
         neo = Neo4j.getInstance();
-        sql = Sql.getInstance();
     }
 
     @Override
@@ -55,30 +53,7 @@ public class VisiblesFilter implements ResourcesProvider{
 
                 if(parentMessageId == null || parentMessageId.trim().isEmpty()){
                     checkHandler.handle(null);
-                    return;
                 }
-
-                /*
-                sql.prepared(
-                        "SELECT m.*  " +
-                                "FROM conversation.messages m " +
-                                "WHERE m.id = ?",
-                        new fr.wseduc.webutils.collections.JsonArray().add(parentMessageId),
-                        SqlResult.validUniqueResultHandler(new Handler<Either<String, JsonObject>>() {
-                            public void handle(Either<String, JsonObject> parentMsgEvent) {
-                                if(parentMsgEvent.isLeft()){
-                                    handler.handle(false);
-                                    return;
-                                }
-
-                                JsonObject parentMsg = parentMsgEvent.right().getValue();
-                                ids.remove(parentMsg.getString("from"));
-                                ids.removeAll(parentMsg.getJsonArray("to", new fr.wseduc.webutils.collections.JsonArray()).getList());
-                                ids.removeAll(parentMsg.getJsonArray("cc", new fr.wseduc.webutils.collections.JsonArray()).getList());
-
-                                checkHandler.handle(null);
-                            }
-                        }, "cc", "to"));*/
         });
 
     }

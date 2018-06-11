@@ -45,6 +45,7 @@ export class Mail implements Selectable {
     loadingAttachments: Attachment[];
     attachments: Attachment[];
     eventer = new Eventer();
+    hasAttachment: boolean;
     selected: boolean;
     allowReply: boolean;
     allowReplyAll: boolean;

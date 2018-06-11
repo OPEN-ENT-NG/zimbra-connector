@@ -87,7 +87,7 @@ public class ZimbraController extends BaseController {
 		this.soapService = new SoapZimbraService(vertx, config);
 		this.userService = new UserService(soapService, sqlService);
 		this.folderService = new FolderService(soapService);
-		this.attachmentService = new AttachmentService(log, soapService, vertx, config);
+		this.attachmentService = new AttachmentService(soapService, vertx, config);
 		this.messageService = new MessageService(soapService, folderService, sqlService, userService);
 
 		soapService.setUserService(userService);
@@ -167,11 +167,12 @@ public class ZimbraController extends BaseController {
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
 					bodyToJson(request, message -> {
-						final String bodyMessage = message.getString("body");
-						final String subjectMessage = message.getString("subject");
-						final JsonArray toMessage = message.getJsonArray("to");
-						final JsonArray ccMessage = message.getJsonArray("cc");
-						messageService.updateDraft(messageId, subjectMessage, bodyMessage, toMessage, ccMessage, user, defaultResponseHandler(request));
+						final String body = message.getString("body");
+						final String subject = message.getString("subject");
+						final JsonArray to = message.getJsonArray("to");
+						final JsonArray cc = message.getJsonArray("cc");
+						messageService.updateDraft(messageId, subject, body, to, cc, user,
+								defaultResponseHandler(request));
 					});
 				} else {
 					unauthorized(request);
@@ -188,16 +189,14 @@ public class ZimbraController extends BaseController {
 	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	@ResourceFilter(VisiblesFilter.class)
 	public void send(final HttpServerRequest request) {
-		//final String messageId = request.params().get("id");
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
-					//final String parentMessageId = request.params().get("In-Reply-To");
 					bodyToJson(request, message -> {
-						final String bodyMessage = message.getString("body");
-						final String subjectMessage = message.getString("subject");
-						final JsonArray toMessage = message.getJsonArray("to");
-						final JsonArray ccMessage = message.getJsonArray("cc");
-						messageService.sendMessage(subjectMessage, bodyMessage, toMessage, ccMessage, user, defaultResponseHandler(request));
+						final String body = message.getString("body");
+						final String subject = message.getString("subject");
+						final JsonArray to = message.getJsonArray("to");
+						final JsonArray cc = message.getJsonArray("cc");
+						messageService.sendMessage(subject, body, to, cc, user, defaultResponseHandler(request));
 					});
 				} else {
 					unauthorized(request);
@@ -469,7 +468,8 @@ public class ZimbraController extends BaseController {
 	@Get("max-depth")
 	@SecuredAction(value="zimbra.max.depth", type=ActionType.AUTHENTICATED)
 	public void getMaxDepth(final HttpServerRequest request){
-		renderJson(request, new JsonObject().put("max-depth", Config.getConf().getInteger("max-folder-depth", Zimbra.DEFAULT_FOLDER_DEPTH)));
+		renderJson(request, new JsonObject().put("max-depth",
+				Config.getConf().getInteger("max-folder-depth", Zimbra.DEFAULT_FOLDER_DEPTH)));
 	}
 
 	/**
@@ -661,19 +661,39 @@ public class ZimbraController extends BaseController {
 		final String messageId = request.params().get("id");
 		//final JsonObject uploaded = new JsonObject();
 
-				UserUtils.getUserInfos(eb, request, user -> {
-					if (user == null) {
-						unauthorized(request);
-						return;
-					}
-					attachmentService.addAttachment(messageId, user, request, defaultResponseHandler(request));
-				});
+		UserUtils.getUserInfos(eb, request, user -> {
+			if (user == null) {
+				unauthorized(request);
+				return;
+			}
+			attachmentService.addAttachment(messageId, user, request, defaultResponseHandler(request));
+		});
 	}
 
-	//Download an attachment
+	/**
+	 * Download an attachment
+	 * @param request http request containing info
+	 *                 Users infos
+	 *                 id : message Id
+	 *                 attachmentId : attachment Id
+	 */
 	@Get("message/:id/attachment/:attachmentId")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void getAttachment(final HttpServerRequest request){
+		final String messageId = request.params().get("id");
+		final String attachmentId = request.params().get("attachmentId");
+		if(messageId == null || messageId.isEmpty() || attachmentId == null || attachmentId.isEmpty()) {
+			notFound(request, "invalid.file.id");
+			return;
+		}
+		UserUtils.getUserInfos(eb, request, user -> {
+			if (user == null) {
+				unauthorized(request);
+				return;
+			}
+			attachmentService.getAttachment(messageId, attachmentId, user, true, request, defaultResponseHandler(request));
+		});
+
 
 	}
 
