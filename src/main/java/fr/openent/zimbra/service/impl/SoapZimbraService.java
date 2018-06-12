@@ -44,6 +44,7 @@ public class SoapZimbraService {
 
     private String zimbraUri;
     private String zimbraAdminUri;
+    private String zimbraDomain;
     private static final String URI_SOAP = "/service/soap";
 
     private String zimbraAdminAccount;
@@ -55,13 +56,14 @@ public class SoapZimbraService {
         String zimbraBaseUri = config.getString("zimbra-uri", "");
         this.zimbraUri = zimbraBaseUri + URI_SOAP;
         this.zimbraAdminUri = config.getString("zimbra-admin-uri", "");
+        this.zimbraDomain = config.getString("zimbra-domain", "");
         this.zimbraAdminAccount = config.getString("admin-account","");
         this.zimbraAdminPassword = config.getString("admin-password","");
         this.preauthKey = config.getString("preauth-key","");
         this.vertx = vertx;
 
         if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
-                || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty()) {
+                || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty() || zimbraDomain.isEmpty()) {
             log.fatal("Zimbra : Missing configuration in conf.properties");
         }
     }
@@ -186,7 +188,7 @@ public class SoapZimbraService {
      */
     void callUserSoapAPI(JsonObject params, UserInfos user, Handler<Either<String,JsonObject>> handler) {
         String userId = user.getUserId();
-        String userAddress = userService.getUserZimbraAddress(user);
+        String userAddress = userId + "@" + zimbraDomain;
         params.put(PARAM_ISADMIN, false);
         callUserSoapAPI(params, userId, userAddress, handler);
     }
@@ -475,7 +477,7 @@ public class SoapZimbraService {
      */
     void getUserAuthToken(UserInfos user, Handler<Either<String,JsonObject>> handler) {
         String userId = user.getUserId();
-        String userAddress = userService.getUserZimbraAddress(user);
+        String userAddress = userId + "@" + zimbraDomain;
         getAuthToken(userId, userAddress, false, handler);
     }
 

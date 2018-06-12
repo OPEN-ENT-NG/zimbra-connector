@@ -20,17 +20,6 @@ public class UserService {
         this.sqlService = sqlService;
     }
 
-    private String getUserDomain(UserInfos user) {
-        return "";
-    }
-
-    String getUserZimbraAddress(UserInfos user) {
-        //todo replace placeholder
-        return "thomas.lecocq2@ng.preprod-ent.fr";
-        //return user.getUserId() + "@" + getUserDomain(user);
-    }
-
-
     /**
      * Get used and max quota of user from Zimbra
      * @param user User infos

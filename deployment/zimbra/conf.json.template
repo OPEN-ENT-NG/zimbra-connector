@@ -17,6 +17,7 @@
         "db-schema": "zimbra",
         "zimbra-uri" : "$zimbraUri",
         "preauth-key" : "$zimbraPreauthKey",
+        "zimbra-domain" : "$zimbraDomain",
         "zimbra-admin-uri" : "$zimbraAdminUri",
         "admin-account" : "$zimbraAdminAccount",
         "admin-password" : "$zimbraAdminPassword",
