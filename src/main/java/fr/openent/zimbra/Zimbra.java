@@ -28,16 +28,14 @@ public class Zimbra extends BaseServer {
 	public final static int DEFAULT_FOLDER_DEPTH = 3;
 	public static final int MAIL_LIST_LIMIT = 25;
 	public static final String URL = "/zimbra";
+	public static String domain;
 
 	@Override
 	public void start() throws Exception {
 		super.start();
 
-
-		final String exportPath = config
-				.getString("export-path", System.getProperty("java.io.tmpdir"));
-
-		addController(new ZimbraController(exportPath));
+		Zimbra.domain = config.getString("zimbra-domain", "");
+		addController(new ZimbraController());
 	}
 
 }

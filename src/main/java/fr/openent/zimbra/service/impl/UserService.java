@@ -1,5 +1,6 @@
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
@@ -8,6 +9,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.user.UserInfos;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class UserService {
 
@@ -149,6 +152,22 @@ public class UserService {
     }
 
     /**
+     * Process response from Zimbra API to get email address of specified user
+     * In case of success, return a String with the address
+     * @param jsonResponse Zimbra API Response
+     * @param handler Handler result
+     */
+    private void processGetAddress(JsonObject jsonResponse,
+                                   Handler<Either<String,String>> handler) {
+
+        if(jsonResponse.containsKey(UserInfoService.ALIAS)) {
+            handler.handle(new Either.Right<>(jsonResponse.getJsonObject(UserInfoService.ALIAS).getString("name")));
+        } else {
+            handler.handle(new Either.Left<>("Could not get Quota from GetInfoRequest"));
+        }
+    }
+
+    /**
      * Get account info from specified user from Zimbra
      * @param account Zimbra account name or alias
      * @param handler result handler
@@ -204,6 +223,66 @@ public class UserService {
         handler.handle(new Either.Right<>(frontData));
     }
 
+    /**
+     * Get a user adress
+     * First query database
+     * If not present, query Zimbra
+     * @param userId User Id
+     * @param handler result handler
+     */
+    private void getUserAddress(String userId, Handler<Either<String,String>> handler) {
+        sqlService.getUserMailFromId(userId, result -> {
+            if(result.isLeft() || result.right().getValue().isEmpty()) {
+                log.debug("no user in database for id : " + userId);
+                String account = userId + "@" + Zimbra.domain;
+                getUserAccount(account, response -> {
+                    if(response.isLeft()) {
+                        handler.handle(new Either.Left<>(response.left().getValue()));
+                    } else {
+                        processGetAddress(response.right().getValue(), handler);
+                    }
+                });
+            } else {
+                JsonArray results = result.right().getValue();
+                if(results.size() > 1) {
+                    log.warn("More than one address for user id : " + userId);
+                }
+                String mail = results.getJsonObject(0).getString(SqlZimbraService.USER_ZIMBRA_NAME);
+                handler.handle(new Either.Right<>(mail));
+            }
+        });
+    }
+
+    /**
+     * Get addresses for a list of users
+     * Return a Json Object :
+     * {
+     *     "userId1" : "userAddress1",
+     *     "userId2" : "userAddress2",
+     *     ...
+     * }
+     * @param idList Array with the list of Ids
+     * @param handler result handler
+     */
+    void getUsersAddresses(JsonArray idList, Handler<JsonObject> handler) {
+        if(idList == null || idList.isEmpty()) {
+            handler.handle(new JsonObject());
+            return;
+        }
+        final AtomicInteger processedIds = new AtomicInteger(idList.size());
+        JsonObject addressList = new JsonObject();
+        for(Object o : idList) {
+            String userId = (String)o;
+            getUserAddress(userId, result -> {
+                if(result.isRight()) {
+                    addressList.put(userId, result.right().getValue());
+                }
+                if(processedIds.decrementAndGet() == 0) {
+                    handler.handle(addressList);
+                }
+            });
+        }
+    }
 
 
 }

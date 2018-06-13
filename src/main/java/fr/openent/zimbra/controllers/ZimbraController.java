@@ -28,7 +28,6 @@ import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
-import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
@@ -62,19 +61,13 @@ import static org.entcore.common.user.UserUtils.getUserInfos;
 
 public class ZimbraController extends BaseController {
 
-	private Neo4jZimbraService neoConversationService;
 	private TimelineHelper notification;
-	private final String exportPath;
-	private SoapZimbraService soapService;
 	private UserService userService;
 	private FolderService folderService;
 	private AttachmentService attachmentService;
 	private MessageService messageService;
 	private SqlZimbraService sqlService;
 
-	public ZimbraController(String exportPath) {
-		this.exportPath = exportPath;
-	}
 
 	@Override
 	public void init(Vertx vertx, JsonObject config, RouteMatcher rm,
@@ -82,9 +75,8 @@ public class ZimbraController extends BaseController {
 		super.init(vertx, config, rm, securedActions);
 		notification = new TimelineHelper(vertx, eb, config);
 
-		this.neoConversationService = new Neo4jZimbraService();
 		this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
-		this.soapService = new SoapZimbraService(vertx, config);
+        SoapZimbraService soapService = new SoapZimbraService(vertx, config);
 		this.userService = new UserService(soapService, sqlService);
 		this.folderService = new FolderService(soapService);
 		this.attachmentService = new AttachmentService(soapService, vertx, config);
@@ -94,31 +86,9 @@ public class ZimbraController extends BaseController {
 	}
 
 	@Get("zimbra")
-	@SecuredAction("conversation.view")
+	@SecuredAction("zimbra.view")
 	public void view(HttpServerRequest request) {
 		renderView(request);
-	}
-
-
-	@Get("testcount")
-	@SecuredAction("conversation.view")
-	public void testCount(HttpServerRequest request) {
-		getUserInfos(eb, request, user -> {
-			folderService.countMessages("INBOX", false, user, event -> {
-				if(event.isLeft()) {
-					renderError(request, new JsonObject().put("error", event.left().getValue()));
-				} else {
-					renderJson(request, event.right().getValue());
-				}
-			});
-		});
-	}
-
-	@Get("zimbra/testauth")
-	public void testAuth(HttpServerRequest request) {
-		getUserInfos(eb, request, user -> {
-			defaultResponseHandler(request).handle(new Either.Right<>(new JsonObject()));
-		});
 	}
 
 
@@ -128,20 +98,21 @@ public class ZimbraController extends BaseController {
 	 * {
 	 * 	    "id" : "new-zimbra-email-id"
 	 * }
-	 * @param request
+	 * @param request http request containing info
+     * 	              Users infos
+     *   	          body : message body
+     *   	          subject : message subject
+     * 	              to : id of each recipient
+     * 	              cc : id of each cc recipient
 	 */
 	@Post("draft")
-	@SecuredAction("conversation.create.draft")
+	@SecuredAction("zimbra.create.draft")
 	public void createDraft(final HttpServerRequest request) {
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
-					bodyToJson(request, message -> {
-						final String bodyMessage = message.getString("body");
-						final String subjectMessage = message.getString("subject");
-						final JsonArray toMessage = message.getJsonArray("to");
-						final JsonArray ccMessage = message.getJsonArray("cc");
-						messageService.saveDraft(subjectMessage, bodyMessage, toMessage, ccMessage, user, defaultResponseHandler(request));
-					});
+					bodyToJson(request, message ->
+						messageService.saveDraft(message, user, null, defaultResponseHandler(request))
+					);
 				} else {
 					unauthorized(request);
 				}
@@ -152,28 +123,27 @@ public class ZimbraController extends BaseController {
 	/**
 	 * Update a Draft email
 	 * In case of success, return empty Json Object.
-	 * @param request
+	 * @param request http request containing info
+	 *                :id : draft Id
+	 * 	              	Users infos
+	 *   	          	body : message body
+	 *   	          	subject : message subject
+	 * 	              	to : id of each recipient
+	 * 	              	cc : id of each cc recipient
 	 */
 	@Put("draft/:id")
 	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void updateDraft(final HttpServerRequest request) {
 		final String messageId = request.params().get("id");
-
 		if (messageId == null || messageId.trim().isEmpty()) {
 			badRequest(request);
 			return;
 		}
-
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
-					bodyToJson(request, message -> {
-						final String body = message.getString("body");
-						final String subject = message.getString("subject");
-						final JsonArray to = message.getJsonArray("to");
-						final JsonArray cc = message.getJsonArray("cc");
-						messageService.updateDraft(messageId, subject, body, to, cc, user,
-								defaultResponseHandler(request));
-					});
+					bodyToJson(request, message ->
+						messageService.saveDraft(message, user, messageId, defaultResponseHandler(request))
+					);
 				} else {
 					unauthorized(request);
 				}
@@ -183,20 +153,22 @@ public class ZimbraController extends BaseController {
 	/**
 	 * Send an email
 	 * In case of success, return empty Json Object.
-	 * @param request
+	 * @param request http request containing info
+	 * 	              Users infos
+	 *   	          body : message body
+	 *   	          subject : message subject
+	 * 	              to : id of each recipient
+	 * 	              cc : id of each cc recipient
 	 */
 	@Post("send")
 	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	@ResourceFilter(VisiblesFilter.class)
 	public void send(final HttpServerRequest request) {
+        final String messageId = request.params().get("id");
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
 					bodyToJson(request, message -> {
-						final String body = message.getString("body");
-						final String subject = message.getString("subject");
-						final JsonArray to = message.getJsonArray("to");
-						final JsonArray cc = message.getJsonArray("cc");
-						messageService.sendMessage(subject, body, to, cc, user, defaultResponseHandler(request));
+						messageService.sendMessage(messageId, message, user, defaultResponseHandler(request));
 					});
 				} else {
 					unauthorized(request);

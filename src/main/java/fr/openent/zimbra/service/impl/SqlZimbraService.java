@@ -50,6 +50,20 @@ public class SqlZimbraService {
     }
 
     /**
+     * Get user mail from uuid in database
+     * @param uuid User uuid
+     * @param handler result handler
+     */
+    void getUserMailFromId(String uuid, Handler<Either<String, JsonArray>> handler) {
+
+        String query = "SELECT " + USER_ZIMBRA_NAME + " FROM "
+                + userTable + " WHERE " + USER_NEO4J_UID + " = ?";
+        JsonArray values = new JsonArray().add(uuid);
+
+        sql.prepared(query, values, SqlResult.validResultHandler(handler));
+    }
+
+    /**
      * Update users mails in database if not already present
      * @param users Array of users :
      *              [
@@ -135,9 +149,9 @@ public class SqlZimbraService {
 
     private void callFindVisibles(UserInfos user, final String acceptLanguage, final Handler<Either<String, JsonObject>> result,
                                   final JsonObject visible, JsonObject params, String preFilter, String customReturn) {
-        UserUtils.findVisibles(eb, user.getUserId(), customReturn, params, true, true, true, acceptLanguage, preFilter, new Handler<JsonArray>() {
-            @Override
-            public void handle(JsonArray visibles) {
+        UserUtils.findVisibles(eb, user.getUserId(), customReturn, params, true, true, true,
+                acceptLanguage, preFilter, visibles -> {
+
                 JsonArray users = new fr.wseduc.webutils.collections.JsonArray();
                 JsonArray groups = new fr.wseduc.webutils.collections.JsonArray();
                 visible.put("groups", groups).put("users", users);
@@ -153,8 +167,7 @@ public class SqlZimbraService {
                         users.add(j);
                     }
                 }
-                result.handle(new Either.Right<String,JsonObject>(visible));
-            }
+                result.handle(new Either.Right<>(visible));
         });
     }
 
@@ -162,13 +175,13 @@ public class SqlZimbraService {
     private boolean validationParamsError(UserInfos user,
                                           Handler<Either<String, JsonObject>> result, String ... params) {
         if (user == null) {
-            result.handle(new Either.Left<String, JsonObject>("zimbra.invalid.user"));
+            result.handle(new Either.Left<>("zimbra.invalid.user"));
             return true;
         }
         if (params.length > 0) {
             for (String s : params) {
                 if (s == null) {
-                    result.handle(new Either.Left<String, JsonObject>("zimbra.invalid.parameter"));
+                    result.handle(new Either.Left<>("zimbra.invalid.parameter"));
                     return true;
                 }
             }
