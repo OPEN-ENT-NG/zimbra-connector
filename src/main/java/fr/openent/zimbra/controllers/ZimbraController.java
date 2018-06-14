@@ -235,7 +235,7 @@ public class ZimbraController extends BaseController {
 				try {
 					page = Integer.parseInt(pageStr);
 				} catch (NumberFormatException e) { page = 0; }
-				Boolean b = null;
+				Boolean b = false;
 				if (unread != null && !unread.isEmpty()) {
 					b = Boolean.valueOf(unread);
 				}

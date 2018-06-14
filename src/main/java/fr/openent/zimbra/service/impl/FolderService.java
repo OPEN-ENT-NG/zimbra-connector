@@ -106,7 +106,7 @@ public class FolderService {
         } else if(parentId == null) {
             folderReq.put("l", ZimbraConstants.FOLDER_INBOX_ID);
         } else {
-            folderReq.put("l", parentId);
+            folderReq.put("l", getZimbraFolderId(parentId));
         }
 
         JsonObject getFolderRequest = new JsonObject()
