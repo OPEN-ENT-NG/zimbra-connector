@@ -388,37 +388,96 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
+	/**
+	 * Trash messages = move messages to trash
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                folder id
+	 *                Body :
+	 *                	[
+	 *                		{"id" : "idmessage"},
+	 *                		{"id" : "idmessage"},
+	 *                		{"id" : "idmessage"},
+	 *                	]
+	 */
 	@Put("trash")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void trash(final HttpServerRequest request) {
-
-	}
-
-	@Put("restore")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
-	public void restore(final HttpServerRequest request) {
-
-	}
-
-	@Delete("delete")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
-	public void delete(final HttpServerRequest request) {
-		final List<String> ids = request.params().getAll("id");
-		if (ids == null || ids.isEmpty()) {
+		final List<String> messageIds = request.params().getAll("id");
+		if(messageIds == null || messageIds.size() == 0){
 			badRequest(request);
 			return;
 		}
-		deleteMessages(request, ids, false);
-	}
-
-	private void deleteMessages(final HttpServerRequest request, final List<String> ids, final Boolean deleteAll) {
-		getUserInfos(eb, request, new Handler<UserInfos>() {
-			@Override
-			public void handle(final UserInfos user) {
-
+		UserUtils.getUserInfos(eb, request, user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
 			}
+			messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_TRASH, user,
+					defaultResponseHandler(request));
 		});
 	}
+
+	/**
+	 * Restore = Move messages from trash to inbox.
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                Body :
+	 *                	[
+	 *                		{"id" : "idmessage"},
+	 *                		{"id" : "idmessage"},
+	 *                		{"id" : "idmessage"},
+	 *                	]
+	 */
+	@Put("restore")
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	public void restore(final HttpServerRequest request) {
+		final List<String> messageIds = request.params().getAll("id");
+		if(messageIds == null || messageIds.size() == 0){
+			badRequest(request);
+			return;
+		}
+		UserUtils.getUserInfos(eb, request, user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_INBOX, user,
+					defaultResponseHandler(request));
+		});
+	}
+
+	/**
+	 * Delete definitively messages from trash
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                Body :
+	 *                	[
+	 *                		{"id" : "idmessage"},
+	 *                		{"id" : "idmessage"},
+	 *                		{"id" : "idmessage"},
+	 *                	]
+	 */
+	@Delete("delete")
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	public void delete(final HttpServerRequest request) {
+		final List<String> messageIds = request.params().getAll("id");
+		if (messageIds == null || messageIds.isEmpty()) {
+			badRequest(request);
+			return;
+		}
+		UserUtils.getUserInfos(eb, request, user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			messageService.deleteMessages(messageIds, user, defaultResponseHandler(request));
+		});
+	}
+
 
     /**
      * Empty trash folder

@@ -34,6 +34,9 @@ public class ZimbraConstants {
     public static final String MSG_MULTIPART = "mp";
     public static final String MSG_MPART_ISBODY = "body";
 
+    public static final String MSG_CONSTRAINTS = "tcon";
+    public static final String MSG_CON_TRASH = "t";
+
     public static final String MULTIPART_CONTENT_DISPLAY = "cd";
     public static final String MULTIPART_CONTENT_TYPE = "ct";
     public static final String MULTIPART_CONTENT_INLINE = "ci";

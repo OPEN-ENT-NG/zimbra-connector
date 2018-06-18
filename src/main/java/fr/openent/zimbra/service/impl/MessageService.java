@@ -716,4 +716,62 @@ public class MessageService {
         });
     }
 
+
+
+    /**
+     * Delete emails from trash
+     * @param listMessageIds Messages ID list selected
+     * @param user User infos
+     * @param result Empty JsonObject returned, no process needed
+     */
+    public void deleteMessages(List<String> listMessageIds, UserInfos user,
+                                     Handler<Either<String, JsonObject>> result) {
+
+        final AtomicInteger processedIds = new AtomicInteger(listMessageIds.size());
+        final AtomicInteger successMessages = new AtomicInteger(0);
+        for(String messageID : listMessageIds) {
+            deleteMessage(messageID, user, resultHandler -> {
+                if(resultHandler.isRight()) {
+                    successMessages.incrementAndGet();
+                }
+                if(processedIds.decrementAndGet() == 0) {
+                    if(successMessages.get() == listMessageIds.size()) {
+                        result.handle(resultHandler);
+                    } else {
+                        result.handle(new Either.Left<>("Not every message processed"));
+                    }
+                }
+            });
+        }
+    }
+
+
+    /**
+     * Delete an email from trash
+     * @param messageID Message ID
+     * @param user User
+     * @param result result handler
+     */
+    private void deleteMessage(String messageID, UserInfos user,
+                                     Handler<Either<String,JsonObject>> result) {
+        JsonObject actionReq = new JsonObject()
+                .put(MSG_ID, messageID)
+                .put(OPERATION, OP_DELETE)
+                .put(MSG_CONSTRAINTS, MSG_CON_TRASH);
+
+        JsonObject convActionRequest = new JsonObject()
+                .put("name", "MsgActionRequest")
+                .put("content", new JsonObject()
+                        .put("action", actionReq)
+                        .put("_jsns", NAMESPACE_MAIL));
+
+        soapService.callUserSoapAPI(convActionRequest, user, response -> {
+            if(response.isLeft()) {
+                result.handle(response);
+            } else {
+                result.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
+    }
+
 }
