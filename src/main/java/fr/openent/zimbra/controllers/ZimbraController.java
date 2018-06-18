@@ -20,6 +20,7 @@
 package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.FrontConstants;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.filters.VisiblesFilter;
 
@@ -547,18 +548,66 @@ public class ZimbraController extends BaseController {
 
 	}
 
-	//Move messages into a folder
+	/**
+	 * Move messages into a folder.
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                folder id
+	 *                Body :
+	 *                	[
+	 *                		{"id" : "idmessage"},
+	 *                		{"id" : "idmessage"},
+	 *                		{"id" : "idmessage"},
+	 *                	]
+	 */
 	@Put("move/userfolder/:folderId")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void move(final HttpServerRequest request) {
-
+		final String folderId = request.params().get("folderId");
+		final List<String> messageIds = request.params().getAll("id");
+		if(messageIds == null || messageIds.size() == 0){
+			badRequest(request);
+			return;
+		}
+		UserUtils.getUserInfos(eb, request, user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			messageService.moveMessagesToFolder(messageIds, folderId, user, defaultResponseHandler(request));
+		});
 	}
 
-	//Move messages into a system folder
+	/**
+	 * Move messages into a system folder (restore emails to inbox).
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                folder id
+	 *                Body :
+	 *                	[
+	 *                		{"id" : "idmessage"},
+	 *                		{"id" : "idmessage"},
+	 *                		{"id" : "idmessage"},
+	 *                	]
+	 */
 	@Put("move/root")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void rootMove(final HttpServerRequest request) {
-
+		final List<String> messageIds = request.params().getAll("id");
+		if(messageIds == null || messageIds.size() == 0){
+			badRequest(request);
+			return;
+		}
+		UserUtils.getUserInfos(eb, request, user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_INBOX, user,
+					defaultResponseHandler(request));
+		});
 	}
 
 	/**
@@ -566,7 +615,7 @@ public class ZimbraController extends BaseController {
 	 * In case of success, return empty Json Object.
 	 * @param request http request containing info
 	 *                Users infos
-	 *                folder id
+	 *                "folderId" : "folder Id"
 	 */
 	@Put("folder/trash/:folderId")
 	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)

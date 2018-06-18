@@ -351,7 +351,7 @@ public class FolderService {
         soapService.callUserSoapAPI(getFolderRequest, user, handler);
     }
 
-    private String getZimbraFolderId(String frontFolderId) {
+    String getZimbraFolderId(String frontFolderId) {
         String folderId = frontFolderId;
         // fixme front is not consistent with case
         switch (folderId.toUpperCase()) {

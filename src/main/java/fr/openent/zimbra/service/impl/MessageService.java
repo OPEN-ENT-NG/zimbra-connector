@@ -9,6 +9,9 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.user.UserInfos;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static fr.openent.zimbra.helper.ZimbraConstants.*;
 
 public class MessageService {
@@ -409,8 +412,8 @@ public class MessageService {
     public void emptyTrash(UserInfos user,
                            Handler<Either<String,JsonObject>> handler) {
         JsonObject actionReq = new JsonObject()
-                .put("id", "3")
-                .put("op", "empty")
+                .put(MSG_ID, FOLDER_TRASH_ID)
+                .put(OPERATION, OP_EMPTY)
                 .put("recursive", "true");
 
         JsonObject folderActionRequest = new JsonObject()
@@ -651,6 +654,66 @@ public class MessageService {
         JsonObject resultJson = new JsonObject();
         AttachmentService.processAttachments(resultJson, allAttachments);
         handler.handle(new Either.Right<>(resultJson));
+    }
+
+
+    /**
+     * Move emails to Folder
+     * @param listMessageIds Messages ID list selected
+     * @param folderId Folder ID destination
+     * @param user User infos
+     * @param result Empty JsonObject returned, no process needed
+     */
+    public void moveMessagesToFolder(List<String> listMessageIds, String folderId, UserInfos user,
+                             Handler<Either<String, JsonObject>> result) {
+
+        final AtomicInteger processedIds = new AtomicInteger(listMessageIds.size());
+        final AtomicInteger successMessages = new AtomicInteger(0);
+        String zimbraFolderId = folderService.getZimbraFolderId(folderId);
+        for(String messageID : listMessageIds) {
+            moveMessageToFolder(messageID, zimbraFolderId, user, resultHandler -> {
+                if(resultHandler.isRight()) {
+                    successMessages.incrementAndGet();
+                }
+                if(processedIds.decrementAndGet() == 0) {
+                    if(successMessages.get() == listMessageIds.size()) {
+                        result.handle(resultHandler);
+                    } else {
+                        result.handle(new Either.Left<>("Not every message processed"));
+                    }
+                }
+            });
+        }
+    }
+
+
+    /**
+     * Move an email to Folder
+     * @param messageID Message ID
+     * @param folderId Folder ID destination
+     * @param user User
+     * @param result result handler
+     */
+    private void moveMessageToFolder(String messageID, String folderId, UserInfos user,
+                                     Handler<Either<String,JsonObject>> result) {
+        JsonObject actionReq = new JsonObject()
+                .put(MSG_ID, messageID)
+                .put(MSG_LOCATION, folderId)
+                .put(OPERATION, OP_MOVE);
+
+        JsonObject convActionRequest = new JsonObject()
+                .put("name", "MsgActionRequest")
+                .put("content", new JsonObject()
+                        .put("action", actionReq)
+                        .put("_jsns", NAMESPACE_MAIL));
+
+        soapService.callUserSoapAPI(convActionRequest, user, response -> {
+            if(response.isLeft()) {
+                result.handle(response);
+            } else {
+                result.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
     }
 
 }

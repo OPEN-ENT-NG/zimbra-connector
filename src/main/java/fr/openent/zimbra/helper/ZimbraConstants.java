@@ -16,6 +16,8 @@ public class ZimbraConstants {
     public static final String OP_RENAME = "rename";
     public static final String OP_MOVE = "move";
     public static final String OP_DELETE = "delete";
+    public static final String OP_EMPTY = "empty";
+    public static final String OPERATION = "op";
 
 
     public static final String GETFOLDER_UNREAD = "u";
