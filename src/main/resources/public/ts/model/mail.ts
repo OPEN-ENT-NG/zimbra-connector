@@ -266,6 +266,7 @@ export class Mail implements Selectable {
             var data: any = { subject: this.subject, body: this.body };
             data.to = _.pluck(this.to, 'id');
             data.cc = _.pluck(this.cc, 'id');
+            data.attachments = this.attachments;
 
             var path = '/zimbra/draft';
             if (this.id) {
@@ -285,6 +286,7 @@ export class Mail implements Selectable {
         var data: any = { subject: this.subject, body: this.body };
         data.to = _.pluck(this.to, 'id');
         data.cc = _.pluck(this.cc, 'id');
+        data.attachments = this.attachments;
         if (data.to.indexOf(model.me.userId) !== -1) {
             Zimbra.instance.folders['inbox'].nbUnread++;
         }
@@ -389,13 +391,8 @@ export class Mail implements Selectable {
             const attachmentObj = new Attachment(targetAttachment);
             this.loadingAttachments.push(attachmentObj)
 
-            const formData = new FormData()
-            formData.append('file', attachmentObj.file)
-
-            //const promise = http.post("message/" + this.id + "/attachment", formData, {
-            //todo: modify headers
             const promise = http.post("message/" + this.id + "/attachment", attachmentObj.file, {
-                headers: {'Content-Type': 'image/jpeg','Content-Disposition': 'attachment; filename="wallpapers.jpg"'},
+                headers: {'Content-Disposition': 'attachment; filename="' + attachmentObj.file.name + '"'},
                 onUploadProgress: (e: ProgressEvent) => {
                     if (e.lengthComputable) {
                         var percentage = Math.round((e.loaded * 100) / e.total);
@@ -404,13 +401,9 @@ export class Mail implements Selectable {
                     }
                 }
             })
-            .then(response => {
+            .then(async response => {
                 this.loadingAttachments.splice(this.loadingAttachments.indexOf(attachmentObj), 1);
-                attachmentObj.id = response.data.id;
-                attachmentObj.filename = attachmentObj.file.name;
-                attachmentObj.size = attachmentObj.file.size;
-                attachmentObj.contentType = attachmentObj.file.type;
-                this.attachments.push(attachmentObj);
+                this.attachments = response.data.attachments;
                 quota.refresh();
                 $scope.$apply();
             })
@@ -428,7 +421,8 @@ export class Mail implements Selectable {
 
     async deleteAttachment(attachment) {
         this.attachments.splice(this.attachments.indexOf(attachment), 1);
-        await http.delete("message/" + this.id + "/attachment/" + attachment.id);
+        const response = await http.delete("message/" + this.id + "/attachment/" + attachment.id);
+        this.attachments = response.data.attachments;
         quota.refresh();
     }
 }

@@ -79,8 +79,8 @@ public class ZimbraController extends BaseController {
         SoapZimbraService soapService = new SoapZimbraService(vertx, config);
 		this.userService = new UserService(soapService, sqlService);
 		this.folderService = new FolderService(soapService);
-		this.attachmentService = new AttachmentService(soapService, vertx, config);
 		this.messageService = new MessageService(soapService, folderService, sqlService, userService);
+		this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
 
 		soapService.setUserService(userService);
 	}
@@ -167,9 +167,9 @@ public class ZimbraController extends BaseController {
         final String messageId = request.params().get("id");
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
-					bodyToJson(request, message -> {
-						messageService.sendMessage(messageId, message, user, defaultResponseHandler(request));
-					});
+					bodyToJson(request, message ->
+						messageService.sendMessage(messageId, message, user, defaultResponseHandler(request))
+					);
 				} else {
 					unauthorized(request);
 				}
@@ -356,7 +356,14 @@ public class ZimbraController extends BaseController {
 	 *      "user_display_name",
 	 *     ],
 	 *     "date" : datesent,
-	 *     "unread" : boolean_unread
+	 *     "unread" : boolean_unread,
+     *     "attachments" : [{
+     *       "id" : "attachment_id",
+     *       "filename" : "attachment_filename",
+     *       "contentType" : "attachment_type",
+     *       "size" : "attachment_size"
+     *      },
+     *      ]
 	 *
 	 * }
 	 * @param request http request containing info
@@ -631,7 +638,6 @@ public class ZimbraController extends BaseController {
 	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void postAttachment(final HttpServerRequest request){
 		final String messageId = request.params().get("id");
-		//final JsonObject uploaded = new JsonObject();
 
 		UserUtils.getUserInfos(eb, request, user -> {
 			if (user == null) {
@@ -678,9 +684,21 @@ public class ZimbraController extends BaseController {
 
 	//Delete an attachment
 	@Delete("message/:id/attachment/:attachmentId")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void deleteAttachment(final HttpServerRequest request){
-
+		final String messageId = request.params().get("id");
+		final String attachmentId = request.params().get("attachmentId");
+		if(messageId == null || messageId.isEmpty() || attachmentId == null || attachmentId.isEmpty()) {
+			notFound(request, "invalid.file.id");
+			return;
+		}
+		UserUtils.getUserInfos(eb, request, user -> {
+			if (user == null) {
+				unauthorized(request);
+				return;
+			}
+			attachmentService.removeAttachment(messageId, attachmentId, user, defaultResponseHandler(request));
+		});
 	}
 
 	@Put("message/:id/forward/:forwardedId")

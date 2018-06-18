@@ -346,7 +346,7 @@ public class FolderService {
                 .put("content", new JsonObject()
                         .put("depth", 0)
                         .put("folder", folderReq)
-                        .put("_jsns", "urn:zimbraMail"));
+                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(getFolderRequest, user, handler);
     }

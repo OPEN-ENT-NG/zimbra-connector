@@ -145,6 +145,7 @@
                 </a>
                 <i class="close"
                    ng-click="deleteAttachment($event, attachment, state.newItem)"
+                   ng-disabled="(state.newItem.loadingAttachments && state.newItem.loadingAttachments.length > 0)"
                    tooltip="remove.attachment">
                 </i>
             </li>

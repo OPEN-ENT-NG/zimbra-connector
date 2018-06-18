@@ -63,7 +63,7 @@ public class MessageService {
                             .put("recip", "2")
                             .put("limit", Zimbra.MAIL_LIST_LIMIT)
                             .put("offset", page * Zimbra.MAIL_LIST_LIMIT)
-                            .put("_jsns", "urn:zimbraMail");
+                            .put("_jsns", NAMESPACE_MAIL);
 
                     JsonObject searchRequest = new JsonObject()
                             .put("name", "SearchRequest")
@@ -201,6 +201,7 @@ public class MessageService {
      * Process recursively every multipart
      * @param msgFront Front JsonObject
      * @param multiparts Array of multipart structure
+     * @param attachments final array of attachments
      */
     private void processMessageMultipart(JsonObject msgFront, JsonArray multiparts, JsonArray attachments) {
         for(Object obj : multiparts) {
@@ -323,6 +324,7 @@ public class MessageService {
 
     /**
      * Get a specific message content and metadata
+     * and process it for Front
      * @param messageId Id of message to get
      * @param user User infos
      * @param handler Final handler
@@ -367,7 +369,14 @@ public class MessageService {
      *      "user_display_name",
      *     ],
      *     "date" : datesent,
-     *     "unread" : boolean_unread
+     *     "unread" : boolean_unread,
+     *     "attachments" : [{
+     *      "id" : "attachment_id",
+     *      "filename" : "attachment_filename",
+     *      "contentType" : "attachment_type",
+     *      "size" : "attachment_size"
+     *     },
+     *     ]
      *
      * }
      * @param response Zimbra API Response
@@ -443,7 +452,7 @@ public class MessageService {
     public void sendMessage(String messageId, JsonObject frontMessage, UserInfos user,
                             Handler<Either<String, JsonObject>> result) {
 
-        transformMessageFrontToZimbra(frontMessage, mailContent -> {
+        transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
             if(messageId != null && !messageId.isEmpty()) {
                 mailContent.put(MSG_ID, messageId);
                 mailContent.put(MSG_DRAFT_ID, messageId);
@@ -511,37 +520,53 @@ public class MessageService {
     public void saveDraft(JsonObject frontMessage, UserInfos user, String messageId,
                           Handler<Either<String, JsonObject>> result) {
 
-        transformMessageFrontToZimbra(frontMessage, mailContent -> {
+        transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
             if(messageId != null && !messageId.isEmpty()) {
                 mailContent.put(MSG_ID, messageId);
             }
-            JsonObject saveDraftRequest = new JsonObject()
-                    .put("name", "SaveDraftRequest")
-                    .put("content", new JsonObject()
-                            .put("_jsns", NAMESPACE_MAIL)
-                            .put(MSG, mailContent));
-
-            soapService.callUserSoapAPI(saveDraftRequest, user, response -> {
-                if(response.isLeft()) {
-                    result.handle(response);
-                } else {
-                    processSaveDraft(response.right().getValue(), result);
-                }
-            });
+            execSaveDraft(mailContent, user, result);
         });
+    }
+
+    private void execSaveDraft(JsonObject mailContent, UserInfos user, Handler<Either<String, JsonObject>> result) {
+        execSaveDraftRaw(mailContent, user, response -> {
+            if(response.isLeft()) {
+                result.handle(response);
+            } else {
+                processSaveDraft(response.right().getValue(), result);
+            }
+        });
+    }
+
+    /**
+     * Save draft without response processing
+     * @param mailContent Mail Content
+     * @param user User Infos
+     * @param handler processing handler
+     */
+    void execSaveDraftRaw(JsonObject mailContent, UserInfos user, Handler<Either<String, JsonObject>> handler) {
+        JsonObject saveDraftRequest = new JsonObject()
+                .put("name", "SaveDraftRequest")
+                .put("content", new JsonObject()
+                        .put("_jsns", NAMESPACE_MAIL)
+                        .put(MSG, mailContent));
+
+        soapService.callUserSoapAPI(saveDraftRequest, user, handler);
     }
 
     /**
      * Transform a front message in Zimbra format.
      * Get mail addresses instead of user ids
      * @param frontMessage Front message
+     * @param messageId Message Id
      * @param handler result handler
      */
-    private void transformMessageFrontToZimbra(JsonObject frontMessage, Handler<JsonObject> handler) {
+    void transformMessageFrontToZimbra(JsonObject frontMessage, String messageId, Handler<JsonObject> handler) {
         JsonArray toFront = frontMessage.getJsonArray("to");
         JsonArray ccFront = frontMessage.getJsonArray("cc");
         String bodyFront = frontMessage.getString("body");
         String subjectFront = frontMessage.getString("subject");
+        JsonArray attsFront = frontMessage.getJsonArray("attachments");
         JsonArray mailContacts = new JsonArray();
         userService.getUsersAddresses(toFront, toResult -> {
             addRecipientToList(mailContacts, toFront, toResult, ADDR_TYPE_TO);
@@ -553,6 +578,17 @@ public class MessageService {
                                 .put("content", new JsonObject()
                                         .put("_content", bodyFront))
                                 .put(MULTIPART_CONTENT_TYPE, "text/html"));
+                JsonArray attsZimbra = new JsonArray();
+                if(messageId != null && !messageId.isEmpty() && !attsFront.isEmpty()) {
+                    for(Object o : attsFront) {
+                        if(!(o instanceof JsonObject)) continue;
+                        JsonObject attFront = (JsonObject) o;
+                        JsonObject attZimbra = new JsonObject();
+                        attZimbra.put(MULTIPART_PART_ID, attFront.getString("id"));
+                        attZimbra.put(MULTIPART_MSG_ID, messageId);
+                        attsZimbra.add(attZimbra);
+                    }
+                }
 
                 JsonObject mailContent = new JsonObject()
                         .put(MSG_EMAILS, mailContacts)
@@ -563,6 +599,10 @@ public class MessageService {
                                 .put(MULTIPART_CONTENT_TYPE, "multipart/alternative")
                                 .put(MSG_MULTIPART, mailMessages)
                         );
+                if(!attsZimbra.isEmpty()) {
+                    JsonObject atts = new JsonObject().put(MSG_MULTIPART, attsZimbra);
+                    mailContent.put(MSG_NEW_ATTACHMENTS, atts);
+                }
                 handler.handle(mailContent);
             });
         });
@@ -593,6 +633,24 @@ public class MessageService {
         } catch (NullPointerException e) {
             handler.handle(new Either.Left<>("Error when reading response"));
         }
+    }
+
+    /**
+     * Process save draft to forward response to Front
+     * @param zimbraResponse Zimbra API response
+     * @param handler final handler
+     */
+    void processSaveDraftFull(JsonObject zimbraResponse, Handler<Either<String, JsonObject>> handler) {
+        JsonObject msgDraftedContent = zimbraResponse
+                .getJsonObject("Body")
+                .getJsonObject("SaveDraftResponse")
+                .getJsonArray(MSG).getJsonObject(0);
+        JsonArray multiparts = msgDraftedContent.getJsonArray(MSG_MULTIPART, new JsonArray());
+        JsonArray allAttachments = new JsonArray();
+        processMessageMultipart(new JsonObject(), multiparts, allAttachments);
+        JsonObject resultJson = new JsonObject();
+        AttachmentService.processAttachments(resultJson, allAttachments);
+        handler.handle(new Either.Right<>(resultJson));
     }
 
 }

@@ -1,14 +1,12 @@
 package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.HttpClientHelper;
-import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Utils;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
-import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.streams.Pump;
@@ -24,16 +22,20 @@ import static fr.openent.zimbra.helper.ZimbraConstants.*;
 public class AttachmentService {
 
     private SoapZimbraService soapService;
+    private MessageService messageService;
     private Vertx vertx;
-    private HttpClient httpClient = null;
     private static Logger log = LoggerFactory.getLogger(AttachmentService.class);
-    private String zimbraUrlAttachment;
+    private final String zimbraUrlAttachment;
+    private final String zimbraUrlUpload;
 
-    public AttachmentService( SoapZimbraService soapService, Vertx vertx, JsonObject config) {
+    public AttachmentService( SoapZimbraService soapService, MessageService messageService,
+                              Vertx vertx, JsonObject config) {
         String zimbraUri = config.getString("zimbra-uri", "");
         this.zimbraUrlAttachment = zimbraUri + "/service/home/~/?auth=co";
+        this.zimbraUrlUpload = zimbraUri + "/service/upload?fmt=extended,raw";
         this.vertx = vertx;
         this.soapService = soapService;
+        this.messageService = messageService;
     }
 
     /**
@@ -51,7 +53,7 @@ public class AttachmentService {
     public void getAttachment(String messageId, String attachmentPartId, UserInfos user, Boolean inline,
                               HttpServerRequest frontRequest, Handler<Either<String,JsonObject>> handler) {
 
-        String disp = inline ? ZimbraConstants.DISPLAY_INLINE : ZimbraConstants.DISPLAY_ATTACHMENT;
+        String disp = inline ? DISPLAY_INLINE : DISPLAY_ATTACHMENT;
         String urlAttachment = zimbraUrlAttachment + "&id=" + messageId + "&part="
                 + attachmentPartId + "&disp=" + disp;
 
@@ -100,93 +102,118 @@ public class AttachmentService {
     }
 
     /**
-     * Create response handler for zimbra api requests
-     * @param handler final response handler
-     * @return default handler
+     * Add attachment to a mail.
+     * Pump data from frontRequest to Zimbra, then update existing draft with attachment.
+     * Send back new draft content to front
+     * @param messageId Message Id
+     * @param user User Infos
+     * @param requestFront Request from front with attachment data
+     * @param handler Final handler
      */
-    private Handler<HttpClientResponse> uploadRequestHandler(final String messageId,
-                                                             final UserInfos user,
-                                                             final Handler<Either<String,JsonObject>> handler) {
-        return response -> {
-            if(response.statusCode() == 200) {
-                response.bodyHandler( body -> {
-                    String newModifiedBody = body.toString();
-                    newModifiedBody = newModifiedBody.replace("\n", "")
-                                     .replace("'", "\"");
-                    String finalBody = "[" + newModifiedBody + "]";
-                    JsonArray result;
-                    try {
-                        result = new JsonArray(finalBody);
-                        String attachmentIdUploaded = result.getJsonArray(2).getJsonObject(0).getString("aid");
-                        updateDraft(messageId, attachmentIdUploaded, user, handler);
-                    } catch (DecodeException e) {
-                        handler.handle(new Either.Left<>("Error when decoding Zimbra upload response"));
-                    }
-                });
-            } else {
-                handler.handle(new Either.Left<>(response.statusMessage()));
-            }
-        };
-    }
-
     public void addAttachment(String messageId,
                               UserInfos user,
                               HttpServerRequest requestFront,
-                              Handler<Either<String, JsonObject>> result) {
+                              Handler<Either<String, JsonObject>> handler) {
+        soapService.getUserAuthToken(user, authTokenResponse -> {
+            if(authTokenResponse.isLeft()) {
+                handler.handle(authTokenResponse);
+                return;
+            }
+            String authToken = authTokenResponse.right().getValue().getString("authToken");
+            HttpClient httpClient = HttpClientHelper.createHttpClient(vertx);
 
-        if(httpClient == null) {
-            httpClient = HttpClientHelper.createHttpClient(vertx);
-        }
+            String cdHeader = Utils.getOrElse(requestFront.getHeader("Content-Disposition"), "attachment");
+            HttpClientRequest requestZimbra;
+            requestZimbra = httpClient.postAbs(zimbraUrlUpload, response -> {
+                if(response.statusCode() == 200) {
+                    response.bodyHandler( body -> {
+                        String aid = body.toString().replaceAll("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$", "$1");
+                        updateDraft(messageId, aid, user, handler);
+                    });
+                } else {
+                    handler.handle(new Either.Left<>(response.statusMessage()));
+                }
+            });
+            requestZimbra.setChunked(true)
+                    .putHeader("Content-Disposition", cdHeader)
+                    .putHeader("Cookie","ZM_AUTH_TOKEN=" + authToken);
 
-        // todo: Modifier URL et headers en conséquences
-        String finalUrl = "https://mailcrif.preprod-ent.fr/service/upload?fmt=extended,raw";
-        HttpClientRequest requestZimbra;
-        Handler<HttpClientResponse> handlerRequest = uploadRequestHandler(messageId, user, result);
-        requestZimbra = httpClient.postAbs(finalUrl, handlerRequest);
-        requestZimbra.setChunked(true)
-                .putHeader("Content-Disposition","attachment; filename=\"4469407-sand-wallpapers.jpg\"")
-                .putHeader("Cookie","ZM_AUTH_TOKEN=0_442580d7125a944940c17d13ab5620d3569a602f_69643d33363a61656532343466312d613332372d343934652d396631642d3661386231636438303834323b6578703d31333a313532383437313838383839333b76763d313a323b747970653d363a7a696d6272613b753d313a613b7469643d31303a313730393430303939303b76657273696f6e3d31343a382e372e31315f47415f313835343b");
-
-        // Pump the http request to the write stream
-        Pump pump = Pump.pump(requestFront, requestZimbra);
-
-        requestFront.endHandler(event -> {
-                //log.info("Sending zimbra request with " + pump.numberPumped() + "bytes");
-                requestZimbra.end();
+            pumpRequests(httpClient, requestFront, requestZimbra);
         });
-        requestZimbra.exceptionHandler(event -> {
-                log.info("Error on the zimbra request: " + event);
+
+    }
+
+    /**
+     * Remove an attachment from an existing draft or message
+     * Get existing message, remove attachment from list
+     * Then save draft again
+     * @param messageId Message Id
+     * @param attachmentId Part Id of the attachment
+     * @param user User Infos
+     * @param result final handler
+     */
+    public void removeAttachment(String messageId, String attachmentId, UserInfos user,
+                                 Handler<Either<String, JsonObject>> result) {
+        messageService.getMessage(messageId, user, response -> {
+            if (response.isLeft()) {
+                result.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                JsonObject msgOrig = response.right().getValue();
+                JsonArray attachsOrig = msgOrig.getJsonArray("attachments", new JsonArray());
+                int i = 0;
+                while (i < attachsOrig.size()) {
+                    if(attachmentId.equals(attachsOrig.getJsonObject(i).getString("id"))) {
+                        break;
+                    }
+                    i++;
+                }
+                if(i < attachsOrig.size()) {
+                    attachsOrig.remove(i);
+                }
+                messageService.transformMessageFrontToZimbra(msgOrig, messageId, mailContent -> {
+                    mailContent.put(MSG_ID, messageId);
+                    messageService.execSaveDraftRaw(mailContent, user, responseSave -> {
+                        if (responseSave.isLeft()) {
+                            result.handle(new Either.Left<>(responseSave.left().getValue()));
+                        } else {
+                            messageService.processSaveDraftFull(responseSave.right().getValue(), result);
+                        }
+                    });
+                });
+            }
         });
-
-        pump.start();
-
-    };
+    }
 
 
     /**
-     * Update Draft
-     * @param idMessage ID Email
-     * @param idAttachment ID Email attachment
+     * Update Draft with a new attachment
+     * @param messageId Message Id
+     * @param uploadAttchId New attachment upload Id
+     * @param user User Infos
      * @param result result handler
      */
-    //todo : Correct bug ReWriting existing email without getting data before ...
-    public void updateDraft(String idMessage, String idAttachment, UserInfos user,
+    private void updateDraft(String messageId, String uploadAttchId, UserInfos user,
                             Handler<Either<String, JsonObject>> result) {
 
-        JsonObject saveDraftRequest = new JsonObject()
-                .put("name", "SaveDraftRequest")
-                .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_MAIL)
-                        .put("m", new JsonObject()
-                                .put("id", idMessage)
-                                .put("attach", new JsonObject()
-                                        .put("aid", idAttachment))));
-
-        soapService.callUserSoapAPI(saveDraftRequest, user, response -> {
-            if(response.isLeft()) {
+        messageService.getMessage(messageId, user, response -> {
+            if (response.isLeft()) {
                 result.handle(new Either.Left<>(response.left().getValue()));
             } else {
-                result.handle(new Either.Right<>(new JsonObject().put("id",idAttachment)));
+                JsonObject msgOrig = response.right().getValue();
+
+                messageService.transformMessageFrontToZimbra(msgOrig, messageId, mailContent -> {
+                    mailContent.put(MSG_ID, messageId);
+                    JsonObject attachs = mailContent.getJsonObject(MSG_NEW_ATTACHMENTS, new JsonObject());
+                    attachs.put(MSG_NEW_UPLOAD_ID, uploadAttchId);
+                    mailContent.put(MSG_NEW_ATTACHMENTS, attachs);
+                    messageService.execSaveDraftRaw(mailContent, user, responseSave -> {
+                        if (responseSave.isLeft()) {
+                            result.handle(new Either.Left<>(responseSave.left().getValue()));
+                        } else {
+                            messageService.processSaveDraftFull(responseSave.right().getValue(), result);
+                        }
+                    });
+                });
             }
         });
     }
@@ -208,7 +235,7 @@ public class AttachmentService {
                         zimbraAtt.getString(MULTIPART_PART_ID)));
                 frontAtt.put("contentType", zimbraAtt.getString(MULTIPART_CONTENT_TYPE));
                 frontAtt.put("size", zimbraAtt.getLong(MULTIPART_SIZE));
-                msgFront.put("attachments", msgFront.getJsonArray("attachments").add(frontAtt));
+                msgFront.put("attachments", msgFront.getJsonArray("attachments", new JsonArray()).add(frontAtt));
             } else if(MULTIPART_INLINE.equals(zimbraAtt.getString(MULTIPART_CONTENT_DISPLAY))
                     && zimbraAtt.containsKey(MULTIPART_CONTENT_INLINE)) {
                 String msgId = msgFront.getString("id");

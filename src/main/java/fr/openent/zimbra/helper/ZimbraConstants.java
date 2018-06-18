@@ -37,10 +37,15 @@ public class ZimbraConstants {
     public static final String MULTIPART_CONTENT_INLINE = "ci";
     public static final String MULTIPART_PART_ID = "part";
     public static final String MULTIPART_FILENAME = "filename";
+    public static final String MULTIPART_MSG_ID = "mid";
     public static final String MULTIPART_SIZE = "s";
 
     public static final String MULTIPART_INLINE = "inline";
     public static final String MULTIPART_ATTACHMENT = "attachment";
+
+    public static final String MSG_NEW_ATTACHMENTS = "attach";
+    public static final String MSG_NEW_UPLOAD_ID = "aid";
+
 
 
 
