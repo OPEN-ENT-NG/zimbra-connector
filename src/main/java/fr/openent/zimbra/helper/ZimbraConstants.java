@@ -96,5 +96,24 @@ public class ZimbraConstants {
     public static final String DISPLAY_INLINE = "i";
     public static final String DISPLAY_ATTACHMENT = "a";
 
+    // Error codes can be found in /opt/zimbra/docs/soap.txt
+    public static final String ERROR_GENERIC = "service.FAILURE";
+    public static final String ERROR_BADREQUEST = "service.INVALID_REQUEST";
+    public static final String ERROR_UNKNOWNREQ = "service.UNKNOWN_DOCUMENT";
+    public static final String ERROR_PARSEERROR = "service.PARSE_ERROR";
+    public static final String ERROR_PERMDENIED = "service.PERM_DENIED";
+    public static final String ERROR_AUTHREQUIRED = "service.AUTH_REQUIRED";
+    public static final String ERROR_AUTHEXPIRED = "service.AUTH_EXPIRED";
+    public static final String ERROR_WRONGHOST = "service.WRONG_HOST";
+    public static final String ERROR_PROXYERROR = "service.PROXY_ERROR";
+    public static final String ERROR_TOOMANYHOPS = "service.TOO_MANY_HOPS";
+    public static final String ERROR_INTERRUPTED = "service.INTERRUPTED";
+    public static final String ERROR_NOTINPROGRESS = "service.NOT_IN_PROGRESS";
+    public static final String ERROR_ALREADYINPROGRESS = "service.ALREADY_IN_PROGRESS";
+    public static final String ERROR_NOSPELLCHECKURL = "service.NO_SPELL_CHECK_URL";
+    public static final String ERROR_UNREACHABLE = "service.RESOURCE_UNREACHABLE";
+    public static final String ERROR_TEMP_UNVAVAILABLE = "service.TEMPORARILY_UNAVAILABLE";
+    public static final String ERROR_NONREADONLY_OPDENIED = "service.NON_READONLY_OPERATION_DENIED";
+
 
 }
