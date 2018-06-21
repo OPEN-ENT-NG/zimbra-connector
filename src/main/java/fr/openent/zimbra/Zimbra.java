@@ -19,6 +19,7 @@
 
 package fr.openent.zimbra;
 
+import fr.openent.zimbra.controllers.SynchroController;
 import org.entcore.common.http.BaseServer;
 import fr.openent.zimbra.controllers.ZimbraController;
 
@@ -36,6 +37,7 @@ public class Zimbra extends BaseServer {
 
 		Zimbra.domain = config.getString("zimbra-domain", "");
 		addController(new ZimbraController());
+		addController(new SynchroController());
 	}
 
 }
