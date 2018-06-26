@@ -70,7 +70,7 @@ public class UserService {
      * @param user Connected user
      * @param handler result handler
      */
-    private void getUserInfo(UserInfos user,
+    public void getUserInfo(UserInfos user,
                              Handler<Either<String, JsonObject>> handler) {
         JsonObject getInfoRequest = new JsonObject()
                 .put("name", "GetInfoRequest")
@@ -105,6 +105,7 @@ public class UserService {
 
         UserInfoService.processQuota(getInfoResp, frontData);
         UserInfoService.processAliases(getInfoResp, frontData);
+        UserInfoService.processSignaturePref(getInfoResp, frontData);
 
         sqlService.updateUsers(new JsonArray().add(frontData.getJsonObject(UserInfoService.ALIAS)),
                                 sqlResponse -> {
@@ -300,6 +301,5 @@ public class UserService {
             });
         }
     }
-
 
 }

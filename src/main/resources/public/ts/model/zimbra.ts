@@ -62,7 +62,9 @@ export class Zimbra {
 
     async getPreference() {
         try{
-            let response = await http.get('/userbook/preference/zimbra')
+            //TODO:QMER has been modified
+            //let response = await http.get('/userbook/preference/zimbra')
+            let response = await http.get('/zimbra/signature')
             if(response.data.preference)
                 this.preference = JSON.parse(response.data.preference)
         }
@@ -72,6 +74,8 @@ export class Zimbra {
     }
 
     async putPreference() {
-        await http.put('/userbook/preference/zimbra', this.preference);
+        //TODO:QMER has been modified
+        //await http.put('/userbook/preference/zimbra', this.preference);
+        await http.put('/zimbra/signature', this.preference);
     }
 }

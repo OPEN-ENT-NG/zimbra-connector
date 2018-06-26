@@ -67,6 +67,7 @@ public class ZimbraController extends BaseController {
 	private FolderService folderService;
 	private AttachmentService attachmentService;
 	private MessageService messageService;
+	private SignatureService signatureService;
 	private SqlZimbraService sqlService;
 	private SynchroUserService synchroUserService;
 
@@ -82,6 +83,7 @@ public class ZimbraController extends BaseController {
 		this.synchroUserService = new SynchroUserService(soapService);
 		this.userService = new UserService(soapService, synchroUserService, sqlService);
 		this.folderService = new FolderService(soapService);
+		this.signatureService = new SignatureService(userService, soapService);
 		this.messageService = new MessageService(soapService, folderService, sqlService, userService);
 		this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
 
@@ -866,6 +868,77 @@ public class ZimbraController extends BaseController {
 			}
 			userService.getQuota(user, defaultResponseHandler(request));
 		});
+	}
+
+	/**
+	 * Get user signature
+	 * @param request http request containing info
+	 *                 Users infos
+	 * In case of success, return Json Object :
+	 * {
+	 * 	    "preference" : {
+	 * 	        "useSignature": boolean,
+	 * 	        "signature": signature Body
+	 * 	    },
+	 * 	    "id" : signatureID,
+	 * 	    "zimbraENTSignatureExists" : boolean
+	 * }
+	 */
+	@Get("signature")
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	public void getSignatureUser(final HttpServerRequest request) {
+		UserUtils.getUserInfos(eb, request,  user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			signatureService.getSignature(user, defaultResponseHandler(request));
+		});
+	}
+
+	/**
+	 * Edit a user signature
+	 * In case of success, return a Json Object :
+	 * {
+	 * 	    "preference" : {
+	 * 	        "useSignature": boolean,
+	 * 	        "signature": signatureBody
+	 * 	    },
+	 * 	    "id" : signatureID
+	 * }
+	 * @param request http request containing info
+	 *                Users infos
+	 */
+	@Put("signature")
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	public void putSignatureUser(final HttpServerRequest request) {
+		UserUtils.getUserInfos(eb, request,  user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			RequestUtils.bodyToJson(request, body -> {
+				final String signatureBody = body.getString("signature", null);
+				final Boolean useSignature = body.getBoolean("useSignature");
+
+				if(signatureBody == null || signatureBody.trim().length() == 0){
+					badRequest(request);
+					return;
+				}
+				signatureService.getSignature(user, resp -> {
+					if (resp.isRight()) {
+						Boolean signatureExists = resp.right().getValue().getBoolean("zimbraENTSignatureExists");
+						if (signatureExists) {
+							signatureService.modifySignature(user, signatureBody, useSignature, defaultResponseHandler(request));
+						}
+						else {
+							signatureService.createSignature(user, signatureBody, useSignature, defaultResponseHandler(request));
+						}
+					}
+				});
+			});
+		});
+
 	}
 
 }

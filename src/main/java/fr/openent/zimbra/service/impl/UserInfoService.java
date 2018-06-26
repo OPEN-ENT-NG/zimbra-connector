@@ -8,6 +8,7 @@ class UserInfoService {
 
     static final String QUOTA = "quota";
     static final String ALIAS = "alias";
+    static final String SIGN_PREF = "signature";
 
     /**
      * Process quota information from Zimbra GetInfoResponse
@@ -66,6 +67,38 @@ class UserInfoService {
                     .put("aliases", aliases));
         } catch (NullPointerException|ClassCastException e) {
             data.remove(ALIAS);
+        }
+    }
+
+    /**
+     * Process signature preference information from Zimbra GetInfoResponse
+     * Add Json to data :
+     * {
+     *     "name" : user mail address from Zimbra,
+     *     "aliases" : name
+     * }
+     * @param getInfoResponse Zimbra GetInfoResponse Json object
+     * @param data JsonObject where result must be added under "quota" entry
+     */
+    static void processSignaturePref(JsonObject getInfoResponse, JsonObject data) {
+        try {
+
+            JsonObject attrs = getInfoResponse.getJsonObject("prefs")
+                    .getJsonObject("_attrs");
+
+            if(attrs.containsKey("zimbraPrefDefaultSignatureId")) {
+                data.put(SIGN_PREF, new JsonObject()
+                        .put("prefered", true)
+                        .put("id", attrs.getString("zimbraPrefDefaultSignatureId")));
+            }
+            else {
+                data.put(SIGN_PREF, new JsonObject()
+                        .put("prefered", false)
+                        .put("id", ""));
+            }
+
+        } catch (NullPointerException|ClassCastException e) {
+            data.remove(SIGN_PREF);
         }
     }
 
