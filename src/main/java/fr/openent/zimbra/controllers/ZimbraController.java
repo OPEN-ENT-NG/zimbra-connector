@@ -24,6 +24,7 @@ import fr.openent.zimbra.helper.FrontConstants;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.filters.VisiblesFilter;
 
+import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
@@ -44,7 +45,6 @@ import org.entcore.common.utils.Config;
 import fr.wseduc.security.ActionType;
 import fr.wseduc.security.SecuredAction;
 
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpServerRequest;
@@ -68,6 +68,7 @@ public class ZimbraController extends BaseController {
 	private AttachmentService attachmentService;
 	private MessageService messageService;
 	private SqlZimbraService sqlService;
+	private SynchroUserService synchroUserService;
 
 
 	@Override
@@ -78,12 +79,13 @@ public class ZimbraController extends BaseController {
 
 		this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
         SoapZimbraService soapService = new SoapZimbraService(vertx, config);
-		this.userService = new UserService(soapService, sqlService);
+		this.synchroUserService = new SynchroUserService(soapService);
+		this.userService = new UserService(soapService, synchroUserService, sqlService);
 		this.folderService = new FolderService(soapService);
 		this.messageService = new MessageService(soapService, folderService, sqlService, userService);
 		this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
 
-		soapService.setUserService(userService);
+		soapService.setServices(userService, synchroUserService);
 	}
 
 	@Get("zimbra")

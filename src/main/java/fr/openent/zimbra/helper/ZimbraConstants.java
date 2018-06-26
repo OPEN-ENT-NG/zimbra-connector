@@ -115,5 +115,46 @@ public class ZimbraConstants {
     public static final String ERROR_TEMP_UNVAVAILABLE = "service.TEMPORARILY_UNAVAILABLE";
     public static final String ERROR_NONREADONLY_OPDENIED = "service.NON_READONLY_OPERATION_DENIED";
 
+    public static final String ERROR_AUTHFAILED = "account.AUTH_FAILED";
+    public static final String ERROR_CHANGEPWD = "account.CHANGE_PASSWORD";
+    public static final String ERROR_PWDLOCK = "account.PASSWORD_LOCKED";
+    public static final String ERROR_PWDTEMPLOCK = "account.PASSWORD_CHANGE_TOO_SOON";
+    public static final String ERROR_PWDRECENTUSED = "account.PASSWORD_RECENTLY_USED";
+    public static final String ERROR_INVALIDPWD = "account.INVALID_PASSWORD";
+    public static final String ERROR_INVALIDATTRNAME = "account.INVALID_ATTR_NAME";
+    public static final String ERROR_INVALIDATTRVALUE = "account.INVALID_ATTR_VALUE";
+    public static final String ERROR_MULTIPLEACCOUNTMATCHED = "account.MULTIPLE_ACCOUNTS_MATCHED";
+    public static final String ERROR_NOSUCHACCOUNT = "account.NO_SUCH_ACCOUNT";
+    public static final String ERROR_NOSUCHALIAS = "account.NO_SUCH_ALIAS";
+    public static final String ERROR_NOSUCHDOMAIN = "account.NO_SUCH_DOMAIN";
+    public static final String ERROR_NOSUCHCOS = "account.NO_SUCH_COS";
+    public static final String ERROR_NOSUCHID = "account.NO_SUCH_IDENTITY";
+    public static final String ERROR_NOSUCHSIGNATURE = "account.NO_SUCH_SIGNATURE";
+    public static final String ERROR_NOSUCHDATASRC = "account.NO_SUCH_DATA_SOURCE";
+    public static final String ERROR_NOSUCHSERVER = "account.NO_SUCH_SERVER";
+    public static final String ERROR_NOSUCHZIMLET = "account.NO_SUCH_ZIMLET";
+    public static final String ERROR_NOSUCHDLIST = "account.NO_SUCH_DISTRIBUTION_LIST";
+    public static final String ERROR_NOSUCHCALENDARRSC = "account.NO_SUCH_CALENDAR_RESOURCE";
+    public static final String ERROR_NOSUCHMEMBER = "account.NO_SUCH_MEMBER";
+    public static final String ERROR_MEMBEREXISTS = "account.MEMBER_EXISTS";
+    public static final String ERROR_ACCOUNTEXISTS = "account.ACCOUNT_EXISTS";
+    public static final String ERROR_DOMAINEXISTS = "account.DOMAIN_EXISTS";
+    public static final String ERROR_COSEXISTS = "account.COS_EXISTS";
+    public static final String ERROR_SERVEREXISTS = "account.SERVER_EXISTS";
+    public static final String ERROR_DLISTEXISTS = "account.DISTRIBUTION_LIST_EXISTS";
+    public static final String ERROR_IDEXISTS = "account.IDENTITY_EXISTS";
+    public static final String ERROR_SIGNATUREEXISTS = "account.SIGNATURE_EXISTS";
+    public static final String ERROR_DATASRCEXISTS = "account.DATA_SOURCE_EXISTS";
+    public static final String ERROR_DOMAINNOTEMPTY = "account.DOMAIN_NOT_EMPTY";
+    public static final String ERROR_MAINTENANCEMODE = "account.MAINTENANCE_MODE";
+    public static final String ERROR_ACCOUNTINACTIVE = "account.ACCOUNT_INACTIVE";
+    public static final String ERROR_TOOMANYACCOUNT = "account.TOO_MANY_ACCOUNTS";
+    public static final String ERROR_TOOMANYIDS = "account.TOO_MANY_IDENTITIES";
+    public static final String ERROR_TOOMANYSIGNATURE = "account.TOO_MANY_SIGNATURES";
+    public static final String ERROR_TOOMANYDATASRC = "account.TOO_MANY_DATA_SOURCES";
+    public static final String ERROR_TOOMANYSRCHRESULTS = "account.TOO_MANY_SEARCH_RESULTS";
+    public static final String ERROR_2FAAUTHFAILED = "account.TWO_FACTOR_AUTH_FAILED";
+    public static final String ERROR_2FASETUPFAILED = "account.TWO_FACTOR_SETUP_REQUIRED";
+
 
 }

@@ -2,6 +2,7 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ZimbraConstants;
+import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -16,10 +17,13 @@ public class UserService {
 
     private SoapZimbraService soapService;
     private SqlZimbraService sqlService;
+    private SynchroUserService synchroUserService;
     private static Logger log = LoggerFactory.getLogger(UserService.class);
 
-    public UserService(SoapZimbraService soapService, SqlZimbraService sqlService) {
+    public UserService(SoapZimbraService soapService, SynchroUserService synchroUserService,
+                       SqlZimbraService sqlService) {
         this.soapService = soapService;
+        this.synchroUserService = synchroUserService;
         this.sqlService = sqlService;
     }
 
@@ -172,7 +176,7 @@ public class UserService {
      * @param account Zimbra account name or alias
      * @param handler result handler
      */
-    private void getUserAccount(String account,
+    void getUserAccount(String account,
                              Handler<Either<String, JsonObject>> handler) {
 
         JsonObject acct = new JsonObject()
@@ -227,6 +231,7 @@ public class UserService {
      * Get a user adress
      * First query database
      * If not present, query Zimbra
+     * If not existing in Zimbra, try to create it
      * @param userId User Id
      * @param handler result handler
      */
@@ -237,7 +242,19 @@ public class UserService {
                 String account = userId + "@" + Zimbra.domain;
                 getUserAccount(account, response -> {
                     if(response.isLeft()) {
-                        handler.handle(new Either.Left<>(response.left().getValue()));
+                        JsonObject callResult = new JsonObject(response.left().getValue());
+                        if(ZimbraConstants.ERROR_NOSUCHACCOUNT
+                                .equals(callResult.getString(SoapZimbraService.ERROR_CODE, ""))) {
+                            synchroUserService.exportUser(userId, resultSync -> {
+                                if (resultSync.isLeft()) {
+                                    handler.handle(new Either.Left<>(resultSync.left().getValue()));
+                                } else {
+                                    getUserAddress(userId, handler);
+                                }
+                            });
+                        } else {
+                            handler.handle(new Either.Left<>(response.left().getValue()));
+                        }
                     } else {
                         processGetAddress(response.right().getValue(), handler);
                     }
