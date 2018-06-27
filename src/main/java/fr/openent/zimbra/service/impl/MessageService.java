@@ -60,6 +60,9 @@ public class MessageService {
                     if(unread) {
                         query += " is:unread";
                     }
+                    if(searchText != null && ! searchText.isEmpty()) {
+                        query += " " + searchText;
+                    }
                     JsonObject searchReq = new JsonObject()
                             .put("query", query)
                             .put("types", "message")
