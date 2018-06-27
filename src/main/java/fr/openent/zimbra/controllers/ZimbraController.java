@@ -35,6 +35,7 @@ import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 
 import fr.wseduc.webutils.request.RequestUtils;
+import io.vertx.core.http.HttpServer;
 import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.http.request.JsonHttpServerRequest;
 import org.entcore.common.notification.TimelineHelper;
@@ -69,7 +70,7 @@ public class ZimbraController extends BaseController {
 	private MessageService messageService;
 	private SignatureService signatureService;
 	private SqlZimbraService sqlService;
-	private SynchroUserService synchroUserService;
+	private NotificationService notificationService;
 
 
 	@Override
@@ -80,12 +81,13 @@ public class ZimbraController extends BaseController {
 
 		this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
         SoapZimbraService soapService = new SoapZimbraService(vertx, config);
-		this.synchroUserService = new SynchroUserService(soapService);
+		SynchroUserService synchroUserService = new SynchroUserService(soapService);
 		this.userService = new UserService(soapService, synchroUserService, sqlService);
 		this.folderService = new FolderService(soapService);
 		this.signatureService = new SignatureService(userService, soapService);
 		this.messageService = new MessageService(soapService, folderService, sqlService, userService);
 		this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
+		this.notificationService = new NotificationService(soapService, pathPrefix, notification);
 
 		soapService.setServices(userService, synchroUserService);
 	}
@@ -179,6 +181,26 @@ public class ZimbraController extends BaseController {
 					unauthorized(request);
 				}
 		});
+	}
+
+	@Post("notification")
+	@SecuredAction("export.structure.users.all")
+	public void sendNotification(HttpServerRequest request) {
+		RequestUtils.bodyToJson(request, body -> {
+				final String zimbraSender = body.getString("sender");
+				final String zimbraRecipient = body.getString("recipient");
+				final String messageId = body.getString("messageId");
+				final String subject = body.getString("subject");
+
+				if(zimbraSender == null || zimbraSender.isEmpty()
+						|| zimbraRecipient == null || zimbraRecipient.isEmpty()
+						|| messageId == null || messageId.isEmpty()) {
+					badRequest(request);
+				} else {
+					notificationService.sendNewMailNotification(zimbraSender, zimbraRecipient, messageId, subject,
+							defaultResponseHandler(request));
+				}
+			});
 	}
 
 	private void timelineNotification(HttpServerRequest request, JsonObject sentMessage, UserInfos user) {

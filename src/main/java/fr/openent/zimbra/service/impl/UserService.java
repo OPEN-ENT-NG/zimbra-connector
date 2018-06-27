@@ -130,7 +130,7 @@ public class UserService {
      * @param account Zimbra account name or alias
      * @param handler Result handler
      */
-    void getAliases(String account, Handler<Either<String, JsonObject>> handler) {
+    public void getAliases(String account, Handler<Either<String, JsonObject>> handler) {
 
         getUserAccount(account, response -> {
             if(response.isLeft()) {

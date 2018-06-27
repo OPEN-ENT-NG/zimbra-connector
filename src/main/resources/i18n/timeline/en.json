@@ -1,5 +1,6 @@
 {
     "timeline.conversation.sent.message": "sent you a message",
     "timeline.conversation.storage.size.alert": "Votre espace de stockage est bientôt plein.",
-    "timeline.no.subject": "no subject"
+    "timeline.no.subject": "no subject",
+    "timeline.no.sender": "Unknown sender"
 }
