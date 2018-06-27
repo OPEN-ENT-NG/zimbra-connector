@@ -744,7 +744,7 @@ public class ZimbraController extends BaseController {
 	 * {
 	 * 	    "id" : "new-zimbra-attachment-id"
 	 * }
-	 * @param request
+	 * @param request http request
 	 */
 	@Post("message/:id/attachment")
 	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
@@ -898,14 +898,7 @@ public class ZimbraController extends BaseController {
 
 	/**
 	 * Edit a user signature
-	 * In case of success, return a Json Object :
-	 * {
-	 * 	    "preference" : {
-	 * 	        "useSignature": boolean,
-	 * 	        "signature": signatureBody
-	 * 	    },
-	 * 	    "id" : signatureID
-	 * }
+	 * In case of success, return an empty Json Array
 	 * @param request http request containing info
 	 *                Users infos
 	 */

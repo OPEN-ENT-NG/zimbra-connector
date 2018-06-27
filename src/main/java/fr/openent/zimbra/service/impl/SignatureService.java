@@ -58,7 +58,8 @@ public class SignatureService {
      * @param jsonResponse Zimbra API Response
      * @param result Handler result
      */
-    private void processGetSignature(UserInfos user, JsonObject jsonResponse,
+    private void processGetSignature(UserInfos user,
+                                     JsonObject jsonResponse,
                                      Handler<Either<String, JsonObject>> result) {
         try {
             Boolean signatureENTExists = false;
@@ -120,7 +121,6 @@ public class SignatureService {
     }
 
 
-
     /**
      * Create a signature
      * @param user User
@@ -128,8 +128,10 @@ public class SignatureService {
      * @param useSignature Boolean signature usage
      * @param result result handler
      */
-    public void createSignature(UserInfos user, String signatureBody, Boolean useSignature,
-                                  Handler<Either<String,JsonObject>> result) {
+    public void createSignature(UserInfos user,
+                                String signatureBody,
+                                Boolean useSignature,
+                                Handler<Either<String,JsonObject>> result) {
 
         JsonObject signatureReq = new JsonObject()
                 .put("id", DEFAULT_SIGNATURE_ID)
@@ -148,54 +150,10 @@ public class SignatureService {
             if(response.isLeft()) {
                 result.handle(response);
             } else {
-                processCreateSignature(response.right().getValue(), signatureBody, result);
+                modifySignatureUsage(user, useSignature, result);
             }
         })  ;
     }
-
-    /**
-     * Process response from Zimbra API to create a signature
-     * In case of success, return Json Object :
-     * {
-     * 	    "preference" : {
-     * 	        "useSignature": boolean,
-     * 	        "signature": signatureBody
-     * 	    },
-     * 	    "id" : signatureID
-     * }
-     * @param jsonResponse Zimbra API Response
-     * @param signatureBody Body of the signature
-     * @param result Handler result
-     */
-    private void processCreateSignature(JsonObject jsonResponse, String signatureBody,
-                                          Handler<Either<String, JsonObject>> result) {
-        try {
-
-            String signatureName = jsonResponse.getJsonObject("Body")
-                    .getJsonObject("CreateSignatureResponse")
-                    .getJsonArray("signature").getJsonObject(0)
-                    .getString("name");
-
-            String signatureId = jsonResponse.getJsonObject("Body")
-                    .getJsonObject("CreateSignatureResponse")
-                    .getJsonArray("signature").getJsonObject(0)
-                    .getString("id");
-
-            JsonObject finalResponse = new JsonObject()
-                    .put("preference", new JsonObject()
-                           .put("useSignature", true)
-                           .put ("signature", signatureBody)
-                            .toString())
-                    .put("id", signatureId);
-
-            result.handle(new Either.Right<>(finalResponse));
-
-        } catch (NullPointerException e) {
-            result.handle(new Either.Left<>("Error when reading response create signature"));
-        }
-    }
-
-
 
     /**
      * Modify a signature
@@ -204,7 +162,9 @@ public class SignatureService {
      * @param useSignature Boolean signature usage
      * @param result result handler
      */
-    public void modifySignature(UserInfos user, String signatureBody, Boolean useSignature,
+    public void modifySignature(UserInfos user,
+                                String signatureBody,
+                                Boolean useSignature,
                                 Handler<Either<String,JsonObject>> result) {
 
         JsonObject signatureReq = new JsonObject()
@@ -224,41 +184,9 @@ public class SignatureService {
             if(response.isLeft()) {
                 result.handle(response);
             } else {
-                processModifySignature(response.right().getValue(), signatureBody, result);
+                modifySignatureUsage(user, useSignature, result);
             }
         });
-    }
-
-    /**
-     * Process response from Zimbra API to modify a signature
-     * In case of success, return Json Object :
-     * {
-     * 	    "preference" : {
-     * 	        "useSignature": boolean,
-     * 	        "signature": signatureBody
-     * 	    },
-     * 	    "id" : signatureID
-     * }
-     * @param jsonResponse Zimbra API Response
-     * @param signatureBody Body of the signature
-     * @param result Handler result
-     */
-    private void processModifySignature(JsonObject jsonResponse, String signatureBody,
-                                        Handler<Either<String, JsonObject>> result) {
-        try {
-
-            JsonObject finalResponse = new JsonObject()
-                    .put("preference", new JsonObject()
-                            .put("useSignature", true)
-                            .put("signature", signatureBody)
-                            .toString())
-                    .put("id", DEFAULT_SIGNATURE_ID);
-
-            result.handle(new Either.Right<>(finalResponse));
-
-        } catch (NullPointerException e) {
-            result.handle(new Either.Left<>("Error when reading response modify signature"));
-        }
     }
 
 
@@ -273,7 +201,7 @@ public class SignatureService {
      * @param handler Result handler
      */
     private void getPrefSignature(UserInfos user,
-                             Handler<Boolean> handler) {
+                                  Handler<Boolean> handler) {
         userService.getUserInfo(user, response -> {
             if(response.isLeft()) {
                 handler.handle(false);
@@ -292,10 +220,35 @@ public class SignatureService {
     }
 
 
-    //TODO : modifyAccount pour modifier les pref zimbra signature checked/uncheked signature
-    private void modifySignatureUsage(JsonObject jsonResponse, String signatureBody,
+    /**
+     * Modify the usage of the "SignatureENT"
+     * In case of success, return an empty Json Object
+     * @param user User infos
+     * @param useSignature Boolean according to check/unchecked button
+     * @param result Result handler
+     */
+    private void modifySignatureUsage(UserInfos user,
+                                      Boolean useSignature,
                                       Handler<Either<String, JsonObject>> result) {
 
+        String insertField = useSignature
+                ? "zimbraPrefDefaultSignatureId"
+                : "-zimbraPrefDefaultSignatureId";
+
+        JsonObject modifyPrefsRequest = new JsonObject()
+                .put("name", "ModifyPrefsRequest")
+                .put("content", new JsonObject()
+                        .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT)
+                        .put("_attrs", new JsonObject()
+                                .put(insertField, DEFAULT_SIGNATURE_ID)));
+
+        soapService.callUserSoapAPI(modifyPrefsRequest, user, response -> {
+            if(response.isLeft()) {
+                result.handle(response);
+            } else {
+                result.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
     }
 
 
