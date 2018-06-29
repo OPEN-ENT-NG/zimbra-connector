@@ -10,14 +10,20 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.user.UserInfos;
+import org.entcore.common.user.UserUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static fr.openent.zimbra.service.impl.Neo4jZimbraService.TYPE_GROUP;
+import static fr.openent.zimbra.service.impl.Neo4jZimbraService.TYPE_USER;
 
 public class UserService {
 
     private SoapZimbraService soapService;
     private SqlZimbraService sqlService;
     private SynchroUserService synchroUserService;
+    private Neo4jZimbraService neoService;
+    private GroupService groupService;
     private static Logger log = LoggerFactory.getLogger(UserService.class);
 
     public UserService(SoapZimbraService soapService, SynchroUserService synchroUserService,
@@ -25,6 +31,8 @@ public class UserService {
         this.soapService = soapService;
         this.synchroUserService = synchroUserService;
         this.sqlService = sqlService;
+        this.neoService = new Neo4jZimbraService();
+        this.groupService = new GroupService(soapService, sqlService);
     }
 
     /**
@@ -70,7 +78,7 @@ public class UserService {
      * @param user Connected user
      * @param handler result handler
      */
-    public void getUserInfo(UserInfos user,
+    void getUserInfo(UserInfos user,
                              Handler<Either<String, JsonObject>> handler) {
         JsonObject getInfoRequest = new JsonObject()
                 .put("name", "GetInfoRequest")
@@ -272,34 +280,74 @@ public class UserService {
     }
 
     /**
-     * Get addresses for a list of users
+     * Get addresses for a list of users or groupes
      * Return a Json Object :
      * {
      *     "userId1" : "userAddress1",
+     *     "groupId1" : "groupAddress1",
      *     "userId2" : "userAddress2",
      *     ...
      * }
      * @param idList Array with the list of Ids
      * @param handler result handler
      */
-    void getUsersAddresses(JsonArray idList, Handler<JsonObject> handler) {
+    void getMailAddresses(JsonArray idList, Handler<JsonObject> handler) {
         if(idList == null || idList.isEmpty()) {
             handler.handle(new JsonObject());
             return;
         }
-        final AtomicInteger processedIds = new AtomicInteger(idList.size());
-        JsonObject addressList = new JsonObject();
-        for(Object o : idList) {
-            String userId = (String)o;
-            getUserAddress(userId, result -> {
-                if(result.isRight()) {
-                    addressList.put(userId, result.right().getValue());
+        neoService.getIdsType(idList, neoResult -> {
+            if(neoResult.isLeft()) {
+                handler.handle(new JsonObject());
+                log.error("Could not get recipient ids from Neo4j");
+                return;
+            }
+            JsonArray idListWithTypes = neoResult.right().getValue();
+            final AtomicInteger processedIds = new AtomicInteger(idListWithTypes.size());
+            JsonObject addressList = new JsonObject();
+            for(Object o : idListWithTypes) {
+                if(!(o instanceof JsonObject)) continue;
+                JsonObject idInfos = (JsonObject)o;
+                JsonObject elemInfos = new JsonObject();
+                if(!idInfos.getString("displayName", "").isEmpty()) {
+                    elemInfos.put("displayName", idInfos.getString("displayName"));
                 }
-                if(processedIds.decrementAndGet() == 0) {
-                    handler.handle(addressList);
+                String elemId = idInfos.getString("id");
+                switch (idInfos.getString("type", "")) {
+                    case TYPE_USER:
+                        getUserAddress(elemId, result -> {
+                            if(result.isRight()) {
+                                elemInfos.put("email", result.right().getValue());
+                                addressList.put(elemId, elemInfos);
+                            }
+                            if(processedIds.decrementAndGet() == 0) {
+                                handler.handle(addressList);
+                            }
+                        });
+                        break;
+                    case TYPE_GROUP:
+                        groupService.getGroupAddress(elemId, result -> {
+                            if(result.isRight()) {
+                                elemInfos.put("email", result.right().getValue());
+                                elemInfos.put("displayName",
+                                        UserUtils.groupDisplayName(
+                                                idInfos.getString("groupName", ""),
+                                                idInfos.getString("displayName"),
+                                                Zimbra.synchroLang));
+                                addressList.put(elemId, elemInfos);
+                            }
+                            if(processedIds.decrementAndGet() == 0) {
+                                handler.handle(addressList);
+                            }
+                        });
+                        break;
+                    default:
+                        if(processedIds.decrementAndGet() == 0) {
+                            handler.handle(addressList);
+                        }
                 }
-            });
-        }
+            }
+        });
     }
 
 }

@@ -335,8 +335,8 @@ public class ZimbraController extends BaseController {
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
 				String parentMessageId = request.params().get("In-Reply-To");
-				sqlService.findVisibleRecipients(parentMessageId, user,
-						I18n.acceptLanguage(request), request.params().get("search"), defaultResponseHandler(request));
+				sqlService.findVisibleRecipients(user, I18n.acceptLanguage(request), request.params().get("search"),
+						defaultResponseHandler(request));
 			} else {
 				unauthorized(request);
 			}

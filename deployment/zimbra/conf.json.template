@@ -18,6 +18,7 @@
         "zimbra-uri" : "$zimbraUri",
         "preauth-key" : "$zimbraPreauthKey",
         "zimbra-domain" : "$zimbraDomain",
+        "zimbra-synchro-lang" : "$zimbraLang",
         "zimbra-admin-uri" : "$zimbraAdminUri",
         "admin-account" : "$zimbraAdminAccount",
         "admin-password" : "$zimbraAdminPassword",

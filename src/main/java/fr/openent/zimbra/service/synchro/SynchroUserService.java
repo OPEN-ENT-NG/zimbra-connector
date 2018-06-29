@@ -110,6 +110,15 @@ public class SynchroUserService {
                 .add(new JsonObject()
                         .put("n", "cn")
                         .put("_content", firstName + " " + lastName));
+        for(Object o : neoData.getJsonArray("groups", new JsonArray())) {
+            if(!(o instanceof JsonObject)) continue;
+            JsonObject group = (JsonObject)o;
+            if(group.containsKey("groupId")) {
+                attributes.add(new JsonObject()
+                    .put("n", "ou")
+                    .put("_content", group.getString("groupId")));
+            }
+        }
 
 
         JsonObject createAccountRequest = new JsonObject()

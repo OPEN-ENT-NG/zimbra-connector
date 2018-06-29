@@ -3,6 +3,7 @@ package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.entcore.common.user.UserInfos;
 
@@ -66,26 +67,21 @@ public class SignatureService {
             if (jsonResponse.getJsonObject("Body")
                     .getJsonObject("GetSignaturesResponse").containsKey("signature")) {
 
-                for(Object o : jsonResponse.getJsonObject("Body")
-                        .getJsonObject("GetSignaturesResponse")
-                        .getJsonArray("signature")) {
+                JsonArray signatures = jsonResponse.getJsonObject("Body")
+                        .getJsonObject("GetSignaturesResponse").getJsonArray("signature");
+
+                for(Object o : signatures) {
 
                     if(!(o instanceof JsonObject)) continue;
-                    JsonObject attr = (JsonObject)o;
-                    String name = attr.getString("name", "");
-                    String id = attr.getString("id", "");
+                    JsonObject signature = (JsonObject)o;
+                    String name = signature.getString("name", "");
 
                     if (name.equals(DEFAULT_SIGNATURE_NAME)) {
-                        String signatureBody = jsonResponse.getJsonObject("Body")
-                                .getJsonObject("GetSignaturesResponse")
-                                .getJsonArray("signature").getJsonObject(0)
+                        String signatureBody = signature
                                 .getJsonArray("content").getJsonObject(0)
                                 .getString("_content");
 
-                        String signatureId = jsonResponse.getJsonObject("Body")
-                                .getJsonObject("GetSignaturesResponse")
-                                .getJsonArray("signature").getJsonObject(0)
-                                .getString("id");
+                        String signatureId = signature.getString("id", "");
 
                         signatureENTExists = true;
 
@@ -99,7 +95,6 @@ public class SignatureService {
                                     .put("id", signatureId);
                             result.handle(new Either.Right<>(finalResponse));
                         });
-
                     }
                 }
             }

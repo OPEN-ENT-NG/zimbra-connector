@@ -15,3 +15,12 @@ CREATE TABLE zimbra.users (
 
 CREATE INDEX users_zimbra_idx ON zimbra.users (mailzimbra);
 CREATE INDEX users_neo_idx ON zimbra.users (uuidneo);
+
+CREATE TABLE zimbra.groups (
+  mailzimbra character varying(255) NOT NULL,
+  uuidneo character varying(255) NOT NULL,
+  CONSTRAINT groups_pkey PRIMARY KEY(mailzimbra, uuidneo)
+);
+
+CREATE INDEX groups_zimbra_idx ON zimbra.groups (mailzimbra);
+CREATE INDEX groups_neo_idx ON zimbra.groups (uuidneo);

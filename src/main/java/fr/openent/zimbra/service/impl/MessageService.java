@@ -1,7 +1,6 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -491,13 +490,18 @@ public class MessageService {
     private void addRecipientToList(JsonArray recipientList, JsonArray originList,
                                     JsonObject correspondance, String type) {
         for(Object o : originList) {
-            String userId = (String)o;
-            if(correspondance.containsKey(userId)) {
-                recipientList.add(new JsonObject()
+            String elemId = (String)o;
+            if(correspondance.containsKey(elemId)) {
+                JsonObject elemInfos = correspondance.getJsonObject(elemId);
+                JsonObject recipient = new JsonObject()
                         .put(MSG_EMAIL_TYPE, type)
-                        .put(MSG_EMAIL_ADDR, correspondance.getString(userId)));
+                        .put(MSG_EMAIL_ADDR, elemInfos.getString("email"));
+                if(!elemInfos.getString("displayName", "").isEmpty()) {
+                    recipient.put(MSG_EMAIL_COMMENT, elemInfos.getString("displayName", ""));
+                }
+                recipientList.add(recipient);
             } else {
-                log.error("No Zimbra correspondance for ID : " + userId);
+                log.error("No Zimbra correspondance for ID : " + elemId);
             }
         }
     }
@@ -575,9 +579,9 @@ public class MessageService {
         String subjectFront = frontMessage.getString("subject");
         JsonArray attsFront = frontMessage.getJsonArray("attachments");
         JsonArray mailContacts = new JsonArray();
-        userService.getUsersAddresses(toFront, toResult -> {
+        userService.getMailAddresses(toFront, toResult -> {
             addRecipientToList(mailContacts, toFront, toResult, ADDR_TYPE_TO);
-            userService.getUsersAddresses(ccFront, ccResult -> {
+            userService.getMailAddresses(ccFront, ccResult -> {
                 addRecipientToList(mailContacts, ccFront, ccResult, ADDR_TYPE_CC);
 
                 JsonArray mailMessages = new JsonArray()

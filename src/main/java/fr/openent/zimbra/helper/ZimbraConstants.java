@@ -98,6 +98,8 @@ public class ZimbraConstants {
     public static final String DISPLAY_INLINE = "i";
     public static final String DISPLAY_ATTACHMENT = "a";
 
+    public static final String DISTRIBUTION_LIST = "dl";
+
     // Error codes can be found in /opt/zimbra/docs/soap.txt
     public static final String ERROR_GENERIC = "service.FAILURE";
     public static final String ERROR_BADREQUEST = "service.INVALID_REQUEST";

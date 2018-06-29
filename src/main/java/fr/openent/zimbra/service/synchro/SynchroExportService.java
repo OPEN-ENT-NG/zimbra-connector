@@ -1,6 +1,5 @@
 package fr.openent.zimbra.service.synchro;
 
-import fr.openent.zimbra.service.impl.SoapZimbraService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;

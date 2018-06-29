@@ -21,6 +21,7 @@ public class SqlZimbraService {
 
 
     private final String userTable;
+    private final String groupTable;
 
     static final String USER_ZIMBRA_NAME = "mailzimbra";
     static final String USER_NEO4J_UID = "uuidneo";
@@ -29,6 +30,7 @@ public class SqlZimbraService {
         this.eb = Server.getEventBus(vertx);
         this.sql = Sql.getInstance();
         this.userTable = schema + ".users";
+        this.groupTable = schema + ".groups";
     }
 
     private String getUserNameFromMail(String mail) {
@@ -55,9 +57,28 @@ public class SqlZimbraService {
      * @param handler result handler
      */
     void getUserMailFromId(String uuid, Handler<Either<String, JsonArray>> handler) {
+        getMailFromId(uuid, userTable, handler);
+    }
+
+    /**
+     * Get group mail from uuid in database
+     * @param uuid Group uuid
+     * @param handler result handler
+     */
+    void getGroupMailFromId(String uuid, Handler<Either<String, JsonArray>> handler) {
+        getMailFromId(uuid, groupTable, handler);
+    }
+
+    /**
+     * Get mail from uuid in database
+     * @param uuid User uuid
+     * @param table table to use for correspondance
+     * @param handler result handler
+     */
+    private void getMailFromId(String uuid, String table, Handler<Either<String, JsonArray>> handler) {
 
         String query = "SELECT " + USER_ZIMBRA_NAME + " FROM "
-                + userTable + " WHERE " + USER_NEO4J_UID + " = ?";
+                + table + " WHERE " + USER_NEO4J_UID + " = ?";
         JsonArray values = new JsonArray().add(uuid);
 
         sql.prepared(query, values, SqlResult.validResultHandler(handler));
@@ -122,8 +143,8 @@ public class SqlZimbraService {
     }
 
 
-    public void findVisibleRecipients(final String parentMessageId, final UserInfos user,
-                                      final String acceptLanguage, final String search, final Handler<Either<String, JsonObject>> result) {
+    public void findVisibleRecipients(final UserInfos user, final String acceptLanguage, final String search,
+                                      final Handler<Either<String, JsonObject>> result) {
         if (validationParamsError(user, result))
             return;
 

@@ -30,12 +30,14 @@ public class Zimbra extends BaseServer {
 	public static final int MAIL_LIST_LIMIT = 25;
 	public static final String URL = "/zimbra";
 	public static String domain;
+	public static String synchroLang;
 
 	@Override
 	public void start() throws Exception {
 		super.start();
 
 		Zimbra.domain = config.getString("zimbra-domain", "");
+		Zimbra.synchroLang = config.getString("zimbra-synchro-lang", "fr");
 		addController(new ZimbraController());
 		addController(new SynchroController());
 	}
