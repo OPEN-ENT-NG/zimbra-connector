@@ -406,12 +406,14 @@ export let zimbraController = ng.controller('ZimbraController', [
             await Zimbra.instance.folders.inbox.countUnread();
             await $scope.userFolders.countUnread();
             await Zimbra.instance.folders.draft.countTotal();
+            $scope.refreshFolders();
             $scope.$apply();
         };
 
         $scope.removeSelection = async () => {
             await Zimbra.instance.currentFolder.removeSelection();
             await Zimbra.instance.currentFolder.countUnread();
+            $scope.refreshFolders();
             $scope.$apply();
         };
 
