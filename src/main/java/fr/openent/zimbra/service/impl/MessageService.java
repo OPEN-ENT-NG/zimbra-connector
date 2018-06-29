@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -777,4 +778,67 @@ public class MessageService {
         });
     }
 
+
+    /**
+     * Mark emails as unread / read
+     * @param listMessageIds Messages ID list selected
+     * @param unread boolean
+     * @param user User infos
+     * @param result Empty JsonObject returned, no process needed
+     */
+    public void toggleUnreadMessages(List<String> listMessageIds, boolean unread, UserInfos user, Handler<Either<String, JsonObject>> result) {
+
+        final AtomicInteger processedIds = new AtomicInteger(listMessageIds.size());
+        final AtomicInteger successMessages = new AtomicInteger(0);
+        for(String messageID : listMessageIds) {
+            toggleUnreadMessage(messageID, unread, user, resultHandler -> {
+                if(resultHandler.isRight()) {
+                    successMessages.incrementAndGet();
+                }
+                if(processedIds.decrementAndGet() == 0) {
+                    if(successMessages.get() == listMessageIds.size()) {
+                        result.handle(resultHandler);
+                    } else {
+                        result.handle(new Either.Left<>("Not every message processed"));
+                    }
+                }
+            });
+        }
+
+    }
+
+    /**
+     * Mark email as unread / read
+     * @param messageID Message ID
+     * @param unread boolean
+     * @param user User
+     * @param result result handler
+     */
+    private void toggleUnreadMessage(String messageID,
+                                     boolean unread,
+                                     UserInfos user,
+                                     Handler<Either<String, JsonObject>> result) {
+
+        String insertField = unread
+                ? OP_UNREAD
+                : OP_READ;
+
+        JsonObject actionReq = new JsonObject()
+                .put(MSG_ID, messageID)
+                .put(OPERATION, insertField);
+
+        JsonObject msgActionRequest = new JsonObject()
+                .put("name", "MsgActionRequest")
+                .put("content", new JsonObject()
+                        .put("action", actionReq)
+                        .put("_jsns", NAMESPACE_MAIL));
+
+        soapService.callUserSoapAPI(msgActionRequest, user, response -> {
+            if(response.isLeft()) {
+                result.handle(response);
+            } else {
+                result.handle(new Either.Right<>(new JsonObject()));
+            }
+        });
+    }
 }

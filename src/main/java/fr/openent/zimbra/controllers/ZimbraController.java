@@ -500,10 +500,37 @@ public class ZimbraController extends BaseController {
         });
 	}
 
-	//Mark messages as unread / read
+	/**
+	 * Mark messages as unread / read
+	 * In case of success, return empty Json Object.
+	 * @param request http request containing info
+	 *                Users infos
+	 *                Body :
+	 *                  id :
+	 *                	[
+	 *                		{"idmessage"},
+	 *                		{"idmessage"},
+	 *                		{"idmessage"},
+	 *                	]
+	 *                  unread : boolean
+	 */
 	@Post("toggleUnread")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void toggleUnread(final HttpServerRequest request) {
+		final List<String> ids = request.params().getAll("id");
+		final String unread = request.params().get("unread");
+
+		if (ids == null || ids.isEmpty() || unread == null || (!unread.equals("true") && !unread.equals("false"))) {
+			badRequest(request);
+			return;
+		}
+		UserUtils.getUserInfos(eb, request, user -> {
+				if (user != null) {
+					messageService.toggleUnreadMessages(ids, Boolean.valueOf(unread), user, defaultResponseHandler(request));
+				} else {
+					unauthorized(request);
+				}
+		});
 
 	}
 
