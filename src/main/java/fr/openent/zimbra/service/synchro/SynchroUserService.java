@@ -2,6 +2,7 @@ package fr.openent.zimbra.service.synchro;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.service.impl.SoapZimbraService;
+import fr.openent.zimbra.service.impl.SqlZimbraService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -15,10 +16,22 @@ public class SynchroUserService {
 
     private Neo4j neo;
     private SoapZimbraService soapService;
+    private SqlZimbraService sqlService;
 
-    public SynchroUserService(SoapZimbraService soapZimbraService){
+    public SynchroUserService(SoapZimbraService soapZimbraService, SqlZimbraService sqlService){
         this.neo = Neo4j.getInstance();
         this.soapService = soapZimbraService;
+        this.sqlService = sqlService;
+    }
+
+    /**
+     * Remove outdated user info from base
+     * @param userId User ID (potentially obsolete)
+     * @param userMail User Mail (potentially obsolete)
+     * @param handler Final handler
+     */
+    public void removeUserFromBase(String userId, String userMail, Handler<Either<String,JsonObject>> handler) {
+        sqlService.removeUserFrombase(userId, userMail, handler);
     }
 
     /**

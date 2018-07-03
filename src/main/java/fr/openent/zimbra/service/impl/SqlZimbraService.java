@@ -85,6 +85,20 @@ public class SqlZimbraService {
     }
 
     /**
+     * Remove user from base
+     * @param userId user id
+     * @param userMail user mail
+     * @param handler final handler
+     */
+    public void removeUserFrombase(String userId, String userMail, Handler<Either<String,JsonObject>> handler) {
+        String query = "DELETE FROM " + userTable
+                + " WHERE " + USER_NEO4J_UID + " = ? OR "
+                + USER_ZIMBRA_NAME + " = ?";
+        JsonArray values = new JsonArray().add(userId).add(userMail);
+        sql.prepared(query, values, SqlResult.validRowsResultHandler(handler));
+    }
+
+    /**
      * Update users mails in database if not already present
      * @param users Array of users :
      *              [

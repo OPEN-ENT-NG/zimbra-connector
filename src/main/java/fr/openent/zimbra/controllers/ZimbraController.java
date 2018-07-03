@@ -81,7 +81,7 @@ public class ZimbraController extends BaseController {
 
 		this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
         SoapZimbraService soapService = new SoapZimbraService(vertx, config);
-		SynchroUserService synchroUserService = new SynchroUserService(soapService);
+		SynchroUserService synchroUserService = new SynchroUserService(soapService, sqlService);
 		this.userService = new UserService(soapService, synchroUserService, sqlService);
 		this.folderService = new FolderService(soapService);
 		this.signatureService = new SignatureService(userService, soapService);
