@@ -963,18 +963,28 @@ public class ZimbraController extends BaseController {
 				final String signatureBody = body.getString("signature", null);
 				final Boolean useSignature = body.getBoolean("useSignature");
 
-				if(signatureBody == null || signatureBody.trim().length() == 0){
-					badRequest(request);
-					return;
-				}
 				signatureService.getSignature(user, resp -> {
 					if (resp.isRight()) {
 						Boolean signatureExists = resp.right().getValue().getBoolean("zimbraENTSignatureExists");
 						if (signatureExists) {
-							signatureService.modifySignature(user, signatureBody, useSignature, defaultResponseHandler(request));
+							if(signatureBody == null || signatureBody.trim().length() == 0){
+								signatureService.deleteSignature(user, false,
+																defaultResponseHandler(request));
+							}
+							else {
+								signatureService.modifySignature(user, signatureBody, useSignature,
+																defaultResponseHandler(request));
+							}
 						}
 						else {
-							signatureService.createSignature(user, signatureBody, useSignature, defaultResponseHandler(request));
+							if(signatureBody == null || signatureBody.trim().length() == 0){
+								badRequest(request);
+								return;
+							}
+							else {
+								signatureService.createSignature(user, signatureBody, useSignature,
+																defaultResponseHandler(request));
+							}
 						}
 					}
 				});
