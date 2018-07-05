@@ -162,28 +162,56 @@ public class SignatureService {
                                 Boolean useSignature,
                                 Handler<Either<String,JsonObject>> result) {
 
-        JsonObject signatureReq = new JsonObject()
-                .put("id", DEFAULT_SIGNATURE_ID)
-                .put("name", DEFAULT_SIGNATURE_NAME)
-                .put("content", new JsonObject()
-                        .put("type", "text/plain")
-                        .put("_content", signatureBody));
+            JsonObject signatureReq = new JsonObject()
+                    .put("id", DEFAULT_SIGNATURE_ID)
+                    .put("name", DEFAULT_SIGNATURE_NAME)
+                    .put("content", new JsonObject()
+                            .put("type", "text/plain")
+                            .put("_content", signatureBody));
 
-        JsonObject modifySignatureRequest = new JsonObject()
-                .put("name", "ModifySignatureRequest")
-                .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT)
-                        .put("signature", signatureReq));
+            JsonObject modifySignatureRequest = new JsonObject()
+                    .put("name", "ModifySignatureRequest")
+                    .put("content", new JsonObject()
+                            .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT)
+                            .put("signature", signatureReq));
 
-        soapService.callUserSoapAPI(modifySignatureRequest, user, response -> {
-            if(response.isLeft()) {
-                result.handle(response);
-            } else {
-                modifySignatureUsage(user, useSignature, result);
-            }
-        });
+            soapService.callUserSoapAPI(modifySignatureRequest, user, response -> {
+                if (response.isLeft()) {
+                    result.handle(response);
+                } else {
+                    modifySignatureUsage(user, useSignature, result);
+                }
+            });
     }
 
+    /**
+     * Delete a signature
+     * @param user User
+     * @param useSignature Boolean signature usage
+     * @param result result handler
+     */
+    public void deleteSignature(UserInfos user,
+                                Boolean useSignature,
+                                Handler<Either<String,JsonObject>> result) {
+
+            JsonObject signatureReq = new JsonObject()
+                    .put("id", DEFAULT_SIGNATURE_ID)
+                    .put("name", DEFAULT_SIGNATURE_NAME);
+
+            JsonObject deleteSignatureRequest = new JsonObject()
+                    .put("name", "DeleteSignatureRequest")
+                    .put("content", new JsonObject()
+                            .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT)
+                            .put("signature", signatureReq));
+
+            soapService.callUserSoapAPI(deleteSignatureRequest, user, response -> {
+                if (response.isLeft()) {
+                    result.handle(response);
+                } else {
+                    modifySignatureUsage(user, useSignature, result);
+                }
+            });
+    }
 
     /**
      * Process response from Zimbra API to get signature profil configuration of user logged in
