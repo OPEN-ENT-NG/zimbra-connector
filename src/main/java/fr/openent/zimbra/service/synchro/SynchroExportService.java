@@ -48,7 +48,7 @@ public class SynchroExportService {
 
         JsonArray fields = new JsonArray().add("externalId").add("lastName").add("firstName").add("login");
         fields.add("email").add("emailAcademy").add("mobile").add("deleteDate").add("functions").add("displayName");
-
+        fields.add("id").add("blocked");
 
         StringBuilder query = new StringBuilder();
 
@@ -69,8 +69,9 @@ public class SynchroExportService {
         }
         query.deleteCharAt(query.length() - 1);
         query.append(", p.name as profiles");
+        query.append(", s.UAI as UAI");
+        query.append(", not exists(u.activationCode) as isActive");
         query.append(", s.externalId as structures")
-                .append(" , CASE WHEN size(u.classes) > 0  THEN  last(collect(u.classes)) END as classes")
                 .append(" , collect({groupName:g.name, groupId:g.id}) + {groupName:pg.name, groupId:pg.id} as groups");
         neo.execute(query.toString(), params, validResultHandler(results));
     }
