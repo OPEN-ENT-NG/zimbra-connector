@@ -182,7 +182,7 @@ public class MessageService {
         String state = flags.contains(MSG_FLAG_DRAFT) ? "DRAFT" : "SENT";
         msgFront.put("state", state);
         msgFront.put("unread", flags.contains(MSG_FLAG_UNREAD));
-        msgFront.put("response", flags.contains(MSG_FLAG_REPLIED));//TODO QMER : verify sendmsgresponse : modified f : r ?
+        msgFront.put("response", flags.contains(MSG_FLAG_REPLIED));
         msgFront.put("hasAttachment", flags.contains(MSG_FLAG_HASATTACHMENT));
 
         msgFront.put("to", new JsonArray());
@@ -474,9 +474,7 @@ public class MessageService {
                 if(response.isLeft()) {
                     result.handle(response);
                 } else {
-                    JsonObject rightResponse = new JsonObject()
-                            .put("sent", 1);
-                    result.handle(new Either.Right<>(rightResponse));
+                    result.handle(new Either.Right<>(new JsonObject().put("sent", 1)));
                 }
             });
         });
