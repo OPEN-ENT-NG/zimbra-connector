@@ -49,13 +49,13 @@ public class SynchroUserService {
 
         query.append("MATCH (s:Structure)<-[:DEPENDS]-(pg:ProfileGroup)")
                 .append("-[:HAS_PROFILE]->(p:Profile)")
-                .append(", pg<-[:IN]-(u:User) ")
-                .append(", (g:Group)<-[:IN]-u ");
+                .append(", pg<-[:IN]-(u:User) ");
 
         String  filter =  "WHERE u.id = {id} ";
         JsonObject params = new JsonObject().put("id", id);
 
         query.append(filter);
+        query.append("OPTIONAL MATCH (g:Group)<-[:IN]-u ");
 
         query.append("RETURN DISTINCT ");
         for (Object field : fields) {
@@ -66,7 +66,7 @@ public class SynchroUserService {
         query.append(", p.name as profiles");
         query.append(", s.externalId as structures")
                 .append(" , CASE WHEN size(u.classes) > 0  THEN  last(collect(u.classes)) END as classes")
-                .append(" , collect({groupName:g.name, groupId:g.id}) + {groupName:pg.name, groupId:pg.id} as groups");
+                .append(" , collect(distinct {groupName:g.name, groupId:g.id}) as groups");
         neo.execute(query.toString(), params, validUniqueResultHandler(handler));
     }
 

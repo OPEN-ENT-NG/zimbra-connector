@@ -54,13 +54,13 @@ public class SynchroExportService {
 
         query.append("MATCH (s:Structure)<-[:DEPENDS]-(pg:ProfileGroup)")
             .append("-[:HAS_PROFILE]->(p:Profile)")
-            .append(", pg<-[:IN]-(u:User) ")
-            .append(", (g:Group)<-[:IN]-u ");
+            .append(", pg<-[:IN]-(u:User) ");
 
         String  filter =  "WHERE s.UAI IN {uai} ";
         JsonObject params = new JsonObject().put("uai", new fr.wseduc.webutils.collections.JsonArray(structures));
 
         query.append(filter);
+        query.append("OPTIONAL MATCH (g:Group)<-[:IN]-u ");
 
         query.append("RETURN DISTINCT ");
         for (Object field : fields) {
@@ -72,7 +72,7 @@ public class SynchroExportService {
         query.append(", s.UAI as UAI");
         query.append(", not exists(u.activationCode) as isActive");
         query.append(", s.externalId as structures")
-                .append(" , collect({groupName:g.name, groupId:g.id}) + {groupName:pg.name, groupId:pg.id} as groups");
+                .append(" , collect(distinct {groupName:g.name, groupId:g.id}) as groups");
         neo.execute(query.toString(), params, validResultHandler(results));
     }
 }
