@@ -64,7 +64,7 @@ public class SynchroUserService {
         }
         query.deleteCharAt(query.length() - 1);
         query.append(", p.name as profiles");
-        query.append(", s.externalId as structures")
+        query.append(", collect(distinct s.UAI) as structures")
                 .append(" , CASE WHEN size(u.classes) > 0  THEN  last(collect(u.classes)) END as classes")
                 .append(" , collect(distinct {groupName:g.name, groupId:g.id}) as groups");
         neo.execute(query.toString(), params, validUniqueResultHandler(handler));
