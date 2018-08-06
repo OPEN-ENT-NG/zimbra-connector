@@ -237,7 +237,7 @@ public class MessageService {
      */
     private void translateMaillistToUidlist(JsonObject frontMsg, JsonArray zimbraMails,
                                             Handler<JsonObject> handler) {
-        if(zimbraMails.isEmpty()) {
+        if(zimbraMails == null || zimbraMails.isEmpty()) {
             handler.handle(frontMsg);
             return;
         }
@@ -341,6 +341,7 @@ public class MessageService {
                 .put("html", 1)
                 .put("read", 1)
                 .put("needExp", 1)
+                .put("neuter", 0)
                 .put("id", messageId);
 
         JsonObject getMsgRequest = new JsonObject()
