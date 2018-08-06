@@ -75,9 +75,9 @@
 						<span> : </span></strong>
 
 						<span ng-repeat="receiver in receivers = (mail.to | filter: filterUsers(mail))">
-							<a ng-if="!receiver.isMe() && !receiver.isAGroup()" href="/userbook/annuaire#[[mail.map(receiver).id]]">[[receiver.displayName]]</a>
+							<a ng-if="!receiver.isMe() && !receiver.isAGroup() && !receiver.isAMail()" href="/userbook/annuaire#[[mail.map(receiver).id]]">[[receiver.displayName]]</a>
 							<span ng-if="receiver.isMe()"><i18n>me</i18n></span>
-							<span ng-if="receiver.isAGroup()">[[receiver.displayName]]</span>
+							<span ng-if="receiver.isAGroup() || receiver.isAMail()">[[receiver.displayName]]</span>
 							<span ng-if="$index !== receivers.length - 1 && receiver.displayName">,</span>
 						</span>
 					</div>
@@ -88,9 +88,9 @@
 						<span> : </span></strong>
 
 						<span ng-repeat="receiver in receivers = (mail.cc | filter: filterUsers(mail))">
-							<a ng-if="!receiver.isMe() && !receiver.isAGroup()" href="/userbook/annuaire#[[mail.map(receiver).id]]">[[receiver.displayName]]</a>
+							<a ng-if="!receiver.isMe() && !receiver.isAGroup() && !receiver.isAMail()" href="/userbook/annuaire#[[mail.map(receiver).id]]">[[receiver.displayName]]</a>
 							<span ng-if="receiver.isMe()"><i18n>me</i18n></span>
-							<span ng-if="receiver.isAGroup()">[[receiver.displayName]]</span>
+							<span ng-if="receiver.isAGroup() || receiver.isAMail()">[[receiver.displayName]]</span>
 							<span ng-if="$index !== receivers.length - 1 && receiver.displayName">,</span>
 						</span>
 					</div>
@@ -110,12 +110,12 @@
 		<div class="row block-container" ng-if="mail.attachments && mail.attachments.length > 0" ng-init="columnOrder = 'filename'">
 			<h2 class="no-margin">
 				<i18n>attachments</i18n>
-				<a data-ng-if="mail.attachments.length > 1"
+				<!-- todo <a data-ng-if="mail.attachments.length > 1"
 					class="right-magnet fade-in-hover"
 					ng-href="[['message/'+mail.id+'/allAttachments']]"
 					tooltip="download.all.attachment">
 					<i class="download-disk valid-color horizontal-spacing"></i>
-				</a>
+				</a>-->
 			</h2>
 			<hr class="line no-margin" />
 

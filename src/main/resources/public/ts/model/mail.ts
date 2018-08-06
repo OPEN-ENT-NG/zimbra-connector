@@ -263,6 +263,7 @@ export class Mail implements Selectable {
 
     async saveAsDraft(): Promise<any> {
             var that = this;
+            this.rewriteBody();
             var data: any = { subject: this.subject, body: this.body };
             data.to = _.pluck(this.to, 'id');
             data.cc = _.pluck(this.cc, 'id');
@@ -283,6 +284,7 @@ export class Mail implements Selectable {
     };
 
     async send() {
+        this.rewriteBody();
         var data: any = { subject: this.subject, body: this.body };
         data.to = _.pluck(this.to, 'id');
         data.cc = _.pluck(this.cc, 'id');
@@ -424,6 +426,13 @@ export class Mail implements Selectable {
         const response = await http.delete("message/" + this.id + "/attachment/" + attachment.id);
         this.attachments = response.data.attachments;
         quota.refresh();
+    }
+
+    rewriteBody() {
+        const regex = /<img([^>]*)\ssrc=["']\//gi;
+        const proto = window.location.protocol;
+        const host = window.location.host;
+        this.body = this.body.replace(regex, '<img $1 src="' + proto + '//' + host + '/');
     }
 }
 

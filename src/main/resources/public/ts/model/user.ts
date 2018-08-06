@@ -50,6 +50,12 @@ export class User implements Selectable {
             return false;
         return this.id.length < 36;
     }
+
+    isAMail() {
+        if (!this.id)
+            return false;
+        return this.id.includes("@");
+    }
 }
 
 export class Users {

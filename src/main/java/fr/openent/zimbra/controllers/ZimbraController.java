@@ -830,7 +830,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
-			attachmentService.getAttachment(messageId, attachmentId, user, true, request, defaultResponseHandler(request));
+			attachmentService.getAttachment(messageId, attachmentId, user, false, request, defaultResponseHandler(request));
 		});
 
 
