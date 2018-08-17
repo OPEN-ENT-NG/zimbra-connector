@@ -273,7 +273,7 @@ public class UserService {
                 if(results.size() > 1) {
                     log.warn("More than one address for user id : " + userId);
                 }
-                String mail = results.getJsonObject(0).getString(SqlZimbraService.USER_ZIMBRA_NAME);
+                String mail = results.getJsonObject(0).getString(SqlZimbraService.ZIMBRA_NAME);
                 handler.handle(new Either.Right<>(mail));
             }
         });

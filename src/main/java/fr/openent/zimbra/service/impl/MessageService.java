@@ -20,6 +20,7 @@ public class MessageService {
     private FolderService folderService;
     private SqlZimbraService sqlService;
     private UserService userService;
+    private GroupService groupService;
     private static Logger log = LoggerFactory.getLogger(MessageService.class);
 
     public MessageService(SoapZimbraService soapService, FolderService folderService,
@@ -28,6 +29,7 @@ public class MessageService {
         this.folderService = folderService;
         this.sqlService = sqlService;
         this.userService = userService;
+        this.groupService = new GroupService(soapService, sqlService);
     }
 
     /**
@@ -290,7 +292,7 @@ public class MessageService {
      * @param handler result handler
      */
     private void translateMail(String mail, Handler<String> handler) {
-        sqlService.getUserIdFromMail(mail, sqlResponse -> {
+        sqlService.getNeoIdFromMail(mail, sqlResponse -> {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
                 log.debug("no user in database for address : " + mail);
                 userService.getAliases(mail, zimbraResponse -> {
@@ -305,7 +307,7 @@ public class MessageService {
                             handler.handle(aliases.getString(0));
                         }
                     } else {
-                        handler.handle(null);
+                        handler.handle(groupService.getGroupId(mail));
                     }
                 });
             } else {
@@ -313,7 +315,7 @@ public class MessageService {
                 if(results.size() > 1) {
                     log.warn("More than one user id for address : " + mail);
                 }
-                String uuid = results.getJsonObject(0).getString(SqlZimbraService.USER_NEO4J_UID);
+                String uuid = results.getJsonObject(0).getString(SqlZimbraService.NEO4J_UID);
                 handler.handle(uuid);
             }
         });

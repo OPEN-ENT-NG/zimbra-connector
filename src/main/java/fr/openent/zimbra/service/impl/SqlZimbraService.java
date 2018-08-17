@@ -23,8 +23,8 @@ public class SqlZimbraService {
     private final String userTable;
     private final String groupTable;
 
-    static final String USER_ZIMBRA_NAME = "mailzimbra";
-    static final String USER_NEO4J_UID = "uuidneo";
+    static final String ZIMBRA_NAME = "mailzimbra";
+    static final String NEO4J_UID = "uuidneo";
 
     public SqlZimbraService(Vertx vertx, String schema) {
         this.eb = Server.getEventBus(vertx);
@@ -42,11 +42,14 @@ public class SqlZimbraService {
      * @param mail Zimbra mail
      * @param handler result handler
      */
-    void getUserIdFromMail(String mail, Handler<Either<String, JsonArray>> handler) {
+    void getNeoIdFromMail(String mail, Handler<Either<String, JsonArray>> handler) {
 
-        String query = "SELECT " + USER_NEO4J_UID + " FROM "
-                + userTable + " WHERE " + USER_ZIMBRA_NAME + " = ?";
-        JsonArray values = new JsonArray().add(mail);
+        String query = "SELECT " + NEO4J_UID + " FROM "
+                + userTable + " WHERE " + ZIMBRA_NAME + " = ? "
+                + "UNION ALL "
+                + "SELECT " + NEO4J_UID + " FROM "
+                + groupTable + " WHERE " + ZIMBRA_NAME + " = ? ";
+        JsonArray values = new JsonArray().add(mail).add(mail);
 
         sql.prepared(query, values, SqlResult.validResultHandler(handler));
     }
@@ -77,8 +80,8 @@ public class SqlZimbraService {
      */
     private void getMailFromId(String uuid, String table, Handler<Either<String, JsonArray>> handler) {
 
-        String query = "SELECT " + USER_ZIMBRA_NAME + " FROM "
-                + table + " WHERE " + USER_NEO4J_UID + " = ?";
+        String query = "SELECT " + ZIMBRA_NAME + " FROM "
+                + table + " WHERE " + NEO4J_UID + " = ?";
         JsonArray values = new JsonArray().add(uuid);
 
         sql.prepared(query, values, SqlResult.validResultHandler(handler));
@@ -92,8 +95,8 @@ public class SqlZimbraService {
      */
     public void removeUserFrombase(String userId, String userMail, Handler<Either<String,JsonObject>> handler) {
         String query = "DELETE FROM " + userTable
-                + " WHERE " + USER_NEO4J_UID + " = ? OR "
-                + USER_ZIMBRA_NAME + " = ?";
+                + " WHERE " + NEO4J_UID + " = ? OR "
+                + ZIMBRA_NAME + " = ?";
         JsonArray values = new JsonArray().add(userId).add(userMail);
         sql.prepared(query, values, SqlResult.validRowsResultHandler(handler));
     }
@@ -140,13 +143,13 @@ public class SqlZimbraService {
         query.deleteCharAt(query.length() - 1);
         query.append(") ");
         query.append("INSERT INTO ").append(userTable).append("( ")
-                .append(USER_ZIMBRA_NAME).append(", ")
-                .append(USER_NEO4J_UID).append(") ");
+                .append(ZIMBRA_NAME).append(", ")
+                .append(NEO4J_UID).append(") ");
         query.append("SELECT d.name, d.alias ");
         query.append("FROM data d ");
         query.append("WHERE NOT EXISTS (SELECT 1 FROM ").append(userTable)
-                .append(" u WHERE u.").append(USER_ZIMBRA_NAME).append(" = d.name ")
-                .append("AND u.").append(USER_NEO4J_UID).append(" = d.alias ")
+                .append(" u WHERE u.").append(ZIMBRA_NAME).append(" = d.name ")
+                .append("AND u.").append(NEO4J_UID).append(" = d.alias ")
                 .append(")");
 
         if(!atLeastOne) {

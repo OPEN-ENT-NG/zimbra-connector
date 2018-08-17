@@ -62,7 +62,7 @@ class GroupService {
                 if(results.size() > 1) {
                     log.warn("More than one address for user id : " + groupId);
                 }
-                String mail = results.getJsonObject(0).getString(SqlZimbraService.USER_ZIMBRA_NAME);
+                String mail = results.getJsonObject(0).getString(SqlZimbraService.ZIMBRA_NAME);
                 handler.handle(new Either.Right<>(mail));
             }
         });
@@ -88,5 +88,19 @@ class GroupService {
                         .put(ZimbraConstants.DISTRIBUTION_LIST, acct));
 
         soapService.callAdminSoapAPI(getInfoRequest, handler);
+    }
+
+    /**
+     * Get the id part of an group email address
+     * @param email address of the group
+     * @return id part if it's a group address, null otherwise
+     */
+    String getGroupId(String email) {
+        if(email.matches("[0-9a-z-]*@" + Zimbra.domain)) {
+            return email.substring(0, email.indexOf("@"));
+        }
+        else {
+            return null;
+        }
     }
 }
