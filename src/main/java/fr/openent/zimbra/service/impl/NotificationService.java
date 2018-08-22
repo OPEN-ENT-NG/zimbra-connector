@@ -21,11 +21,13 @@ public class NotificationService {
     private UserService userService;
 
 
-    public NotificationService(SoapZimbraService soapService, String pathPrefix, TimelineHelper timelineHelper) {
+    public NotificationService(SoapZimbraService soapService, UserService userService,
+                               String pathPrefix, TimelineHelper timelineHelper) {
         this.soapService = soapService;
         this.neo = Neo4j.getInstance();
         this.pathPrefix = pathPrefix;
         this.timelineHelper = timelineHelper;
+        this.userService = userService;
     }
 
     public void sendNewMailNotification(String zimbraSender, String zimbraRecipient, String messageId, String subject,
@@ -34,17 +36,16 @@ public class NotificationService {
                 ? subject
                 : "<span translate key=\"timeline.no.subject\"></span>";
         userService.getAliases(zimbraSender, aliasRes -> {
-            String userId = "";
-            if(aliasRes.isRight()) {
-                userId = aliasRes.right().getValue().getJsonArray("aliases").getString(0);
-            }
+            String userId = aliasRes.isRight()
+                    ? aliasRes.right().getValue().getJsonArray("aliases").getString(0).split("@")[0]
+                    : "";
             getUserInfos(userId, user -> {
-                String timelineSender = (user != null)
+                String timelineSender = (user != null && user.getUsername() != null)
                         ? user.getUsername()
                         : "<span translate key=\"timeline.no.sender\"></span>";
-                String messageUri = pathPrefix + "/conversation#/read-mail/" + messageId;
+                String messageUri = pathPrefix + "/zimbra#/read-mail/" + messageId;
                 final JsonObject params = new JsonObject()
-                        .put("uri", "/userbook/annuaire#" + zimbraSender )
+                        .put("uri", "/userbook/annuaire#" + userId )
                         .put("username", timelineSender)
                         .put("subject", timelineSubject)
                         .put("messageUri", messageUri)
@@ -53,6 +54,7 @@ public class NotificationService {
                 recipients.add(zimbraRecipient);
                 timelineHelper.notifyTimeline(null, "messagerie.send-message",
                         user, recipients, messageId, params);
+                handler.handle(new Either.Right<>(new JsonObject()));
             });
         });
     }

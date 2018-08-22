@@ -2,8 +2,8 @@
     "messagerie": "Messagerie",
     "messagerie.send-message": "Réception d'un message",
     "messagerie.storage": "Espace de stockage bientôt plein",
-    "timeline.conversation.sent.message": "vous a envoyé un message ",
-    "timeline.conversation.storage.size.alert": "Votre espace de stockage est bientôt plein.",
+    "timeline.zimbra.sent.message": "vous a envoyé un message ",
+    "timeline.zimbra.storage.size.alert": "Votre espace de stockage est bientôt plein.",
     "timeline.no.subject": "aucun objet",
     "timeline.no.sender": "Expéditeur inconnu"
 }

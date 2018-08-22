@@ -35,7 +35,6 @@ import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 
 import fr.wseduc.webutils.request.RequestUtils;
-import io.vertx.core.http.HttpServer;
 import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.http.request.JsonHttpServerRequest;
 import org.entcore.common.notification.TimelineHelper;
@@ -87,7 +86,7 @@ public class ZimbraController extends BaseController {
 		this.signatureService = new SignatureService(userService, soapService);
 		this.messageService = new MessageService(soapService, folderService, sqlService, userService);
 		this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
-		this.notificationService = new NotificationService(soapService, pathPrefix, notification);
+		this.notificationService = new NotificationService(soapService, userService, pathPrefix, notification);
 
 		soapService.setServices(userService, synchroUserService);
 	}
@@ -183,6 +182,15 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
+	/**
+	 * Create notification in timeline when receiving a mail
+	 * Return empty Json Object if successful
+	 * @param request request containing data :
+	 *                sender : mail address of the sender
+	 *                recipient : neo4j id of the recipient
+	 *                messageId : essage_id in the mailbox of recipient
+	 *                subject : message subject
+	 */
 	@Post("notification")
 	@SecuredAction("export.structure.users.all")
 	public void sendNotification(HttpServerRequest request) {
