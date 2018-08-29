@@ -7,6 +7,7 @@ import io.vertx.core.json.JsonObject;
 class UserInfoService {
 
     static final String QUOTA = "quota";
+    static final String STATUS = "status";
     static final String ALIAS = "alias";
     static final String SIGN_PREF = "signature";
 
@@ -138,6 +139,9 @@ class UserInfoService {
                 case "zimbraMailAlias":
                     JsonArray aliases = alias.getJsonArray("aliases").add(value);
                     alias.put("aliases", aliases);
+                    break;
+                case "zimbraAccountStatus":
+                    data.put(STATUS, value);
                     break;
             }
         }

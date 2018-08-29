@@ -4,7 +4,7 @@
         "main" : "fr.openent.zimbra.Zimbra",
         "port" : 8104,
         "app-name" : "Messagerie",
-    	"app-address" : "/zimbra",
+    	"app-address" : "/zimbra/zimbra",
     	"app-icon" : "Zimbra-large",
         "host": "${host}",
         "ssl" : $ssl,

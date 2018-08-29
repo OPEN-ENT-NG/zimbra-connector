@@ -100,6 +100,10 @@ public class ZimbraConstants {
 
     public static final String DISTRIBUTION_LIST = "dl";
 
+
+    public static final String ACCT_STATUS_LOCKED = "locked";
+    public static final String ACCT_STATUS_ACTIVE = "active";
+
     // Error codes can be found in /opt/zimbra/docs/soap.txt
     public static final String ERROR_GENERIC = "service.FAILURE";
     public static final String ERROR_BADREQUEST = "service.INVALID_REQUEST";

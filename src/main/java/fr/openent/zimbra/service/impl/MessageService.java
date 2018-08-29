@@ -541,7 +541,14 @@ public class MessageService {
             if(messageId != null && !messageId.isEmpty()) {
                 mailContent.put(MSG_ID, messageId);
             }
-            execSaveDraft(mailContent, user, result);
+            execSaveDraft(mailContent, user, res -> {
+                if(res.isLeft()) {
+                    log.error("Error when saving draft. User : " + user.getUserId() +
+                            " messageId : " + messageId +
+                            "error : " + res.left().getValue());
+                }
+                result.handle(res);
+            });
         });
     }
 
