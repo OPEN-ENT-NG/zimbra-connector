@@ -49,7 +49,8 @@ public class NotificationService {
                         .put("username", timelineSender)
                         .put("subject", timelineSubject)
                         .put("messageUri", messageUri)
-                        .put("resourceUri", messageUri);
+                        .put("resourceUri", messageUri)
+                        .put("disableAntiFlood", true);
                 List<String> recipients = new ArrayList<>();
                 recipients.add(zimbraRecipient);
                 timelineHelper.notifyTimeline(null, "messagerie.send-message",
