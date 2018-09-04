@@ -17,6 +17,9 @@ import io.vertx.core.json.JsonObject;
 
 import io.vertx.core.logging.Logger;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 import static fr.openent.zimbra.helper.ZimbraConstants.*;
 
 public class AttachmentService {
@@ -27,6 +30,7 @@ public class AttachmentService {
     private static Logger log = LoggerFactory.getLogger(AttachmentService.class);
     private final String zimbraUrlAttachment;
     private final String zimbraUrlUpload;
+    private final Queue<HttpClient> httpClientPool;
 
     public AttachmentService( SoapZimbraService soapService, MessageService messageService,
                               Vertx vertx, JsonObject config) {
@@ -36,6 +40,7 @@ public class AttachmentService {
         this.vertx = vertx;
         this.soapService = soapService;
         this.messageService = messageService;
+        this.httpClientPool = new LinkedList<>();
     }
 
     /**
@@ -63,7 +68,11 @@ public class AttachmentService {
                 return;
             }
             String authToken = authTokenResponse.right().getValue().getString("authToken");
-            HttpClient httpClient = HttpClientHelper.createHttpClient(vertx);
+
+            if(httpClientPool.isEmpty()) {
+                httpClientPool.add(HttpClientHelper.createHttpClient(vertx));
+            }
+            HttpClient httpClient = httpClientPool.poll();
 
             HttpClientRequest zimbraRequest = httpClient.getAbs(urlAttachment, zimbraResponse -> {
                 HttpServerResponse frontResponse = frontRequest.response();
@@ -94,9 +103,15 @@ public class AttachmentService {
      */
     private void pumpRequests(HttpClient httpClient, ReadStream<Buffer> inRequest, WriteStream<Buffer> outRequest) {
             Pump pump = Pump.pump(inRequest, outRequest);
+            outRequest.exceptionHandler( event -> {
+                log.error(event.getMessage());
+            });
+            inRequest.exceptionHandler( event -> {
+                log.error(event.getMessage());
+            });
             inRequest.endHandler(event -> {
                 outRequest.end();
-                httpClient.close();
+                httpClientPool.add(httpClient);
             });
             pump.start();
     }
