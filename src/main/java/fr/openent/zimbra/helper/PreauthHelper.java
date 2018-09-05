@@ -57,7 +57,7 @@ public class PreauthHelper {
             mac.init(bk);
             return toHex(mac.doFinal(data.getBytes()));
         } catch (NoSuchAlgorithmException|InvalidKeyException e) {
-            Logger log = LoggerFactory.getLogger(Renders.class);
+            Logger log = LoggerFactory.getLogger(PreauthHelper.class);
             log.fatal("Error when computing preauth key ", e);
             return null;
         }

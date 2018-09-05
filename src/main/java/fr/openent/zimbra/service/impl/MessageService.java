@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -24,12 +25,12 @@ public class MessageService {
     private static Logger log = LoggerFactory.getLogger(MessageService.class);
 
     public MessageService(SoapZimbraService soapService, FolderService folderService,
-                          SqlZimbraService sqlService, UserService userService) {
+                          SqlZimbraService sqlService, UserService userService, SynchroUserService synchroUserService) {
         this.soapService = soapService;
         this.folderService = folderService;
         this.sqlService = sqlService;
         this.userService = userService;
-        this.groupService = new GroupService(soapService, sqlService);
+        this.groupService = new GroupService(soapService, sqlService, synchroUserService);
     }
 
     /**

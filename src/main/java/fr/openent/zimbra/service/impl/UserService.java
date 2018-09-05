@@ -32,7 +32,7 @@ public class UserService {
         this.synchroUserService = synchroUserService;
         this.sqlService = sqlService;
         this.neoService = new Neo4jZimbraService();
-        this.groupService = new GroupService(soapService, sqlService);
+        this.groupService = new GroupService(soapService, sqlService, synchroUserService);
     }
 
     /**
@@ -130,7 +130,7 @@ public class UserService {
      * @param account Zimbra account name or alias
      * @param handler Result handler
      */
-    public void getAliases(String account, Handler<Either<String, JsonObject>> handler) {
+    void getAliases(String account, Handler<Either<String, JsonObject>> handler) {
 
         getUserAccount(account, response -> {
             if(response.isLeft()) {
@@ -205,6 +205,21 @@ public class UserService {
                 processGetAccountInfo(response.right().getValue(), handler);
             }
         });
+    }
+
+    /**
+     * Get a user account by its neo id
+     * @param userId Neo4j id of the account to get
+     * @param handler result handler
+     */
+    public void getUserAccountById(String userId,
+                                   Handler<Either<String, JsonObject>> handler) {
+        if(userId == null || userId.isEmpty()) {
+            handler.handle(new Either.Left<>("Empty userId, can't get account"));
+            return;
+        }
+        String account = userId + "@" + Zimbra.domain;
+        getUserAccount(account, handler);
     }
 
     /**

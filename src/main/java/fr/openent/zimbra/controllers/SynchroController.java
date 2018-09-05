@@ -33,11 +33,12 @@ public class SynchroController extends BaseController {
         super.init(vertx, config, rm, securedActions);
         SqlZimbraService sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
         SoapZimbraService soapService = new SoapZimbraService(vertx, config);
-        UserService userService = new UserService(soapService, synchroUserService, sqlService);
         this.synchroExportService = new SynchroExportService();
         this.synchroUserService = new SynchroUserService(soapService, sqlService);
+        UserService userService = new UserService(soapService, synchroUserService, sqlService);
 
         soapService.setServices(userService, synchroUserService);
+        synchroUserService.setUserService(userService);
     }
 
     /**

@@ -91,6 +91,7 @@ public class ZimbraConstants {
     public static final String NAMESPACE_MAIL = "urn:zimbraMail";
 
     public static final String ACCT_NAME = "name";
+    public static final String ACCT_ID = "id";
     public static final String ACCT_ATTRIBUTES = "a";
     public static final String ACCT_ATTRIBUTES_NAME = "n";
     public static final String ACCT_ATTRIBUTES_CONTENT = "_content";

@@ -84,11 +84,13 @@ public class ZimbraController extends BaseController {
 		this.userService = new UserService(soapService, synchroUserService, sqlService);
 		this.folderService = new FolderService(soapService);
 		this.signatureService = new SignatureService(userService, soapService);
-		this.messageService = new MessageService(soapService, folderService, sqlService, userService);
+		this.messageService = new MessageService(soapService, folderService,
+				sqlService, userService, synchroUserService);
 		this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
 		this.notificationService = new NotificationService(soapService, userService, pathPrefix, notification);
 
 		soapService.setServices(userService, synchroUserService);
+		synchroUserService.setUserService(userService);
 	}
 
 	@Get("zimbra")

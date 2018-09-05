@@ -4,11 +4,13 @@ import fr.openent.zimbra.helper.ZimbraConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-class UserInfoService {
+public class UserInfoService {
 
     static final String QUOTA = "quota";
     static final String STATUS = "status";
     static final String ALIAS = "alias";
+    static final String GROUPS = "groups";
+    public static final String ZIMBRA_ID = "zimbra_id";
     static final String SIGN_PREF = "signature";
 
     /**
@@ -113,7 +115,7 @@ class UserInfoService {
      * @param getAccountResponse Zimbra GetInfoResponse Json object
      * @param data JsonObject where result must be added
      */
-    static void processAccountInfo(JsonObject getAccountResponse, JsonObject data) {
+    public static void processAccountInfo(JsonObject getAccountResponse, JsonObject data) {
         JsonObject alias = new JsonObject();
         JsonObject account;
         try {
@@ -121,6 +123,9 @@ class UserInfoService {
         } catch (Exception e) {
             account = new JsonObject();
         }
+
+        data.put(ZIMBRA_ID, account.getString(ZimbraConstants.ACCT_ID, ""));
+
         alias.put("name", account.getString(ZimbraConstants.ACCT_NAME, ""));
         alias.put("aliases", new JsonArray());
 
@@ -142,6 +147,11 @@ class UserInfoService {
                     break;
                 case "zimbraAccountStatus":
                     data.put(STATUS, value);
+                    break;
+                case "ou":
+                    JsonArray groups = data.getJsonArray(GROUPS, new JsonArray());
+                    groups.add(value);
+                    data.put(GROUPS, groups);
                     break;
             }
         }

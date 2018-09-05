@@ -28,7 +28,7 @@ public class SoapZimbraService {
 
     private String preauthKey;
     private Vertx vertx;
-    private static final Logger log = LoggerFactory.getLogger(Renders.class);
+    private static final Logger log = LoggerFactory.getLogger(SoapZimbraService.class);
     private UserService userService;
     private SynchroUserService synchroUserService;
     private HttpClient httpClient = null;
