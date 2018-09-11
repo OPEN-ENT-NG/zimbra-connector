@@ -169,6 +169,8 @@ public class MessageService {
     private void transformMessageZimbraToFront(JsonObject msgZimbra, JsonObject msgFront,
                                                Handler<JsonObject> result) {
         msgFront.put("id", msgZimbra.getString(MSG_ID));
+        msgFront.put("mid", msgZimbra.getString(MSG_HEADER_ID));
+        //TODO : QMER see if possible to get mid and put in Reply-Mail-To link mid ?
         msgFront.put("date", msgZimbra.getLong(MSG_DATE));
         msgFront.put("subject", msgZimbra.getString(MSG_SUBJECT));
         String folderId = msgZimbra.getString(MSG_LOCATION);
@@ -405,7 +407,7 @@ public class MessageService {
         }
         JsonObject msgZimbra = listMessages.getJsonObject(0);
 
-        transformMessageZimbraToFront(msgZimbra, msgFront, result -> handler.handle(new Either.Right<>(msgFront)) );
+        transformMessageZimbraToFront(msgZimbra, msgFront, result -> handler.handle(new Either.Right<>(msgFront)));
     }
 
     /**
@@ -456,7 +458,7 @@ public class MessageService {
      * @param user User infos
      * @param result result handler
      */
-    public void sendMessage(String messageId, JsonObject frontMessage, UserInfos user,
+    public void sendMessage(String messageId, String parentMessageId, JsonObject frontMessage, UserInfos user,
                             Handler<Either<String, JsonObject>> result) {
 
         transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
@@ -529,15 +531,20 @@ public class MessageService {
      * @param messageId Id of existing draft to update. Null for draft creation
      * @param result result handler
      */
-    public void saveDraft(JsonObject frontMessage, UserInfos user, String messageId,
+    public void saveDraft(JsonObject frontMessage, String parentMessageId, UserInfos user, String messageId,
                           Handler<Either<String, JsonObject>> result) {
 
-        transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
-            if(messageId != null && !messageId.isEmpty()) {
-                mailContent.put(MSG_ID, messageId);
-            }
-            execSaveDraft(mailContent, user, result);
-        });
+        if (parentMessageId != null) {
+        //......? get msg mid pour mettre en irt ?
+        }
+        else {
+            transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
+                if (messageId != null && !messageId.isEmpty()) {
+                    mailContent.put(MSG_ID, messageId);
+                }
+                execSaveDraft(mailContent, user, result);
+            });
+        }
     }
 
     private void execSaveDraft(JsonObject mailContent, UserInfos user, Handler<Either<String, JsonObject>> result) {

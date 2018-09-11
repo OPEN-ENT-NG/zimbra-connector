@@ -117,8 +117,9 @@ public class ZimbraController extends BaseController {
 	public void createDraft(final HttpServerRequest request) {
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
+					final String parentMessageId = request.params().get("In-Reply-To");
 					bodyToJson(request, message ->
-						messageService.saveDraft(message, user, null, defaultResponseHandler(request))
+						messageService.saveDraft(message, parentMessageId, user, null, defaultResponseHandler(request))
 					);
 				} else {
 					unauthorized(request);
@@ -148,8 +149,10 @@ public class ZimbraController extends BaseController {
 		}
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
+					//TODO : QMER NOTHING HERE FOR PARENTMESSAGEID ?
+					final String parentMessageId = request.params().get("In-Reply-To");
 					bodyToJson(request, message ->
-						messageService.saveDraft(message, user, messageId, defaultResponseHandler(request))
+						messageService.saveDraft(message, parentMessageId, user, messageId, defaultResponseHandler(request))
 					);
 				} else {
 					unauthorized(request);
@@ -159,7 +162,10 @@ public class ZimbraController extends BaseController {
 
 	/**
 	 * Send an email
-	 * In case of success, return empty Json Object.
+	 * In case of success, return Json Object :
+	 * {
+	 * 	    "sent" : 1
+	 * }
 	 * @param request http request containing info
 	 * 	              Users infos
 	 *   	          body : message body
@@ -174,8 +180,9 @@ public class ZimbraController extends BaseController {
         final String messageId = request.params().get("id");
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
+					final String parentMessageId = request.params().get("In-Reply-To");
 					bodyToJson(request, message ->
-						messageService.sendMessage(messageId, message, user, defaultResponseHandler(request))
+						messageService.sendMessage(messageId, parentMessageId, message, user, defaultResponseHandler(request))
 					);
 				} else {
 					unauthorized(request);
