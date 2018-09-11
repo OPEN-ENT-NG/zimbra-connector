@@ -1,8 +1,8 @@
-﻿import { idiom as lang, _, model, } from 'entcore';
+﻿import { idiom as lang, _, model } from "entcore";
 
-import { Mix, Selection, Selectable, Eventer } from 'entcore-toolkit';
+import { Mix, Selection, Selectable, Eventer } from "entcore-toolkit";
 
-import http from 'axios';
+import http from "axios";
 
 export class User implements Selectable {
     displayName: string;
@@ -12,33 +12,44 @@ export class User implements Selectable {
     selected: boolean;
     isGroup: boolean;
 
-    constructor(id?: string, displayName?: string){
+    constructor(id?: string, displayName?: string) {
         this.displayName = displayName;
         this.id = id;
     }
 
     toString() {
-        return (this.displayName || '') + (this.name || '') + (this.profile ? ' (' + lang.translate(this.profile) + ')' : '')
+        return (
+            (this.displayName || "") +
+            (this.name || "") +
+            (this.profile ? " (" + lang.translate(this.profile) + ")" : "")
+        );
     }
 
     async findData(): Promise<boolean> {
         var that = this;
-        const response = await http.get('/userbook/api/person?id=' + this.id);
+        const response = await http.get("/userbook/api/person?id=" + this.id);
         const userData = response.data;
-        if (!userData.result[0]) // If group
+        if (!userData.result[0])
+            // If group
             return true;
         // If deleted ??
-        Mix.extend(this, { id: that.id, displayName: userData.result[0].displayName });
+        Mix.extend(this, {
+            id: that.id,
+            displayName: userData.result[0].displayName
+        });
 
         return true;
     }
 
     mapUser(displayNames, id) {
-        return _.map(_.filter(displayNames, function (user) {
-            return user[0] === id;
-        }), function (user) {
-            return new User(user[0], user[1]);
-        })[0];
+        return _.map(
+            _.filter(displayNames, function(user) {
+                return user[0] === id;
+            }),
+            function(user) {
+                return new User(user[0], user[1]);
+            }
+        )[0];
     }
 
     isMe() {
@@ -46,14 +57,12 @@ export class User implements Selectable {
     }
 
     isAGroup() {
-        if (!this.id)
-            return false;
+        if (!this.id) return false;
         return this.id.length < 36;
     }
 
     isAMail() {
-        if (!this.id)
-            return false;
+        if (!this.id) return false;
         return this.id.includes("@");
     }
 }
@@ -62,9 +71,9 @@ export class Users {
     eventer = new Eventer();
     searchCachedMap = {};
 
-    async sync(search: string){
+    async sync(search: string) {
         let newArr = [];
-        const response = await http.get('/zimbra/visible?search=' + search);
+        const response = await http.get("/zimbra/visible?search=" + search);
         response.data.groups.forEach(group => {
             group.isGroup = true;
             newArr.push(Mix.castAs(User, group));
@@ -74,37 +83,49 @@ export class Users {
         return newArr;
     }
 
-    async findUser (search, include, exclude): Promise<User[]> {
+    async findUser(search, include, exclude): Promise<User[]> {
         const startText = search.substr(0, 3);
-        if(!this.searchCachedMap[startText]){
+        if (!this.searchCachedMap[startText]) {
             this.searchCachedMap[startText] = await this.sync(startText);
         }
         var searchTerm = lang.removeAccents(search).toLowerCase();
         var found = _.filter(
-            this.searchCachedMap[startText].filter(function (user) {
-                var includeUser = _.findWhere(include, { id: user.id });
-                if(includeUser !== undefined)
-                    includeUser.profile = user.profile;
-                return includeUser === undefined;
-            })
-            .concat(include), function (user) {
-                var testDisplayName = '', testNameReversed = '';
+            this.searchCachedMap[startText]
+                .filter(function(user) {
+                    var includeUser = _.findWhere(include, { id: user.id });
+                    if (includeUser !== undefined)
+                        includeUser.profile = user.profile;
+                    return includeUser === undefined;
+                })
+                .concat(include),
+            function(user) {
+                var testDisplayName = "",
+                    testNameReversed = "";
                 if (user.displayName) {
-                    testDisplayName = lang.removeAccents(user.displayName).toLowerCase();
-                    testNameReversed = lang.removeAccents(user.displayName.split(' ')[1] + ' '
-                        + user.displayName.split(' ')[0]).toLowerCase();
+                    testDisplayName = lang
+                        .removeAccents(user.displayName)
+                        .toLowerCase();
+                    testNameReversed = lang
+                        .removeAccents(
+                            user.displayName.split(" ")[1] +
+                                " " +
+                                user.displayName.split(" ")[0]
+                        )
+                        .toLowerCase();
                 }
-                var testName = '';
+                var testName = "";
                 if (user.name) {
                     testName = lang.removeAccents(user.name).toLowerCase();
                 }
 
-                return testDisplayName.indexOf(searchTerm) !== -1 ||
+                return (
+                    testDisplayName.indexOf(searchTerm) !== -1 ||
                     testNameReversed.indexOf(searchTerm) !== -1 ||
-                    testName.indexOf(searchTerm) !== -1;
+                    testName.indexOf(searchTerm) !== -1
+                );
             }
         );
-        return _.reject(found, function (element) {
+        return _.reject(found, function(element) {
             return _.findWhere(exclude, { id: element.id });
         });
     }

@@ -1,10 +1,10 @@
-import { routes, ng } from 'entcore';
-import { zimbraController } from './controllers/controller';
+import { routes, ng } from "entcore";
+import { zimbraController } from "./controllers/controller";
 import { printController } from "./controllers/printController";
 import { recipientList } from "./directives/recipientList";
 import { switchSearch } from "./directives/switchSearch";
 
-routes.define(function ($routeProvider) {
+routes.define(function($routeProvider) {
     $routeProvider
         .when("/read-mail/:mailId", {
             action: "readMail"
@@ -12,15 +12,15 @@ routes.define(function ($routeProvider) {
         .when("/write-mail/:userId", {
             action: "writeMail"
         })
-        .when('/inbox', {
-            action: 'inbox'
+        .when("/inbox", {
+            action: "inbox"
         })
-        .when('/printMail/:mailId', {
-            action: 'viewPrint'
+        .when("/printMail/:mailId", {
+            action: "viewPrint"
         })
         .otherwise({
             redirectTo: "/inbox"
-        })
+        });
 });
 
 ng.controllers.push(zimbraController);

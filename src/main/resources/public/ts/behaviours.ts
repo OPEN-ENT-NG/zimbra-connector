@@ -1,30 +1,38 @@
-﻿import { Behaviours, http, notify, _ } from 'entcore';
+﻿import { Behaviours, http, notify, _ } from "entcore";
 
-Behaviours.register('zimbra', {
+Behaviours.register("zimbra", {
     rights: {
         workflow: {
-            draft: 'fr.openent.zimbra.controllers.ZimbraController|createDraft',
-            read: 'fr.openent.zimbra.controllers.ZimbraController|view'
+            draft: "fr.openent.zimbra.controllers.ZimbraController|createDraft",
+            read: "fr.openent.zimbra.controllers.ZimbraController|view"
         }
     },
     sniplets: {
         ml: {
-            title: 'sniplet.ml.title',
-            description: 'sniplet.ml.description',
+            title: "sniplet.ml.title",
+            description: "sniplet.ml.description",
             controller: {
-                init: function () {
-                    this.message = {}
+                init: function() {
+                    this.message = {};
                 },
-                initSource: function () {
+                initSource: function() {
                     this.setSnipletSource({});
                 },
-                send: function () {
-                    this.message.to = _.map(this.snipletResource.shared, function (shared) { return shared.userId || shared.groupId });
+                send: function() {
+                    this.message.to = _.map(
+                        this.snipletResource.shared,
+                        function(shared) {
+                            return shared.userId || shared.groupId;
+                        }
+                    );
                     this.message.to.push(this.snipletResource.owner.userId);
-                    http().postJson('/zimbra/send', this.message).done(function () {
-                        notify.info('ml.sent');
-                    }).e401(function () { });
-                    this.message = {}
+                    http()
+                        .postJson("/zimbra/send", this.message)
+                        .done(function() {
+                            notify.info("ml.sent");
+                        })
+                        .e401(function() {});
+                    this.message = {};
                 }
             }
         }

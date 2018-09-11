@@ -1,8 +1,8 @@
-import { ng, _ } from 'entcore';
+import { ng, _ } from "entcore";
 
-export const switchSearch = ng.directive('switchSearch', () => {
+export const switchSearch = ng.directive("switchSearch", () => {
     return {
-        restrict: 'E',
+        restrict: "E",
         transclude: true,
         template: `
             <div ng-class="{'hide-search': hide}" class="flex-row align-center justify-between search-pagination">
@@ -15,12 +15,12 @@ export const switchSearch = ng.directive('switchSearch', () => {
                 </div>
                 <ng-transclude></ng-transclude>
             </div>
-        `,        
+        `,
 
         scope: {
-            ngModel: '=',
-            ngChange: '&',
-            cancel: '&'
+            ngModel: "=",
+            ngChange: "&",
+            cancel: "&"
         },
 
         link: (scope, element, attributes) => {
@@ -32,21 +32,21 @@ export const switchSearch = ng.directive('switchSearch', () => {
                 // element.find('.cell').addClass("twelve-mobile");
                 // element.find('a').removeClass("zero-mobile");
 
-                element.find('a').removeClass("zero");
-                element.find('.cell').addClass("twelve");
-            }
+                element.find("a").removeClass("zero");
+                element.find(".cell").addClass("twelve");
+            };
 
             scope.cancelSearch = () => {
                 scope.hide = true;
                 scope.ngModel = "";
 
-                element.find('.cell').removeClass("twelve");
-                element.find('a').addClass("zero");
+                element.find(".cell").removeClass("twelve");
+                element.find("a").addClass("zero");
 
                 //element.find('.cell').removeClass("twelve-mobile");
                 //element.find('a').addClass("zero-mobile");
                 scope.cancel();
-            }
+            };
         }
     };
 });

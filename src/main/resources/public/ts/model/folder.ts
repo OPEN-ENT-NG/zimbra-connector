@@ -1,17 +1,17 @@
-﻿import { notify, toFormData, _ } from 'entcore';
-import { Zimbra } from './zimbra';
-import { Mail, Mails } from './mail';
-import { quota } from './quota';
+﻿import { notify, toFormData, _ } from "entcore";
+import { Zimbra } from "./zimbra";
+import { Mail, Mails } from "./mail";
+import { quota } from "./quota";
 
-import { Mix, Eventer, Selection, Selectable } from 'entcore-toolkit';
+import { Mix, Eventer, Selection, Selectable } from "entcore-toolkit";
 
-import http from 'axios';
+import http from "axios";
 
 export abstract class Folder implements Selectable {
     pageNumber: number;
     mails: Mails;
     nbUnread: number;
-    api: { get: string, post: string, put: string, delete: string };
+    api: { get: string; post: string; put: string; delete: string };
     eventer = new Eventer();
     selected: boolean;
     filter: boolean;
@@ -23,7 +23,12 @@ export abstract class Folder implements Selectable {
     abstract selectAll();
     abstract deselectAll();
 
-    constructor(api: { get: string, post: string, put: string, delete: string }){
+    constructor(api: {
+        get: string;
+        post: string;
+        put: string;
+        delete: string;
+    }) {
         this.api = api;
         this.filter = false;
         this.reverse = true;
@@ -32,7 +37,7 @@ export abstract class Folder implements Selectable {
 
     getName() {
         if (this instanceof SystemFolder) {
-            return this.folderName.toUpperCase();;
+            return this.folderName.toUpperCase();
         }
         if (this instanceof UserFolder) {
             return this.id;
@@ -40,37 +45,55 @@ export abstract class Folder implements Selectable {
         return "";
     }
 
-    async nextPage(select : boolean) {
+    async nextPage(select: boolean) {
         if (!this.mails.full) {
             this.pageNumber++;
-            await this.mails.sync({ pageNumber: this.pageNumber, searchText: this.searchText, emptyList: false, filterUnread: this.filter, selectAll: select });
+            await this.mails.sync({
+                pageNumber: this.pageNumber,
+                searchText: this.searchText,
+                emptyList: false,
+                filterUnread: this.filter,
+                selectAll: select
+            });
         }
     }
 
-    async search(text : string) {
+    async search(text: string) {
         this.mails.full = false;
         this.pageNumber = 0;
         this.searchText = text;
-        await this.mails.sync({ pageNumber: 0, searchText: this.searchText, emptyList: true, filterUnread: this.filter });
+        await this.mails.sync({
+            pageNumber: 0,
+            searchText: this.searchText,
+            emptyList: true,
+            filterUnread: this.filter
+        });
     }
 
-    async filterUnread(filter : boolean) {
+    async filterUnread(filter: boolean) {
         this.mails.full = false;
         this.filter = filter;
         this.pageNumber = 0;
-        await this.mails.sync({ pageNumber: this.pageNumber, searchText: this.searchText, emptyList: true, filterUnread: this.filter });
+        await this.mails.sync({
+            pageNumber: this.pageNumber,
+            searchText: this.searchText,
+            emptyList: true,
+            filterUnread: this.filter
+        });
     }
 
-    async countUnread () {
+    async countUnread() {
         var name = this.getName();
         var restrain;
         if (this instanceof SystemFolder) {
-            restrain = '';
+            restrain = "";
         }
         if (this instanceof UserFolder) {
-            restrain = '&restrain=';
+            restrain = "&restrain=";
         }
-        const response = await http.get('/zimbra/count/' + name + '?unread=true' + restrain)
+        const response = await http.get(
+            "/zimbra/count/" + name + "?unread=true" + restrain
+        );
         this.nbUnread = parseInt(response.data.count);
     }
 
@@ -88,7 +111,7 @@ export abstract class SystemFolder extends Folder {
     constructor(api) {
         super(api);
 
-        var thatFolder = this
+        var thatFolder = this;
         this.pageNumber = 0;
         this.mails = new Mails(api);
     }
@@ -98,98 +121,106 @@ export class Trash extends SystemFolder {
     userFolders: Selection<UserFolder> = new Selection<UserFolder>([]);
     constructor() {
         super({
-            get: '/zimbra/list/trash'
+            get: "/zimbra/list/trash"
         });
 
-        this.folderName = 'trash';
+        this.folderName = "trash";
     }
 
-    selectAll(){
+    selectAll() {
         this.mails.selection.selectAll();
         this.userFolders.selectAll();
     }
 
-    deselectAll(){
+    deselectAll() {
         this.mails.selection.deselectAll();
         this.userFolders.deselectAll();
     }
 
-    async sync(){
-        await this.mails.sync({searchText: this.searchText});
+    async sync() {
+        await this.mails.sync({ searchText: this.searchText });
         await this.syncUsersFolders();
     }
 
-    async syncUsersFolders(){
+    async syncUsersFolders() {
         this.userFolders.all.splice(0, this.userFolders.all.length);
-        const response = await http.get('folders/list?trash=')
-        response.data.forEach(f => this.userFolders.all.push(Mix.castAs(UserFolder, f)));
+        const response = await http.get("folders/list?trash=");
+        response.data.forEach(f =>
+            this.userFolders.all.push(Mix.castAs(UserFolder, f))
+        );
     }
 
-    async removeSelection(){
-        if(this.mails.selection.selected.length > 0) {
+    async removeSelection() {
+        if (this.mails.selection.selected.length > 0) {
             await this.removeMails();
             await this.mails.removeSelection();
         }
-        for(let folder of this.userFolders.selected){
+        for (let folder of this.userFolders.selected) {
             await folder.delete();
         }
         await quota.refresh();
     }
 
-    async restore(){
+    async restore() {
         await this.restoreMails();
-        for(let folder of this.userFolders.selected){
+        for (let folder of this.userFolders.selected) {
             await folder.restore();
         }
         await this.syncUsersFolders();
         await this.countUnread();
     }
 
-    async restoreMails () {
-        if(!this.mails.selection.length){
+    async restoreMails() {
+        if (!this.mails.selection.length) {
             return;
         }
-        await http.put('/zimbra/restore?' + toFormData({
-            id: _.pluck(this.mails.selection.selected, 'id')
-        }));
+        await http.put(
+            "/zimbra/restore?" +
+                toFormData({
+                    id: _.pluck(this.mails.selection.selected, "id")
+                })
+        );
         this.mails.removeSelection();
     }
 
-    async removeMails () {
-        const response = await http.delete('/zimbra/delete?' + toFormData({
-            id: _.pluck(this.mails.selection.selected, 'id')
-        }));
+    async removeMails() {
+        const response = await http.delete(
+            "/zimbra/delete?" +
+                toFormData({
+                    id: _.pluck(this.mails.selection.selected, "id")
+                })
+        );
         this.mails.removeSelection();
     }
 
     async removeAll() {
-        const response = await http.delete('/zimbra/emptyTrash');
+        const response = await http.delete("/zimbra/emptyTrash");
     }
 }
 
 export class Inbox extends SystemFolder {
     constructor() {
         super({
-            get: '/zimbra/list/inbox'
+            get: "/zimbra/list/inbox"
         });
 
-        this.folderName = 'inbox';
+        this.folderName = "inbox";
     }
 
-    async sync(){
-        await this.mails.sync({ searchText: this.searchText});
+    async sync() {
+        await this.mails.sync({ searchText: this.searchText });
     }
 
-    async removeSelection(){
+    async removeSelection() {
         await this.mails.toTrash();
         await quota.refresh();
     }
 
-    selectAll(){
+    selectAll() {
         this.mails.selection.selectAll();
     }
 
-    deselectAll(){
+    deselectAll() {
         this.mails.selection.deselectAll();
     }
 }
@@ -199,27 +230,27 @@ export class Draft extends SystemFolder {
 
     constructor() {
         super({
-            get: '/zimbra/list/draft'
+            get: "/zimbra/list/draft"
         });
 
-        this.folderName = 'draft';
+        this.folderName = "draft";
         this.totalNb = 0;
     }
 
-    selectAll(){
+    selectAll() {
         this.mails.selection.selectAll();
     }
 
-    deselectAll(){
+    deselectAll() {
         this.mails.selection.deselectAll();
     }
 
-    async sync(){
-        await this.mails.sync({ searchText: this.searchText});
+    async sync() {
+        await this.mails.sync({ searchText: this.searchText });
         await this.countTotal();
     }
 
-    async removeSelection(){
+    async removeSelection() {
         await this.mails.toTrash();
         await quota.refresh();
     }
@@ -228,26 +259,26 @@ export class Draft extends SystemFolder {
         var id = draft.id;
         await draft.saveAsDraft();
         this.mails.push(draft);
-        if(id == undefined && draft.id != undefined)
-            this.totalNb++;
+        if (id == undefined && draft.id != undefined) this.totalNb++;
     }
 
     async transfer(mail: Mail, newMail: Mail) {
         await this.saveDraft(newMail);
-        try{
+        try {
             await http.put("message/" + newMail.id + "/forward/" + mail.id);
             for (let attachment of mail.attachments) {
-                newMail.attachments.push(JSON.parse(JSON.stringify(attachment)))
+                newMail.attachments.push(
+                    JSON.parse(JSON.stringify(attachment))
+                );
             }
             quota.refresh();
-        }
-        catch(e){
-            notify.error(e.data.error)
+        } catch (e) {
+            notify.error(e.data.error);
         }
     }
 
-    async countTotal () {
-        const response = await http.get('/zimbra/count/DRAFT?unread=false')
+    async countTotal() {
+        const response = await http.get("/zimbra/count/DRAFT?unread=false");
         this.totalNb = parseInt(response.data.count);
     }
 }
@@ -255,25 +286,25 @@ export class Draft extends SystemFolder {
 export class Outbox extends SystemFolder {
     constructor() {
         super({
-            get: '/zimbra/list/outbox'
+            get: "/zimbra/list/outbox"
         });
 
-        this.folderName = 'outbox';
+        this.folderName = "outbox";
     }
 
-    selectAll(){
+    selectAll() {
         this.mails.selection.selectAll();
     }
 
-    deselectAll(){
+    deselectAll() {
         this.mails.selection.deselectAll();
     }
 
-    async sync(){
-        await this.mails.sync({ searchText: this.searchText});
+    async sync() {
+        await this.mails.sync({ searchText: this.searchText });
     }
 
-    async removeSelection(){
+    async removeSelection() {
         await this.mails.toTrash();
         await quota.refresh();
     }
@@ -286,19 +317,19 @@ export class UserFolder extends Folder {
     parentFolder: UserFolder;
     userFolders: Selection<UserFolder> = new Selection<UserFolder>([]);
 
-    async removeMailsFromFolder(){
-        for(let mail of this.mails.selection.selected){
+    async removeMailsFromFolder() {
+        for (let mail of this.mails.selection.selected) {
             await mail.removeFromFolder();
         }
         this.mails.removeSelection();
     }
 
-    async removeSelection(){
+    async removeSelection() {
         await this.mails.toTrash();
         await quota.refresh();
     }
 
-    async open(){
+    async open() {
         this.mails.full = false;
         this.pageNumber = 0;
         this.searchText = null;
@@ -307,24 +338,24 @@ export class UserFolder extends Folder {
         await this.sync();
     }
 
-    async sync(){
-        await this.mails.sync({ searchText: this.searchText});
+    async sync() {
+        await this.mails.sync({ searchText: this.searchText });
         await this.syncUserFolders();
     }
 
-    selectAll(){
+    selectAll() {
         this.mails.selection.selectAll();
     }
 
-    deselectAll(){
+    deselectAll() {
         this.mails.selection.deselectAll();
     }
 
-    async syncUserFolders(){
-        const response = await http.get('folders/list?parentId=' + this.id);
+    async syncUserFolders() {
+        const response = await http.get("folders/list?parentId=" + this.id);
         await this.countUnread();
         this.userFolders.all.splice(0, this.userFolders.colLength);
-        for(let f of response.data){
+        for (let f of response.data) {
             const folder: UserFolder = Mix.castAs(UserFolder, f);
             folder.parentFolder = this;
             this.userFolders.push(folder);
@@ -336,7 +367,7 @@ export class UserFolder extends Folder {
         super(data);
 
         this.mails = new Mails(this);
-        var thatFolder = this
+        var thatFolder = this;
         this.pageNumber = 0;
     }
 
@@ -349,52 +380,54 @@ export class UserFolder extends Folder {
         }
         return depth;
     }
-    
-    async create() {
-        var json = !this.parentFolderId ? {
-            name: this.name
-        } : {
-                name: this.name,
-                parentId: this.parentFolderId
-            }
 
-        return await http.post('folder', json);
+    async create() {
+        var json = !this.parentFolderId
+            ? {
+                  name: this.name
+              }
+            : {
+                  name: this.name,
+                  parentId: this.parentFolderId
+              };
+
+        return await http.post("folder", json);
     }
 
     async update() {
         var json = {
             name: this.name
-        }
-        return await http.put('folder/' + this.id, json)
+        };
+        return await http.put("folder/" + this.id, json);
     }
 
     async trash() {
-        return http.put('folder/trash/' + this.id)
+        return http.put("folder/trash/" + this.id);
     }
 
     async restore() {
-        return http.put('folder/restore/' + this.id)
+        return http.put("folder/restore/" + this.id);
     }
 
     async delete() {
-        return http.delete('folder/' + this.id)
+        return http.delete("folder/" + this.id);
     }
 }
 
-export class UserFolders{
+export class UserFolders {
     all: UserFolder[];
     selection: Selection<UserFolder>;
 
-    forEach(cb: (item: UserFolder, index: number) => void){
+    forEach(cb: (item: UserFolder, index: number) => void) {
         return this.all.forEach(cb);
     }
 
-    async sync(){
-        const response = await http.get('folders/list');
+    async sync() {
+        const response = await http.get("folders/list");
         const data = response.data;
         this.all = Mix.castArrayAs(UserFolder, data);
-        this.forEach(function (item) {
-            item.syncUserFolders()
+        this.forEach(function(item) {
+            item.syncUserFolders();
         });
     }
 
@@ -419,14 +452,14 @@ export class SystemFolders {
         this.draft = new Draft();
         this.outbox = new Outbox();
     }
-    
-    async openFolder (folderName) {
+
+    async openFolder(folderName) {
         Zimbra.instance.currentFolder = this[folderName];
         Zimbra.instance.currentFolder.searchText = null;
         Zimbra.instance.currentFolder.filter = false;
         await Zimbra.instance.currentFolder.sync();
         Zimbra.instance.currentFolder.pageNumber = 0;
         Zimbra.instance.currentFolder.mails.full = false;
-        Zimbra.instance.currentFolder.eventer.trigger('change');
+        Zimbra.instance.currentFolder.eventer.trigger("change");
     }
 }

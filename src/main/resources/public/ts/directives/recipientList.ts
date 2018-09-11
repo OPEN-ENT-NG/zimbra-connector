@@ -1,4 +1,4 @@
-import { ng, _ } from 'entcore';
+import { ng, _ } from "entcore";
 
 /**
  * @description Displays chips of items list with a search input and dropDown options. If more than
@@ -14,9 +14,9 @@ import { ng, _ } from 'entcore';
         update-found-items="<function>(search, model, founds)">
     </recipient-list>
  */
-export const recipientList = ng.directive('recipientList', () => {
+export const recipientList = ng.directive("recipientList", () => {
     return {
-        restrict: 'E',
+        restrict: "E",
         template: `
             <div class="twelve flex-row align-center" ng-click="unfoldChip()">
                 <label ng-model="ngModel" ng-change="ngChange" class="chip removable" ng-repeat="item in ngModel | limitTo : (needChipDisplay() ? 2 : ngModel.length)" ng-click="giveFocus()">
@@ -42,74 +42,82 @@ export const recipientList = ng.directive('recipientList', () => {
         `,
 
         scope: {
-            ngModel: '=',
-            ngChange: '&',
-            restriction: '=',
-            updateFoundItems: '&'
+            ngModel: "=",
+            ngChange: "&",
+            restriction: "=",
+            updateFoundItems: "&"
         },
 
         link: (scope, element, attributes) => {
             var firstFocus = true;
             var minWidth = 0;
             scope.focused = false;
-            scope.searchText = '';
+            scope.searchText = "";
             scope.itemsFound = [];
-            scope.currentReceiver = 'undefined';
+            scope.currentReceiver = "undefined";
 
-            element.find('input').on('focus', () => {
-                if (firstFocus)
-                    firstFocus = false;
+            element.find("input").on("focus", () => {
+                if (firstFocus) firstFocus = false;
                 scope.focused = true;
-                element.find('div').addClass('focus');
-                element.find('form').width(minWidth);
+                element.find("div").addClass("focus");
+                element.find("form").width(minWidth);
             });
 
-            element.find('input').on('blur', () => {
+            element.find("input").on("blur", () => {
                 scope.focused = false;
-                element.find('div').removeClass('focus');
-                setTimeout(function(){
-                    if (!scope.focused)
-                        element.find('form').width(0);
+                element.find("div").removeClass("focus");
+                setTimeout(function() {
+                    if (!scope.focused) element.find("form").width(0);
                 }, 250);
             });
 
-            element.find('input').on('keydown', function (e) {
-                if (e.keyCode === 8 && scope.searchText && scope.searchText.length === 0) { // BackSpace
+            element.find("input").on("keydown", function(e) {
+                if (
+                    e.keyCode === 8 &&
+                    scope.searchText &&
+                    scope.searchText.length === 0
+                ) {
+                    // BackSpace
                     var nb = scope.ngModel.length;
-                    if (nb > 0)
-                        scope.deleteItem(scope.ngModel[nb - 1]);
+                    if (nb > 0) scope.deleteItem(scope.ngModel[nb - 1]);
                 }
             });
 
             //prevent blur when look for more users in dropDown
-            element.parents().find('.display-more').on('click', () => {
-                if (!firstFocus) {
-                    scope.giveFocus();
-                }
-            });
-
+            element
+                .parents()
+                .find(".display-more")
+                .on("click", () => {
+                    if (!firstFocus) {
+                        scope.giveFocus();
+                    }
+                });
 
             scope.needChipDisplay = () => {
-                return !scope.focused && (typeof scope.ngModel !== 'undefined') && scope.ngModel.length > 3;
+                return (
+                    !scope.focused &&
+                    typeof scope.ngModel !== "undefined" &&
+                    scope.ngModel.length > 3
+                );
             };
 
             scope.update = (force?: boolean) => {
                 if (force) {
                     scope.doSearch();
-                }
-                else {
-                    if(scope.restriction && scope.searchText.length < 3 || scope.searchText.length < 1) {
+                } else {
+                    if (
+                        (scope.restriction && scope.searchText.length < 3) ||
+                        scope.searchText.length < 1
+                    ) {
                         scope.itemsFound.splice(0, scope.itemsFound.length);
-                    }
-                    else {
+                    } else {
                         scope.doSearch();
                     }
                 }
             };
 
             scope.giveFocus = () => {
-                if (!scope.focus)
-                    element.find('input').focus();
+                if (!scope.focus) element.find("input").focus();
             };
 
             scope.unfoldChip = () => {
@@ -118,9 +126,7 @@ export const recipientList = ng.directive('recipientList', () => {
                 }
             };
 
-
-
-            scope.addItem = (item) => {
+            scope.addItem = item => {
                 if (!scope.ngModel) {
                     scope.ngModel = [];
                 }
@@ -128,37 +134,41 @@ export const recipientList = ng.directive('recipientList', () => {
                     scope.currentReceiver = item;
                 }
                 scope.ngModel.push(scope.currentReceiver);
-                scope.$apply('ngModel');
-				scope.$eval(scope.ngChange);
+                scope.$apply("ngModel");
+                scope.$eval(scope.ngChange);
             };
 
-            scope.deleteItem = (item) => {
-                scope.ngModel = _.reject(scope.ngModel, function (i) { return i === item; });
-                scope.$apply('ngModel');
-				scope.$eval(scope.ngChange);
+            scope.deleteItem = item => {
+                scope.ngModel = _.reject(scope.ngModel, function(i) {
+                    return i === item;
+                });
+                scope.$apply("ngModel");
+                scope.$eval(scope.ngChange);
             };
 
             scope.clearSearch = () => {
                 scope.itemsFound = [];
-                scope.searchText = '';
+                scope.searchText = "";
             };
 
             scope.doSearch = () => {
-                scope.updateFoundItems({search:scope.searchText, model:scope.ngModel, founds:scope.itemsFound});
+                scope.updateFoundItems({
+                    search: scope.searchText,
+                    model: scope.ngModel,
+                    founds: scope.itemsFound
+                });
             };
 
             // Focus when items list changes
-            scope.$watchCollection('ngModel', function(newValue){
+            scope.$watchCollection("ngModel", function(newValue) {
                 if (!firstFocus) {
                     scope.giveFocus();
                 }
             });
 
-
-
             // Make the input width be the label help infos width
-            setTimeout(function(){
-                minWidth = element.find('form label').width();
+            setTimeout(function() {
+                minWidth = element.find("form label").width();
             }, 0);
         }
     };

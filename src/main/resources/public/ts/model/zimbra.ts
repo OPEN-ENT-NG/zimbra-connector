@@ -15,15 +15,29 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-import { idiom as lang, model, Model, notify, Collection, _, moment } from 'entcore';
+import {
+    idiom as lang,
+    model,
+    Model,
+    notify,
+    Collection,
+    _,
+    moment
+} from "entcore";
 
-import { Folder, UserFolder, UserFolders, SystemFolder, SystemFolders } from './folder';
-import { User, Users } from './user';
-import { quota } from './quota';
+import {
+    Folder,
+    UserFolder,
+    UserFolders,
+    SystemFolder,
+    SystemFolders
+} from "./folder";
+import { User, Users } from "./user";
+import { quota } from "./quota";
 
-import { Eventer } from 'entcore-toolkit';
+import { Eventer } from "entcore-toolkit";
 
-import http from 'axios';
+import http from "axios";
 
 export class Zimbra {
     folders: SystemFolders;
@@ -33,11 +47,11 @@ export class Zimbra {
     currentFolder: Folder;
     maxFolderDepth: number;
     eventer = new Eventer();
-    preference = {useSignature: false, signature: ""};
+    preference = { useSignature: false, signature: "" };
 
     static _instance: Zimbra;
-    static get instance(): Zimbra{
-        if(!this._instance){
+    static get instance(): Zimbra {
+        if (!this._instance) {
             this._instance = new Zimbra();
         }
         return this._instance;
@@ -52,26 +66,25 @@ export class Zimbra {
     }
 
     async sync() {
-        let response = await http.get('max-depth')
-        this.maxFolderDepth = parseInt(response.data['max-depth']);
-        this.eventer.trigger('change');
+        let response = await http.get("max-depth");
+        this.maxFolderDepth = parseInt(response.data["max-depth"]);
+        this.eventer.trigger("change");
         await this.getPreference();
         await this.userFolders.sync();
         await quota.refresh();
     }
 
     async getPreference() {
-        try{
-            let response = await http.get('/zimbra/signature')
-            if(response.data.preference)
-                this.preference = JSON.parse(response.data.preference)
-        }
-        catch(e){
+        try {
+            let response = await http.get("/zimbra/signature");
+            if (response.data.preference)
+                this.preference = JSON.parse(response.data.preference);
+        } catch (e) {
             notify.error(e.response.data.error);
         }
     }
 
     async putPreference() {
-        await http.put('/zimbra/signature', this.preference);
+        await http.put("/zimbra/signature", this.preference);
     }
 }

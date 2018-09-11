@@ -1,25 +1,26 @@
-import { ng, template } from 'entcore';
-import { Mail } from '../model';
+import { ng, template } from "entcore";
+import { Mail } from "../model";
 
-export let printController = ng.controller('PrintController', [
-    '$scope', 'route', 'model',
-    function ($scope, route, model, ) {
+export let printController = ng.controller("PrintController", [
+    "$scope",
+    "route",
+    "model",
+    function($scope, route, model) {
         route({
-            viewPrint: async function(params){
+            viewPrint: async function(params) {
                 $scope.mail = new Mail(params.mailId);
 
-                try{
+                try {
                     await $scope.mail.open(true);
                     $scope.$apply();
-                    setTimeout(function(){
+                    setTimeout(function() {
                         window.print();
-                    }, 1000)
-                }
-                catch(e){
+                    }, 1000);
+                } catch (e) {
                     console.log(e);
-                    template.open('page', 'errors/e404');
+                    template.open("page", "errors/e404");
                 }
             }
-        })
+        });
     }
 ]);
