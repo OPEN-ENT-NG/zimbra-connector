@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.FrontConstants;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
@@ -533,14 +534,25 @@ public class MessageService {
      * }
      * @param user User infos
      * @param messageId Id of existing draft to update. Null for draft creation
+     * @param parentMessageId Id of the message being replied-to. Null if original message.
+     * @param replyType Type of reply ((r)eply, (f)orward or null, already checked by controller)
      * @param result result handler
      */
-    public void saveDraft(JsonObject frontMessage, UserInfos user, String messageId,
-                          Handler<Either<String, JsonObject>> result) {
+    public void saveDraft(JsonObject frontMessage, UserInfos user, String messageId, String parentMessageId,
+                          String replyType, Handler<Either<String, JsonObject>> result) {
 
         transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
             if(messageId != null && !messageId.isEmpty()) {
                 mailContent.put(MSG_ID, messageId);
+            }
+            if(parentMessageId != null && !parentMessageId.isEmpty()) {
+                mailContent.put(MSG_ORIGINAL_ID, parentMessageId);
+            }
+            if(replyType != null) {
+                mailContent.put(MSG_REPLYTYPE,
+                        FrontConstants.REPLYTYPE_REPLY.equalsIgnoreCase(replyType)
+                        ? MSG_RT_REPLY
+                        : MSG_RT_FORWARD);
             }
             execSaveDraft(mailContent, user, res -> {
                 if(res.isLeft()) {

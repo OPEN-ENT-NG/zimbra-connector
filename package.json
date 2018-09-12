@@ -37,6 +37,7 @@
     "yargs": "^8.0.2"
   },
   "devDependencies": {
-    "@types/jquery": "^2.0.34"
+    "@types/jquery": "^2.0.34",
+    "prettier": "^1.14.2"
   }
 }

@@ -13,6 +13,8 @@ import fr.wseduc.webutils.request.RequestUtils;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.vertx.java.core.http.RouteMatcher;
 
 import java.util.List;
@@ -26,6 +28,7 @@ public class SynchroController extends BaseController {
 
     private SynchroExportService synchroExportService;
     private SynchroUserService synchroUserService;
+    private static final Logger log = LoggerFactory.getLogger(SynchroController.class);
 
     @Override
     public void init(Vertx vertx, JsonObject config, RouteMatcher rm,

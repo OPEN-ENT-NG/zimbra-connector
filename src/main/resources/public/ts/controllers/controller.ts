@@ -329,6 +329,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             template.open("main", "mail-actions/write-mail");
             const mail = $scope.state.newItem as Mail;
             mail.parentConversation = $scope.mail;
+            mail.replyType = "F";
             await mail.setMailContent(
                 $scope.mail,
                 "transfer",

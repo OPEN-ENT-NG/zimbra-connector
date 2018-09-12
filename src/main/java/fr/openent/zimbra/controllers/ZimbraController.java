@@ -30,11 +30,14 @@ import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
+import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 
 import fr.wseduc.webutils.request.RequestUtils;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.http.request.JsonHttpServerRequest;
 import org.entcore.common.notification.TimelineHelper;
@@ -71,6 +74,7 @@ public class ZimbraController extends BaseController {
 	private SqlZimbraService sqlService;
 	private NotificationService notificationService;
 
+	private static final Logger log = LoggerFactory.getLogger(ZimbraController.class);
 
 	@Override
 	public void init(Vertx vertx, JsonObject config, RouteMatcher rm,
@@ -108,6 +112,8 @@ public class ZimbraController extends BaseController {
 	 * }
 	 * @param request http request containing info
      * 	              Users infos
+	 * 	              In-Reply-To : Id of the message being replied to
+	 * 	              reply : type of reply (R for reply, F for Forward)
      *   	          body : message body
      *   	          subject : message subject
      * 	              to : id of each recipient
@@ -116,10 +122,21 @@ public class ZimbraController extends BaseController {
 	@Post("draft")
 	@SecuredAction("zimbra.create.draft")
 	public void createDraft(final HttpServerRequest request) {
+
+		final String parentMessageId = request.params().get("In-Reply-To");
+		String replyType = request.params().get("reply");
+
+		if(replyType != null && !FrontConstants.REPLYTYPE_REPLY.equalsIgnoreCase(replyType)
+				&& !FrontConstants.REPLYTYPE_FORWARD.equalsIgnoreCase(replyType)) {
+			log.warn("CreateDraft - Unknown reply type : " + replyType);
+			replyType = null;
+		}
+		final String reply = replyType;
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
 					bodyToJson(request, message ->
-						messageService.saveDraft(message, user, null, defaultResponseHandler(request))
+						messageService.saveDraft(message, user, null, parentMessageId, reply,
+								defaultResponseHandler(request))
 					);
 				} else {
 					unauthorized(request);
@@ -150,7 +167,8 @@ public class ZimbraController extends BaseController {
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
 					bodyToJson(request, message ->
-						messageService.saveDraft(message, user, messageId, defaultResponseHandler(request))
+						messageService.saveDraft(message, user, messageId, null, null,
+								defaultResponseHandler(request))
 					);
 				} else {
 					unauthorized(request);
@@ -873,9 +891,18 @@ public class ZimbraController extends BaseController {
 	}
 
 	@Put("message/:id/forward/:forwardedId")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void forwardAttachments(final HttpServerRequest request){
+		final String messageId = request.params().get("id");
+		final String forwardedId = request.params().get("forwardedId");
 
+		UserUtils.getUserInfos(eb, request, user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			attachmentService.forwardAttachments(forwardedId, messageId, user, defaultResponseHandler(request));
+		});
 	}
 
 	@Get("/print")

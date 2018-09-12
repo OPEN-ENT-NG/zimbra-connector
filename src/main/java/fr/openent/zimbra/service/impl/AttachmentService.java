@@ -143,7 +143,7 @@ public class AttachmentService {
                 if(response.statusCode() == 200) {
                     response.bodyHandler( body -> {
                         String aid = body.toString().replaceAll("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$", "$1");
-                        updateDraft(messageId, aid, user, handler);
+                        updateDraft(messageId, aid, user, null, handler);
                     });
                 } else {
                     handler.handle(new Either.Left<>(response.statusMessage()));
@@ -199,17 +199,40 @@ public class AttachmentService {
         });
     }
 
+    public void forwardAttachments(String origMessageId, String finalMessageid, UserInfos user,
+                                   Handler<Either<String, JsonObject>> handler) {
+        messageService.getMessage(origMessageId, user, response -> {
+            if (response.isLeft()) {
+                handler.handle(new Either.Left<>(response.left().getValue()));
+            } else {
+                JsonObject msgOrig = response.right().getValue();
+                JsonArray attachsOrig = msgOrig.getJsonArray("attachments", new JsonArray());
+                JsonArray newAttachs = new JsonArray();
+                for (Object o : attachsOrig) {
+                    if(!(o instanceof JsonObject)) continue;
+                    String idOrig = ((JsonObject) o).getString("id", "");
+                    if(!idOrig.isEmpty()) {
+                        JsonObject attchNew = new JsonObject();
+                        attchNew.put(MULTIPART_PART_ID, idOrig);
+                        attchNew.put(MULTIPART_MSG_ID, origMessageId);
+                        newAttachs.add(attchNew);
+                    }
+                }
+                updateDraft(finalMessageid, null, user, newAttachs, handler);
+            }
+        });
+    }
+
 
     /**
-     * Update Draft with a new attachment
+     * Update Draft with new attachments
      * @param messageId Message Id
      * @param uploadAttchId New attachment upload Id
      * @param user User Infos
      * @param result result handler
      */
-    private void updateDraft(String messageId, String uploadAttchId, UserInfos user,
+    private void updateDraft(String messageId, String uploadAttchId, UserInfos user, JsonArray forwardedAtts,
                             Handler<Either<String, JsonObject>> result) {
-
         messageService.getMessage(messageId, user, response -> {
             if (response.isLeft()) {
                 result.handle(new Either.Left<>(response.left().getValue()));
@@ -218,9 +241,15 @@ public class AttachmentService {
 
                 messageService.transformMessageFrontToZimbra(msgOrig, messageId, mailContent -> {
                     mailContent.put(MSG_ID, messageId);
-                    JsonObject attachs = mailContent.getJsonObject(MSG_NEW_ATTACHMENTS, new JsonObject());
-                    attachs.put(MSG_NEW_UPLOAD_ID, uploadAttchId);
-                    mailContent.put(MSG_NEW_ATTACHMENTS, attachs);
+                    JsonObject attachs = new JsonObject();
+                    if(uploadAttchId != null) {
+                        attachs.put(MSG_NEW_UPLOAD_ID, uploadAttchId);
+                        mailContent.put(MSG_NEW_ATTACHMENTS, attachs);
+                    }
+                    if(forwardedAtts != null) {
+                        attachs.put(MSG_MULTIPART, forwardedAtts);
+                        mailContent.put(MSG_NEW_ATTACHMENTS, attachs);
+                    }
                     messageService.execSaveDraftRaw(mailContent, user, responseSave -> {
                         if (responseSave.isLeft()) {
                             result.handle(new Either.Left<>(responseSave.left().getValue()));

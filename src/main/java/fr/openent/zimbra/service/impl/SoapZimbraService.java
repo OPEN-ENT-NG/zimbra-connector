@@ -297,11 +297,11 @@ public class SoapZimbraService {
                             if( ! ACCT_STATUS_ACTIVE.equals(accountStatus)) {
                                 handler.handle(new Either.Left<>(
                                         "Account " + userAddress + " not active : " + accountStatus));
-                                log.warn("Account not active : " + accountStatus);
+                                log.warn("Account " + userAddress + " not active : " + accountStatus);
                             } else {
                                 handler.handle(new Either.Left<>("" +
                                         "Auth failed for " + userAddress + " with active account " + callResultStr));
-                                log.error("Auth failed with active account " + callResultStr);
+                                log.error("Auth failed for " + userAddress + " with active account " + callResultStr);
                             }
                         }
                     });

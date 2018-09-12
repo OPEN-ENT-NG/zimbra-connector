@@ -49,6 +49,7 @@ export class Mail implements Selectable {
     unread: boolean;
     state: string;
     parentConversation: Mail;
+    replyType: string;
     newAttachments: FileList;
     loadingAttachments: Attachment[];
     attachments: Attachment[];
@@ -316,6 +317,7 @@ export class Mail implements Selectable {
         } else {
             if (this.parentConversation) {
                 path += "?In-Reply-To=" + this.parentConversation.id;
+                path += "&reply=" + this.replyType;
             }
             let response = await http.post(path, data);
             Mix.extend(this, response.data);
