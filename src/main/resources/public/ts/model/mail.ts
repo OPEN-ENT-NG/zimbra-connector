@@ -451,7 +451,9 @@ export class Mail implements Selectable {
                         headers: {
                             "Content-Disposition":
                                 'attachment; filename="' +
-                                attachmentObj.file.name +
+                                attachmentObj.file.name.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
+                                    return '&#'+i.charCodeAt(0)+';';
+                                }) +
                                 '"'
                         },
                         onUploadProgress: (e: ProgressEvent) => {
