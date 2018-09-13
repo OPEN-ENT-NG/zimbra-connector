@@ -241,7 +241,7 @@ public class AttachmentService {
 
                 messageService.transformMessageFrontToZimbra(msgOrig, messageId, mailContent -> {
                     mailContent.put(MSG_ID, messageId);
-                    JsonObject attachs = new JsonObject();
+                    JsonObject attachs = mailContent.getJsonObject(MSG_NEW_ATTACHMENTS, new JsonObject());
                     if(uploadAttchId != null) {
                         attachs.put(MSG_NEW_UPLOAD_ID, uploadAttchId);
                         mailContent.put(MSG_NEW_ATTACHMENTS, attachs);
