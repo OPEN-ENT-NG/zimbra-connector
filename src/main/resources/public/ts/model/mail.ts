@@ -598,7 +598,7 @@ export class Mails {
         if (!data.searchText) {
             data.searchText = "";
         } else {
-            data.searchText += "&search=" + data.searchText;
+            data.searchText = "&search=" + data.searchText;
         }
         if (!data.filterUnread) {
             data.filterUnread = false;

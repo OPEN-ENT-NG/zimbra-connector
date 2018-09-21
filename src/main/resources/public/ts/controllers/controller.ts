@@ -299,7 +299,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                     $scope.variableMailAction(nextMail);
                 }
             }
-            if (idx === mails.length - 2 && nextMail.count > mails.length) {
+            if (idx === mails.length - 2 && Zimbra.instance.currentFolder.count > mails.length) {
                 await Zimbra.instance.currentFolder.nextPage(
                     $scope.state.selectAll
                 );

@@ -12,7 +12,7 @@
 			<i18n>reply</i18n>
 		</button>
 
-		<nav class="prev-next" ng-if="state.current.count > 1">
+		<nav class="prev-next" ng-if="zimbra.currentFolder.count > 1">
 			<button class=""
 			ng-click="previousMail()"
 			ng-disabled="zimbra.currentFolder.mails.all.indexOf(state.current) === 0">
@@ -22,11 +22,11 @@
 				<span>[[zimbra.currentFolder.mails.all.indexOf(state.current)+1]]</span>
 				<i18n class="zero-mobile">mail.count.of</i18n>
 				<span class="zero-desktop">/</span>
-				<span> [[state.current.count]]</span>
+				<span> [[zimbra.currentFolder.count]]</span>
 			</span>
 			<button class=""
 			ng-click="nextMail()"
-			ng-disabled="zimbra.currentFolder.mails.all.indexOf(state.current) + 1 === state.current.count">
+			ng-disabled="zimbra.currentFolder.mails.all.indexOf(state.current) + 1 === zimbra.currentFolder.count">
 				<i class="open-right"></i>
 			</button>
 		</nav>

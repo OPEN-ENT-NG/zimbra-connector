@@ -17,6 +17,8 @@ export abstract class Folder implements Selectable {
     filter: boolean;
     reverse: boolean;
     searchText: string;
+    count: number;
+
 
     abstract removeSelection();
     abstract sync();
@@ -97,6 +99,14 @@ export abstract class Folder implements Selectable {
         this.nbUnread = parseInt(response.data.count);
     }
 
+    async countTotal() {
+        let name = this.getName();
+        const response = await http.get(
+            "/zimbra/count/" + name + "?unread=false"
+        );
+        this.count = parseInt(response.data.count);
+    }
+
     async toggleUnreadSelection(unread) {
         await this.mails.toggleUnread(unread);
         this.mails.selection.deselectAll();
@@ -138,8 +148,12 @@ export class Trash extends SystemFolder {
     }
 
     async sync() {
-        await this.mails.sync({ searchText: this.searchText });
-        await this.syncUsersFolders();
+        await Promise.all(
+            [
+            await this.mails.sync({ searchText: this.searchText }),
+            await this.syncUsersFolders(),
+            await this.countTotal()
+        ]);
     }
 
     async syncUsersFolders() {
@@ -208,7 +222,11 @@ export class Inbox extends SystemFolder {
     }
 
     async sync() {
-        await this.mails.sync({ searchText: this.searchText });
+        await Promise.all(
+            [
+                    await this.mails.sync({ searchText: this.searchText }),
+                    await this.countTotal()
+                ]);
     }
 
     async removeSelection() {
@@ -246,8 +264,11 @@ export class Draft extends SystemFolder {
     }
 
     async sync() {
-        await this.mails.sync({ searchText: this.searchText });
-        await this.countTotal();
+        await Promise.all(
+            [
+                await this.mails.sync({ searchText: this.searchText }),
+                await this.countTotal()
+            ]);
     }
 
     async removeSelection() {
@@ -280,6 +301,7 @@ export class Draft extends SystemFolder {
     async countTotal() {
         const response = await http.get("/zimbra/count/DRAFT?unread=false");
         this.totalNb = parseInt(response.data.count);
+        this.count = this.totalNb;
     }
 }
 
@@ -302,6 +324,7 @@ export class Outbox extends SystemFolder {
 
     async sync() {
         await this.mails.sync({ searchText: this.searchText });
+        await this.countTotal();
     }
 
     async removeSelection() {
@@ -339,8 +362,12 @@ export class UserFolder extends Folder {
     }
 
     async sync() {
-        await this.mails.sync({ searchText: this.searchText });
-        await this.syncUserFolders();
+        await Promise.all(
+            [
+            await this.mails.sync({ searchText: this.searchText }),
+            await this.syncUserFolders(),
+            await this.countTotal()
+        ]);
     }
 
     selectAll() {
