@@ -625,6 +625,7 @@ export class Mails {
         if (response.data.length === 0) {
             this.full = true;
         }
+        this.selection.all = _.sortBy(this.all, 'date').reverse();
     }
 
     async apiSync(data?: {
@@ -667,6 +668,7 @@ export class Mails {
         if (response.data.length === 0) {
             this.full = true;
         }
+        this.selection.all = _.sortBy(this.all, 'date').reverse();
     }
 
     refresh() {
