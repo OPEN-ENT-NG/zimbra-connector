@@ -20,7 +20,7 @@ public class SynchroGroupService {
 
     private Neo4j neo;
     private SoapZimbraService soapService;
-    private static final String memberUrlTpl = "ldap:///??sub?(&(objectClass=zimbraAccount)(ou=###))";
+    private static final String memberUrlTpl = "ldap:///??sub?(&(objectClass=zimbraAccount)(|(ou=###)(ou=allgroupsaccount)))";
     private static Logger log = LoggerFactory.getLogger(SynchroGroupService.class);
     private SynchroUserService synchroUser;
 
