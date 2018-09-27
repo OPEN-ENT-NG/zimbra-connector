@@ -181,7 +181,7 @@ public class SqlZimbraService {
             String customReturn =
                     "RETURN DISTINCT visibles.id as id, visibles.name as name, " +
                             "visibles.displayName as displayName, visibles.groupDisplayName as groupDisplayName, " +
-                            "visibles.profiles[0] as profile";
+                            "visibles.profiles[0] as profile, visibles.structureName as structureName ";
             callFindVisibles(user, acceptLanguage, result, visible, params, preFilter, customReturn);
     }
 

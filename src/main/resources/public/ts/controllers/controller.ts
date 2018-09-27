@@ -184,6 +184,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 await Zimbra.instance.currentFolder.removeMailsFromFolder();
                 await Zimbra.instance.folders.inbox.countUnread();
                 await Zimbra.instance.folders.draft.countTotal();
+                $scope.state.selectAll = false;
                 $scope.$apply();
             }
         };
@@ -465,6 +466,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             await $scope.userFolders.countUnread();
             await Zimbra.instance.folders.draft.countTotal();
             $scope.refreshFolders();
+            $scope.state.selectAll = false;
             $scope.$apply();
         };
 
@@ -472,11 +474,13 @@ export let zimbraController = ng.controller("ZimbraController", [
             await Zimbra.instance.currentFolder.removeSelection();
             await Zimbra.instance.currentFolder.countUnread();
             $scope.refreshFolders();
+            $scope.state.selectAll = false;
             $scope.$apply();
         };
 
         $scope.toggleUnreadSelection = async unread => {
             await Zimbra.instance.currentFolder.toggleUnreadSelection(unread);
+            $scope.state.selectAll = false;
             $scope.$apply();
         };
 
