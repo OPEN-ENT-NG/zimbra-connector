@@ -187,7 +187,7 @@ public class SqlZimbraService {
 
     private void callFindVisibles(UserInfos user, final String acceptLanguage, final Handler<Either<String, JsonObject>> result,
                                   final JsonObject visible, JsonObject params, String preFilter, String customReturn) {
-        UserUtils.findVisibles(eb, user.getUserId(), customReturn, params, true, true, true,
+        UserUtils.findVisibles(eb, user.getUserId(), customReturn, params, true, true, false,
                 acceptLanguage, preFilter, visibles -> {
 
                 JsonArray users = new fr.wseduc.webutils.collections.JsonArray();
