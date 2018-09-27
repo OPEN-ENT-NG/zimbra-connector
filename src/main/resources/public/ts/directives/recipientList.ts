@@ -1,4 +1,5 @@
 import { ng, _ } from "entcore";
+import http from 'axios';
 
 /**
  * @description Displays chips of items list with a search input and dropDown options. If more than
@@ -27,6 +28,7 @@ export const recipientList = ng.directive("recipientList", () => {
                 <label class="chip selected" ng-if="needChipDisplay()" ng-click="giveFocus()">
                     <span class="cell">... <i18n>chip.more1</i18n> [[ngModel.length - 2]] <i18n>chip.more2</i18n></span>
                 </label>
+                <img skin-src="/img/illustrations/loading.gif" width="30px" heigh="30px" ng-if="loading"/>
                 <form class="input-help" ng-submit="update(true)">
                     <input class="chip-input right-magnet" type="text" ng-model="searchText" ng-change="update()" autocomplete="off" ng-class="{ move: searchText.length > 0 }" 
                     i18n-placeholder="[[restriction ? 'share.search.help' : 'share.search.placeholder' ]]"
@@ -53,6 +55,7 @@ export const recipientList = ng.directive("recipientList", () => {
             var firstFocus = true;
             var minWidth = 0;
             scope.focused = false;
+            scope.loading = false;
             scope.searchText = "";
             scope.itemsFound = [];
             scope.currentReceiver = "undefined";
@@ -127,14 +130,40 @@ export const recipientList = ng.directive("recipientList", () => {
                 }
             };
 
-            scope.addItem = item => {
+
+            scope.addOneItem = (item) => {
+                for (var i = 0, l = scope.ngModel.length; i < l; i++) {
+                    if (scope.ngModel[i].id === item.id) {
+                        return false;
+                    }
+                }
+                scope.ngModel.push(item);
+                return true;
+            };
+
+            scope.addItem = async () => {
+                scope.focused = true;
+                element.find('input').focus();
                 if (!scope.ngModel) {
                     scope.ngModel = [];
                 }
-                if (item) {
-                    scope.currentReceiver = item;
+                if (scope.currentReceiver.type === 'sharebookmark') {
+                    scope.loading = true;
+                    var response = await http.get('/directory/sharebookmark/' + scope.currentReceiver.id);
+                    response.data.groups.forEach(item => {
+                        scope.addOneItem(item);
+                    });
+                    response.data.users.forEach(item => {
+                        scope.addOneItem(item);
+                    });
+                    scope.loading = false;
+                } else {
+                    scope.ngModel.push(scope.currentReceiver);
+                    setTimeout(function(){
+                        scope.itemsFound.splice(scope.itemsFound.indexOf(scope.currentReceiver), 1);
+                        scope.$apply('itemsFound');
+                    }, 0);
                 }
-                scope.ngModel.push(scope.currentReceiver);
                 scope.$apply("ngModel");
                 scope.$eval(scope.ngChange);
             };
@@ -145,6 +174,8 @@ export const recipientList = ng.directive("recipientList", () => {
                 });
                 scope.$apply("ngModel");
                 scope.$eval(scope.ngChange);
+                if (scope.itemsFound.length > 0)
+                    scope.doSearch();
             };
 
             scope.clearSearch = () => {

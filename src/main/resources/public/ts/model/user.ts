@@ -73,7 +73,13 @@ export class Users {
 
     async sync(search: string) {
         let newArr = [];
-        const response = await http.get("/zimbra/visible?search=" + search);
+        let response = await http.get('/directory/sharebookmark/all');
+        let bookmarks = _.map(response.data, function(bookmark) {
+            bookmark.type = 'sharebookmark';
+            return bookmark;
+        });
+        newArr = Mix.castArrayAs(User, bookmarks);
+        response = await http.get("/zimbra/visible?search=" + search);
         response.data.groups.forEach(group => {
             group.isGroup = true;
             newArr.push(Mix.castAs(User, group));
