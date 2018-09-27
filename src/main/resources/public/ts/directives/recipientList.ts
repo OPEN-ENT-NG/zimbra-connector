@@ -19,10 +19,11 @@ export const recipientList = ng.directive("recipientList", () => {
         restrict: "E",
         template: `
             <div class="twelve flex-row align-center" ng-click="unfoldChip()">
-                <label ng-model="ngModel" ng-change="ngChange" class="chip removable" ng-repeat="item in ngModel | limitTo : (needChipDisplay() ? 2 : ngModel.length)" ng-click="giveFocus()">
-                    <i class="close right-magnet" ng-click="deleteItem(item)"></i>
-                    <span class="cell-ellipsis block">[[item.toString()]]</span>
-                </label>
+                <contact-chip class="block relative removable" 
+                    ng-model="item"
+                    action="deleteItem(item)"
+                    ng-repeat="item in ngModel | limitTo : (needChipDisplay() ? 2 : ngModel.length)">
+                </contact-chip>
                 <label class="chip selected" ng-if="needChipDisplay()" ng-click="giveFocus()">
                     <span class="cell">... <i18n>chip.more1</i18n> [[ngModel.length - 2]] <i18n>chip.more2</i18n></span>
                 </label>
