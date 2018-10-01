@@ -1,148 +1,153 @@
 <h3 whereami></h3>
 <nav class="twelve bottom-spacing-twice">
-	<div class="cell zero-mobile no-2d">
-		<i class="refresh" ng-click="refresh()"></i>
-	</div>
+    <div class="cell zero-mobile no-2d">
+        <i class="refresh" ng-click="refresh()"></i>
+    </div>
 
-	<div class="">
-		<switch-search
-			ng-model="searchField.words"
-			ng-change="search(words)"
-			cancel="cancelSearch()">
-			
-			<button class="cell-ellipsis right-magnet" ng-click="template.open('main', 'mail-actions/write-mail')">
-				<i18n>new.message</i18n>
-			</button>
-		</switch-search>
-	</div>
+    <div class="">
+        <switch-search
+                ng-model="searchField.words"
+                ng-change="search(words)"
+                cancel="cancelSearch()">
+
+            <button class="cell-ellipsis right-magnet" ng-click="template.open('main', 'mail-actions/write-mail')">
+                <i18n>new.message</i18n>
+            </button>
+        </switch-search>
+    </div>
 </nav>
 
 
 <div class="mailbox-tools notification twelve flex-row align-center centered-text zero-mobile-fat-mobile no-margin" ng-if="zimbra.currentFolder.mails.all.length > 0 || state.searching">
-	<div class="check-col">
-		<label class="wrapping-checkbox relative">
-			<input type="checkbox" ng-model="state.selectAll" ng-change="switchSelectAll()" />
-			<i18n></i18n>
-		</label>
-	</div>
+    <div class="check-col">
+        <label class="wrapping-checkbox relative">
+            <input type="checkbox" ng-model="state.selectAll" ng-change="switchSelectAll()" />
+            <i18n></i18n>
+        </label>
+    </div>
 
-	<div class="status-filter">
+    <div class="status-filter">
 
-		<label class="chip"
-		tooltip="filter.unread"
-		ng-if="zimbra.currentFolder.nbUnread > 0"
-		ng-class="{ selected: state.filterUnread && zimbra.currentFolder.nbUnread > 0}">
-			<i class="mail"></i>
-			<span ng-model="zimbra.currentFolder.nbUnread">([[zimbra.currentFolder.nbUnread]])</span>
-			<input type="checkbox" ng-model="state.filterUnread" ng-change="filterUnread()" ng-if="zimbra.currentFolder.nbUnread > 0" />
-		</label>
+        <label class="chip"
+               tooltip="filter.unread"
+               ng-if="zimbra.currentFolder.nbUnread > 0"
+               ng-class="{ selected: state.filterUnread && zimbra.currentFolder.nbUnread > 0}">
+            <i class="mail"></i>
+            <span ng-model="zimbra.currentFolder.nbUnread">([[zimbra.currentFolder.nbUnread]])</span>
+            <input type="checkbox" ng-model="state.filterUnread" ng-change="filterUnread()" ng-if="zimbra.currentFolder.nbUnread > 0" />
+        </label>
 
-	</div>
-	<div class="flex-all-remains cell horizontal-margin">
-		<div class="search-pagination flex-row align-center">
-			<a ng-class="{'show-close': searchField.words.length > 0 || state.searching}" ng-click='searchField.words="";cancelSearch()'><i class="close horizontal-spacing cell-ellipsis"></i></a>
-			<div class="cell twelve">
-				<input class="twelve" name="searchField.words" type="text" ng-model="searchField.words"
-				ng-keyup="$event.keyCode == 13 ? search(searchField.words) : null"
-				i18n-placeholder="search.condition"/>
-				<i class="search" ng-click="search(searchField.words)"></i>
-				<div class="cell small-text warning-color" ng-if="state.searchFailed"><i18n>search.failed</i18n></div>
-			</div>
-		</div>
-	</div>
+    </div>
+    <div class="flex-all-remains cell horizontal-margin">
+        <div class="search-pagination flex-row align-center">
+            <a ng-class="{'show-close': searchField.words.length > 0 || state.searching}" ng-click='searchField.words="";cancelSearch()'><i class="close horizontal-spacing cell-ellipsis"></i></a>
+            <div class="cell twelve">
+                <input class="twelve" name="searchField.words" type="text" ng-model="searchField.words"
+                       ng-keyup="$event.keyCode == 13 ? search(searchField.words) : null"
+                       i18n-placeholder="search.condition"/>
+                <i class="search" ng-click="search(searchField.words)"></i>
+                <div class="cell small-text warning-color" ng-if="state.searchFailed"><i18n>search.failed</i18n></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 
 <div class="mailbox simple-notifications">
-	<div ng-if="isLoading()">
-		<div class="info fade-in"><i18n>loading</i18n></div>
-	</div>
-	<div ng-if="!isLoading() && zimbra.currentFolder.mails.all.length === 0">
-		<div class="info fade-in">[[state.emptyMessage]]</div>
-	</div>
+    <div ng-if="isLoading()">
+        <div class="info fade-in"><i18n>loading</i18n></div>
+    </div>
+    <div ng-if="!isLoading() && zimbra.currentFolder.mails.all.length === 0">
+        <div class="info fade-in">[[state.emptyMessage]]</div>
+    </div>
 
-	<div class="notification relative no-margin" ng-if="!isLoading()"
-		ng-repeat="mail in zimbra.currentFolder.mails.all"
-		ng-class="{ checked: mail.selected, 'new-element': mail.isUnread(zimbra.currentFolder) }"
-		dragstart="drag(mail, $originalEvent)">
+    <div class="notification relative no-margin" ng-if="!isLoading()"
+         ng-repeat="mail in zimbra.currentFolder.mails.all"
+         ng-class="{ checked: mail.selected, 'new-element': mail.isUnread(zimbra.currentFolder) }"
+         dragstart="drag(mail, $originalEvent)">
 
-		<article ng-click="readMail(mail);$event.stopPropagation();">
-			<div class="flex-row align-center">
-				<label class="wrapping-checkbox">
-					<div class="avatar" ng-click="$event.stopPropagation();">
-						<img ng-src="[[ mail.matchAvatar() ]]"/>
+        <article ng-click="readMail(mail);$event.stopPropagation();">
+            <div class="flex-row align-center">
+                <label class="wrapping-checkbox">
+                    <div class="avatar" ng-click="$event.stopPropagation();">
+                        <img ng-src="[[ mail.matchAvatar() ]]"/>
 
-						<input type="checkbox" ng-model="mail.selected" ng-click="refreshSelectionState(mail)"/>
+                        <input type="checkbox" ng-model="mail.selected" ng-click="refreshSelectionState(mail)"/>
 
-						<i18n></i18n>
-					</div>
-				</label>
+                        <i18n></i18n>
+                    </div>
+                </label>
 
-				<div class="states">
-					<i class="undo" ng-if="mail.response" tooltip="you.answered"></i>
-					<i class="mail" ng-if="mail.isUnread(zimbra.currentFolder)" tooltip="unread.mail"></i>
-				</div>
-				<div class="flex-all-remains horizontal-margin cell-ellipsis">
-					<span class="strong">[[mail.sender().displayName]][[mail.fromName]]</span>
-					<br>
-					<span class="small-text">[[mail.subject]]</span>
-				</div>
-			</div>
+                <div class="states">
+                    <i class="undo" ng-if="mail.response" tooltip="you.answered"></i>
+                    <i class="mail" ng-if="mail.isUnread(zimbra.currentFolder)" tooltip="unread.mail"></i>
+                </div>
+                <div class="flex-all-remains horizontal-margin cell-ellipsis">
+                    <span class="strong">[[mail.sender().displayName]][[mail.fromName]]</span>
+                    <br>
+                    <span class="small-text">[[mail.subject]]</span>
+                </div>
+            </div>
 
-			<div class="notification-date">
-				<em class="low-importance right-magnet">[[mail.notifDate()]]</em>
-			</div>
-			<div class="notification-attachment">
-				<i class="attachment" ng-if="mail.hasAttachment"></i>
-			</div>
+            <div class="notification-date">
+                <em class="low-importance right-magnet">[[mail.notifDate()]]</em>
+            </div>
+            <div class="notification-attachment">
+                <i class="attachment" ng-if="mail.hasAttachment"></i>
+            </div>
 
-		</article>
-	</div>
+        </article>
+    </div>
+    <div ng-if="!zimbra.currentFolder.mails.full" class="element-circle-add">
+        <button class="circle-add" ng-click="nextPage();$event.stopPropagation();" >
+            <span class="strong">+</span>
+        </button>
+    </div>
 </div>
 
 
 <lightbox show="result.inactive.length > 0" on-close="result.inactive = []">
-	<h2><i18n>warning.title</i18n></h2>
-	<label><i18n>warning.inactive</i18n></label>
-	<div class="row">
-		<table class="twelve">
-			<thead>
-			<tr>
-				<th class="" ng-click=""><i18n>name</i18n></th>
-			</tr>
-			</thead>
-			<tbody>
-			<tr ng-repeat="users in result.inactive track by $index">
-				<td class="user"><a>[[users]]</a></td>
-			</tr>
-			</tbody>
-		</table>
-	</div>
-	<div class="row">
-		<button type="button" class="cancel right-magnet" ng-click="result.inactive = []"><i18n>warning.close</i18n></button>
-	</div>
+    <h2><i18n>warning.title</i18n></h2>
+    <label><i18n>warning.inactive</i18n></label>
+    <div class="row">
+        <table class="twelve">
+            <thead>
+            <tr>
+                <th class="" ng-click=""><i18n>name</i18n></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="users in result.inactive track by $index">
+                <td class="user"><a>[[users]]</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="row">
+        <button type="button" class="cancel right-magnet" ng-click="result.inactive = []"><i18n>warning.close</i18n></button>
+    </div>
 </lightbox>
 
 <lightbox show="result.undelivered.length > 0" on-close="result.undelivered = []">
-	<h2><i18n>warning.title</i18n></h2>
-	<label><i18n>warning.undelivered</i18n></label>
-	<div class="row">
-		<table class="twelve">
-			<thead>
-			<tr>
-				<th class="" ng-click=""><i18n>name</i18n></th>
-			</tr>
-			</thead>
-			<tbody>
-			<tr ng-repeat="users in result.undelivered track by $index">
-				<td class="user"><a>[[users]]</a></td>
-			</tr>
-			</tbody>
-		</table>
-	</div>
-	<div class="row">
-		<button type="button" class="cancel right-magnet" ng-click="result.undelivered = []"><i18n>warning.close</i18n></button>
-	</div>
+    <h2><i18n>warning.title</i18n></h2>
+    <label><i18n>warning.undelivered</i18n></label>
+    <div class="row">
+        <table class="twelve">
+            <thead>
+            <tr>
+                <th class="" ng-click=""><i18n>name</i18n></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="users in result.undelivered track by $index">
+                <td class="user"><a>[[users]]</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="row">
+        <button type="button" class="cancel right-magnet" ng-click="result.undelivered = []"><i18n>warning.close</i18n></button>
+    </div>
 </lightbox>
 
 <container template="toaster"></container>
