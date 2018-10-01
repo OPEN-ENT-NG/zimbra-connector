@@ -59,6 +59,7 @@ export const recipientList = ng.directive("recipientList", () => {
             scope.searchText = "";
             scope.itemsFound = [];
             scope.currentReceiver = "undefined";
+            scope.addedFavorites = [];
 
             element.find("input").on("focus", () => {
                 if (firstFocus) firstFocus = false;
@@ -105,9 +106,10 @@ export const recipientList = ng.directive("recipientList", () => {
                 );
             };
 
-            scope.update = (force?: boolean) => {
+            scope.update = async (force?: boolean) => {
                 if (force) {
-                    scope.doSearch();
+                    await scope.doSearch();
+                    scope.$apply('itemsFound');
                 } else {
                     if (
                         (scope.restriction && scope.searchText.length < 3) ||
@@ -115,7 +117,8 @@ export const recipientList = ng.directive("recipientList", () => {
                     ) {
                         scope.itemsFound.splice(0, scope.itemsFound.length);
                     } else {
-                        scope.doSearch();
+                        await scope.doSearch();
+                        scope.$apply('itemsFound');
                     }
                 }
             };
@@ -156,14 +159,15 @@ export const recipientList = ng.directive("recipientList", () => {
                     response.data.users.forEach(item => {
                         scope.addOneItem(item);
                     });
+                    scope.addedFavorites.push(scope.currentReceiver);
                     scope.loading = false;
                 } else {
                     scope.ngModel.push(scope.currentReceiver);
-                    setTimeout(function(){
-                        scope.itemsFound.splice(scope.itemsFound.indexOf(scope.currentReceiver), 1);
-                        scope.$apply('itemsFound');
-                    }, 0);
                 }
+                setTimeout(function(){
+                    scope.itemsFound.splice(scope.itemsFound.indexOf(scope.currentReceiver), 1);
+                    scope.$apply('itemsFound');
+                }, 0);
                 scope.$apply("ngModel");
                 scope.$eval(scope.ngChange);
             };
@@ -181,13 +185,17 @@ export const recipientList = ng.directive("recipientList", () => {
             scope.clearSearch = () => {
                 scope.itemsFound = [];
                 scope.searchText = "";
+                scope.addedFavorites = [];
             };
 
-            scope.doSearch = () => {
-                scope.updateFoundItems({
+            scope.doSearch = async () => {
+                await scope.updateFoundItems({
                     search: scope.searchText,
                     model: scope.ngModel,
                     founds: scope.itemsFound
+                });
+                scope.itemsFound = _.reject(scope.itemsFound, function (element) {
+                    return _.findWhere(scope.addedFavorites, { id: element.id });
                 });
             };
 
