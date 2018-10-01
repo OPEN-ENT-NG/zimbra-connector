@@ -451,9 +451,12 @@ export class Mail implements Selectable {
                         headers: {
                             "Content-Disposition":
                                 'attachment; filename="' +
-                                attachmentObj.file.name.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
-                                    return '&#'+i.charCodeAt(0)+';';
-                                }) +
+                                attachmentObj.file.name.replace(
+                                    /[\u00A0-\u9999<>\&]/gim,
+                                    function(i) {
+                                        return "&#" + i.charCodeAt(0) + ";";
+                                    }
+                                ) +
                                 '"'
                         },
                         onUploadProgress: (e: ProgressEvent) => {
@@ -618,8 +621,11 @@ export class Mails {
         if (data.emptyList !== false) {
             this.all.splice(0, this.all.length);
         }
+        let idxmail = 0;
         response.data.forEach(m => {
             if (data.selectAll) m.selected = true;
+            m.count = idxmail;
+            idxmail++;
             this.all.push(Mix.castAs(Mail, m));
         });
         if (response.data.length === 0) {
@@ -669,6 +675,7 @@ export class Mails {
             this.full = true;
         }
         this.selection.all = _.sortBy(this.all, 'date').reverse();
+        return;
     }
 
     refresh() {

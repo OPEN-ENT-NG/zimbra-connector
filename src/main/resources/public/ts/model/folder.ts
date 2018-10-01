@@ -484,9 +484,9 @@ export class SystemFolders {
         Zimbra.instance.currentFolder = this[folderName];
         Zimbra.instance.currentFolder.searchText = null;
         Zimbra.instance.currentFolder.filter = false;
+        Zimbra.instance.currentFolder.mails.full = false;
         await Zimbra.instance.currentFolder.sync();
         Zimbra.instance.currentFolder.pageNumber = 0;
-        Zimbra.instance.currentFolder.mails.full = false;
         Zimbra.instance.currentFolder.eventer.trigger("change");
     }
 }
