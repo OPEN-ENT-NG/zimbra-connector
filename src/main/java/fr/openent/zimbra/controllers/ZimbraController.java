@@ -73,6 +73,7 @@ public class ZimbraController extends BaseController {
 	private SignatureService signatureService;
 	private SqlZimbraService sqlService;
 	private NotificationService notificationService;
+	private CommunicationService communicationService;
 
 	private static final Logger log = LoggerFactory.getLogger(ZimbraController.class);
 
@@ -92,6 +93,7 @@ public class ZimbraController extends BaseController {
 				sqlService, userService, synchroUserService);
 		this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
 		this.notificationService = new NotificationService(soapService, userService, pathPrefix, notification);
+		this.communicationService = new CommunicationService(messageService);
 
 		soapService.setServices(userService, synchroUserService);
 		synchroUserService.setUserService(userService);
@@ -212,7 +214,7 @@ public class ZimbraController extends BaseController {
 	 *                subject : message subject
 	 */
 	@Post("notification")
-	@SecuredAction("export.structure.users.all")
+	@SecuredAction("zimbra.notification.send")
 	public void sendNotification(HttpServerRequest request) {
 		RequestUtils.bodyToJson(request, body -> {
 				final String zimbraSender = body.getString("sender");
@@ -391,6 +393,23 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 			}
 		});
+	}
+
+	/**
+	 * todo
+	 * @param request
+	 */
+	@Get("communication")
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	//@SecuredAction("zimbra.communication.all")
+	public void canCommunicate(final HttpServerRequest request) {
+		String sender = request.params().get("from");
+		String receiver = request.params().get("to");
+		if( sender != null && !sender.isEmpty() && receiver != null && !receiver.isEmpty()) {
+			communicationService.canCommunicate(sender, receiver, defaultResponseHandler(request));
+		} else {
+			badRequest(request);
+		}
 	}
 
 	/**
