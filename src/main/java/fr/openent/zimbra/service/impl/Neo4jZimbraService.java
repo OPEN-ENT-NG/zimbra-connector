@@ -26,8 +26,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import static org.entcore.common.neo4j.Neo4jResult.validResultHandler;
+import static org.entcore.common.neo4j.Neo4jResult.validUniqueResultHandler;
 
-class Neo4jZimbraService {
+public class Neo4jZimbraService {
 
 	private Neo4j neo;
 
@@ -46,10 +47,39 @@ class Neo4jZimbraService {
 				+ "return v.id as id, "
 				+ "coalesce(v.displayName, v.groupDisplayName) as displayName, "
 				+ "v.name as groupName, "
-				+ "case when 'User' in labels(v) then '"+ TYPE_USER + "' "
-				+ "when 'Group' in labels(v) then '"+ TYPE_GROUP + "' end as type";
+				+ "case when 'User' in labels(v) then '" + TYPE_USER + "' "
+				+ "when 'Group' in labels(v) then '" + TYPE_GROUP + "' end as type";
 
 		neo.execute(query, new JsonObject().put("ids", idList), validResultHandler(handler));
+	}
+
+	void checkUserCommunication(String senderId, String recipientId, Handler<Either<String,JsonObject>> handler) {
+		String query = "MATCH (s:User), (r:User) "
+				+ "where s.id = {senderId} and r.id = {recipientId} "
+				+ "return s.id as senderId, r.id as recipientId, "
+				+ "exists((r)<-[:COMMUNIQUE*1..2]-()<-[:COMMUNIQUE]-(s)) OR "
+				+ "exists((r)<-[:COMMUNIQUE_DIRECT]-(s)) as " + CommunicationService.CAN_COMMUNICATE;
+
+		JsonObject params = new JsonObject()
+				.put("senderId", senderId)
+				.put("recipientId", recipientId);
+
+		neo.execute(query, params, validUniqueResultHandler(handler));
+	}
+
+	void checkGroupCommunication(String senderId, String recipientId, Handler<Either<String,JsonObject>> handler) {
+		String query = "MATCH (s:User), (r:Group) "
+				+ "where s.id = {senderId} and r.id = {recipientId} "
+				+ "return s.id as senderId, r.id as recipientId, "
+				+ "exists((r)<-[:COMMUNIQUE*1..2]-()<-[:DEPENDS]-(s)) OR "
+				+ "exists((r)<-[:COMMUNIQUE]-()<-[:COMMUNIQUE]-(s)) OR "
+				+ "exists((r)<-[:COMMUNIQUE]-(s)) as " + CommunicationService.CAN_COMMUNICATE;
+
+		JsonObject params = new JsonObject()
+				.put("senderId", senderId)
+				.put("recipientId", recipientId);
+
+		neo.execute(query, params, validUniqueResultHandler(handler));
 	}
 
 }

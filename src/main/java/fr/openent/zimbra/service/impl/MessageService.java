@@ -293,7 +293,7 @@ public class MessageService {
      * @param mail Zimbra mail
      * @param handler result handler
      */
-    private void translateMail(String mail, Handler<String> handler) {
+    void translateMail(String mail, Handler<String> handler) {
         sqlService.getNeoIdFromMail(mail, sqlResponse -> {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
                 log.debug("no user in database for address : " + mail);
