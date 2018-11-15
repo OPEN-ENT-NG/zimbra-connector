@@ -21,16 +21,15 @@ package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.FrontConstants;
+import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.filters.VisiblesFilter;
 
-import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
-import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
@@ -75,28 +74,25 @@ public class ZimbraController extends BaseController {
 	private NotificationService notificationService;
 	private CommunicationService communicationService;
 
+
 	private static final Logger log = LoggerFactory.getLogger(ZimbraController.class);
 
 	@Override
 	public void init(Vertx vertx, JsonObject config, RouteMatcher rm,
 			Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
 		super.init(vertx, config, rm, securedActions);
-		notification = new TimelineHelper(vertx, eb, config);
 
-		this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
-        SoapZimbraService soapService = new SoapZimbraService(vertx, config);
-		SynchroUserService synchroUserService = new SynchroUserService(soapService, sqlService);
-		this.userService = new UserService(soapService, synchroUserService, sqlService);
-		this.folderService = new FolderService(soapService);
-		this.signatureService = new SignatureService(userService, soapService);
-		this.messageService = new MessageService(soapService, folderService,
-				sqlService, userService, synchroUserService);
-		this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
-		this.notificationService = new NotificationService(soapService, userService, pathPrefix, notification);
-		this.communicationService = new CommunicationService(messageService);
+		ServiceManager serviceManager = ServiceManager.init(vertx, config, eb, pathPrefix);
 
-		soapService.setServices(userService, synchroUserService);
-		synchroUserService.setUserService(userService);
+		notification = serviceManager.getTimelineHelper();
+		this.sqlService = serviceManager.getSqlService();
+		this.userService = serviceManager.getUserService();
+		this.folderService = serviceManager.getFolderService();
+		this.signatureService = serviceManager.getSignatureService();
+		this.messageService = serviceManager.getMessageService();
+		this.attachmentService = serviceManager.getAttachmentService();
+		this.notificationService = serviceManager.getNotificationService();
+		this.communicationService = serviceManager.getCommunicationService();
 	}
 
 	@Get("zimbra")
@@ -400,8 +396,7 @@ public class ZimbraController extends BaseController {
 	 * @param request
 	 */
 	@Get("communication")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
-	//@SecuredAction("zimbra.communication.all")
+	@SecuredAction("zimbra.communication.all")
 	public void canCommunicate(final HttpServerRequest request) {
 		String sender = request.params().get("from");
 		String receiver = request.params().get("to");

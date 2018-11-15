@@ -12,14 +12,14 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-class GroupService {
+public class GroupService {
 
     private SoapZimbraService soapService;
     private SqlZimbraService sqlService;
     private SynchroGroupService synchroGroupService;
     private static Logger log = LoggerFactory.getLogger(GroupService.class);
 
-    GroupService(SoapZimbraService soapService, SqlZimbraService sqlService, SynchroUserService synchroUserService) {
+    public GroupService(SoapZimbraService soapService, SqlZimbraService sqlService, SynchroUserService synchroUserService) {
         this.soapService = soapService;
         this.sqlService = sqlService;
         this.synchroGroupService = new SynchroGroupService(soapService, synchroUserService);
@@ -96,7 +96,7 @@ class GroupService {
      * @param email address of the group
      * @return id part if it's a group address, null otherwise
      */
-    String getGroupId(String email) {
+    public String getGroupId(String email) {
         if(email.matches("[0-9a-z-]*@" + Zimbra.domain)) {
             return email.substring(0, email.indexOf("@"));
         }

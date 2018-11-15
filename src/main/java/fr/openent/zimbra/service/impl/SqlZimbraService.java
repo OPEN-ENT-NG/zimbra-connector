@@ -24,7 +24,7 @@ public class SqlZimbraService {
     private final String groupTable;
 
     static final String ZIMBRA_NAME = "mailzimbra";
-    static final String NEO4J_UID = "uuidneo";
+    public static final String NEO4J_UID = "uuidneo";
 
     public SqlZimbraService(Vertx vertx, String schema) {
         this.eb = Server.getEventBus(vertx);
@@ -42,7 +42,7 @@ public class SqlZimbraService {
      * @param mail Zimbra mail
      * @param handler result handler
      */
-    void getNeoIdFromMail(String mail, Handler<Either<String, JsonArray>> handler) {
+    public void getNeoIdFromMail(String mail, Handler<Either<String, JsonArray>> handler) {
 
         String query = "SELECT " + NEO4J_UID + " FROM "
                 + userTable + " WHERE " + ZIMBRA_NAME + " = ? "
