@@ -19,6 +19,7 @@
 
 package fr.openent.zimbra;
 
+import fr.openent.zimbra.controllers.ExternalWebservicesController;
 import fr.openent.zimbra.controllers.SynchroController;
 import org.entcore.common.http.BaseServer;
 import fr.openent.zimbra.controllers.ZimbraController;
@@ -40,6 +41,7 @@ public class Zimbra extends BaseServer {
 		Zimbra.synchroLang = config.getString("zimbra-synchro-lang", "fr");
 		addController(new ZimbraController());
 		addController(new SynchroController());
+		addController(new ExternalWebservicesController());
 	}
 
 }

@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.data.ZimbraUser;
 import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
@@ -180,11 +181,42 @@ public class UserService {
         }
     }
 
+    public void getUserLogin(String email,
+                             Handler<Either<String, JsonObject>> handler) {
+        ZimbraUser user = new ZimbraUser();
+        user.fetchEntLoginFromEmail(email, userResponse -> {
+            if(userResponse.isLeft()) {
+                handler.handle(userResponse);
+            } else {
+                JsonObject frontResponse = new JsonObject();
+                frontResponse.put("login", user.getLogin());
+                handler.handle(new Either.Right<>(frontResponse));
+            }
+        });
+    }
+
     /**
      * Get account info from specified user from Zimbra
      * @param account Zimbra account name or alias
      * @param handler result handler
      */
+    public void getUserAccountNew(String account,
+                        Handler<Either<String, JsonObject>> handler) {
+
+        JsonObject acct = new JsonObject()
+                .put("by", "name")
+                .put("_content", account);
+
+        JsonObject getInfoRequest = new JsonObject()
+                .put("name", "GetAccountRequest")
+                .put("content", new JsonObject()
+                        .put("_jsns", ZimbraConstants.NAMESPACE_ADMIN)
+                        .put("account", acct));
+
+        soapService.callAdminSoapAPI(getInfoRequest, handler);
+    }
+
+    // TODO : Replace usage with getUserAccountNew and ZimbraUser
     void getUserAccount(String account,
                              Handler<Either<String, JsonObject>> handler) {
 

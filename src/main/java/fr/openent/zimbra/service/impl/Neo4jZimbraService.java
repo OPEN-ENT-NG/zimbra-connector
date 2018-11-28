@@ -35,7 +35,7 @@ public class Neo4jZimbraService {
 	static final String TYPE_GROUP = "group";
 	static final String TYPE_USER = "user";
 
-	Neo4jZimbraService(){
+	public Neo4jZimbraService(){
 		this.neo = Neo4j.getInstance();
 	}
 
@@ -80,6 +80,14 @@ public class Neo4jZimbraService {
 				.put("recipientId", recipientId);
 
 		neo.execute(query, params, validUniqueResultHandler(handler));
+	}
+
+	public void getLoginFromIds(JsonArray idList, Handler<Either<String,JsonObject>> handler) {
+		String query = "MATCH (u:User) "
+				+ "WHERE u.id in {ids} "
+				+ "return u.login as login";
+
+		neo.execute(query, new JsonObject().put("ids", idList), validUniqueResultHandler(handler));
 	}
 
 }
