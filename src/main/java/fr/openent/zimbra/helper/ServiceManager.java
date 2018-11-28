@@ -21,6 +21,7 @@ public class ServiceManager {
     private NotificationService notificationService;
     private CommunicationService communicationService;
     private GroupService groupService;
+    private Neo4jZimbraService neoService;
 
 
     private void initServiceManager(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
@@ -38,6 +39,7 @@ public class ServiceManager {
         this.notificationService = new NotificationService(soapService, userService, pathPrefix, timelineHelper);
         this.communicationService = new CommunicationService(messageService);
         this.groupService = new GroupService(soapService, sqlService, synchroUserService);
+        this.neoService = new Neo4jZimbraService();
 
 
         soapService.setServices(userService, synchroUserService);
@@ -94,6 +96,10 @@ public class ServiceManager {
 
     public GroupService getGroupService() {
         return groupService;
+    }
+
+    public Neo4jZimbraService getNeoService() {
+        return neoService;
     }
 
 

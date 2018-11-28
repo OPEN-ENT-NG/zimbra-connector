@@ -1,5 +1,6 @@
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.data.ZimbraUser;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Server;
 import fr.wseduc.webutils.Utils;
@@ -8,11 +9,16 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.sql.Sql;
 import org.entcore.common.sql.SqlResult;
 import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.validation.StringValidation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SqlZimbraService {
 
@@ -25,6 +31,8 @@ public class SqlZimbraService {
 
     static final String ZIMBRA_NAME = "mailzimbra";
     public static final String NEO4J_UID = "uuidneo";
+
+    private static Logger log = LoggerFactory.getLogger(SqlZimbraService.class);
 
     public SqlZimbraService(Vertx vertx, String schema) {
         this.eb = Server.getEventBus(vertx);
@@ -101,6 +109,16 @@ public class SqlZimbraService {
         sql.prepared(query, values, SqlResult.validRowsResultHandler(handler));
     }
 
+    public void updateUserAsync(ZimbraUser user) {
+        List<ZimbraUser> userList = new ArrayList<>();
+        userList.add(user);
+        updateUsers(userList, sqlResponse -> {
+            if(sqlResponse.isLeft()) {
+                log.error("Error when updating Zimbra users : " + sqlResponse.left().getValue());
+            }
+        });
+    }
+
     /**
      * Update users mails in database if not already present
      * @param users Array of users :
@@ -115,7 +133,17 @@ public class SqlZimbraService {
      *              ]
      * @param handler result handler
      */
-    void updateUsers(JsonArray users, Handler<Either<String, JsonObject>> handler) {
+    public void updateUsers(List<ZimbraUser> users, Handler<Either<String, JsonObject>> handler) {
+        JsonArray jsonUsers = new JsonArray();
+        for(ZimbraUser user : users) {
+            JsonObject jsonUser = new JsonObject()
+                    .put("name", user.getName())
+                    .put("aliases", new JsonArray(user.getAliases()));
+        }
+        updateUsers(jsonUsers, handler);
+    }
+
+    public void updateUsers(JsonArray users, Handler<Either<String, JsonObject>> handler) {
 
         boolean atLeastOne = false;
 

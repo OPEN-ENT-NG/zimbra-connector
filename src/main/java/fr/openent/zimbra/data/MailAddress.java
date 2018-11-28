@@ -48,6 +48,10 @@ public class MailAddress {
         return neoId;
     }
 
+    public String getLocalPart() {
+        return localPart;
+    }
+
     private MailAddress(String rawAddress) throws IllegalArgumentException {
         this.rawAddress = rawAddress;
         processRawAddress();
@@ -68,7 +72,7 @@ public class MailAddress {
         if(completeCleanAddress.isEmpty()) {
             throw new IllegalArgumentException("Empty address can't be processed");
         }
-        setLocalPart( completeCleanAddress.substring(0, completeCleanAddress.indexOf('@')-1) );
+        setLocalPart( completeCleanAddress.substring(0, completeCleanAddress.indexOf('@')) );
         setDomain( completeCleanAddress.substring(completeCleanAddress.indexOf('@')+1) );
     }
 
