@@ -32,6 +32,7 @@
     "e408": "Temps d'attente dépassé, veuillez réessayer",
     "e500": "L'application a rencontré une erreur. Si ce problème se reproduit, veuillez vous adresser au support.",
     "e504": "La demande a dépassé le delai imparti.",
+    "expert.mode.access": "Accéder au mode Expert",
     "empty.trash": "Vider la corbeille",
     "file.too.large": "Quota de stockage : espace disponible insuffisant.",
     "filter.unread": "Filtrer les messages non lu",

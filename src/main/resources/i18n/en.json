@@ -28,6 +28,7 @@
     "e404": "Not Found",
     "e408": "Request Time-out",
     "e500": "Internal Server Error",
+    "expert.mode.access": "Access Expert mode",
     "file.too.large": "Quota de stockage : espace disponible insuffisant.",
     "folder.empty": "Empty folder",
     "folder.new.title": "Créer un dossier",
