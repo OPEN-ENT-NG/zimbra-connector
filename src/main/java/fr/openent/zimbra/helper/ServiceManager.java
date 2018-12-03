@@ -11,7 +11,10 @@ public class ServiceManager {
 
     private static ServiceManager serviceManager = null;
 
+    private ConfigManager appConfig;
+
     private TimelineHelper timelineHelper;
+    private SoapZimbraService soapService;
     private UserService userService;
     private FolderService folderService;
     private AttachmentService attachmentService;
@@ -22,14 +25,18 @@ public class ServiceManager {
     private CommunicationService communicationService;
     private GroupService groupService;
     private Neo4jZimbraService neoService;
+    private ExpertModeService expertModeService;
+    private SynchroUserService synchroUserService;
 
 
     private void initServiceManager(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
 
+        appConfig = new ConfigManager(config);
+
         timelineHelper = new TimelineHelper(vertx, eb, config);
         this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
-        SoapZimbraService soapService = new SoapZimbraService(vertx, config);
-        SynchroUserService synchroUserService = new SynchroUserService(soapService, sqlService);
+        this.soapService = new SoapZimbraService(vertx, appConfig);
+        this.synchroUserService = new SynchroUserService(soapService, sqlService);
         this.userService = new UserService(soapService, synchroUserService, sqlService);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
@@ -40,6 +47,7 @@ public class ServiceManager {
         this.communicationService = new CommunicationService(messageService);
         this.groupService = new GroupService(soapService, sqlService, synchroUserService);
         this.neoService = new Neo4jZimbraService();
+        this.expertModeService = new ExpertModeService();
 
 
         soapService.setServices(userService, synchroUserService);
@@ -58,8 +66,16 @@ public class ServiceManager {
         return serviceManager;
     }
 
+    public ConfigManager getConfig() {
+        return appConfig;
+    }
+
     public TimelineHelper getTimelineHelper() {
         return timelineHelper;
+    }
+
+    public SoapZimbraService getSoapService() {
+        return soapService;
     }
 
     public SqlZimbraService getSqlService() {
@@ -100,6 +116,14 @@ public class ServiceManager {
 
     public Neo4jZimbraService getNeoService() {
         return neoService;
+    }
+
+    public ExpertModeService getExpertModeService() {
+        return expertModeService;
+    }
+
+    public SynchroUserService getSynchroUserService() {
+        return synchroUserService;
     }
 
 

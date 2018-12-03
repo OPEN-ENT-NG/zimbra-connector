@@ -1,6 +1,8 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+
+import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.HttpClientHelper;
 import fr.openent.zimbra.helper.PreauthHelper;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
@@ -56,22 +58,18 @@ public class SoapZimbraService {
     private String zimbraAdminAccount;
     private String zimbraAdminPassword;
 
-    public SoapZimbraService(Vertx vertx, JsonObject config) {
+    public SoapZimbraService(Vertx vertx, ConfigManager config) {
         this.userService = null;
         this.synchroUserService = null;
 
-        String zimbraBaseUri = config.getString("zimbra-uri", "");
+        String zimbraBaseUri = config.getZimbraUri();
         this.zimbraUri = zimbraBaseUri + URI_SOAP;
-        this.zimbraAdminUri = config.getString("zimbra-admin-uri", "");
-        this.zimbraAdminAccount = config.getString("admin-account","");
-        this.zimbraAdminPassword = config.getString("admin-password","");
-        this.preauthKey = config.getString("preauth-key","");
+        this.zimbraAdminUri = config.getZimbraAdminUri();
+        this.zimbraAdminAccount = config.getZimbraAdminAccount();
+        this.zimbraAdminPassword = config.getZimbraAdminPassword();
+        this.preauthKey = config.getPreauthKey();
         this.vertx = vertx;
 
-        if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
-                || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty() || Zimbra.domain.isEmpty()) {
-            log.fatal("Zimbra : Missing configuration in conf.properties");
-        }
     }
 
     public void setServices(UserService us, SynchroUserService synchroUserService) {

@@ -20,6 +20,7 @@
 package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.FrontConstants;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.service.impl.*;
@@ -55,6 +56,7 @@ import io.vertx.core.json.JsonObject;
 import org.vertx.java.core.http.RouteMatcher;
 
 
+import java.io.IOException;
 import java.util.*;
 
 import static fr.wseduc.webutils.request.RequestUtils.bodyToJson;
@@ -65,6 +67,7 @@ import static org.entcore.common.user.UserUtils.getUserInfos;
 public class ZimbraController extends BaseController {
 
 	private TimelineHelper notification;
+	private ConfigManager appConfig;
 	private UserService userService;
 	private FolderService folderService;
 	private AttachmentService attachmentService;
@@ -73,6 +76,7 @@ public class ZimbraController extends BaseController {
 	private SqlZimbraService sqlService;
 	private NotificationService notificationService;
 	private CommunicationService communicationService;
+	private ExpertModeService expertModeService;
 
 
 	private static final Logger log = LoggerFactory.getLogger(ZimbraController.class);
@@ -85,6 +89,7 @@ public class ZimbraController extends BaseController {
 		ServiceManager serviceManager = ServiceManager.init(vertx, config, eb, pathPrefix);
 
 		notification = serviceManager.getTimelineHelper();
+		this.appConfig = serviceManager.getConfig();
 		this.sqlService = serviceManager.getSqlService();
 		this.userService = serviceManager.getUserService();
 		this.folderService = serviceManager.getFolderService();
@@ -93,12 +98,31 @@ public class ZimbraController extends BaseController {
 		this.attachmentService = serviceManager.getAttachmentService();
 		this.notificationService = serviceManager.getNotificationService();
 		this.communicationService = serviceManager.getCommunicationService();
+		this.expertModeService = serviceManager.getExpertModeService();
+
 	}
 
 	@Get("zimbra")
 	@SecuredAction("zimbra.view")
 	public void view(HttpServerRequest request) {
 		renderView(request);
+	}
+
+	@Get("preauth")
+	@SecuredAction("zimbra.expert")
+	public void preauth(HttpServerRequest request) {
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				try {
+					String location = expertModeService.getPreauthUrl(user);
+					redirect(request, appConfig.getZimbraUri(), location);
+				} catch (IOException e) {
+					renderError(request);
+				}
+			} else {
+				unauthorized(request);
+			}
+		});
 	}
 
 
