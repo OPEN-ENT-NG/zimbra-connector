@@ -1,5 +1,6 @@
 package fr.openent.zimbra.controllers;
 
+import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.service.impl.SoapZimbraService;
 import fr.openent.zimbra.service.impl.SqlZimbraService;
 import fr.openent.zimbra.service.impl.UserService;
@@ -34,14 +35,12 @@ public class SynchroController extends BaseController {
     public void init(Vertx vertx, JsonObject config, RouteMatcher rm,
                      Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
         super.init(vertx, config, rm, securedActions);
-        SqlZimbraService sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
-        SoapZimbraService soapService = new SoapZimbraService(vertx, config);
-        this.synchroExportService = new SynchroExportService();
-        this.synchroUserService = new SynchroUserService(soapService, sqlService);
-        UserService userService = new UserService(soapService, synchroUserService, sqlService);
 
-        soapService.setServices(userService, synchroUserService);
-        synchroUserService.setUserService(userService);
+        ServiceManager serviceManager = ServiceManager.init(vertx, config, eb, pathPrefix);
+
+        this.synchroExportService = new SynchroExportService();
+        this.synchroUserService = serviceManager.getSynchroUserService();
+
     }
 
     /**

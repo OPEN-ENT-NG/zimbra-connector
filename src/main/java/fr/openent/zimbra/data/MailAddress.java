@@ -58,6 +58,11 @@ public class MailAddress {
         initServices();
     }
 
+    @Override
+    public String toString() {
+        return this.localPart + "@" + this.domain;
+    }
+
     private void processRawAddress() throws IllegalArgumentException {
         if(rawAddress.isEmpty()) {
             throw new IllegalArgumentException("Empty address can't be processed");

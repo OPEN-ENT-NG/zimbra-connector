@@ -8,14 +8,25 @@ import org.entcore.common.user.UserInfos;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class PreauthHelper {
 
+    private static String preauthUrl = "/service/preauth" + "" +
+            "?account=%s" +
+            "&by=name" +
+            "&timestamp=%s" +
+            "&expires=0" +
+            "&preauth=%s";
+
     private static final char[] hex =
             { '0' , '1' , '2' , '3' , '4' , '5' , '6' , '7' ,
                     '8' , '9' , 'a' , 'b' , 'c' , 'd' , 'e' , 'f'};
+
+    private static final Logger log = LoggerFactory.getLogger(PreauthHelper.class);
 
     private static  String computeDefaultPreAuth(String id, String timestamp, String key) {
         return computePreAuth(id, "name", timestamp, "0", "0", key);
@@ -48,6 +59,19 @@ public class PreauthHelper {
                 .put("id", emailAddress)
                 .put("timestamp", timestamp)
                 .put("preauthkey", computedPreauth);
+    }
+
+    public static String generatePreauthUrl(String emailAddress, String preauthKey) throws IOException{
+        JsonObject preauthInfos = PreauthHelper.generatePreauth(emailAddress, preauthKey);
+        if(preauthInfos == null) {
+            log.error("Error when processing preauth url for " + emailAddress);
+            throw new IOException("Error when processing preauth url");
+        } else {
+            return String.format(preauthUrl,
+                    URLEncoder.encode(preauthInfos.getString("id"), "UTF-8"),
+                    preauthInfos.getString("timestamp"),
+                    preauthInfos.getString("preauthkey"));
+        }
     }
 
     private static String getHmac(String data, byte[] key) {
