@@ -4,7 +4,8 @@ Behaviours.register("zimbra", {
     rights: {
         workflow: {
             draft: "fr.openent.zimbra.controllers.ZimbraController|createDraft",
-            read: "fr.openent.zimbra.controllers.ZimbraController|view"
+            read: "fr.openent.zimbra.controllers.ZimbraController|view",
+            expert: "fr.openent.zimbra.controllers.ZimbraController|preauth"
         }
     },
     sniplets: {

@@ -840,5 +840,9 @@ export let zimbraController = ng.controller("ZimbraController", [
                 model.me.functions.ADMIN_LOCAL.scope
             );
         };
+
+        $scope.openExpertMode = () => {
+            window.open('/zimbra/preauth');
+        }
     }
 ]);
