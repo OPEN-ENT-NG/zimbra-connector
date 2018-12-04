@@ -1,11 +1,16 @@
 package fr.openent.zimbra.data;
 
+
 import fr.openent.zimbra.helper.ServiceManager;
+import fr.openent.zimbra.helper.SoapConstants;
+import fr.openent.zimbra.helper.SynchroConstants;
 import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.openent.zimbra.service.impl.Neo4jZimbraService;
 import fr.openent.zimbra.service.impl.SqlZimbraService;
 import fr.openent.zimbra.service.impl.UserService;
 import fr.wseduc.webutils.Either;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -17,6 +22,7 @@ import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 
 import static fr.openent.zimbra.helper.SoapConstants.*;
+import static fr.openent.zimbra.helper.AsyncHelper.*;
 
 public class ZimbraUser {
 
@@ -53,32 +59,38 @@ public class ZimbraUser {
         return entLogin;
     }
 
+
+
     public void fetchEntLoginFromEmail(String email, Handler<Either<String, JsonObject>> handler) {
-        fetchAccountInfoFromEmail(email, userResponse -> {
-            if(userResponse.isLeft()) {
-                handler.handle(userResponse);
-            } else {
-                fetchLoginFromAliases(handler);
-            }
-        });
+        Future<JsonObject> startFuture = getJsonObjectFinalFuture(handler);
+
+        Future<JsonObject> fetchedInfos = Future.future();
+        fetchAccountInfoFromEmail(email, fetchedInfos.completer());
+        fetchedInfos.compose(v -> {
+            fetchLoginFromAliases(startFuture.completer());
+        }, startFuture);
     }
 
-    public void fetchAccountInfoFromEmail(String email, Handler<Either<String, JsonObject>> handler) {
-        userService.getUserAccountNew(email, userServiceResponse -> {
-            if(userServiceResponse.isLeft()) {
-                handler.handle(userServiceResponse);
-            } else {
+    public void fetchAccountInfoFromEmail(String email, Handler<AsyncResult<JsonObject>> handler) {
+        JsonObject acct = new JsonObject()
+                .put(SoapConstants.ID_BY, ZimbraConstants.ACCT_NAME)
+                .put(SoapConstants.ATTR_VALUE, email);
+
+        SoapRequest getAccountRequest = SoapRequest.AdminSoapRequest(SoapConstants.GET_ACCOUNT_REQUEST);
+        getAccountRequest.setContent(new JsonObject().put(SoapConstants.ACCOUNT, acct));
+        getAccountRequest.start(response -> {
+            if(response.succeeded()) {
                 try {
-                    processGetAccountInfo(userServiceResponse.right().getValue());
-                    handler.handle(userServiceResponse);
+                    processGetAccountInfo(response.result());
                 } catch (InvalidPropertiesFormatException e) {
-                    handler.handle(new Either.Left<>(e.getMessage()));
+                    handler.handle(Future.failedFuture(e));
                 }
             }
+            handler.handle(response);
         });
     }
 
-    private void fetchLoginFromAliases(Handler<Either<String, JsonObject>> handler) {
+    private void fetchLoginFromAliases(Handler<AsyncResult<JsonObject>> handler) {
         JsonArray aliasList = new JsonArray();
         for(String alias : aliases) {
             try {
@@ -89,20 +101,22 @@ public class ZimbraUser {
             }
         }
         if(aliasList.isEmpty()) {
-            handler.handle(new Either.Left<>("No login for this user"));
+            handler.handle(Future.failedFuture("No login for this user"));
         } else {
             neo4jService.getLoginFromIds(aliasList, neoResponse -> {
                 if(neoResponse.isRight()) {
                     this.entLogin = neoResponse.right().getValue().getString("login");
+                    handler.handle(Future.succeededFuture(neoResponse.right().getValue()));
+                } else {
+                    handler.handle(Future.failedFuture(neoResponse.left().getValue()));
                 }
-                handler.handle(neoResponse);
             });
         }
     }
 
     private void processGetAccountInfo(JsonObject zimbraData) throws InvalidPropertiesFormatException{
         JsonObject getInfoResp = zimbraData.getJsonObject(BODY)
-                .getJsonObject("GetAccountResponse");
+                .getJsonObject(GET_ACCOUNT_RESPONSE);
 
         try {
             this.processAccountInfo(getInfoResp);
@@ -118,7 +132,7 @@ public class ZimbraUser {
     // Can throw Exception when parsing getAccountResponse
     private void processAccountInfo(JsonObject getAccountResponse) {
 
-        JsonObject account = getAccountResponse.getJsonArray("account").getJsonObject(0);
+        JsonObject account = getAccountResponse.getJsonArray(ACCOUNT).getJsonObject(0);
         this.zimbraID = account.getString(ZimbraConstants.ACCT_ID, this.zimbraID);
         this.zimbraName = account.getString(ZimbraConstants.ACCT_NAME, this.zimbraName);
 
@@ -130,16 +144,16 @@ public class ZimbraUser {
             String value = attr.getString(ZimbraConstants.ACCT_ATTRIBUTES_CONTENT, "");
 
             switch (key) {
-                case "zimbraMailQuota":
+                case ZimbraConstants.ATTR_MAIL_QUOTA:
                     this.totalQuota = value;
                     break;
-                case "zimbraMailAlias":
+                case SynchroConstants.ALIAS:
                     this.aliases.add(value);
                     break;
-                case "zimbraAccountStatus":
+                case SynchroConstants.ACCOUNT_STATUS:
                     this.zimbraStatus = value;
                     break;
-                case "ou":
+                case SynchroConstants.GROUPID:
                     this.entGroups.add(value);
                     break;
             }
