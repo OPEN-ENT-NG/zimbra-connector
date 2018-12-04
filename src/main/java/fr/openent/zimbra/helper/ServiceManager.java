@@ -36,6 +36,7 @@ public class ServiceManager {
         timelineHelper = new TimelineHelper(vertx, eb, config);
         this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
         this.soapService = new SoapZimbraService(vertx, appConfig);
+        this.neoService = new Neo4jZimbraService();
         this.synchroUserService = new SynchroUserService(soapService, sqlService);
         this.userService = new UserService(soapService, synchroUserService, sqlService);
         this.folderService = new FolderService(soapService);
@@ -46,7 +47,6 @@ public class ServiceManager {
         this.notificationService = new NotificationService(soapService, userService, pathPrefix, timelineHelper);
         this.communicationService = new CommunicationService(messageService);
         this.groupService = new GroupService(soapService, sqlService, synchroUserService);
-        this.neoService = new Neo4jZimbraService();
         this.expertModeService = new ExpertModeService();
 
 

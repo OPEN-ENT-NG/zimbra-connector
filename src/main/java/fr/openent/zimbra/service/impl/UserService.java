@@ -1,10 +1,13 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.data.SoapRequest;
 import fr.openent.zimbra.data.ZimbraUser;
+import fr.openent.zimbra.helper.SoapConstants;
 import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -201,19 +204,15 @@ public class UserService {
      * @param handler result handler
      */
     public void getUserAccountNew(String account,
-                        Handler<Either<String, JsonObject>> handler) {
+                        Handler<AsyncResult<JsonObject>> handler) {
 
         JsonObject acct = new JsonObject()
-                .put("by", "name")
-                .put("_content", account);
+                .put(SoapConstants.ID_BY, ZimbraConstants.ACCT_NAME)
+                .put(SoapConstants.ATTR_VALUE, account);
 
-        JsonObject getInfoRequest = new JsonObject()
-                .put("name", "GetAccountRequest")
-                .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_ADMIN)
-                        .put("account", acct));
-
-        soapService.callAdminSoapAPI(getInfoRequest, handler);
+        SoapRequest getAccountRequest = SoapRequest.AdminSoapRequest(SoapConstants.GET_ACCOUNT_REQUEST);
+        getAccountRequest.setContent(new JsonObject().put(SoapConstants.ACCOUNT, acct));
+        getAccountRequest.start(handler);
     }
 
     // TODO : Replace usage with getUserAccountNew and ZimbraUser

@@ -23,10 +23,13 @@ public class CommunicationService {
 
     /**
      * Indicates if a sender (user) can send a mail to a receiver (user or group)
-     * todo
-     * @param inSender
-     * @param inRecipient
-     * @param handler
+     * Returns JsonObject :
+     * {
+     *     can_communicate : true/false
+     * }
+     * @param inSender Mail address of the sender
+     * @param inRecipient Maid address of the recipient
+     * @param handler final handler
      */
     public void canCommunicate(String inSender, String inRecipient, Handler<Either<String,JsonObject>> handler) {
 

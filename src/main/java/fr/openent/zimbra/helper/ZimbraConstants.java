@@ -58,6 +58,8 @@ public class ZimbraConstants {
     public static final String MSG_NEW_UPLOAD_ID = "aid";
 
 
+    public static final String ATTR_MAIL_QUOTA = "zimbraMailQuota";
+
 
 
     public static final String MSG_EMAILS = "e";
@@ -99,6 +101,7 @@ public class ZimbraConstants {
     public static final String ACCT_ATTRIBUTES = "a";
     public static final String ACCT_ATTRIBUTES_NAME = "n";
     public static final String ACCT_ATTRIBUTES_CONTENT = "_content";
+    public static final String ACCT_ALIAS = "alias";
 
     public static final String DISPLAY_INLINE = "i";
     public static final String DISPLAY_ATTACHMENT = "a";

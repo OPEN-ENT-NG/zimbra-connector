@@ -207,7 +207,7 @@ public class SoapZimbraService {
      * @param user User connected
      * @param handler process result
      */
-    void callUserSoapAPI(JsonObject params, UserInfos user, Handler<Either<String,JsonObject>> handler) {
+    public void callUserSoapAPI(JsonObject params, UserInfos user, Handler<Either<String,JsonObject>> handler) {
         String userId = user.getUserId();
         String userAddress = userId + "@" + Zimbra.domain;
         params.put(PARAM_ISADMIN, false);

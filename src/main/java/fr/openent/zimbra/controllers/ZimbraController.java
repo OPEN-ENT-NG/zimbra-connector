@@ -416,8 +416,14 @@ public class ZimbraController extends BaseController {
 	}
 
 	/**
-	 * todo
+	 * Indicates if a sender (user or external address) can send a mail to a receiver (user, group or external address)
+	 * Returns JsonObject :
+	 * {
+	 *     can_communicate : true/false
+	 * } Check if communication is allowed between two mail addresses
 	 * @param request
+	 * 		from : mail address for the sender
+	 * 		to : mail address for the recipient
 	 */
 	@Get("communication")
 	@SecuredAction("zimbra.communication.all")
