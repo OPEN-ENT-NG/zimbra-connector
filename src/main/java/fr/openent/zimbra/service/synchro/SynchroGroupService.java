@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.synchro;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.SoapConstants;
 import fr.openent.zimbra.service.impl.SoapZimbraService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
@@ -153,7 +154,7 @@ public class SynchroGroupService {
                         .put("name", accountName)
                         .put("dynamic", 1)
                         .put("a", attributes)
-                        .put("_jsns", NAMESPACE_ADMIN));
+                        .put("_jsns", SoapConstants.NAMESPACE_ADMIN));
 
         soapService.callAdminSoapAPI(createDLRequest, handler);
     }

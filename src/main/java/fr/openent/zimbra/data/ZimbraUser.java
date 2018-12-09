@@ -64,14 +64,14 @@ public class ZimbraUser {
     public void fetchEntLoginFromEmail(String email, Handler<Either<String, JsonObject>> handler) {
         Future<JsonObject> startFuture = getJsonObjectFinalFuture(handler);
 
-        Future<JsonObject> fetchedInfos = Future.future();
+        Future<ZimbraUser> fetchedInfos = Future.future();
         fetchAccountInfoFromEmail(email, fetchedInfos.completer());
         fetchedInfos.compose(v -> {
             fetchLoginFromAliases(startFuture.completer());
         }, startFuture);
     }
 
-    public void fetchAccountInfoFromEmail(String email, Handler<AsyncResult<JsonObject>> handler) {
+    public void fetchAccountInfoFromEmail(String email, Handler<AsyncResult<ZimbraUser>> handler) {
         JsonObject acct = new JsonObject()
                 .put(SoapConstants.ID_BY, ZimbraConstants.ACCT_NAME)
                 .put(SoapConstants.ATTR_VALUE, email);
@@ -82,11 +82,13 @@ public class ZimbraUser {
             if(response.succeeded()) {
                 try {
                     processGetAccountInfo(response.result());
+                    Future.succeededFuture(ZimbraUser.this);
                 } catch (InvalidPropertiesFormatException e) {
                     handler.handle(Future.failedFuture(e));
                 }
+            } else {
+                handler.handle(Future.failedFuture(response.cause()));
             }
-            handler.handle(response);
         });
     }
 

@@ -2,6 +2,7 @@ package fr.openent.zimbra.service.impl;
 
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.SoapConstants;
 import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.openent.zimbra.service.synchro.SynchroGroupService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
@@ -84,7 +85,7 @@ public class GroupService {
         JsonObject getInfoRequest = new JsonObject()
                 .put("name", "GetDistributionListRequest")
                 .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_ADMIN)
+                        .put("_jsns", SoapConstants.NAMESPACE_ADMIN)
                         .put("limit", 1)
                         .put(ZimbraConstants.DISTRIBUTION_LIST, acct));
 

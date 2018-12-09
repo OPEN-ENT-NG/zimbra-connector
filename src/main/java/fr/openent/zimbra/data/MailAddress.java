@@ -87,6 +87,10 @@ public class MailAddress {
         initServices();
     }
 
+    public String getRawCleanAddress() {
+        return completeCleanAddress;
+    }
+
     private void setLocalPart(String localPart) {
         //todo check valid localPart
         this.localPart = localPart;

@@ -2,21 +2,20 @@ package fr.openent.zimbra.data;
 
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.helper.SoapConstants;
 import fr.openent.zimbra.service.impl.SoapZimbraService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 
-import static fr.openent.zimbra.helper.ZimbraConstants.NAMESPACE_ACCOUNT;
-import static fr.openent.zimbra.helper.ZimbraConstants.NAMESPACE_ADMIN;
+import static fr.openent.zimbra.helper.SoapConstants.*;
 
 public class SoapRequest {
 
     private String name;
     private String namespace;
     private boolean isAdmin;
+    private String userId;
     private JsonObject content = null;
 
     private SoapRequest(String name, String namespace, boolean isAdmin) {
@@ -25,8 +24,15 @@ public class SoapRequest {
         this.isAdmin = isAdmin;
     }
 
-    public static SoapRequest UserSoapRequest(String name) {
-        return new SoapRequest(name, NAMESPACE_ACCOUNT, false);
+    private SoapRequest(String name, String namespace, boolean isAdmin, String userId) {
+        this.name = name;
+        this.namespace = namespace;
+        this.isAdmin = isAdmin;
+        this.userId = userId;
+    }
+
+    public static SoapRequest AccountSoapRequest(String name, String userId) {
+        return new SoapRequest(name, NAMESPACE_ACCOUNT, false, userId);
     }
 
     public static SoapRequest AdminSoapRequest(String name) {
@@ -37,7 +43,7 @@ public class SoapRequest {
         if(content == null) {
             content = new JsonObject();
         }
-        content.put("_jsns", namespace);
+        content.put(REQ_NAMESPACE, namespace);
         this.content = content;
     }
 
@@ -52,14 +58,18 @@ public class SoapRequest {
         }
 
         JsonObject reqParams = new JsonObject()
-                .put(SoapConstants.REQ_NAME, name)
-                .put(SoapConstants.REQ_CONTENT, content);
+                .put(REQ_NAME, name)
+                .put(REQ_CONTENT, content);
 
-        if(!isAdmin) {
-            handler.handle(Future.failedFuture("User requests not implemented"));
-            return;
+        if(isAdmin) {
+            soapService.callAdminSoapAPI(reqParams, AsyncHelper.getJsonObjectEitherHandler(handler));
+        } else {
+            if(userId.isEmpty()) {
+                handler.handle(Future.failedFuture("Can't launch user request without userid"));
+            } else {
+                soapService.callUserSoapAPI(reqParams, userId, handler);
+            }
         }
 
-        soapService.callAdminSoapAPI(reqParams, AsyncHelper.getJsonObjectEitherHandler(handler));
     }
 }

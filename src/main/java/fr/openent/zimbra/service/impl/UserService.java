@@ -87,7 +87,7 @@ public class UserService {
         JsonObject getInfoRequest = new JsonObject()
                 .put("name", "GetInfoRequest")
                 .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT));
+                        .put("_jsns", SoapConstants.NAMESPACE_ACCOUNT));
 
         soapService.callUserSoapAPI(getInfoRequest, user, response -> {
             if(response.isLeft()) {
@@ -226,7 +226,7 @@ public class UserService {
         JsonObject getInfoRequest = new JsonObject()
                 .put("name", "GetAccountRequest")
                 .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_ADMIN)
+                        .put("_jsns", SoapConstants.NAMESPACE_ADMIN)
                         .put("account", acct));
 
         soapService.callAdminSoapAPI(getInfoRequest, response -> {
