@@ -3,6 +3,8 @@ package fr.openent.zimbra.service.synchro;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.data.EntUser;
 import fr.openent.zimbra.data.SoapRequest;
+import fr.openent.zimbra.data.synchro.SynchroUser;
+import fr.openent.zimbra.helper.SoapConstants;
 import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.openent.zimbra.service.impl.*;
 import fr.wseduc.webutils.Either;
@@ -26,11 +28,14 @@ public class SynchroUserService {
     private SoapZimbraService soapService;
     private UserService userService;
     private SqlZimbraService sqlService;
+    private SqlSynchroService sqlSynchroService;
     private static Logger log = LoggerFactory.getLogger(SynchroUserService.class);
 
-    public SynchroUserService(SoapZimbraService soapZimbraService, SqlZimbraService sqlService){
+    public SynchroUserService(SoapZimbraService soapZimbraService, SqlZimbraService sqlService,
+                              SqlSynchroService sqlSynchroService){
         this.soapService = soapZimbraService;
         this.sqlService = sqlService;
+        this.sqlSynchroService = sqlSynchroService;
     }
 
     public void setUserService(UserService userService) {
@@ -45,6 +50,30 @@ public class SynchroUserService {
      */
     public void removeUserFromBase(String userId, String userMail, Handler<Either<String,JsonObject>> handler) {
         sqlService.removeUserFrombase(userId, userMail, handler);
+    }
+
+
+    public void syncUserFromBase(Handler<AsyncResult<JsonObject>> handler) {
+        Future<JsonObject> startFuture = Future.future();
+        startFuture.setHandler(handler);
+
+
+        sqlSynchroService.fetchUserToSynchronize(res -> {
+            if(res.failed()) {
+                handler.handle(res);
+            } else {
+                JsonObject bddRes = res.result();
+                if(bddRes.isEmpty()) {
+                    handler.handle(res);
+                } else {
+                    int idRow = bddRes.getInteger(SqlSynchroService.USER_IDROW);
+                    String idUser = bddRes.getString(SqlSynchroService.USER_IDUSER);
+                    String modType = bddRes.getString(SqlSynchroService.USER_MODTYPE);
+                    SynchroUser user = new SynchroUser(idUser);
+                    user.synchronize(idRow, modType, handler);
+                }
+            }
+        });
     }
 
     /**
@@ -133,87 +162,7 @@ public class SynchroUserService {
                 .getJsonObject(CREATE_ACCOUNT_RESPONSE)
                 .getJsonArray(ACCOUNT).getJsonObject(0);
         return account.getString(ACCT_ID);
-
     }
-
-
-    /*private void createUserOld(String userId, int increment, JsonObject neoData,
-                               Handler<Either<String, JsonObject>> handler) {
-
-        String login = neoData.getString("login", "");
-        if(login.isEmpty()) {
-            handler.handle(new Either.Left<>("No login from Neo4j, can't create zimbra account"));
-            return;
-        }
-
-        String accountName = increment > 0
-                ? login + "-" + increment + "@" + Zimbra.domain
-                : login + "@" + Zimbra.domain;
-
-        String firstName = neoData.getString("firstName", "");
-        String lastName = neoData.getString("lastName", "");
-        JsonArray attributes = new JsonArray()
-                .add(new JsonObject()
-                        .put("n", "givenName")
-                        .put("_content", firstName))
-                .add(new JsonObject()
-                        .put("n", "sn")
-                        .put("_content", lastName))
-                .add(new JsonObject()
-                        .put("n", "cn")
-                        .put("_content", firstName + " " + lastName));
-        for(Object o : neoData.getJsonArray("groups", new JsonArray())) {
-            if(!(o instanceof JsonObject)) continue;
-            JsonObject group = (JsonObject)o;
-            if(group.containsKey("groupId")) {
-                attributes.add(new JsonObject()
-                    .put("n", "ou")
-                    .put("_content", group.getString("groupId")));
-            }
-        }
-
-
-        JsonObject createAccountRequest = new JsonObject()
-                .put("name", CREATE_ACCOUNT_REQUEST)
-                .put("content", new JsonObject()
-                        .put("name", accountName)
-                        .put("a", attributes)
-                        .put("_jsns", NAMESPACE_ADMIN));
-
-        soapService.callAdminSoapAPI(createAccountRequest, response -> {
-            if(response.isLeft()) {
-                try {
-                    JsonObject callResult = new JsonObject(response.left().getValue());
-                    if(callResult.getString(SoapZimbraService.ERROR_CODE,"").equals(ERROR_ACCOUNTEXISTS)) {
-                        createUserOld(userId, increment+1, neoData, handler);
-                    } else {
-                        handler.handle(response);
-                    }
-                } catch (Exception e) {
-                    handler.handle(response);
-                }
-            } else {
-                try {
-                    JsonObject account = response.right().getValue()
-                            .getJsonObject("Body")
-                            .getJsonObject("CreateAccountResponse")
-                            .getJsonArray("account").getJsonObject(0);
-                    String accountId = account.getString("id");
-                    addAlias(userId, accountId, resAdd -> {
-                        if(resAdd.isLeft()) {
-                            log.error("Error when adding alias " + userId + " to account " + accountId
-                                    + " Error : " + resAdd.left().getValue());
-                            handler.handle(resAdd);
-                        } else {
-                            handler.handle(new Either.Right<>(account));
-                        }
-                    });
-                } catch (Exception e) {
-                    handler.handle(new Either.Left<>("Could not get account id to add alias"));
-                }
-            }
-        });
-    }*/
 
     private void addAlias(EntUser user, String zimbraId, Handler<AsyncResult<JsonObject>> handler) {
         SoapRequest addAliasRequest = SoapRequest.AdminSoapRequest(ADD_ALIAS_REQUEST);
@@ -222,22 +171,6 @@ public class SynchroUserService {
                 .put(ACCT_ALIAS, user.getUserAddress()));
         addAliasRequest.start(handler);
     }
-
-    /**
-     * Add user Id as alias to existing Zimbra account
-     * @param userId User Id
-     * @param accountId Existing Zimbra Account Id
-     * @param handler result handler
-     */
-    /*private void addAlias(String userId, String accountId, Handler<Either<String, JsonObject>> handler) {
-        JsonObject addAliasRequest = new JsonObject()
-                .put("name", "AddAccountAliasRequest")
-                .put("content", new JsonObject()
-                        .put("id", accountId)
-                        .put("alias", userId + "@" + Zimbra.domain)
-                        .put("_jsns", NAMESPACE_ADMIN));
-        soapService.callAdminSoapAPI(addAliasRequest, handler);
-    }*/
 
     /**
      * Add Manual Group to users asynchronously
@@ -312,7 +245,7 @@ public class SynchroUserService {
         JsonObject modifyAccountRequest = new JsonObject()
                 .put("name", "ModifyAccountRequest")
                 .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_ADMIN)
+                        .put("_jsns", SoapConstants.NAMESPACE_ADMIN)
                         .put("id", accountInfo.getValue(UserInfoService.ZIMBRA_ID))
                         .put("_attrs", attrs));
 

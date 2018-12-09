@@ -1,6 +1,8 @@
 package fr.openent.zimbra.helper;
 
 import fr.openent.zimbra.service.impl.*;
+import fr.openent.zimbra.service.synchro.SqlSynchroService;
+import fr.openent.zimbra.service.synchro.SynchroService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
@@ -26,18 +28,24 @@ public class ServiceManager {
     private GroupService groupService;
     private Neo4jZimbraService neoService;
     private ExpertModeService expertModeService;
+
+
     private SynchroUserService synchroUserService;
+    private SynchroService synchroService;
+    private SqlSynchroService sqlSynchroService;
 
 
-    private void initServiceManager(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
+
+    private ServiceManager(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
 
         appConfig = new ConfigManager(config);
 
         timelineHelper = new TimelineHelper(vertx, eb, config);
         this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
+        this.sqlSynchroService = new SqlSynchroService(config.getString("db-schema", "zimbra"));
         this.soapService = new SoapZimbraService(vertx, appConfig);
         this.neoService = new Neo4jZimbraService();
-        this.synchroUserService = new SynchroUserService(soapService, sqlService);
+        this.synchroUserService = new SynchroUserService(soapService, sqlService, sqlSynchroService);
         this.userService = new UserService(soapService, synchroUserService, sqlService);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
@@ -49,6 +57,8 @@ public class ServiceManager {
         this.groupService = new GroupService(soapService, sqlService, synchroUserService);
         this.expertModeService = new ExpertModeService();
 
+        this.synchroService = new SynchroService(sqlSynchroService);
+
 
         soapService.setServices(userService, synchroUserService);
         synchroUserService.setUserService(userService);
@@ -56,8 +66,7 @@ public class ServiceManager {
 
     public static ServiceManager init(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
         if(serviceManager == null) {
-            serviceManager = new ServiceManager();
-            serviceManager.initServiceManager(vertx, config, eb, pathPrefix);
+            serviceManager = new ServiceManager(vertx, config, eb, pathPrefix);
         }
         return serviceManager;
     }
@@ -126,5 +135,11 @@ public class ServiceManager {
         return synchroUserService;
     }
 
+    public SynchroService getSynchroService() {
+        return synchroService;
+    }
 
+    public SqlSynchroService getSqlSynchroService() {
+        return sqlSynchroService;
+    }
 }

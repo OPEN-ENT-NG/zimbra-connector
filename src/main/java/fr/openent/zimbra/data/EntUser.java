@@ -1,6 +1,7 @@
 package fr.openent.zimbra.data;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.helper.SoapConstants;
 import fr.openent.zimbra.service.impl.Neo4jZimbraService;
@@ -12,6 +13,7 @@ import org.entcore.common.user.UserInfos;
 import io.vertx.core.Handler;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static fr.openent.zimbra.helper.SynchroConstants.*;
@@ -28,8 +30,9 @@ public class EntUser {
     private String login = "";
     private String email = "";
     private String emailAcademy = "";
-    private List<String> groupsId = new ArrayList<>();
-    private List<String> profiles = new ArrayList<>();
+    private List<Group> groups = new ArrayList<>();
+    private String profile = "";
+    private List<String> structuresUai = new ArrayList<>();
     private MailAddress userZimbraAddress;
 
 
@@ -46,6 +49,14 @@ public class EntUser {
         userZimbraAddress = MailAddress.createFromLocalpartAndDomain(userId, Zimbra.domain);
         ServiceManager sm = ServiceManager.getServiceManager();
         this.neoService = sm.getNeoService();
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
     }
 
     public String getUserId() {
@@ -84,15 +95,37 @@ public class EntUser {
         login = neoUser.getString("login", "");
         emailAcademy = neoUser.getString("emailAcademy", "");
         email = neoUser.getString("email", "");
-        profiles = neoUser.getJsonArray("profiles", new JsonArray()).getList();
-        groupsId = neoUser.getJsonArray("groups", new JsonArray()).getList();
+        profile = neoUser.getString("profiles", "");
+        processJsonGroups(neoUser.getJsonArray("groups", new JsonArray()));
+        structuresUai = JsonHelper.getStringList(neoUser.getJsonArray("structures", new JsonArray()));
 
         if(login.isEmpty()) {
             throw new IllegalArgumentException("Login is mandatory for user : " + userId);
         }
     }
 
+    private void processJsonGroups(JsonArray groupArray) throws IllegalArgumentException {
+        for(Object o : groupArray) {
+            if(!(o instanceof JsonObject)) {
+                throw new IllegalArgumentException("JsonArray is not a String list");
+            }
+            JsonObject groupJson = (JsonObject)o;
+            groups.add(new Group(groupJson));
+        }
+    }
+
     public JsonArray getSoapData() {
+        return getSoapData(false);
+    }
+
+    private JsonArray getSoapData(boolean delete) {
+
+        Collections.sort(structuresUai);
+        StringBuilder structuresStr = new StringBuilder();
+        for(String uai : structuresUai) {
+            structuresStr.append(uai);
+            structuresStr.append(" ");
+        }
 
         JsonArray attributes = new JsonArray()
                 .add(new JsonObject()
@@ -106,15 +139,38 @@ public class EntUser {
                         .put(SoapConstants.ATTR_VALUE, displayName))
                 .add(new JsonObject()
                         .put(SoapConstants.ATTR_NAME, LOGIN)
-                        .put(SoapConstants.ATTR_VALUE, login));
-
-        for(String groupId : groupsId) {
-            attributes
+                        .put(SoapConstants.ATTR_VALUE, login))
                 .add(new JsonObject()
-                        .put(SoapConstants.ATTR_NAME, GROUPID)
-                        .put(SoapConstants.ATTR_VALUE, groupId));
+                        .put(SoapConstants.ATTR_NAME, PROFILE)
+                        .put(SoapConstants.ATTR_VALUE, profile))
+                .add(new JsonObject()
+                        .put(SoapConstants.ATTR_NAME, STRUCTURES)
+                        .put(SoapConstants.ATTR_VALUE, structuresStr.toString()))
+                .add(new JsonObject()
+                        .put(SoapConstants.ATTR_NAME, ACCOUNT_STATUS)
+                        .put(SoapConstants.ATTR_VALUE, delete ? ACCT_STATUS_LOCKED : ACCT_STATUS_ACTIVE))
+                .add(new JsonObject()
+                        .put(SoapConstants.ATTR_NAME, HIDEINSEARCH)
+                        .put(SoapConstants.ATTR_VALUE, delete ? SoapConstants.TRUE_VALUE : SoapConstants.FALSE_VALUE));
+
+        if(delete) {
+            attributes.add(new JsonObject()
+                    .put(SoapConstants.ATTR_NAME, GROUPID)
+                    .put(SoapConstants.ATTR_VALUE, SoapConstants.EMPTY_VALUE));
+        } else {
+            for (Group group : groups) {
+                attributes
+                        .add(new JsonObject()
+                                .put(SoapConstants.ATTR_NAME, GROUPID)
+                                .put(SoapConstants.ATTR_VALUE, group.getId()));
+            }
         }
 
         return attributes;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public JsonArray getDeleteSoapData() {
+        return getSoapData(true);
     }
 }

@@ -1,5 +1,6 @@
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.helper.SoapConstants;
 import fr.openent.zimbra.helper.ZimbraConstants;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
@@ -7,7 +8,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.entcore.common.user.UserInfos;
 
-import static fr.openent.zimbra.helper.ZimbraConstants.NAMESPACE_ACCOUNT;
+import static fr.openent.zimbra.helper.SoapConstants.NAMESPACE_ACCOUNT;
 
 public class SignatureService {
 
@@ -138,7 +139,7 @@ public class SignatureService {
         JsonObject createSignatureRequest = new JsonObject()
                 .put("name", "CreateSignatureRequest")
                 .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT)
+                        .put("_jsns", SoapConstants.NAMESPACE_ACCOUNT)
                         .put("signature", signatureReq));
 
         soapService.callUserSoapAPI(createSignatureRequest, user, response -> {
@@ -172,7 +173,7 @@ public class SignatureService {
             JsonObject modifySignatureRequest = new JsonObject()
                     .put("name", "ModifySignatureRequest")
                     .put("content", new JsonObject()
-                            .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT)
+                            .put("_jsns", SoapConstants.NAMESPACE_ACCOUNT)
                             .put("signature", signatureReq));
 
             soapService.callUserSoapAPI(modifySignatureRequest, user, response -> {
@@ -201,7 +202,7 @@ public class SignatureService {
             JsonObject deleteSignatureRequest = new JsonObject()
                     .put("name", "DeleteSignatureRequest")
                     .put("content", new JsonObject()
-                            .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT)
+                            .put("_jsns", SoapConstants.NAMESPACE_ACCOUNT)
                             .put("signature", signatureReq));
 
             soapService.callUserSoapAPI(deleteSignatureRequest, user, response -> {
@@ -261,7 +262,7 @@ public class SignatureService {
         JsonObject modifyPrefsRequest = new JsonObject()
                 .put("name", "ModifyPrefsRequest")
                 .put("content", new JsonObject()
-                        .put("_jsns", ZimbraConstants.NAMESPACE_ACCOUNT)
+                        .put("_jsns", SoapConstants.NAMESPACE_ACCOUNT)
                         .put("_attrs", new JsonObject()
                                 .put(insertField, DEFAULT_SIGNATURE_ID)));
 

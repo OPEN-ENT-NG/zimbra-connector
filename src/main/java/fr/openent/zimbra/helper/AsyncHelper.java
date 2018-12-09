@@ -4,6 +4,7 @@ import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class AsyncHelper {
@@ -61,5 +62,17 @@ public class AsyncHelper {
         } else {
             return new Either.Right<>(asyncResult.result());
         }
+    }
+
+
+
+    public static Handler<Either<String, JsonArray>> getJsonArrayEitherHandler(Handler<AsyncResult<JsonArray>> handler) {
+        return res -> {
+            if(res.isLeft()) {
+                handler.handle(Future.failedFuture(res.left().getValue()));
+            } else {
+                handler.handle(Future.succeededFuture(res.right().getValue()));
+            }
+        };
     }
 }

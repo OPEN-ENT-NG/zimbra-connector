@@ -2,12 +2,11 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 
-import fr.openent.zimbra.helper.ConfigManager;
-import fr.openent.zimbra.helper.HttpClientHelper;
-import fr.openent.zimbra.helper.PreauthHelper;
+import fr.openent.zimbra.helper.*;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.http.Renders;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
@@ -109,7 +108,7 @@ public class SoapZimbraService {
     private JsonObject prepareJsonRequest(JsonObject params) {
 
         JsonObject context = new JsonObject()
-                .put("_jsns", NAMESPACE_ZIMBRA);
+                .put("_jsns", SoapConstants.NAMESPACE_ZIMBRA);
         if(params.getBoolean(PARAM_IS_AUTH, false) || !params.containsKey(PARAM_AUTH_TOKEN)) {
 
             context.put("_content", new JsonArray().add(new JsonObject().put("nosession", new JsonObject())));
@@ -212,6 +211,13 @@ public class SoapZimbraService {
         String userAddress = userId + "@" + Zimbra.domain;
         params.put(PARAM_ISADMIN, false);
         callSoapWithAuth(params, userId, userAddress, handler);
+    }
+
+
+    public void callUserSoapAPI(JsonObject params, String userId, Handler<AsyncResult<JsonObject>> handler) {
+        String userAddress = userId + "@" + Zimbra.domain;
+        params.put(PARAM_ISADMIN, false);
+        callSoapWithAuth(params, userId, userAddress, AsyncHelper.getJsonObjectEitherHandler(handler));
     }
 
     /**
@@ -363,7 +369,7 @@ public class SoapZimbraService {
             preauth.put("_content", preauthInfos.getString("preauthkey"));
 
             JsonObject body = new JsonObject();
-            body.put("_jsns", NAMESPACE_ACCOUNT);
+            body.put("_jsns", SoapConstants.NAMESPACE_ACCOUNT);
             body.put("account", authContent);
             body.put("preauth", preauth);
 
@@ -401,7 +407,7 @@ public class SoapZimbraService {
         authContent.put("_content", userId);
 
         JsonObject body = new JsonObject();
-        body.put("_jsns", NAMESPACE_ADMIN);
+        body.put("_jsns", SoapConstants.NAMESPACE_ADMIN);
         body.put("account", authContent);
         body.put("password", new JsonObject()
                 .put("_content", zimbraAdminPassword));

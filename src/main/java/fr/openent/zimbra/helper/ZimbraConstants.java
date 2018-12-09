@@ -91,17 +91,17 @@ public class ZimbraConstants {
     public static final String ADDR_TYPE_READRECEIPT = "n";
     public static final String ADDR_TYPE_RESENT_FROM = "rf";
 
-    public static final String NAMESPACE_ZIMBRA = "urn:zimbra";
-    public static final String NAMESPACE_ADMIN = "urn:zimbraAdmin";
-    public static final String NAMESPACE_ACCOUNT = "urn:zimbraAccount";
-    public static final String NAMESPACE_MAIL = "urn:zimbraMail";
-
     public static final String ACCT_NAME = "name";
     public static final String ACCT_ID = "id";
     public static final String ACCT_ATTRIBUTES = "a";
     public static final String ACCT_ATTRIBUTES_NAME = "n";
     public static final String ACCT_ATTRIBUTES_CONTENT = "_content";
     public static final String ACCT_ALIAS = "alias";
+
+    public static final String ACCT_INFO_ATTRIBUTES = "_attrs";
+    public static final String ACCT_INFO_ATTRIBUTE_NAME = "name";
+    public static final String ACCT_INFO_ZIMBRA_ID = "zimbraId";
+    public static final String ACCT_INFO_ACCOUNT = "account";
 
     public static final String DISPLAY_INLINE = "i";
     public static final String DISPLAY_ATTACHMENT = "a";

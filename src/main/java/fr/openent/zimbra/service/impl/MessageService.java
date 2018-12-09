@@ -2,6 +2,7 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.FrontConstants;
+import fr.openent.zimbra.helper.SoapConstants;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
@@ -73,7 +74,7 @@ public class MessageService {
                             .put("recip", "2")
                             .put("limit", Zimbra.MAIL_LIST_LIMIT)
                             .put("offset", page * Zimbra.MAIL_LIST_LIMIT)
-                            .put("_jsns", NAMESPACE_MAIL);
+                            .put("_jsns", SoapConstants.NAMESPACE_MAIL);
 
                     JsonObject searchRequest = new JsonObject()
                             .put("name", "SearchRequest")
@@ -352,7 +353,7 @@ public class MessageService {
                 .put("name", "GetMsgRequest")
                 .put("content", new JsonObject()
                     .put(MSG, messageReq)
-                    .put("_jsns", NAMESPACE_MAIL));
+                    .put("_jsns", SoapConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(getMsgRequest, user, response -> {
             if(response.isLeft()) {
@@ -429,7 +430,7 @@ public class MessageService {
                 .put("name", "FolderActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
-                        .put("_jsns", NAMESPACE_MAIL));
+                        .put("_jsns", SoapConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(folderActionRequest, user, response -> {
             if(response.isLeft()) {
@@ -472,7 +473,7 @@ public class MessageService {
             JsonObject sendMsgRequest = new JsonObject()
                     .put("name", "SendMsgRequest")
                     .put("content", new JsonObject()
-                            .put("_jsns", NAMESPACE_MAIL)
+                            .put("_jsns", SoapConstants.NAMESPACE_MAIL)
                             .put(MSG, mailContent));
 
             soapService.callUserSoapAPI(sendMsgRequest, user, response -> {
@@ -585,7 +586,7 @@ public class MessageService {
         JsonObject saveDraftRequest = new JsonObject()
                 .put("name", "SaveDraftRequest")
                 .put("content", new JsonObject()
-                        .put("_jsns", NAMESPACE_MAIL)
+                        .put("_jsns", SoapConstants.NAMESPACE_MAIL)
                         .put(MSG, mailContent));
 
         soapService.callUserSoapAPI(saveDraftRequest, user, handler);
@@ -739,7 +740,7 @@ public class MessageService {
                 .put("name", "MsgActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
-                        .put("_jsns", NAMESPACE_MAIL));
+                        .put("_jsns", SoapConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(convActionRequest, user, response -> {
             if(response.isLeft()) {
@@ -797,7 +798,7 @@ public class MessageService {
                 .put("name", "MsgActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
-                        .put("_jsns", NAMESPACE_MAIL));
+                        .put("_jsns", SoapConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(convActionRequest, user, response -> {
             if(response.isLeft()) {
@@ -861,7 +862,7 @@ public class MessageService {
                 .put("name", "MsgActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
-                        .put("_jsns", NAMESPACE_MAIL));
+                        .put("_jsns", SoapConstants.NAMESPACE_MAIL));
 
         soapService.callUserSoapAPI(msgActionRequest, user, response -> {
             if(response.isLeft()) {

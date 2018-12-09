@@ -38,6 +38,9 @@ public class Neo4jZimbraService {
 	static final String TYPE_GROUP = "group";
 	static final String TYPE_USER = "user";
 
+	public static final String GROUP_NAME = "groupName";
+	public static final String GROUP_ID = "groupId";
+
 	public Neo4jZimbraService(){
 		this.neo = Neo4j.getInstance();
 	}
