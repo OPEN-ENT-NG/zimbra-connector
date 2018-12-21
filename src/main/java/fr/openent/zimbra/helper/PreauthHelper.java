@@ -1,10 +1,8 @@
 package fr.openent.zimbra.helper;
 
-import fr.wseduc.webutils.http.Renders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.entcore.common.user.UserInfos;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -15,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class PreauthHelper {
 
+    @SuppressWarnings("FieldCanBeLocal")
     private static String preauthUrl = "/service/preauth" + "" +
             "?account=%s" +
             "&by=name" +
@@ -33,6 +32,7 @@ public class PreauthHelper {
     }
 
 
+    @SuppressWarnings("SameParameterValue")
     private static String computePreAuth(String id, String by, String timestamp, String expires,
                                          String admin, String key)
     {

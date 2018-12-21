@@ -1,8 +1,8 @@
 package fr.openent.zimbra.service.synchro;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.helper.SoapConstants;
-import fr.openent.zimbra.service.impl.SoapZimbraService;
+import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -12,7 +12,6 @@ import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.neo4j.Neo4j;
 import org.entcore.common.user.UserUtils;
 
-import static fr.openent.zimbra.helper.ZimbraConstants.*;
 import static org.entcore.common.neo4j.Neo4jResult.validResultHandler;
 import static org.entcore.common.neo4j.Neo4jResult.validUniqueResultHandler;
 
@@ -34,7 +33,7 @@ public class SynchroGroupService {
     /**
      * Export a group to Zimbra
      * If it is a manual group, update members in Zimbra (create them if necessary)
-     * Get data from Neo4j, then create group in Zimbra
+     * Get model from Neo4j, then create group in Zimbra
      * @param groupId Group Id
      * @param handler result handler
      */
@@ -121,7 +120,7 @@ public class SynchroGroupService {
      * Create group in Zimbra
      *      id@domain
      * @param groupId Group id
-     * @param neoData Group Neo4j data
+     * @param neoData Group Neo4j model
      * @param handler result handler
      */
     private void createGroup(String groupId, JsonObject neoData,

@@ -1,8 +1,9 @@
 package fr.openent.zimbra.service.impl;
 
-import fr.openent.zimbra.helper.FrontConstants;
-import fr.openent.zimbra.helper.SoapConstants;
-import fr.openent.zimbra.helper.ZimbraConstants;
+import fr.openent.zimbra.model.constant.FrontConstants;
+import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -54,7 +55,7 @@ public class FolderService {
      * Process response from Zimbra API to count messages in folder
      * Json returned :
      * {
-     *    data: count // number of (unread) messages
+     *    model: count // number of (unread) messages
      * }
      * Zimbra API documentation for GetFolder :
      * https://files.zimbra.com/docs/soap_api/8.7.11/api-reference/zimbraMail/GetFolder.html
@@ -376,7 +377,7 @@ public class FolderService {
         if(FrontConstants.FOLDER_INBOX.equals(folderId)
                 || FrontConstants.FOLDER_DRAFT.equals(folderId)
                 || FrontConstants.FOLDER_OUTBOX.equals(folderId)
-                || FrontConstants.FOLDER_DRAFT.equals(folderId)) {
+                || FrontConstants.FOLDER_TRASH.equals(folderId)) {
             return null;
         } else {
             return folderId;

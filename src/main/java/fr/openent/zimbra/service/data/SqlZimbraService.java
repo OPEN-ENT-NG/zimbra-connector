@@ -1,6 +1,6 @@
-package fr.openent.zimbra.service.impl;
+package fr.openent.zimbra.service.data;
 
-import fr.openent.zimbra.data.ZimbraUser;
+import fr.openent.zimbra.model.ZimbraUser;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Server;
 import fr.wseduc.webutils.Utils;
@@ -29,7 +29,7 @@ public class SqlZimbraService {
     private final String userTable;
     private final String groupTable;
 
-    static final String ZIMBRA_NAME = "mailzimbra";
+    public static final String ZIMBRA_NAME = "mailzimbra";
     public static final String NEO4J_UID = "uuidneo";
 
     private static Logger log = LoggerFactory.getLogger(SqlZimbraService.class);
@@ -67,7 +67,7 @@ public class SqlZimbraService {
      * @param uuid User uuid
      * @param handler result handler
      */
-    void getUserMailFromId(String uuid, Handler<Either<String, JsonArray>> handler) {
+    public void getUserMailFromId(String uuid, Handler<Either<String, JsonArray>> handler) {
         getMailFromId(uuid, userTable, handler);
     }
 
@@ -76,7 +76,7 @@ public class SqlZimbraService {
      * @param uuid Group uuid
      * @param handler result handler
      */
-    void getGroupMailFromId(String uuid, Handler<Either<String, JsonArray>> handler) {
+    public void getGroupMailFromId(String uuid, Handler<Either<String, JsonArray>> handler) {
         getMailFromId(uuid, groupTable, handler);
     }
 
@@ -133,7 +133,7 @@ public class SqlZimbraService {
      *              ]
      * @param handler result handler
      */
-    public void updateUsers(List<ZimbraUser> users, Handler<Either<String, JsonObject>> handler) {
+    private void updateUsers(List<ZimbraUser> users, Handler<Either<String, JsonObject>> handler) {
         JsonArray jsonUsers = new JsonArray();
         for(ZimbraUser user : users) {
             JsonObject jsonUser = new JsonObject()
@@ -148,12 +148,12 @@ public class SqlZimbraService {
         boolean atLeastOne = false;
 
         if(users.size() == 0) {
-            handler.handle(new Either.Left<>("Incorrect data, can't update users"));
+            handler.handle(new Either.Left<>("Incorrect model, can't update users"));
             return;
         }
 
         StringBuilder query = new StringBuilder();
-        query.append("WITH data (name, alias) as ( values ");
+        query.append("WITH model (name, alias) as ( values ");
         for(Object obj : users) {
             if(!(obj instanceof JsonObject)) continue;
             JsonObject user = (JsonObject)obj;
@@ -174,7 +174,7 @@ public class SqlZimbraService {
                 .append(ZIMBRA_NAME).append(", ")
                 .append(NEO4J_UID).append(") ");
         query.append("SELECT d.name, d.alias ");
-        query.append("FROM data d ");
+        query.append("FROM model d ");
         query.append("WHERE NOT EXISTS (SELECT 1 FROM ").append(userTable)
                 .append(" u WHERE u.").append(ZIMBRA_NAME).append(" = d.name ")
                 .append("AND u.").append(NEO4J_UID).append(" = d.alias ")

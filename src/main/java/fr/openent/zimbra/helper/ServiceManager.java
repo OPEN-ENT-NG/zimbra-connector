@@ -1,7 +1,10 @@
 package fr.openent.zimbra.helper;
 
+import fr.openent.zimbra.service.data.Neo4jZimbraService;
+import fr.openent.zimbra.service.data.SoapZimbraService;
+import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.*;
-import fr.openent.zimbra.service.synchro.SqlSynchroService;
+import fr.openent.zimbra.service.data.SqlSynchroService;
 import fr.openent.zimbra.service.synchro.SynchroService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import io.vertx.core.Vertx;
@@ -45,7 +48,7 @@ public class ServiceManager {
         this.sqlSynchroService = new SqlSynchroService(config.getString("db-schema", "zimbra"));
         this.soapService = new SoapZimbraService(vertx, appConfig);
         this.neoService = new Neo4jZimbraService();
-        this.synchroUserService = new SynchroUserService(soapService, sqlService, sqlSynchroService);
+        this.synchroUserService = new SynchroUserService(sqlService, sqlSynchroService);
         this.userService = new UserService(soapService, synchroUserService, sqlService);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);

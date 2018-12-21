@@ -18,6 +18,7 @@ public class ConfigManager {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
+    @SuppressWarnings("WeakerAccess")
     public ConfigManager(JsonObject config) {
         this.zimbraUri = config.getString("zimbra-uri", "");
         this.zimbraAdminUri = config.getString("zimbra-admin-uri", "");

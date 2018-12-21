@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.HttpClientHelper;
+import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Utils;
 import io.vertx.core.Handler;
@@ -20,7 +21,7 @@ import io.vertx.core.logging.Logger;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import static fr.openent.zimbra.helper.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
 public class AttachmentService {
 
@@ -73,6 +74,11 @@ public class AttachmentService {
                 httpClientPool.add(HttpClientHelper.createHttpClient(vertx));
             }
             HttpClient httpClient = httpClientPool.poll();
+            if(httpClient == null) {
+                log.error("Null httpClient for attachment upload");
+                handler.handle(new Either.Left<>("Null httpClient, can't upload attachment"));
+                return;
+            }
 
             HttpClientRequest zimbraRequest = httpClient.getAbs(urlAttachment, zimbraResponse -> {
                 HttpServerResponse frontResponse = frontRequest.response();
@@ -98,17 +104,13 @@ public class AttachmentService {
      * Dump one request into another.
      * Used to transfer attachment from Zimbra to Front, or Front to Zimbra
      * @param httpClient HttpClient used for pump, can be closed afterwards
-     * @param inRequest Request containing the data
+     * @param inRequest Request containing the model
      * @param outRequest Request that must be filled
      */
     private void pumpRequests(HttpClient httpClient, ReadStream<Buffer> inRequest, WriteStream<Buffer> outRequest) {
             Pump pump = Pump.pump(inRequest, outRequest);
-            outRequest.exceptionHandler( event -> {
-                log.error(event.getMessage());
-            });
-            inRequest.exceptionHandler( event -> {
-                log.error(event.getMessage());
-            });
+            outRequest.exceptionHandler( event -> log.error(event.getMessage()) );
+            inRequest.exceptionHandler( event -> log.error(event.getMessage()) );
             inRequest.endHandler(event -> {
                 outRequest.end();
                 httpClientPool.add(httpClient);
@@ -118,11 +120,11 @@ public class AttachmentService {
 
     /**
      * Add attachment to a mail.
-     * Pump data from frontRequest to Zimbra, then update existing draft with attachment.
+     * Pump model from frontRequest to Zimbra, then update existing draft with attachment.
      * Send back new draft content to front
      * @param messageId Message Id
      * @param user User Infos
-     * @param requestFront Request from front with attachment data
+     * @param requestFront Request from front with attachment model
      * @param handler Final handler
      */
     public void addAttachment(String messageId,

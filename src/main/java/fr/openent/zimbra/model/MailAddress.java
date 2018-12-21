@@ -1,9 +1,9 @@
-package fr.openent.zimbra.data;
+package fr.openent.zimbra.model;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.service.impl.GroupService;
-import fr.openent.zimbra.service.impl.SqlZimbraService;
+import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.UserService;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -35,6 +35,7 @@ public class MailAddress {
         return new MailAddress(rawAddress);
     }
 
+    @SuppressWarnings("WeakerAccess")
     static public MailAddress createFromLocalpartAndDomain(String localPart, String domain)
             throws IllegalArgumentException {
         return new MailAddress(localPart, domain);
@@ -48,6 +49,7 @@ public class MailAddress {
         return neoId;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public String getLocalPart() {
         return localPart;
     }
@@ -118,8 +120,8 @@ public class MailAddress {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
                 log.debug("no user in database for address : " + completeCleanAddress);
                 userService.getAliases(completeCleanAddress, zimbraResponse -> {
-                    if(zimbraResponse.isRight()) {
-                        JsonArray aliases = zimbraResponse.right().getValue().getJsonArray("aliases");
+                    if(zimbraResponse.succeeded()) {
+                        JsonArray aliases = zimbraResponse.result().getJsonArray("aliases");
                         if(aliases.size() > 1) {
                             log.warn("More than one alias for address : " + completeCleanAddress);
                         }

@@ -21,8 +21,9 @@ package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ConfigManager;
-import fr.openent.zimbra.helper.FrontConstants;
+import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.helper.ServiceManager;
+import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.filters.VisiblesFilter;
 
@@ -39,9 +40,6 @@ import fr.wseduc.webutils.request.RequestUtils;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.filter.ResourceFilter;
-import org.entcore.common.http.request.JsonHttpServerRequest;
-import org.entcore.common.notification.TimelineHelper;
-import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.utils.Config;
 
@@ -51,7 +49,6 @@ import fr.wseduc.security.SecuredAction;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.vertx.java.core.http.RouteMatcher;
 
@@ -66,7 +63,6 @@ import static org.entcore.common.user.UserUtils.getUserInfos;
 
 public class ZimbraController extends BaseController {
 
-	private TimelineHelper notification;
 	private ConfigManager appConfig;
 	private UserService userService;
 	private FolderService folderService;
@@ -74,8 +70,6 @@ public class ZimbraController extends BaseController {
 	private MessageService messageService;
 	private SignatureService signatureService;
 	private SqlZimbraService sqlService;
-	private NotificationService notificationService;
-	private CommunicationService communicationService;
 	private ExpertModeService expertModeService;
 
 
@@ -88,7 +82,6 @@ public class ZimbraController extends BaseController {
 
 		ServiceManager serviceManager = ServiceManager.init(vertx, config, eb, pathPrefix);
 
-		notification = serviceManager.getTimelineHelper();
 		this.appConfig = serviceManager.getConfig();
 		this.sqlService = serviceManager.getSqlService();
 		this.userService = serviceManager.getUserService();
@@ -96,8 +89,6 @@ public class ZimbraController extends BaseController {
 		this.signatureService = serviceManager.getSignatureService();
 		this.messageService = serviceManager.getMessageService();
 		this.attachmentService = serviceManager.getAttachmentService();
-		this.notificationService = serviceManager.getNotificationService();
-		this.communicationService = serviceManager.getCommunicationService();
 		this.expertModeService = serviceManager.getExpertModeService();
 
 	}
@@ -108,6 +99,10 @@ public class ZimbraController extends BaseController {
 		renderView(request);
 	}
 
+	/**
+	 * Redirect the connected user to an authenticated session of Zimbra
+	 * @param request	http request containing user info
+	 */
 	@Get("preauth")
 	@SecuredAction("zimbra.expert")
 	public void preauth(HttpServerRequest request) {
@@ -225,63 +220,6 @@ public class ZimbraController extends BaseController {
 	}
 
 	/**
-	 * Create notification in timeline when receiving a mail
-	 * Return empty Json Object if successful
-	 * @param request request containing data :
-	 *                sender : mail address of the sender
-	 *                recipient : neo4j id of the recipient
-	 *                messageId : essage_id in the mailbox of recipient
-	 *                subject : message subject
-	 */
-	@Post("notification")
-	@SecuredAction("zimbra.notification.send")
-	public void sendNotification(HttpServerRequest request) {
-		RequestUtils.bodyToJson(request, body -> {
-				final String zimbraSender = body.getString("sender");
-				final String zimbraRecipient = body.getString("recipient");
-				final String messageId = body.getString("messageId");
-				final String subject = body.getString("subject");
-
-				if(zimbraSender == null || zimbraSender.isEmpty()
-						|| zimbraRecipient == null || zimbraRecipient.isEmpty()
-						|| messageId == null || messageId.isEmpty()) {
-					badRequest(request);
-				} else {
-					notificationService.sendNewMailNotification(zimbraSender, zimbraRecipient, messageId, subject,
-							defaultResponseHandler(request));
-				}
-			});
-	}
-
-	private void timelineNotification(HttpServerRequest request, JsonObject sentMessage, UserInfos user) {
-		log.debug(sentMessage.encode());
-		JsonArray r = sentMessage.getJsonArray("sentIds");
-		String id = sentMessage.getString("id");
-		String subject = sentMessage.getString("subject", "<span translate key=\"timeline.no.subject\"></span>");
-		sentMessage.remove("sentIds");
-		sentMessage.remove("id");
-		sentMessage.remove("subject");
-		if (r == null || id == null || user == null) {
-			return;
-		}
-		final JsonObject params = new JsonObject()
-				.put("uri", "/userbook/annuaire#" + user.getUserId() + "#" + user.getType())
-				.put("username", user.getUsername())
-				.put("subject", subject)
-				.put("messageUri", pathPrefix + "/conversation#/read-mail/" + id);
-		params.put("resourceUri", params.getString("messageUri"));
-		List<String> recipients = new ArrayList<>();
-		String idTmp;
-		for (Object o : r) {
-			if (!(o instanceof String)) continue;
-			idTmp = (String) o;
-			if(!user.getUserId().equals(idTmp))
-				recipients.add(idTmp);
-		}
-		notification.notifyTimeline(request, "messagerie.send-message", user, recipients, id, params);
-	}
-
-	/**
 	 * List messages in folders
 	 * If unread is true, filter only unread messages.
 	 * If search is set, must be at least 3 characters. Then filter by search.
@@ -323,56 +261,13 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
-	private void translateGroupsNames(JsonObject message, HttpServerRequest request) {
-		JsonArray d3 = new fr.wseduc.webutils.collections.JsonArray();
-		for (Object o2 : message.getJsonArray("displayNames", new fr.wseduc.webutils.collections.JsonArray())) {
-			if (!(o2 instanceof String)) {
-				continue;
-			}
-			String [] a = ((String) o2).split("\\$");
-			if (a.length != 4) {
-				continue;
-			}
-			JsonArray d2 = new fr.wseduc.webutils.collections.JsonArray().add(a[0]);
-			if (a[2] != null && !a[2].trim().isEmpty()) {
-				final String groupDisplayName = (a[3] != null && !a[3].trim().isEmpty()) ? a[3] : null;
-				d2.add(UserUtils.groupDisplayName(a[2], groupDisplayName, I18n.acceptLanguage(request)));
-			} else {
-				d2.add(a[1]);
-			}
-			d3.add(d2);
-		}
-		message.put("displayNames", d3);
-		JsonArray toName = message.getJsonArray("toName");
-		if (toName != null) {
-			JsonArray d2 = new fr.wseduc.webutils.collections.JsonArray();
-			message.put("toName", d2);
-			for (Object o : toName) {
-				if (!(o instanceof String)) {
-					continue;
-				}
-				d2.add(UserUtils.groupDisplayName((String) o, null, I18n.acceptLanguage(request)));
-			}
-		}
-		JsonArray ccName = message.getJsonArray("ccName");
-		if (ccName != null) {
-			JsonArray d2 = new fr.wseduc.webutils.collections.JsonArray();
-			message.put("ccName", d2);
-			for (Object o : ccName) {
-				if (!(o instanceof String)) {
-					continue;
-				}
-				d2.add(UserUtils.groupDisplayName((String) o, null, I18n.acceptLanguage(request)));
-			}
-		}
-	}
 
 	/**
 	 * Count number of messages in a folder.
 	 * If unread is true, filter only unread messages.
 	 * In case of success, return Json :
 	 * {
-	 *     data: count // number of (unread) messages
+	 *     model: count // number of (unread) messages
 	 * }
 	 * @param request http request containing info
 	 *                Users infos
@@ -406,35 +301,12 @@ public class ZimbraController extends BaseController {
 	public void visible(final HttpServerRequest request) {
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
-				String parentMessageId = request.params().get("In-Reply-To");
 				sqlService.findVisibleRecipients(user, I18n.acceptLanguage(request), request.params().get("search"),
 						defaultResponseHandler(request));
 			} else {
 				unauthorized(request);
 			}
 		});
-	}
-
-	/**
-	 * Indicates if a sender (user or external address) can send a mail to a receiver (user, group or external address)
-	 * Returns JsonObject :
-	 * {
-	 *     can_communicate : true/false
-	 * } Check if communication is allowed between two mail addresses
-	 * @param request
-	 * 		from : mail address for the sender
-	 * 		to : mail address for the recipient
-	 */
-	@Get("communication")
-	@SecuredAction("zimbra.communication.all")
-	public void canCommunicate(final HttpServerRequest request) {
-		String sender = request.params().get("from");
-		String receiver = request.params().get("to");
-		if( sender != null && !sender.isEmpty() && receiver != null && !receiver.isEmpty()) {
-			communicationService.canCommunicate(sender, receiver, defaultResponseHandler(request));
-		} else {
-			badRequest(request);
-		}
 	}
 
 	/**
@@ -958,23 +830,13 @@ public class ZimbraController extends BaseController {
 	@BusAddress("org.entcore.conversation")
 	public void conversationEventBusHandler(Message<JsonObject> message) {
 		switch (message.body().getString("action", "")) {
-			case "send" : send(message);
+			case "send" : log.error("BUS sending not implemented : " + message.toString());
+				// send(message);
 				break;
 			default:
 				message.reply(new JsonObject().put("status", "error")
 						.put("message", "invalid.action"));
 		}
-	}
-
-	private void send(final Message<JsonObject> message) {
-
-	}
-
-	private void notifyEmptySpaceIsSmall(String userId) {
-		List<String> recipients = new ArrayList<>();
-		recipients.add(userId);
-		notification.notifyTimeline(new JsonHttpServerRequest(new JsonObject()),
-				"messagerie.storage", null, recipients, null, new JsonObject());
 	}
 
 
@@ -1060,7 +922,6 @@ public class ZimbraController extends BaseController {
 						else {
 							if(signatureBody == null || signatureBody.trim().length() == 0){
 								badRequest(request);
-								return;
 							}
 							else {
 								signatureService.createSignature(user, signatureBody, useSignature,

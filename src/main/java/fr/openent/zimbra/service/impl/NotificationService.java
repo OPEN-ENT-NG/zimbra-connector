@@ -1,5 +1,6 @@
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -14,7 +15,6 @@ import static org.entcore.common.neo4j.Neo4jResult.validUniqueResultHandler;
 
 public class NotificationService {
 
-    private SoapZimbraService soapService;
     private Neo4j neo;
     private String pathPrefix;
     private TimelineHelper timelineHelper;
@@ -23,7 +23,6 @@ public class NotificationService {
 
     public NotificationService(SoapZimbraService soapService, UserService userService,
                                String pathPrefix, TimelineHelper timelineHelper) {
-        this.soapService = soapService;
         this.neo = Neo4j.getInstance();
         this.pathPrefix = pathPrefix;
         this.timelineHelper = timelineHelper;
@@ -36,8 +35,8 @@ public class NotificationService {
                 ? subject
                 : "<span translate key=\"timeline.no.subject\"></span>";
         userService.getAliases(zimbraSender, aliasRes -> {
-            String userId = aliasRes.isRight()
-                    ? aliasRes.right().getValue().getJsonArray("aliases").getString(0).split("@")[0]
+            String userId = aliasRes.succeeded()
+                    ? aliasRes.result().getJsonArray("aliases").getString(0).split("@")[0]
                     : "";
             getUserInfos(userId, user -> {
                 String timelineSender = (user != null && user.getUsername() != null)

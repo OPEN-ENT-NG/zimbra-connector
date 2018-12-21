@@ -1,13 +1,18 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.data.SoapRequest;
-import fr.openent.zimbra.data.ZimbraUser;
-import fr.openent.zimbra.helper.SoapConstants;
-import fr.openent.zimbra.helper.ZimbraConstants;
+import fr.openent.zimbra.model.SoapRequest;
+import fr.openent.zimbra.model.ZimbraUser;
+import fr.openent.zimbra.helper.AsyncHelper;
+import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.service.data.Neo4jZimbraService;
+import fr.openent.zimbra.service.data.SoapZimbraService;
+import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -18,8 +23,8 @@ import org.entcore.common.user.UserUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static fr.openent.zimbra.service.impl.Neo4jZimbraService.TYPE_GROUP;
-import static fr.openent.zimbra.service.impl.Neo4jZimbraService.TYPE_USER;
+import static fr.openent.zimbra.service.data.Neo4jZimbraService.TYPE_GROUP;
+import static fr.openent.zimbra.service.data.Neo4jZimbraService.TYPE_USER;
 
 public class UserService {
 
@@ -134,13 +139,13 @@ public class UserService {
      * @param account Zimbra account name or alias
      * @param handler Result handler
      */
-    public void getAliases(String account, Handler<Either<String, JsonObject>> handler) {
+    public void getAliases(String account, Handler<AsyncResult<JsonObject>> handler) {
 
         getUserAccount(account, response -> {
-            if(response.isLeft()) {
+            if(response.failed()) {
                 handler.handle(response);
             } else {
-                processGetAliases(response.right().getValue(), handler);
+                processGetAliases(response.result(), AsyncHelper.getJsonObjectEitherHandler(handler));
             }
         });
     }
@@ -203,8 +208,8 @@ public class UserService {
      * @param account Zimbra account name or alias
      * @param handler result handler
      */
-    public void getUserAccountNew(String account,
-                        Handler<AsyncResult<JsonObject>> handler) {
+    public void getUserAccount(String account,
+                               Handler<AsyncResult<JsonObject>> handler) {
 
         JsonObject acct = new JsonObject()
                 .put(SoapConstants.ID_BY, ZimbraConstants.ACCT_NAME)
@@ -215,38 +220,15 @@ public class UserService {
         getAccountRequest.start(handler);
     }
 
-    // TODO : Replace usage with getUserAccountNew and ZimbraUser
-    void getUserAccount(String account,
-                             Handler<Either<String, JsonObject>> handler) {
-
-        JsonObject acct = new JsonObject()
-                .put("by", "name")
-                .put("_content", account);
-
-        JsonObject getInfoRequest = new JsonObject()
-                .put("name", "GetAccountRequest")
-                .put("content", new JsonObject()
-                        .put("_jsns", SoapConstants.NAMESPACE_ADMIN)
-                        .put("account", acct));
-
-        soapService.callAdminSoapAPI(getInfoRequest, response -> {
-            if(response.isLeft()) {
-                handler.handle(response);
-            } else {
-                processGetAccountInfo(response.right().getValue(), handler);
-            }
-        });
-    }
-
     /**
      * Get a user account by its neo id
      * @param userId Neo4j id of the account to get
      * @param handler result handler
      */
     public void getUserAccountById(String userId,
-                                   Handler<Either<String, JsonObject>> handler) {
+                                   Handler<AsyncResult<JsonObject>> handler) {
         if(userId == null || userId.isEmpty()) {
-            handler.handle(new Either.Left<>("Empty userId, can't get account"));
+            handler.handle(Future.failedFuture("Empty userId, can't get account"));
             return;
         }
         String account = userId + "@" + Zimbra.domain;
@@ -296,22 +278,22 @@ public class UserService {
                 log.debug("no user in database for id : " + userId);
                 String account = userId + "@" + Zimbra.domain;
                 getUserAccount(account, response -> {
-                    if(response.isLeft()) {
-                        JsonObject callResult = new JsonObject(response.left().getValue());
+                    if(response.failed()) {
+                        JsonObject callResult = new JsonObject(response.cause().getMessage());
                         if(ZimbraConstants.ERROR_NOSUCHACCOUNT
                                 .equals(callResult.getString(SoapZimbraService.ERROR_CODE, ""))) {
                             synchroUserService.exportUser(userId, resultSync -> {
-                                if (resultSync.isLeft()) {
-                                    handler.handle(new Either.Left<>(resultSync.left().getValue()));
+                                if (resultSync.failed()) {
+                                    handler.handle(new Either.Left<>(resultSync.cause().getMessage()));
                                 } else {
                                     getUserAddress(userId, handler);
                                 }
                             });
                         } else {
-                            handler.handle(new Either.Left<>(response.left().getValue()));
+                            handler.handle(new Either.Left<>(response.cause().getMessage()));
                         }
                     } else {
-                        processGetAddress(response.right().getValue(), handler);
+                        processGetAddress(response.result(), handler);
                     }
                 });
             } else {

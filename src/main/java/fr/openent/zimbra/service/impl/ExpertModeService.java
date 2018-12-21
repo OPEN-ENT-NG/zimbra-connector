@@ -1,13 +1,9 @@
 package fr.openent.zimbra.service.impl;
 
-import fr.openent.zimbra.data.EntUser;
-import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.model.EntUser;
 import fr.openent.zimbra.helper.PreauthHelper;
 import fr.openent.zimbra.helper.ServiceManager;
-import fr.wseduc.webutils.Either;
 
-import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
 import org.entcore.common.user.UserInfos;
 
 import java.io.IOException;

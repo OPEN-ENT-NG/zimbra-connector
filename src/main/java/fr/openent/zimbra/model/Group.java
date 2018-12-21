@@ -1,13 +1,14 @@
-package fr.openent.zimbra.data;
+package fr.openent.zimbra.model;
 
 import io.vertx.core.json.JsonObject;
-import static fr.openent.zimbra.service.impl.Neo4jZimbraService.*;
+import static fr.openent.zimbra.service.data.Neo4jZimbraService.*;
 
 public class Group {
     private String id;
     private String rawName;
     private String translatedName = "";
 
+    @SuppressWarnings("WeakerAccess")
     public Group(JsonObject json) throws IllegalArgumentException {
         try {
             id = json.getString(GROUP_ID, "");

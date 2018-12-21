@@ -1,24 +1,25 @@
 package fr.openent.zimbra.service.impl;
 
-import fr.openent.zimbra.helper.ZimbraConstants;
+import fr.openent.zimbra.model.constant.ZimbraConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+@SuppressWarnings("WeakerAccess")
 public class UserInfoService {
 
-    static final String QUOTA = "quota";
-    static final String STATUS = "status";
-    static final String ALIAS = "alias";
-    static final String GROUPS = "groups";
+    public static final String QUOTA = "quota";
+    public static final String STATUS = "status";
+    public static final String ALIAS = "alias";
+    public static final String GROUPS = "groups";
     public static final String ZIMBRA_ID = "zimbra_id";
     static final String SIGN_PREF = "signature";
 
     /**
      * Process quota information from Zimbra GetInfoResponse
-     * Add Json to data :
+     * Add Json to model :
      * {
-     *     "storage" : used data,
-     *     "quota" : max data usage allowed
+     *     "storage" : used model,
+     *     "quota" : max model usage allowed
      * }
      * @param getInfoResponse Zimbra GetInfoResponse Json object
      * @param data JsonObject where result must be added under "quota" entry
@@ -40,7 +41,7 @@ public class UserInfoService {
 
     /**
      * Process aliases information from Zimbra GetInfoResponse
-     * Add Json to data :
+     * Add Json to model :
      * {
      *     "name" : user mail address from Zimbra,
      *     "aliases" :
@@ -75,7 +76,7 @@ public class UserInfoService {
 
     /**
      * Process signature preference information from Zimbra GetInfoResponse
-     * Add Json to data :
+     * Add Json to model :
      * {
      *     "name" : user mail address from Zimbra,
      *     "aliases" : name
@@ -107,7 +108,7 @@ public class UserInfoService {
 
     /**
      * Process aliases information from Zimbra GetInfoResponse
-     * Add Json to data :
+     * Add Json to model :
      * {
      *      "quota" : {quota_infos}, // see UserInfoService.processQuota
      *      "alias" : {alias_infos}  // see UserInfoService.processAliases

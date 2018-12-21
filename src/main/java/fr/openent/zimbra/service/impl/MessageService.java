@@ -1,8 +1,10 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.helper.FrontConstants;
-import fr.openent.zimbra.helper.SoapConstants;
+import fr.openent.zimbra.model.constant.FrontConstants;
+import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.service.data.SoapZimbraService;
+import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
@@ -15,7 +17,7 @@ import org.entcore.common.user.UserInfos;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static fr.openent.zimbra.helper.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
 public class MessageService {
 
@@ -235,8 +237,8 @@ public class MessageService {
 
 
     /**
-     * Process list of mail address in a mail and transform it in Front data
-     * @param frontMsg JsonObject receiving Front-formatted data
+     * Process list of mail address in a mail and transform it in Front model
+     * @param frontMsg JsonObject receiving Front-formatted model
      * @param zimbraMails JsonObject containing mail addresses
      * @param handler result handler
      */
@@ -294,13 +296,13 @@ public class MessageService {
      * @param mail Zimbra mail
      * @param handler result handler
      */
-    void translateMail(String mail, Handler<String> handler) {
+    private void translateMail(String mail, Handler<String> handler) {
         sqlService.getNeoIdFromMail(mail, sqlResponse -> {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
                 log.debug("no user in database for address : " + mail);
                 userService.getAliases(mail, zimbraResponse -> {
-                    if(zimbraResponse.isRight()) {
-                        JsonArray aliases = zimbraResponse.right().getValue().getJsonArray("aliases");
+                    if(zimbraResponse.succeeded()) {
+                        JsonArray aliases = zimbraResponse.result().getJsonArray("aliases");
                         if(aliases.size() > 1) {
                             log.warn("More than one alias for address : " + mail);
                         }

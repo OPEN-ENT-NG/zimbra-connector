@@ -1,6 +1,6 @@
 package fr.openent.zimbra.controllers;
 
-import fr.openent.zimbra.data.synchro.SynchroInfos;
+import fr.openent.zimbra.model.synchro.SynchroInfos;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
@@ -9,7 +9,6 @@ import fr.openent.zimbra.service.synchro.SynchroService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
-import fr.wseduc.rs.Put;
 import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.request.RequestUtils;
@@ -121,28 +120,5 @@ public class SynchroController extends BaseController {
     public void listUsersByStructure(final HttpServerRequest request) {
         final List<String> structures = request.params().getAll("uai");
         synchroExportService.listUsersByStructure(structures, arrayResponseHandler(request));
-    }
-
-    /**
-     * A user id has been modified, mark it for update.
-     * The user is removed from the base and will be resynchronized on next connection
-     * @param request Http request, containing info
-     *                entid : User ID as in Neo4j,
-     *                zimbramail : Zimbra email address
-     */
-    @Put("/export/updateid")
-    @SecuredAction("export.update.id")
-    public void updateUserId(final HttpServerRequest request) {
-        RequestUtils.bodyToJson(request, body -> {
-            final String userId = body.getString("entid");
-            final String userMail = body.getString("zimbramail");
-
-            if(userId == null || userId.isEmpty()
-                    || userMail == null || userMail.isEmpty()) {
-                badRequest(request);
-            } else {
-                synchroUserService.removeUserFromBase(userId, userMail, defaultResponseHandler(request));
-            }
-        });
     }
 }
