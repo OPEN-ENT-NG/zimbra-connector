@@ -25,7 +25,7 @@ CREATE TABLE zimbra.user_synchro (
   id_user character varying(36) NOT NULL,
   id_synchro bigint,
   synchro_type character varying(16) NOT NULL,
-  modif_type character varying(16) NOT NULL,
+  synchro_action character varying(16) NOT NULL,
   synchro_date timestamp without time zone NOT NULL DEFAULT now(),
   status character varying(16) NOT NULL,
   id_logs bigint,

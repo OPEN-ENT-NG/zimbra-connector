@@ -29,9 +29,7 @@ public class AsyncHelper {
     }
 
     public static Handler<Either<String, JsonObject>> getVoidEitherHandler(Handler<AsyncResult<Void>> handler) {
-        return res -> {
-                handler.handle(eitherToVoidAsync(res));
-        };
+        return res -> handler.handle(eitherToVoidAsync(res));
     }
 
     public static Future<JsonObject> getJsonObjectFinalFuture(Handler<Either<String, JsonObject>> handler) {
@@ -40,6 +38,7 @@ public class AsyncHelper {
         return startFuture;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static AsyncResult<Void> eitherToVoidAsync(Either<String,JsonObject> either) {
         if(either.isLeft()) {
             return Future.failedFuture(either.left().getValue());

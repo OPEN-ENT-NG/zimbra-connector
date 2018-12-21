@@ -1,14 +1,14 @@
-package fr.openent.zimbra.data;
+package fr.openent.zimbra.model;
 
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.service.impl.SoapZimbraService;
+import fr.openent.zimbra.service.data.SoapZimbraService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 
-import static fr.openent.zimbra.helper.SoapConstants.*;
+import static fr.openent.zimbra.model.constant.SoapConstants.*;
 
 public class SoapRequest {
 
@@ -48,7 +48,6 @@ public class SoapRequest {
     }
 
     public void start(Handler<AsyncResult<JsonObject>> handler) {
-        // todo handle user requests
         ServiceManager sm = ServiceManager.getServiceManager();
         SoapZimbraService soapService = sm.getSoapService();
 

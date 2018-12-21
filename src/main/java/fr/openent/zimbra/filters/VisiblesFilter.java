@@ -10,14 +10,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerRequest;
 import org.entcore.common.http.filter.ResourcesProvider;
 import org.entcore.common.neo4j.Neo4j;
-import org.entcore.common.sql.Sql;
-import org.entcore.common.sql.SqlResult;
 import org.entcore.common.user.UserInfos;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.http.Binding;
 import fr.wseduc.webutils.request.RequestUtils;
 
@@ -46,9 +42,9 @@ public class VisiblesFilter implements ResourcesProvider{
 
                 final Handler<Void> checkHandler = v -> {
                         params.put("ids", new fr.wseduc.webutils.collections.JsonArray(new ArrayList<>(ids)));
-                        findVisibles(neo.getEventBus(), user.getUserId(), customReturn, params, true, true, false, visibles -> {
-                                handler.handle(visibles.size() == ids.size());
-                        });
+                        findVisibles(neo.getEventBus(), user.getUserId(), customReturn, params, true, true, false, visibles ->
+                                handler.handle(visibles.size() == ids.size())
+                        );
                 };
 
                 if(parentMessageId == null || parentMessageId.trim().isEmpty()){

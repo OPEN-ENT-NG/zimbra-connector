@@ -1,4 +1,4 @@
-package fr.openent.zimbra.helper;
+package fr.openent.zimbra.model.constant;
 
 public class ZimbraConstants {
     public static final String FOLDER_INBOX = "/Inbox";

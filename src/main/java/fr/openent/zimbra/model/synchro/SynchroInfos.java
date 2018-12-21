@@ -1,11 +1,7 @@
-package fr.openent.zimbra.data.synchro;
+package fr.openent.zimbra.model.synchro;
 
-import fr.openent.zimbra.data.MailAddress;
+import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.helper.JsonHelper;
-import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.service.synchro.SqlSynchroService;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -32,7 +28,7 @@ public class SynchroInfos {
         if(!jsonData.containsKey(USERS_CREATED)
             || !jsonData.containsKey(USERS_MODIFIED)
             || !jsonData.containsKey(USERS_DELETED)) {
-            throw new IllegalArgumentException("Missing data");
+            throw new IllegalArgumentException("Missing model");
         }
         users_created = JsonHelper.getStringList(jsonData.getJsonArray(USERS_CREATED));
         users_modified = JsonHelper.getStringList(jsonData.getJsonArray(USERS_MODIFIED));

@@ -1,9 +1,9 @@
-package fr.openent.zimbra.service.synchro;
+package fr.openent.zimbra.service.data;
 
-import fr.openent.zimbra.data.Group;
+import fr.openent.zimbra.model.Group;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.JsonHelper;
-import fr.openent.zimbra.helper.SynchroConstants;
+import fr.openent.zimbra.model.constant.SynchroConstants;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -30,8 +30,8 @@ public class SqlSynchroService {
     public static final String USER_IDUSER = "id_user";
     private static final String USER_SYNCID = "id_synchro";
     private static final String USER_SYNCDATE = "synchro_date";
-    public static final String USER_SYNCTYPE = "synchro_type";
-    public static final String USER_MODTYPE = "modif_type";
+    private static final String USER_SYNCTYPE = "synchro_type";
+    public static final String USER_SYNCACTION = "action_type";
     private static final String USER_STATUS = "status";
 
 
@@ -50,7 +50,6 @@ public class SqlSynchroService {
         this.userSynchroTable = schema + ".user_synchro";
     }
 
-    @SuppressWarnings("WeakerAccess")
     public void getDeployedStructures(Handler<AsyncResult<List<String>>> handler) {
         String query = "SELECT " + UAI + " FROM "
                 + deployedStructuresTable + " WHERE " + IS_DEPLOYED + " = true ";
@@ -63,15 +62,15 @@ public class SqlSynchroService {
                     List<String> structuresList = JsonHelper.extractValueFromJsonObjects(res.right().getValue(), UAI);
                     handler.handle(Future.succeededFuture(structuresList));
                 } catch (IllegalArgumentException e) {
-                    log.error("Invalid data in database : " + res.right().getValue().toString());
-                    handler.handle(Future.failedFuture("Invalid data in database"));
+                    log.error("Invalid model in database : " + res.right().getValue().toString());
+                    handler.handle(Future.failedFuture("Invalid model in database"));
                 }
             }
         }));
     }
 
     //todo delete old structures
-    void updateDeployedStructures(List<String> newStructures, List<String> toDeleteStructures,
+    public void updateDeployedStructures(List<String> newStructures, List<String> toDeleteStructures,
                                   Handler<AsyncResult<JsonObject>> handler) {
         StringBuilder query = new StringBuilder("INSERT INTO " + deployedStructuresTable)
                 .append(String.format("(%s,%s,%s) ", UAI, DATE_MODIFIED, IS_DEPLOYED))
@@ -90,7 +89,7 @@ public class SqlSynchroService {
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 
-    void initializeSynchro(String maillingList, Handler<AsyncResult<JsonObject>> handler) {
+    public void initializeSynchro(String maillingList, Handler<AsyncResult<JsonObject>> handler) {
         String query = "INSERT INTO " + synchroTable
                 + String.format("(%s,%s) ", SYNCHRO_MAILLINGLIST, SYNCHRO_STATUS)
                 + "VALUES (?, ?) "
@@ -102,7 +101,7 @@ public class SqlSynchroService {
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 
-    void addUsersToSynchronize(int idSynchro, List<String> users, String modification,
+    public void addUsersToSynchronize(int idSynchro, List<String> users, String modification,
                                Handler<AsyncResult<JsonObject>> handler) {
         if(users.isEmpty()) {
             handler.handle(Future.succeededFuture(new JsonObject()));
@@ -110,7 +109,7 @@ public class SqlSynchroService {
         }
         StringBuilder query = new StringBuilder("INSERT INTO " + userSynchroTable)
                 .append(String.format("(%s,%s,%s,%s,%s) ",
-                        USER_SYNCID, USER_IDUSER, USER_SYNCTYPE, USER_MODTYPE, USER_STATUS));
+                        USER_SYNCID, USER_IDUSER, USER_SYNCTYPE, USER_SYNCACTION, USER_STATUS));
         String delimiter = "VALUES";
         for(int i = 0 ; i < users.size() ; i++) {
             query.append(String.format("%s(%d,?,'%s','%s','%s')",
@@ -121,7 +120,7 @@ public class SqlSynchroService {
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 
-    void fetchUserToSynchronize(Handler<AsyncResult<JsonObject>> handler) {
+    public void fetchUserToSynchronize(Handler<AsyncResult<JsonObject>> handler) {
         // Get an user in TO-DO state from database
         // Explanation for : FOR UPDATE SKIP LOCKED :
         // https://dba.stackexchange.com/questions/69471/postgres-update-limit-1
@@ -135,7 +134,7 @@ public class SqlSynchroService {
                     + " LIMIT 1"
                     + " FOR UPDATE SKIP LOCKED"
                 + " ) "
-                + " RETURNING " + USER_IDUSER + "," + USER_MODTYPE + "," + USER_IDROW;
+                + " RETURNING " + USER_IDUSER + "," + USER_SYNCACTION + "," + USER_IDROW;
         sql.prepared(query, new JsonArray(),
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }

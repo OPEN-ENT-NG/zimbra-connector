@@ -1,10 +1,10 @@
-package fr.openent.zimbra.data;
+package fr.openent.zimbra.model;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.helper.SoapConstants;
-import fr.openent.zimbra.service.impl.Neo4jZimbraService;
+import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -16,8 +16,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static fr.openent.zimbra.helper.SynchroConstants.*;
+import static fr.openent.zimbra.model.constant.SynchroConstants.*;
 
+@SuppressWarnings("FieldCanBeLocal")
 public class EntUser {
 
     private Neo4jZimbraService neoService;
@@ -67,6 +68,7 @@ public class EntUser {
         return userZimbraAddress.toString();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public String getLogin() {
         return login;
     }
@@ -114,6 +116,7 @@ public class EntUser {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public JsonArray getSoapData() {
         return getSoapData(false);
     }

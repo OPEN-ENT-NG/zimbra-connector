@@ -17,12 +17,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-package fr.openent.zimbra.service.impl;
+package fr.openent.zimbra.service.data;
 
 
-import io.vertx.core.Future;
+import fr.openent.zimbra.service.impl.CommunicationService;
 import fr.wseduc.webutils.Either;
-import io.vertx.core.AsyncResult;
 import org.entcore.common.neo4j.Neo4j;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -35,8 +34,8 @@ public class Neo4jZimbraService {
 
 	private Neo4j neo;
 
-	static final String TYPE_GROUP = "group";
-	static final String TYPE_USER = "user";
+	public static final String TYPE_GROUP = "group";
+	public static final String TYPE_USER = "user";
 
 	public static final String GROUP_NAME = "groupName";
 	public static final String GROUP_ID = "groupId";
@@ -46,7 +45,7 @@ public class Neo4jZimbraService {
 	}
 
 
-	void getIdsType(JsonArray idList, Handler<Either<String,JsonArray>> handler) {
+	public void getIdsType(JsonArray idList, Handler<Either<String,JsonArray>> handler) {
 
 		String query = "MATCH (v:Visible) "
 				+ "where v.id in {ids} "
@@ -59,7 +58,7 @@ public class Neo4jZimbraService {
 		neo.execute(query, new JsonObject().put("ids", idList), validResultHandler(handler));
 	}
 
-	void checkUserCommunication(String senderId, String recipientId, Handler<Either<String,JsonObject>> handler) {
+	public void checkUserCommunication(String senderId, String recipientId, Handler<Either<String,JsonObject>> handler) {
 		String query = "MATCH (s:User), (r:User) "
 				+ "where s.id = {senderId} and r.id = {recipientId} "
 				+ "return s.id as senderId, r.id as recipientId, "
@@ -73,7 +72,7 @@ public class Neo4jZimbraService {
 		neo.execute(query, params, validUniqueResultHandler(handler));
 	}
 
-	void checkGroupCommunication(String senderId, String recipientId, Handler<Either<String,JsonObject>> handler) {
+	public void checkGroupCommunication(String senderId, String recipientId, Handler<Either<String,JsonObject>> handler) {
 		String query = "MATCH (s:User), (r:Group) "
 				+ "where s.id = {senderId} and r.id = {recipientId} "
 				+ "return s.id as senderId, r.id as recipientId, "

@@ -1,12 +1,12 @@
-package fr.openent.zimbra.data.synchro;
+package fr.openent.zimbra.model.synchro;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.data.EntUser;
-import fr.openent.zimbra.data.SoapRequest;
-import fr.openent.zimbra.data.ZimbraUser;
-import fr.openent.zimbra.helper.SoapConstants;
-import fr.openent.zimbra.helper.ZimbraConstants;
-import fr.openent.zimbra.service.impl.SoapZimbraService;
+import fr.openent.zimbra.model.EntUser;
+import fr.openent.zimbra.model.SoapRequest;
+import fr.openent.zimbra.model.ZimbraUser;
+import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.service.data.SoapZimbraService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -14,27 +14,31 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-import static fr.openent.zimbra.helper.SynchroConstants.*;
-import static fr.openent.zimbra.helper.SoapConstants.*;
-import static fr.openent.zimbra.helper.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.SynchroConstants.*;
+import static fr.openent.zimbra.model.constant.SoapConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
 
 public class SynchroUser extends EntUser {
 
     private int idRowBdd;
-    private String modType;
+    private String sync_action;
     private ZimbraUser zimbraData = null;
 
 
     private static Logger log = LoggerFactory.getLogger(SynchroUser.class);
 
-    public SynchroUser(String userid) {
+    public SynchroUser(String userid) throws IllegalArgumentException {
         super(userid);
     }
 
-    public void synchronize(int idRow, String modType, Handler<AsyncResult<JsonObject>> handler) {
+    public void synchronize(String sync_action, Handler<AsyncResult<JsonObject>> handler) {
+        synchronize(0, sync_action, handler);
+    }
+
+    public void synchronize(int idRow, String sync_action, Handler<AsyncResult<JsonObject>> handler) {
         this.idRowBdd = idRow;
-        this.modType = modType;
+        this.sync_action = sync_action;
         Future<JsonObject> updateDbFuture = Future.future();
         updateDbFuture.setHandler(result ->
             updateDatabase(result, handler)
@@ -53,8 +57,8 @@ public class SynchroUser extends EntUser {
 
     @Override
     public void fetchDataFromNeo(Handler<AsyncResult<Void>> handler) {
-        if(MODTYPE_CREATION.equals(modType)
-                || MODTYPE_MODIFICATION.equals(modType)) {
+        if(ACTION_CREATION.equals(sync_action)
+                || ACTION_MODIFICATION.equals(sync_action)) {
             super.fetchDataFromNeo(handler);
         } else {
             handler.handle(Future.succeededFuture());
@@ -62,7 +66,7 @@ public class SynchroUser extends EntUser {
     }
 
     private void getZimbraId(Handler<AsyncResult<String>> handler) {
-        if(MODTYPE_CREATION.equals(modType)) {
+        if(ACTION_CREATION.equals(sync_action)) {
             handler.handle(Future.succeededFuture(""));
         } else {
             SoapRequest getInfoRequest = SoapRequest.AccountSoapRequest(GET_ACCOUNT_INFO_REQUEST, getUserId());
@@ -87,25 +91,25 @@ public class SynchroUser extends EntUser {
 
     private void updateZimbra(String zimbraId, Handler<AsyncResult<JsonObject>> handler) {
         // todo check groups existence
-        if(modType == null) {
+        if(sync_action == null) {
             handler.handle(Future.failedFuture("No defined modification type for synchronisation"));
             return;
         }
-        switch(modType) {
-            case MODTYPE_CREATION:
+        switch(sync_action) {
+            case ACTION_CREATION:
                 createUser(0, handler);
                 syncGroups();
                 break;
-            case MODTYPE_MODIFICATION:
+            case ACTION_MODIFICATION:
                 updateUser(zimbraId, handler);
                 syncGroups();
                 break;
-            case MODTYPE_DELETION:
+            case ACTION_DELETION:
                 deleteUser(zimbraId, handler);
                 break;
             default:
-                handler.handle(Future.failedFuture("Unknown modType : " + modType));
-                log.error("Unknown modType : " + modType);
+                handler.handle(Future.failedFuture("Unknown sync_action : " + sync_action));
+                log.error("Unknown sync_action : " + sync_action);
         }
     }
 

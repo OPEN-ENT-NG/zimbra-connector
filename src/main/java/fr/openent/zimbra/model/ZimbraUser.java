@@ -1,12 +1,12 @@
-package fr.openent.zimbra.data;
+package fr.openent.zimbra.model;
 
 
 import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.helper.SoapConstants;
-import fr.openent.zimbra.helper.SynchroConstants;
-import fr.openent.zimbra.helper.ZimbraConstants;
-import fr.openent.zimbra.service.impl.Neo4jZimbraService;
-import fr.openent.zimbra.service.impl.SqlZimbraService;
+import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.model.constant.SynchroConstants;
+import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.service.data.Neo4jZimbraService;
+import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.UserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
@@ -21,14 +21,15 @@ import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 
-import static fr.openent.zimbra.helper.SoapConstants.*;
+import static fr.openent.zimbra.model.constant.SoapConstants.*;
 import static fr.openent.zimbra.helper.AsyncHelper.*;
 
+@SuppressWarnings("FieldCanBeLocal")
 public class ZimbraUser {
 
-    UserService userService;
-    SqlZimbraService sqlService;
-    Neo4jZimbraService neo4jService;
+    private UserService userService;
+    private SqlZimbraService sqlService;
+    private Neo4jZimbraService neo4jService;
 
     private String zimbraID = "";
     private String zimbraName = "";
@@ -66,12 +67,12 @@ public class ZimbraUser {
 
         Future<ZimbraUser> fetchedInfos = Future.future();
         fetchAccountInfoFromEmail(email, fetchedInfos.completer());
-        fetchedInfos.compose(v -> {
-            fetchLoginFromAliases(startFuture.completer());
-        }, startFuture);
+        fetchedInfos.compose(v ->
+            fetchLoginFromAliases(startFuture.completer())
+        , startFuture);
     }
 
-    public void fetchAccountInfoFromEmail(String email, Handler<AsyncResult<ZimbraUser>> handler) {
+    private void fetchAccountInfoFromEmail(String email, Handler<AsyncResult<ZimbraUser>> handler) {
         JsonObject acct = new JsonObject()
                 .put(SoapConstants.ID_BY, ZimbraConstants.ACCT_NAME)
                 .put(SoapConstants.ATTR_VALUE, email);

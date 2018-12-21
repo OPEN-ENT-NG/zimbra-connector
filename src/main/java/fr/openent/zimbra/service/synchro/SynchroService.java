@@ -1,7 +1,8 @@
 package fr.openent.zimbra.service.synchro;
 
-import fr.openent.zimbra.data.synchro.SynchroInfos;
-import fr.openent.zimbra.helper.SynchroConstants;
+import fr.openent.zimbra.model.synchro.SynchroInfos;
+import fr.openent.zimbra.model.constant.SynchroConstants;
+import fr.openent.zimbra.service.data.SqlSynchroService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -87,17 +88,17 @@ public class SynchroService {
 
             Future<JsonObject> createdAdded = Future.future();
             sqlSynchroService.addUsersToSynchronize(synchroInfos.getId(), synchroInfos.getUsersCreated(),
-                    SynchroConstants.MODTYPE_CREATION, createdAdded.completer());
+                    SynchroConstants.ACTION_CREATION, createdAdded.completer());
             return createdAdded;
 
         }).compose( createdResult -> {
             Future<JsonObject> modifiedAdded = Future.future();
             sqlSynchroService.addUsersToSynchronize(synchroInfos.getId(), synchroInfos.getUsersModified(),
-                    SynchroConstants.MODTYPE_MODIFICATION, modifiedAdded.completer());
+                    SynchroConstants.ACTION_MODIFICATION, modifiedAdded.completer());
             return modifiedAdded;
-        }).compose( modifiedResult -> {
+        }).compose( modifiedResult ->
             sqlSynchroService.addUsersToSynchronize(synchroInfos.getId(), synchroInfos.getUsersDeleted(),
-                    SynchroConstants.MODTYPE_DELETION, startFuture.completer());
-        }, startFuture);
+                    SynchroConstants.ACTION_DELETION, startFuture.completer())
+        , startFuture);
     }
 }

@@ -2,12 +2,15 @@ package fr.openent.zimbra.controllers;
 
 
 import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.service.impl.UserService;
+import fr.openent.zimbra.service.impl.CommunicationService;
+import fr.openent.zimbra.service.impl.NotificationService;
+import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.rs.Get;
-import fr.wseduc.security.ActionType;
-import fr.wseduc.webutils.Utils;
+import fr.wseduc.rs.Post;
+import fr.wseduc.rs.Put;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.security.SecuredAction;
+import fr.wseduc.webutils.request.RequestUtils;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
@@ -21,7 +24,9 @@ import static org.entcore.common.http.response.DefaultResponseHandler.defaultRes
 
 public class ExternalWebservicesController extends BaseController {
 
-    UserService userService;
+    private SynchroUserService synchroUserService;
+    private NotificationService notificationService;
+    private CommunicationService communicationService;
 
     private static final Logger log = LoggerFactory.getLogger(ExternalWebservicesController.class);
 
@@ -31,18 +36,85 @@ public class ExternalWebservicesController extends BaseController {
         super.init(vertx, config, rm, securedActions);
 
         ServiceManager serviceManager = ServiceManager.init(vertx, config, eb, pathPrefix);
-        userService = serviceManager.getUserService();
+        synchroUserService = serviceManager.getSynchroUserService();
+        notificationService = serviceManager.getNotificationService();
+        communicationService = serviceManager.getCommunicationService();
     }
 
 
-    @Get("ws/getlogin")
-    @SecuredAction("zimbra.ws.getlogin")
-    public void getLogin(final HttpServerRequest request) {
-        final String email = request.params().get("email");
-        if (email == null || email.trim().isEmpty()) {
+    /**
+     * A user id has been modified, mark it for update.
+     * The user is removed from the base and will be resynchronized on next connection
+     * @param request Http request, containing info
+     *                entid : User ID as in Neo4j,
+     *                zimbramail : Zimbra email address
+     */
+    @Put("/export/updateid")
+    @SecuredAction("export.update.id")
+    public void updateUserId(final HttpServerRequest request) {
+        RequestUtils.bodyToJson(request, body -> {
+            final String userId = body.getString("entid");
+            final String userMail = body.getString("zimbramail");
+
+            if(userId == null || userId.isEmpty()
+                    || userMail == null || userMail.isEmpty()) {
+                badRequest(request);
+            } else {
+                synchroUserService.removeUserFromBase(userId, userMail, defaultResponseHandler(request));
+            }
+        });
+    }
+
+
+    /**
+     * Create notification in timeline when receiving a mail
+     * Return empty Json Object if successful
+     * @param request request containing model :
+     *                sender : mail address of the sender
+     *                recipient : neo4j id of the recipient
+     *                messageId : essage_id in the mailbox of recipient
+     *                subject : message subject
+     */
+    @Post("notification")
+    @SecuredAction("zimbra.notification.send")
+    public void sendNotification(HttpServerRequest request) {
+        RequestUtils.bodyToJson(request, body -> {
+            final String zimbraSender = body.getString("sender");
+            final String zimbraRecipient = body.getString("recipient");
+            final String messageId = body.getString("messageId");
+            final String subject = body.getString("subject");
+
+            if(zimbraSender == null || zimbraSender.isEmpty()
+                    || zimbraRecipient == null || zimbraRecipient.isEmpty()
+                    || messageId == null || messageId.isEmpty()) {
+                badRequest(request);
+            } else {
+                notificationService.sendNewMailNotification(zimbraSender, zimbraRecipient, messageId, subject,
+                        defaultResponseHandler(request));
+            }
+        });
+    }
+
+
+    /**
+     * Indicates if a sender (user or external address) can send a mail to a receiver (user, group or external address)
+     * Returns JsonObject :
+     * {
+     *     can_communicate : true/false
+     * } Check if communication is allowed between two mail addresses
+     * @param request
+     * 		from : mail address for the sender
+     * 		to : mail address for the recipient
+     */
+    @Get("communication")
+    @SecuredAction("zimbra.communication.all")
+    public void canCommunicate(final HttpServerRequest request) {
+        String sender = request.params().get("from");
+        String receiver = request.params().get("to");
+        if( sender != null && !sender.isEmpty() && receiver != null && !receiver.isEmpty()) {
+            communicationService.canCommunicate(sender, receiver, defaultResponseHandler(request));
+        } else {
             badRequest(request);
-        } else  {
-            userService.getUserLogin(email, defaultResponseHandler(request));
         }
     }
 }

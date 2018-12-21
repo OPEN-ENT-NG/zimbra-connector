@@ -1,14 +1,14 @@
 package fr.openent.zimbra.service.impl;
 
-import fr.openent.zimbra.helper.SoapConstants;
-import fr.openent.zimbra.helper.ZimbraConstants;
+import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.entcore.common.user.UserInfos;
 
-import static fr.openent.zimbra.helper.SoapConstants.NAMESPACE_ACCOUNT;
+import static fr.openent.zimbra.model.constant.SoapConstants.NAMESPACE_ACCOUNT;
 
 public class SignatureService {
 
@@ -64,7 +64,7 @@ public class SignatureService {
                                      JsonObject jsonResponse,
                                      Handler<Either<String, JsonObject>> result) {
         try {
-            Boolean signatureENTExists = false;
+            boolean signatureENTExists = false;
             if (jsonResponse.getJsonObject("Body")
                     .getJsonObject("GetSignaturesResponse").containsKey("signature")) {
 

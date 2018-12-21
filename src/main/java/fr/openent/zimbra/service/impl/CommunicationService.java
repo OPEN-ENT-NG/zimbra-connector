@@ -1,7 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
-import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.data.MailAddress;
+import fr.openent.zimbra.model.MailAddress;
+import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -10,15 +10,13 @@ import io.vertx.core.logging.LoggerFactory;
 
 public class CommunicationService {
 
-    static final String CAN_COMMUNICATE = "can_communicate";
+    public static final String CAN_COMMUNICATE = "can_communicate";
 
     private Neo4jZimbraService neoZimbraService;
-    private MessageService messageService;
     private static Logger log = LoggerFactory.getLogger(CommunicationService.class);
 
     public CommunicationService(MessageService messageService) {
         neoZimbraService = new Neo4jZimbraService();
-        this.messageService = messageService;
     }
 
     /**
@@ -40,17 +38,18 @@ public class CommunicationService {
             recipient = MailAddress.createFromRawAddress(inRecipient);
         } catch (IllegalArgumentException e) {
             log.error("Error when processing WS Data : " + e.getMessage());
-            answerCanCommunicate(handler, false);
+            refuseCommunication(handler);
             return;
         }
 
+        //noinspection CodeBlock2Expr
         sender.fetchNeoId(senderId -> {
             recipient.fetchNeoId(recipientId -> {
 
                 if(sender.isExternal() || recipient.isExternal()) {
                     //todo handle external sender
                     log.error("External emails not handled");
-                    answerCanCommunicate(handler, false);
+                    refuseCommunication(handler);
                     return;
                 }
 
@@ -78,7 +77,7 @@ public class CommunicationService {
         });
     }
 
-    private void answerCanCommunicate(Handler<Either<String,JsonObject>> handler, boolean canCommunicate) {
-        handler.handle(new Either.Right<>(new JsonObject().put(CAN_COMMUNICATE, canCommunicate)));
+    private void refuseCommunication(Handler<Either<String, JsonObject>> handler) {
+        handler.handle(new Either.Right<>(new JsonObject().put(CAN_COMMUNICATE, false)));
     }
 }

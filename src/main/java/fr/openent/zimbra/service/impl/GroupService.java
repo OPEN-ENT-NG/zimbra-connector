@@ -2,8 +2,10 @@ package fr.openent.zimbra.service.impl;
 
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.helper.SoapConstants;
-import fr.openent.zimbra.helper.ZimbraConstants;
+import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.service.data.SoapZimbraService;
+import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroGroupService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
