@@ -1,6 +1,6 @@
 package fr.openent.zimbra.service.synchro;
 
-import fr.openent.zimbra.model.SoapRequest;
+import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.synchro.SynchroUser;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.SynchroConstants;

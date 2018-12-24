@@ -5,6 +5,7 @@ import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.SynchroConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.model.soap.SoapError;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.UserService;
@@ -12,6 +13,7 @@ import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -31,6 +33,9 @@ public class ZimbraUser {
     private SqlZimbraService sqlService;
     private Neo4jZimbraService neo4jService;
 
+    private boolean accountExists = false;
+    private MailAddress address;
+
     private String zimbraID = "";
     private String zimbraName = "";
     private String zimbraStatus = "";
@@ -43,7 +48,12 @@ public class ZimbraUser {
 
     private static Logger log = LoggerFactory.getLogger(ZimbraUser.class);
 
-    public ZimbraUser() {
+    public ZimbraUser(MailAddress address) {
+        this.address = address;
+        init();
+    }
+
+    private void init() {
         ServiceManager sm = ServiceManager.getServiceManager();
         this.userService = sm.getUserService();
         this.sqlService = sm.getSqlService();
@@ -59,27 +69,42 @@ public class ZimbraUser {
     public String getLogin() {
         return entLogin;
     }
+    public String getZimbraID() {
+        return zimbraID;
+    }
 
 
 
-    public void fetchEntLoginFromEmail(String email, Handler<Either<String, JsonObject>> handler) {
-        Future<JsonObject> startFuture = getJsonObjectFinalFuture(handler);
+    public void checkIfExists(Handler<AsyncResult<ZimbraUser>> handler) {
+        JsonObject response = new JsonObject();
 
-        Future<ZimbraUser> fetchedInfos = Future.future();
-        fetchAccountInfoFromEmail(email, fetchedInfos.completer());
-        fetchedInfos.compose(v ->
-            fetchLoginFromAliases(startFuture.completer())
-        , startFuture);
+        fetchAccountInfoFromEmail(address.toString(), result -> {
+            if(result.succeeded()) {
+                response.put("login", entLogin);
+                handler.handle(Future.succeededFuture(ZimbraUser.this));
+            } else {
+                String errorStr = result.cause().getMessage();
+                try {
+                    SoapError error = new SoapError(errorStr);
+                    if(ZimbraConstants.ERROR_NOSUCHACCOUNT.equals(error.getCode())) {
+                        handler.handle(Future.succeededFuture(ZimbraUser.this));
+                    } else {
+                        handler.handle(Future.failedFuture(errorStr));
+                    }
+                } catch (DecodeException e) {
+                    log.error("Unknown error when trying to fetch account info : " + errorStr);
+                    handler.handle(Future.failedFuture("Unknown Zimbra error"));
+                }
+            }
+        });
+    }
+
+    public boolean existsInZimbra() {
+        return accountExists;
     }
 
     private void fetchAccountInfoFromEmail(String email, Handler<AsyncResult<ZimbraUser>> handler) {
-        JsonObject acct = new JsonObject()
-                .put(SoapConstants.ID_BY, ZimbraConstants.ACCT_NAME)
-                .put(SoapConstants.ATTR_VALUE, email);
-
-        SoapRequest getAccountRequest = SoapRequest.AdminSoapRequest(SoapConstants.GET_ACCOUNT_REQUEST);
-        getAccountRequest.setContent(new JsonObject().put(SoapConstants.ACCOUNT, acct));
-        getAccountRequest.start(response -> {
+        userService.getUserAccount(email, response ->  {
             if(response.succeeded()) {
                 try {
                     processGetAccountInfo(response.result());

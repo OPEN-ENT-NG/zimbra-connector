@@ -5,6 +5,7 @@ import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.data.SqlSynchroService;
+import fr.openent.zimbra.service.synchro.SynchroGroupService;
 import fr.openent.zimbra.service.synchro.SynchroService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import io.vertx.core.Vertx;
@@ -36,6 +37,7 @@ public class ServiceManager {
     private SynchroUserService synchroUserService;
     private SynchroService synchroService;
     private SqlSynchroService sqlSynchroService;
+    private SynchroGroupService synchroGroupService;
 
 
 
@@ -61,6 +63,7 @@ public class ServiceManager {
         this.expertModeService = new ExpertModeService();
 
         this.synchroService = new SynchroService(sqlSynchroService);
+        this.synchroGroupService = new SynchroGroupService(soapService, synchroUserService);
 
 
         soapService.setServices(userService, synchroUserService);
@@ -144,5 +147,9 @@ public class ServiceManager {
 
     public SqlSynchroService getSqlSynchroService() {
         return sqlSynchroService;
+    }
+
+    public SynchroGroupService getSynchroGroupService() {
+        return synchroGroupService;
     }
 }

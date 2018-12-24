@@ -7,6 +7,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+@SuppressWarnings("unused")
 public class AsyncHelper {
     public static Handler<AsyncResult<JsonObject>> getJsonObjectAsyncHandler(Handler<Either<String, JsonObject>> handler) {
         return res -> {
@@ -18,6 +19,7 @@ public class AsyncHelper {
         };
     }
 
+    @SuppressWarnings("Duplicates")
     public static Handler<Either<String, JsonObject>> getJsonObjectEitherHandler(Handler<AsyncResult<JsonObject>> handler) {
         return res -> {
             if(res.isLeft()) {
@@ -32,9 +34,9 @@ public class AsyncHelper {
         return res -> handler.handle(eitherToVoidAsync(res));
     }
 
-    public static Future<JsonObject> getJsonObjectFinalFuture(Handler<Either<String, JsonObject>> handler) {
+    public static Future<JsonObject> getJsonObjectFinalFuture(Handler<AsyncResult<JsonObject>> handler) {
         Future<JsonObject> startFuture = Future.future();
-        startFuture.setHandler(getJsonObjectAsyncHandler(handler));
+        startFuture.setHandler(handler);
         return startFuture;
     }
 
@@ -65,6 +67,7 @@ public class AsyncHelper {
 
 
 
+    @SuppressWarnings("Duplicates")
     public static Handler<Either<String, JsonArray>> getJsonArrayEitherHandler(Handler<AsyncResult<JsonArray>> handler) {
         return res -> {
             if(res.isLeft()) {

@@ -1,7 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.model.SoapRequest;
+import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.constant.SoapConstants;
@@ -187,20 +187,6 @@ public class UserService {
         } else {
             handler.handle(new Either.Left<>("Could not get Quota from GetInfoRequest"));
         }
-    }
-
-    public void getUserLogin(String email,
-                             Handler<Either<String, JsonObject>> handler) {
-        ZimbraUser user = new ZimbraUser();
-        user.fetchEntLoginFromEmail(email, userResponse -> {
-            if(userResponse.isLeft()) {
-                handler.handle(userResponse);
-            } else {
-                JsonObject frontResponse = new JsonObject();
-                frontResponse.put("login", user.getLogin());
-                handler.handle(new Either.Right<>(frontResponse));
-            }
-        });
     }
 
     /**

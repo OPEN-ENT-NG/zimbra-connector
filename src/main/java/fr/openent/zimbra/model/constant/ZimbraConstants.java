@@ -107,6 +107,7 @@ public class ZimbraConstants {
     public static final String DISPLAY_ATTACHMENT = "a";
 
     public static final String DISTRIBUTION_LIST = "dl";
+    public static final String DLIST_LIMIT_MEMBERS = "limit";
 
 
     public static final String ACCT_STATUS_LOCKED = "locked";

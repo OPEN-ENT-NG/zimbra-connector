@@ -1,8 +1,10 @@
 package fr.openent.zimbra.model.synchro;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.EntUser;
-import fr.openent.zimbra.model.SoapRequest;
+import fr.openent.zimbra.model.Group;
+import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
@@ -13,6 +15,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+
+import java.util.List;
 
 import static fr.openent.zimbra.model.constant.SynchroConstants.*;
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
@@ -73,7 +77,7 @@ public class SynchroUser extends EntUser {
             getInfoRequest.setContent(new JsonObject()
                     .put(ACCT_INFO_ACCOUNT, new JsonObject()
                         .put(SoapConstants.ID_BY, ZimbraConstants.ACCT_NAME)
-                        .put(SoapConstants.ATTR_VALUE, getUserAddress())));
+                        .put(SoapConstants.ATTR_VALUE, getUserStrAddress())));
             getInfoRequest.start( result -> {
                 if(result.failed()) {
                     handler.handle(Future.failedFuture(result.cause()));
@@ -90,14 +94,13 @@ public class SynchroUser extends EntUser {
     }
 
     private void updateZimbra(String zimbraId, Handler<AsyncResult<JsonObject>> handler) {
-        // todo check groups existence
         if(sync_action == null) {
             handler.handle(Future.failedFuture("No defined modification type for synchronisation"));
             return;
         }
         switch(sync_action) {
             case ACTION_CREATION:
-                createUser(0, handler);
+                createUserIfNotExists(handler);
                 syncGroups();
                 break;
             case ACTION_MODIFICATION:
@@ -114,11 +117,40 @@ public class SynchroUser extends EntUser {
     }
 
     private void syncGroups() {
+        sqlZimbraService.checkGroupsExistence(getGroups(), sqlResult -> {
+            if(sqlResult.failed()) {
+                log.error("Error when getting unsynced groups : " + sqlResult.cause().getMessage());
+            } else {
+                try {
+                    List<String> unsyncedGroupIds = JsonHelper.getStringList(sqlResult.result());
+                    for(String groupId : unsyncedGroupIds) {
+                        SynchroGroup group = new SynchroGroup(groupId);
+                        group.synchronize( v -> {});
+                    }
+                } catch (IllegalArgumentException e) {
+                    log.error("Error when trying to process sql groups result : " + sqlResult.result().toString());
+                }
+            }
+        });
+    }
 
+
+    private void createUserIfNotExists(Handler<AsyncResult<JsonObject>> handler) {
+        ZimbraUser user = new ZimbraUser(getUserMailAddress());
+        user.checkIfExists(userResponse -> {
+            if(userResponse.failed()) {
+                handler.handle(Future.failedFuture(userResponse.cause()));
+            } else {
+                if(user.existsInZimbra()) {
+                    updateUser(user.getZimbraID(), handler);
+                } else {
+                    createUser(0, handler);
+                }
+            }
+        });
     }
 
     private void createUser(int increment, Handler<AsyncResult<JsonObject>> handler) {
-        // todo check user does not exists
         String login = getLogin();
 
         String accountName = increment > 0
@@ -178,7 +210,7 @@ public class SynchroUser extends EntUser {
         SoapRequest addAliasRequest = SoapRequest.AdminSoapRequest(ADD_ALIAS_REQUEST);
         addAliasRequest.setContent(new JsonObject()
                 .put(ACCT_ID, zimbraId)
-                .put(ACCT_ALIAS, getUserAddress()));
+                .put(ACCT_ALIAS, getUserStrAddress()));
         addAliasRequest.start(handler);
     }
 
@@ -201,7 +233,7 @@ public class SynchroUser extends EntUser {
     }
 
     private void updateDatabase(AsyncResult<JsonObject> result, Handler<AsyncResult<JsonObject>> handler) {
-        // TODO
+        // TODO update database
         /*ServiceManager sm = ServiceManager.getServiceManager();
         SqlSynchroService sqlSynchroService = sm.getSqlSynchroService();
         sqlSynchroService.updateSynchroUser(idRowBdd, STATUS_DONE, "", handler);*/

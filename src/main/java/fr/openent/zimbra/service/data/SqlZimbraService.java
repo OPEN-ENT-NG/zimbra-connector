@@ -1,9 +1,13 @@
 package fr.openent.zimbra.service.data;
 
+import fr.openent.zimbra.helper.AsyncHelper;
+import fr.openent.zimbra.model.Group;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Server;
 import fr.wseduc.webutils.Utils;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
@@ -253,6 +257,34 @@ public class SqlZimbraService {
             }
         }
         return false;
+    }
+
+
+
+    public void checkGroupsExistence(List<Group> groups, Handler<AsyncResult<JsonArray>> handler) {
+        if(groups.isEmpty()) {
+            handler.handle(Future.succeededFuture(new JsonArray()));
+            return;
+        }
+        JsonArray params = new JsonArray();
+        StringBuilder query = new StringBuilder();
+        query.append("SELECT * ")
+                .append("FROM (")
+                .append("VALUES");
+        String delim = " ";
+        for(Group group : groups) {
+            query.append(delim).append("(?)");
+            params.add(group.getId());
+            delim = ",";
+        }
+        query.append(") as gid(id) ")
+                .append("WHERE NOT EXISTS (")
+                .append("SELECT 1")
+                .append("FROM ").append(groupTable).append(" g ")
+                .append("WHERE gid.id = ").append(groupTable).append(".").append(NEO4J_UID)
+                .append(")");
+        sql.prepared(query.toString(), new JsonArray(),
+                SqlResult.validResultHandler(AsyncHelper.getJsonArrayEitherHandler(handler)));
     }
 
 }
