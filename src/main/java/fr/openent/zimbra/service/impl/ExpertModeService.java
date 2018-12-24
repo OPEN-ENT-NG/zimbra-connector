@@ -18,6 +18,6 @@ public class ExpertModeService {
     public String getPreauthUrl(UserInfos userInfos) throws IOException {
         EntUser user = new EntUser(userInfos);
         String preauthKey = ServiceManager.getServiceManager().getConfig().getPreauthKey();
-        return PreauthHelper.generatePreauthUrl(user.getUserAddress(), preauthKey);
+        return PreauthHelper.generatePreauthUrl(user.getUserStrAddress(), preauthKey);
     }
 }

@@ -83,7 +83,7 @@ public class MailAddress {
         setDomain( completeCleanAddress.substring(completeCleanAddress.indexOf('@')+1) );
     }
 
-    private MailAddress(String localPart, String domain) throws IllegalArgumentException {
+    public MailAddress(String localPart, String domain) throws IllegalArgumentException {
         setLocalPart(localPart);
         setDomain(domain);
         initServices();

@@ -5,6 +5,7 @@ import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
+import fr.openent.zimbra.service.data.SqlZimbraService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -21,7 +22,9 @@ import static fr.openent.zimbra.model.constant.SynchroConstants.*;
 @SuppressWarnings("FieldCanBeLocal")
 public class EntUser {
 
-    private Neo4jZimbraService neoService;
+    @SuppressWarnings("WeakerAccess")
+    protected Neo4jZimbraService neoService;
+    protected SqlZimbraService sqlZimbraService;
 
     private String userId;
     private String externalId = "";
@@ -50,6 +53,7 @@ public class EntUser {
         userZimbraAddress = MailAddress.createFromLocalpartAndDomain(userId, Zimbra.domain);
         ServiceManager sm = ServiceManager.getServiceManager();
         this.neoService = sm.getNeoService();
+        this.sqlZimbraService = sm.getSqlService();
     }
 
     public String getFirstName() {
@@ -64,8 +68,16 @@ public class EntUser {
         return userId;
     }
 
-    public String getUserAddress() {
+    public String getUserStrAddress() {
         return userZimbraAddress.toString();
+    }
+
+    public MailAddress getUserMailAddress() {
+        return userZimbraAddress;
+    }
+
+    protected List<Group> getGroups() {
+        return groups;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -98,7 +110,7 @@ public class EntUser {
         emailAcademy = neoUser.getString("emailAcademy", "");
         email = neoUser.getString("email", "");
         profile = neoUser.getString("profiles", "");
-        processJsonGroups(neoUser.getJsonArray("groups", new JsonArray()));
+        groups = Group.processJsonGroups(neoUser.getJsonArray("groups", new JsonArray()));
         structuresUai = JsonHelper.getStringList(neoUser.getJsonArray("structures", new JsonArray()));
 
         if(login.isEmpty()) {
@@ -106,15 +118,6 @@ public class EntUser {
         }
     }
 
-    private void processJsonGroups(JsonArray groupArray) throws IllegalArgumentException {
-        for(Object o : groupArray) {
-            if(!(o instanceof JsonObject)) {
-                throw new IllegalArgumentException("JsonArray is not a String list");
-            }
-            JsonObject groupJson = (JsonObject)o;
-            groups.add(new Group(groupJson));
-        }
-    }
 
     @SuppressWarnings("WeakerAccess")
     public JsonArray getSoapData() {

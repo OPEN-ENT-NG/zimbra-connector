@@ -47,7 +47,7 @@ public class SqlSynchroService {
         this.sql = Sql.getInstance();
         this.deployedStructuresTable = schema + ".deployed_structures";
         this.synchroTable = schema + ".synchro";
-        this.userSynchroTable = schema + ".user_synchro";
+        this.userSynchroTable = schema + ".synchro_user";
     }
 
     public void getDeployedStructures(Handler<AsyncResult<List<String>>> handler) {
@@ -139,15 +139,7 @@ public class SqlSynchroService {
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 
-    public void checkGroupsExistence(List<Group> groups, Handler<AsyncResult<JsonArray>> handler) {
-        if(groups.isEmpty()) {
-            handler.handle(Future.succeededFuture(new JsonArray()));
-            return;
-        }
-        StringBuilder query = new StringBuilder();
-    }
-
     public void updateSynchroUser(int idRow, String state, String logs, Handler<AsyncResult<JsonObject>> handler) {
-        // TODO
+        // TODO update synchro user
     }
 }

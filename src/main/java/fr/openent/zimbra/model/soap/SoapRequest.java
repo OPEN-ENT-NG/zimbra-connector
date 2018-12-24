@@ -1,4 +1,4 @@
-package fr.openent.zimbra.model;
+package fr.openent.zimbra.model.soap;
 
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ServiceManager;
