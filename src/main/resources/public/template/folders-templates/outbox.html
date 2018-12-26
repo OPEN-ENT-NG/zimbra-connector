@@ -84,13 +84,11 @@
 
 		</article>
 	</div>
-	<div class="notification relative no-margin" ng-if="!zimbra.currentFolder.mails.full">
-		<article ng-click="nextPage();$event.stopPropagation();">
-			<div class="flex-all-remains horizontal-margin cell-ellipsis">
-				<span class="strong">Charger plus...</span>
-			</div>
-		</article>
-	</div>
+    <div ng-if="!zimbra.currentFolder.mails.full" class="element-circle-add">
+        <button class="circle-add" ng-click="nextPage();$event.stopPropagation();" >
+            <span class="strong">+</span>
+        </button>
+    </div>
 </div>
 
 <container template="toaster"></container>

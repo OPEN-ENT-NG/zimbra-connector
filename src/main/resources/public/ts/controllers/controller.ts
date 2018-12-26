@@ -50,6 +50,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 $scope.readMail(new Mail(params.mailId));
                 await Zimbra.instance.sync();
                 await Zimbra.instance.folders.draft.countTotal();
+                $scope.nextPage();
                 $scope.constructNewItem();
                 $scope.$apply();
             },
@@ -81,6 +82,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 await Zimbra.instance.folders.openFolder("inbox");
                 await Zimbra.instance.sync();
                 await Zimbra.instance.folders.draft.countTotal();
+                $scope.nextPage();
                 $scope.constructNewItem();
                 $scope.$apply();
             }
@@ -152,6 +154,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.resetState();
             await Zimbra.instance.folders.openFolder(folderName);
             await Zimbra.instance.currentFolder.countUnread();
+            $scope.nextPage();
             $scope.$apply();
             $scope.updateWherami();
         };
