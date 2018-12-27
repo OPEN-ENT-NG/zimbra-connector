@@ -108,7 +108,7 @@ public class ZimbraUser {
             if(response.succeeded()) {
                 try {
                     processGetAccountInfo(response.result());
-                    Future.succeededFuture(ZimbraUser.this);
+                    handler.handle(Future.succeededFuture(ZimbraUser.this));
                 } catch (InvalidPropertiesFormatException e) {
                     handler.handle(Future.failedFuture(e));
                 }

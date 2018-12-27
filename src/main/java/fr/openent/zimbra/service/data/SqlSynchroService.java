@@ -1,6 +1,6 @@
 package fr.openent.zimbra.service.data;
 
-import fr.openent.zimbra.model.Group;
+
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.constant.SynchroConstants;
@@ -31,7 +31,7 @@ public class SqlSynchroService {
     private static final String USER_SYNCID = "id_synchro";
     private static final String USER_SYNCDATE = "synchro_date";
     private static final String USER_SYNCTYPE = "synchro_type";
-    public static final String USER_SYNCACTION = "action_type";
+    public static final String USER_SYNCACTION = "synchro_action";
     private static final String USER_STATUS = "status";
 
 
@@ -62,8 +62,8 @@ public class SqlSynchroService {
                     List<String> structuresList = JsonHelper.extractValueFromJsonObjects(res.right().getValue(), UAI);
                     handler.handle(Future.succeededFuture(structuresList));
                 } catch (IllegalArgumentException e) {
-                    log.error("Invalid model in database : " + res.right().getValue().toString());
-                    handler.handle(Future.failedFuture("Invalid model in database"));
+                    log.error("Invalid data in database : " + res.right().getValue().toString());
+                    handler.handle(Future.failedFuture("Invalid data in database"));
                 }
             }
         }));

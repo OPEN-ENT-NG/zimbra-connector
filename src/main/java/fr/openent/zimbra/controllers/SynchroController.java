@@ -97,6 +97,7 @@ public class SynchroController extends BaseController {
         synchroUserService.syncUserFromBase(AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
     }
 
+
     /**
      * List Structures for Zimbra Synchronisation
      * @param request Http request

@@ -55,7 +55,7 @@ public class FolderService {
      * Process response from Zimbra API to count messages in folder
      * Json returned :
      * {
-     *    model: count // number of (unread) messages
+     *    data: count // number of (unread) messages
      * }
      * Zimbra API documentation for GetFolder :
      * https://files.zimbra.com/docs/soap_api/8.7.11/api-reference/zimbraMail/GetFolder.html

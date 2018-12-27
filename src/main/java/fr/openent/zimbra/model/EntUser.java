@@ -87,10 +87,10 @@ public class EntUser {
 
     public void fetchDataFromNeo(Handler<AsyncResult<Void>> handler) {
         neoService.getUserFromNeo4j(userId, neoResult -> {
-            if(neoResult.isLeft()) {
-                handler.handle(Future.failedFuture(neoResult.left().getValue()));
+            if(neoResult.failed()) {
+                handler.handle(Future.failedFuture(neoResult.cause()));
             } else {
-                JsonObject jsonUser = neoResult.right().getValue();
+                JsonObject jsonUser = neoResult.result();
                 try {
                     applyJson(jsonUser);
                 } catch (Exception e) {

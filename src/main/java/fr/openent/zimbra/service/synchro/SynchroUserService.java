@@ -82,7 +82,7 @@ public class SynchroUserService {
 
     /**
      * Export a user to Zimbra
-     * Get model from Neo4j, then create user in Zimbra
+     * Get data from Neo4j, then create user in Zimbra
      * @param userId userId
      * @param handler result handler
      */

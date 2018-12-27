@@ -267,7 +267,7 @@ public class ZimbraController extends BaseController {
 	 * If unread is true, filter only unread messages.
 	 * In case of success, return Json :
 	 * {
-	 *     model: count // number of (unread) messages
+	 *     data: count // number of (unread) messages
 	 * }
 	 * @param request http request containing info
 	 *                Users infos

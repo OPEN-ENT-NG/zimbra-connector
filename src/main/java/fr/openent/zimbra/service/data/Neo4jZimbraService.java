@@ -20,8 +20,10 @@
 package fr.openent.zimbra.service.data;
 
 
+import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.service.impl.CommunicationService;
 import fr.wseduc.webutils.Either;
+import io.vertx.core.AsyncResult;
 import org.entcore.common.neo4j.Neo4j;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -38,6 +40,7 @@ public class Neo4jZimbraService {
 	public static final String TYPE_USER = "user";
 
 	public static final String GROUP_NAME = "groupName";
+	public static final String GROUP_DISPLAYNAME = "groupDisplayName";
 	public static final String GROUP_ID = "groupId";
 
 	public Neo4jZimbraService(){
@@ -100,7 +103,7 @@ public class Neo4jZimbraService {
 	 * @param id User Id
 	 * @param handler result handler
 	 */
-	public void getUserFromNeo4j(String id, Handler<Either<String, JsonObject>> handler) {
+	public void getUserFromNeo4j(String id, Handler<AsyncResult<JsonObject>> handler) {
 
 		JsonArray fields = new JsonArray().add("externalId").add("lastName").add("firstName").add("login");
 		fields.add("email").add("emailAcademy").add("mobile").add("deleteDate").add("functions").add("displayName");
@@ -128,7 +131,18 @@ public class Neo4jZimbraService {
 		query.append(", collect(distinct s.UAI) as structures")
 				.append(" , CASE WHEN size(u.classes) > 0  THEN  last(collect(u.classes)) END as classes")
 				.append(" , collect(distinct {groupName:g.name, groupId:g.id}) as groups");
-		neo.execute(query.toString(), params, validUniqueResultHandler(handler));
+		neo.execute(query.toString(), params, validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
+	}
+
+	public void getGroupFromNeo4j(String id, Handler<AsyncResult<JsonObject>> handler) {
+		String query = "MATCH (g:Group) "
+				+ "WHERE g.id = {id} "
+				+ "RETURN g.id as " + GROUP_ID + ", "
+				+ "g.groupDisplayName as " + GROUP_DISPLAYNAME + ", "
+				+ "g.name as " + GROUP_NAME;
+		JsonObject params = new JsonObject().put("id", id);
+
+		neo.execute(query, params, validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
 	}
 
 }

@@ -104,7 +104,7 @@ public class AttachmentService {
      * Dump one request into another.
      * Used to transfer attachment from Zimbra to Front, or Front to Zimbra
      * @param httpClient HttpClient used for pump, can be closed afterwards
-     * @param inRequest Request containing the model
+     * @param inRequest Request containing the data
      * @param outRequest Request that must be filled
      */
     private void pumpRequests(HttpClient httpClient, ReadStream<Buffer> inRequest, WriteStream<Buffer> outRequest) {
@@ -120,11 +120,11 @@ public class AttachmentService {
 
     /**
      * Add attachment to a mail.
-     * Pump model from frontRequest to Zimbra, then update existing draft with attachment.
+     * Pump data from frontRequest to Zimbra, then update existing draft with attachment.
      * Send back new draft content to front
      * @param messageId Message Id
      * @param user User Infos
-     * @param requestFront Request from front with attachment model
+     * @param requestFront Request from front with attachment data
      * @param handler Final handler
      */
     public void addAttachment(String messageId,

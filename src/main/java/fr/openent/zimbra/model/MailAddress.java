@@ -45,9 +45,6 @@ public class MailAddress {
         return !isLocal;
     }
 
-    public String getNeoId() {
-        return neoId;
-    }
 
     @SuppressWarnings("WeakerAccess")
     public String getLocalPart() {
@@ -87,10 +84,6 @@ public class MailAddress {
         setLocalPart(localPart);
         setDomain(domain);
         initServices();
-    }
-
-    public String getRawCleanAddress() {
-        return completeCleanAddress;
     }
 
     private void setLocalPart(String localPart) {

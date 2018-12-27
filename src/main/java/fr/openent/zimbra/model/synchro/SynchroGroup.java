@@ -9,48 +9,75 @@ import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
 import fr.openent.zimbra.model.soap.SoapError;
 import fr.openent.zimbra.model.soap.SoapRequest;
-import fr.openent.zimbra.service.synchro.SynchroGroupService;
+import fr.openent.zimbra.service.data.SqlZimbraService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.user.UserUtils;
 
-public class SynchroGroup extends Group {
+import static fr.openent.zimbra.model.constant.SoapConstants.*;
 
+/**
+ * Group class used for synchronisation with Zimbra
+ */
+class SynchroGroup extends Group {
 
     private MailAddress ddlAddress;
+    private String zimbraID = "";
 
-    private SynchroGroupService synchroGroupService;
+    private SqlZimbraService sqlZimbraService;
 
-
+    private static final String MEMBER_URL_TPL = "ldap:///??sub?(&(objectClass=zimbraAccount)(|(ou=%s)(ou=allgroupsaccount)))";
     private static Logger log = LoggerFactory.getLogger(SynchroGroup.class);
+
 
     SynchroGroup(String groupId) throws IllegalArgumentException {
         super(groupId);
         init();
     }
 
-    private void init() {
-        ddlAddress = new MailAddress(getId(), Zimbra.domain);
-        ServiceManager sm = ServiceManager.getServiceManager();
-        synchroGroupService = sm.getSynchroGroupService();
+
+    /**
+     * Synchronize Group in zimbra :
+     *   - Get data from Neo
+     *   - Create group in zimbra if it does not exists
+     *   - Else update it
+     * @param handler final handler. Contains zimbra data for updated group if successful
+     */
+    @SuppressWarnings("WeakerAccess")
+    public void synchronize(Handler<AsyncResult<JsonObject>> handler) {
+        fetchDataFromNeo( res -> {
+            if(res.failed()) {
+                handler.handle(Future.failedFuture(res.cause()));
+            } else {
+                createOrUpdate(handler);
+            }
+        });
     }
 
 
+    private void init() {
+        ddlAddress = new MailAddress(getId(), Zimbra.domain);
+        ServiceManager sm = ServiceManager.getServiceManager();
+        sqlZimbraService = sm.getSqlService();
+    }
 
-    private void checkIfExists(Handler<AsyncResult<Boolean>> handler) {
+
+    private void checkIfExists(Handler<AsyncResult<String>> handler) {
         getZimbraInfos(result -> {
             if(result.succeeded()) {
-                handler.handle(Future.succeededFuture(Boolean.TRUE));
+                getGroupIdFromZimbraResponse(result.result(), handler);
             } else {
                 String errorStr = result.cause().getMessage();
                 try {
                     SoapError error = new SoapError(errorStr);
                     if(ZimbraConstants.ERROR_NOSUCHDLIST.equals(error.getCode())) {
-                        handler.handle(Future.succeededFuture(Boolean.FALSE));
+                        handler.handle(Future.succeededFuture(EMPTY_VALUE));
                     } else {
                         handler.handle(Future.failedFuture(errorStr));
                     }
@@ -62,39 +89,106 @@ public class SynchroGroup extends Group {
         });
     }
 
-    public void synchronize(Handler<AsyncResult<JsonObject>> handler) {
-        // todo finalize synchronization
-        createIfNotExists(handler);
+
+    private void getGroupIdFromZimbraResponse(JsonObject zimbraResponse, Handler<AsyncResult<String>> handler) {
+        try {
+            JsonArray dlList = zimbraResponse
+                    .getJsonObject(BODY)
+                    .getJsonObject(GET_DISTRIBUTIONLIST_RESPONSE)
+                    .getJsonArray(ZimbraConstants.DISTRIBUTION_LIST);
+            if(dlList.size() > 1) {
+                log.error("More than one distribution list with name " + getId());
+            }
+            zimbraID = dlList.getJsonObject(0).getString(ZimbraConstants.DLIST_ID, "");
+            if(zimbraID.isEmpty()) {
+                handler.handle(Future.succeededFuture(EMPTY_VALUE));
+            } else {
+                handler.handle(Future.succeededFuture(zimbraID));
+            }
+        } catch (Exception e) {
+            handler.handle(Future.failedFuture(e));
+            log.error("Error when reading getDistributionListResponse : " + e);
+        }
     }
 
-    private void createIfNotExists(Handler<AsyncResult<JsonObject>> handler) {
-        checkIfExists( res -> {
-            if(res.succeeded() && res.result()) {
-                handler.handle(Future.succeededFuture(new JsonObject()));
+
+    private void createOrUpdate(Handler<AsyncResult<JsonObject>> handler) {
+        Future<JsonObject> startFuture = AsyncHelper.getJsonObjectFinalFuture(handler);
+
+        Future<String> chechedExistence = Future.future();
+        checkIfExists(chechedExistence.completer());
+
+        chechedExistence.compose( res -> {
+            Future<JsonObject> zimbraUpdated = Future.future();
+            if(!res.isEmpty()) {
+                updateInZimbra(zimbraUpdated.completer());
             } else {
-                createInZimbra(handler);
+                createInZimbra(zimbraUpdated.completer());
             }
-        });
+            return zimbraUpdated;
+        }).compose( updatedRes ->
+            sqlZimbraService.updateGroup(getId(), ddlAddress.toString(), startFuture.completer())
+        , startFuture);
     }
+
 
     private void updateInZimbra(Handler<AsyncResult<JsonObject>> handler) {
+        SoapRequest modifyDistributionListRequest = SoapRequest.AdminSoapRequest(MODIFY_DISTRIBUTIONLIST_REQUEST);
 
+        modifyDistributionListRequest.setContent(new JsonObject()
+                .put(ZimbraConstants.DLIST_ID, zimbraID)
+                .put(ATTR_LIST, getSoapData(false)));
+
+        modifyDistributionListRequest.start(handler);
     }
 
+
+    private JsonArray getSoapData(boolean isCreation) {
+        String displayName = UserUtils.groupDisplayName(
+                getGroupName(),
+                getGroupDisplayName(),
+                Zimbra.synchroLang);
+
+        String memberUrl = String.format(MEMBER_URL_TPL, getId());
+
+        JsonArray result =  new JsonArray()
+                .add(new JsonObject()
+                        .put(ATTR_NAME, ZimbraConstants.DLIST_DISPLAYNAME)
+                        .put(ATTR_VALUE, displayName))
+                .add(new JsonObject()
+                        .put(ATTR_NAME, ZimbraConstants.DLIST_MEMBER_URL)
+                        .put(ATTR_VALUE, memberUrl));
+        if(isCreation) {
+                result.add(new JsonObject()
+                    .put(ATTR_NAME, ZimbraConstants.DLIST_IS_ACL_GROUP)
+                    .put(ATTR_VALUE, FALSE_VALUE));
+        }
+        return result;
+    }
 
 
     private void createInZimbra(Handler<AsyncResult<JsonObject>> handler) {
-        synchroGroupService.exportGroup(getId(), AsyncHelper.getJsonObjectEitherHandler(handler));
-    }
+        SoapRequest createDistributionListRequest = SoapRequest.AdminSoapRequest(CREATE_DISTRIBUTIONLIST_REQUEST);
 
+        createDistributionListRequest.setContent(new JsonObject()
+                .put(ZimbraConstants.ACCT_NAME, ddlAddress.toString())
+                .put(ZimbraConstants.DLIST_DYNAMIC, 1)
+                .put(ATTR_LIST, getSoapData(true)));
+
+        createDistributionListRequest.start(handler);
+    }
 
 
     private void getZimbraInfos(Handler<AsyncResult<JsonObject>> handler) {
         SoapRequest getDListRequest = SoapRequest.AdminSoapRequest(SoapConstants.GET_DISTRIBUTIONLIST_REQUEST);
+
+        JsonObject grpData = new JsonObject()
+                .put(SoapConstants.ID_BY, ZimbraConstants.ACCT_NAME)
+                .put(SoapConstants.ATTR_VALUE, ddlAddress.toString());
+
         getDListRequest.setContent(new JsonObject()
                 .put(ZimbraConstants.DLIST_LIMIT_MEMBERS, 1)
-                .put(SoapConstants.ID_BY, ZimbraConstants.ACCT_NAME)
-                .put(SoapConstants.ATTR_VALUE, ddlAddress.getRawCleanAddress()));
+                .put(ZimbraConstants.DISTRIBUTION_LIST, grpData));
         getDListRequest.start(handler);
     }
 }

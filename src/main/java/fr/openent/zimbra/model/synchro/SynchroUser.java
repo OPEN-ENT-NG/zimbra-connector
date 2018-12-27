@@ -3,11 +3,11 @@ package fr.openent.zimbra.model.synchro;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.EntUser;
-import fr.openent.zimbra.model.Group;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -122,10 +122,15 @@ public class SynchroUser extends EntUser {
                 log.error("Error when getting unsynced groups : " + sqlResult.cause().getMessage());
             } else {
                 try {
-                    List<String> unsyncedGroupIds = JsonHelper.getStringList(sqlResult.result());
+                    List<String> unsyncedGroupIds = JsonHelper.extractValueFromJsonObjects(sqlResult.result(), "id");
                     for(String groupId : unsyncedGroupIds) {
                         SynchroGroup group = new SynchroGroup(groupId);
-                        group.synchronize( v -> {});
+                        group.synchronize( v -> {
+                            if(v.failed()) {
+                                log.error("Group synchronisation failed for group : " + groupId
+                                        + ", Error : " + v);
+                            }
+                        });
                     }
                 } catch (IllegalArgumentException e) {
                     log.error("Error when trying to process sql groups result : " + sqlResult.result().toString());

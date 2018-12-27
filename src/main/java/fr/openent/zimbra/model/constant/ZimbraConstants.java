@@ -108,6 +108,11 @@ public class ZimbraConstants {
 
     public static final String DISTRIBUTION_LIST = "dl";
     public static final String DLIST_LIMIT_MEMBERS = "limit";
+    public static final String DLIST_DISPLAYNAME = "displayName";
+    public static final String DLIST_MEMBER_URL = "memberURL";
+    public static final String DLIST_IS_ACL_GROUP = "zimbraIsACLGroup";
+    public static final String DLIST_DYNAMIC = "dynamic";
+    public static final String DLIST_ID = "id";
 
 
     public static final String ACCT_STATUS_LOCKED = "locked";

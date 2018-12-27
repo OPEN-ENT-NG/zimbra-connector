@@ -28,6 +28,9 @@ public class SoapConstants {
     public static final String GET_ACCOUNT_RESPONSE = "GetAccountResponse";
     public static final String MODIFY_ACCOUNT_REQUEST = "ModifyAccountRequest";
     public static final String GET_DISTRIBUTIONLIST_REQUEST = "GetDistributionListRequest";
+    public static final String GET_DISTRIBUTIONLIST_RESPONSE = "GetDistributionListResponse";
+    public static final String CREATE_DISTRIBUTIONLIST_REQUEST = "CreateDistributionListRequest";
+    public static final String MODIFY_DISTRIBUTIONLIST_REQUEST = "ModifyDistributionListRequest";
 
     // Accounts Requests
     public static final String GET_ACCOUNT_INFO_REQUEST = "GetAccountInfoRequest";

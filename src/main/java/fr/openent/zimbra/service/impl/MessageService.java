@@ -237,8 +237,8 @@ public class MessageService {
 
 
     /**
-     * Process list of mail address in a mail and transform it in Front model
-     * @param frontMsg JsonObject receiving Front-formatted model
+     * Process list of mail address in a mail and transform it in Front data
+     * @param frontMsg JsonObject receiving Front-formatted data
      * @param zimbraMails JsonObject containing mail addresses
      * @param handler result handler
      */

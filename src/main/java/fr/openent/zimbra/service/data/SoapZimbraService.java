@@ -98,11 +98,11 @@ public class SoapZimbraService {
      *         params.name : params.content
      *     }
      * }
-     * @param params inner model to send to zimbra
+     * @param params inner data to send to zimbra
      * {
      *      "authToken" : [optionnal] user auth token if already connected,
      *      "name" : name of the zimbra soap request,
-     *      "content" : model for the request,
+     *      "content" : data for the request,
      *      "isAuthRequest" : [optional] boolean indicating if it is an authRequest, defaults to false
      *      "isAdmin" : boolean indicating if admin auth must be used
      * }
@@ -170,11 +170,11 @@ public class SoapZimbraService {
 
     /**
      * Call zimbra SOAP API
-     * @param params inner model to send to zimbra
+     * @param params inner data to send to zimbra
      * {
      *      "authToken" : [optional] user auth token if already connected,
      *      "name" : name of the zimbra soap request,
-     *      "content" : model for the request
+     *      "content" : data for the request
      *      "isAuthRequest" : boolean indicating if it is an authRequest,
      *      "isAdmin" : boolean indicating if admin auth must be used
      * }
@@ -201,10 +201,10 @@ public class SoapZimbraService {
      * Call zimbra SOAP API with regular user infos
      * If user has up to date authentication in "authedUsers" use it
      * Else authenticate user beforehand
-     * @param params inner model to send to zimbra
+     * @param params inner data to send to zimbra
      *  {
      *      "name" : name of the zimbra soap request,
-     *      "content" : model for the request
+     *      "content" : data for the request
      *  }
      * @param user User connected
      * @param handler process result
@@ -228,10 +228,10 @@ public class SoapZimbraService {
      * Use zimbra admin account
      * If admin has up to date authentication in "authedUsers" use it
      * Else authenticate as admin beforehand
-     * @param params inner model to send to zimbra
+     * @param params inner data to send to zimbra
      *  {
      *      "name" : name of the zimbra soap request,
-     *      "content" : model for the request
+     *      "content" : data for the request
      *  }
      * @param handler process result
      */
@@ -245,10 +245,10 @@ public class SoapZimbraService {
      * If user has up to date authentication in "authedUsers" use it
      * Else authenticate user beforehand
      * Same for admin authentication
-     * @param params inner model to send to zimbra
+     * @param params inner data to send to zimbra
      *  {
      *      "name" : name of the zimbra soap request,
-     *      "content" : model for the request,
+     *      "content" : data for the request,
      *      "isAdmin" : must the request be made as admin ?
      *  }
      * @param userId User id
@@ -530,7 +530,7 @@ public class SoapZimbraService {
     }
 
     /**
-     * Return authInfos for specified user from Map model
+     * Return authInfos for specified user from Map data
      * @param userId User id
      * @param handler result Handler
      */

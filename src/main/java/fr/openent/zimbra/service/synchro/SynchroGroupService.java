@@ -33,7 +33,7 @@ public class SynchroGroupService {
     /**
      * Export a group to Zimbra
      * If it is a manual group, update members in Zimbra (create them if necessary)
-     * Get model from Neo4j, then create group in Zimbra
+     * Get data from Neo4j, then create group in Zimbra
      * @param groupId Group Id
      * @param handler result handler
      */
@@ -120,7 +120,7 @@ public class SynchroGroupService {
      * Create group in Zimbra
      *      id@domain
      * @param groupId Group id
-     * @param neoData Group Neo4j model
+     * @param neoData Group Neo4j data
      * @param handler result handler
      */
     private void createGroup(String groupId, JsonObject neoData,

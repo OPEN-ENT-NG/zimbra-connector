@@ -152,12 +152,12 @@ public class SqlZimbraService {
         boolean atLeastOne = false;
 
         if(users.size() == 0) {
-            handler.handle(new Either.Left<>("Incorrect model, can't update users"));
+            handler.handle(new Either.Left<>("Incorrect data, can't update users"));
             return;
         }
 
         StringBuilder query = new StringBuilder();
-        query.append("WITH model (name, alias) as ( values ");
+        query.append("WITH data (name, alias) as ( values ");
         for(Object obj : users) {
             if(!(obj instanceof JsonObject)) continue;
             JsonObject user = (JsonObject)obj;
@@ -178,7 +178,7 @@ public class SqlZimbraService {
                 .append(ZIMBRA_NAME).append(", ")
                 .append(NEO4J_UID).append(") ");
         query.append("SELECT d.name, d.alias ");
-        query.append("FROM model d ");
+        query.append("FROM data d ");
         query.append("WHERE NOT EXISTS (SELECT 1 FROM ").append(userTable)
                 .append(" u WHERE u.").append(ZIMBRA_NAME).append(" = d.name ")
                 .append("AND u.").append(NEO4J_UID).append(" = d.alias ")
@@ -281,10 +281,31 @@ public class SqlZimbraService {
                 .append("WHERE NOT EXISTS (")
                 .append("SELECT 1")
                 .append("FROM ").append(groupTable).append(" g ")
-                .append("WHERE gid.id = ").append(groupTable).append(".").append(NEO4J_UID)
+                .append("WHERE gid.id = g.").append(NEO4J_UID)
                 .append(")");
-        sql.prepared(query.toString(), new JsonArray(),
+        sql.prepared(query.toString(), params,
                 SqlResult.validResultHandler(AsyncHelper.getJsonArrayEitherHandler(handler)));
+    }
+
+
+    public void updateGroup(String groupId, String groupAddr, Handler<AsyncResult<JsonObject>> handler) {
+
+        StringBuilder query = new StringBuilder();
+        JsonArray params = new JsonArray();
+        query.append("WITH new_group (id, addr) as ( values (?,?)");
+        params.add(groupId).add(groupAddr);
+        query.append(") INSERT INTO ").append(groupTable)
+                .append(String.format("(%s,%s) ", NEO4J_UID, ZIMBRA_NAME))
+                .append("SELECT ng.id, ng.addr ")
+                .append("FROM new_group ng ")
+                .append("WHERE NOT EXISTS ")
+                    .append("( SELECT 1 ")
+                    .append("FROM ").append(groupTable).append(" g ")
+                    .append("WHERE g.").append(NEO4J_UID).append(" = ng.id ")
+                    .append(")");
+
+        sql.prepared(query.toString(), params,
+                SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 
 }

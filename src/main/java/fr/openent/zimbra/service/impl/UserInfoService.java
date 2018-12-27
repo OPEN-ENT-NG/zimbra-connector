@@ -16,10 +16,10 @@ public class UserInfoService {
 
     /**
      * Process quota information from Zimbra GetInfoResponse
-     * Add Json to model :
+     * Add Json to data :
      * {
-     *     "storage" : used model,
-     *     "quota" : max model usage allowed
+     *     "storage" : used data,
+     *     "quota" : max data usage allowed
      * }
      * @param getInfoResponse Zimbra GetInfoResponse Json object
      * @param data JsonObject where result must be added under "quota" entry
@@ -41,7 +41,7 @@ public class UserInfoService {
 
     /**
      * Process aliases information from Zimbra GetInfoResponse
-     * Add Json to model :
+     * Add Json to data :
      * {
      *     "name" : user mail address from Zimbra,
      *     "aliases" :
@@ -76,7 +76,7 @@ public class UserInfoService {
 
     /**
      * Process signature preference information from Zimbra GetInfoResponse
-     * Add Json to model :
+     * Add Json to data :
      * {
      *     "name" : user mail address from Zimbra,
      *     "aliases" : name
@@ -108,7 +108,7 @@ public class UserInfoService {
 
     /**
      * Process aliases information from Zimbra GetInfoResponse
-     * Add Json to model :
+     * Add Json to data :
      * {
      *      "quota" : {quota_infos}, // see UserInfoService.processQuota
      *      "alias" : {alias_infos}  // see UserInfoService.processAliases

@@ -69,7 +69,7 @@ public class ExternalWebservicesController extends BaseController {
     /**
      * Create notification in timeline when receiving a mail
      * Return empty Json Object if successful
-     * @param request request containing model :
+     * @param request request containing data :
      *                sender : mail address of the sender
      *                recipient : neo4j id of the recipient
      *                messageId : essage_id in the mailbox of recipient

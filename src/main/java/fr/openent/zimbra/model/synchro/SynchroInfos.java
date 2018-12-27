@@ -28,7 +28,7 @@ public class SynchroInfos {
         if(!jsonData.containsKey(USERS_CREATED)
             || !jsonData.containsKey(USERS_MODIFIED)
             || !jsonData.containsKey(USERS_DELETED)) {
-            throw new IllegalArgumentException("Missing model");
+            throw new IllegalArgumentException("Missing data");
         }
         users_created = JsonHelper.getStringList(jsonData.getJsonArray(USERS_CREATED));
         users_modified = JsonHelper.getStringList(jsonData.getJsonArray(USERS_MODIFIED));
@@ -65,7 +65,7 @@ public class SynchroInfos {
             if(!first)
                 rawlist.append(",");
             first = false;
-            rawlist.append(mail.getRawCleanAddress());
+            rawlist.append(mail.toString());
         }
         return rawlist.toString();
     }
