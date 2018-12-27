@@ -55,6 +55,7 @@ compileTestJava {
 dependencies {
   compileOnly "io.vertx:vertx-core:$vertxVersion"
   compile "org.entcore:common:$entCoreVersion"
+  compile "fr.wseduc:vertx-cron-timer:$vertxCronTimer"
   testCompile "org.entcore:tests:$entCoreVersion"
   testCompile 'io.gatling.highcharts:gatling-charts-highcharts:2.2.2'
 }

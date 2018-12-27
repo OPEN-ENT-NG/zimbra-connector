@@ -1,8 +1,8 @@
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.model.EntUser;
 import fr.openent.zimbra.helper.PreauthHelper;
-import fr.openent.zimbra.helper.ServiceManager;
 
 import org.entcore.common.user.UserInfos;
 
@@ -17,7 +17,7 @@ public class ExpertModeService {
 
     public String getPreauthUrl(UserInfos userInfos) throws IOException {
         EntUser user = new EntUser(userInfos);
-        String preauthKey = ServiceManager.getServiceManager().getConfig().getPreauthKey();
+        String preauthKey = Zimbra.appConfig.getPreauthKey();
         return PreauthHelper.generatePreauthUrl(user.getUserStrAddress(), preauthKey);
     }
 }

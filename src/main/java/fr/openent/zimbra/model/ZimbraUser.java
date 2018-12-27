@@ -2,14 +2,12 @@ package fr.openent.zimbra.model;
 
 
 import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.SynchroConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
 import fr.openent.zimbra.model.soap.SoapError;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.UserService;
-import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -24,7 +22,6 @@ import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
-import static fr.openent.zimbra.helper.AsyncHelper.*;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class ZimbraUser {
@@ -42,6 +39,7 @@ public class ZimbraUser {
     private List<String> aliases = new ArrayList<>();
 
     private String totalQuota = "";
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private List<String> entGroups = new ArrayList<>();
 
     private String entLogin = "";
@@ -65,9 +63,6 @@ public class ZimbraUser {
     }
     public List<String> getAliases() {
         return aliases;
-    }
-    public String getLogin() {
-        return entLogin;
     }
     public String getZimbraID() {
         return zimbraID;
@@ -118,29 +113,6 @@ public class ZimbraUser {
         });
     }
 
-    private void fetchLoginFromAliases(Handler<AsyncResult<JsonObject>> handler) {
-        JsonArray aliasList = new JsonArray();
-        for(String alias : aliases) {
-            try {
-                MailAddress addr = MailAddress.createFromRawAddress(alias);
-                aliasList.add(addr.getLocalPart());
-            } catch (IllegalArgumentException e) {
-                log.error("Malformed alias : " + alias);
-            }
-        }
-        if(aliasList.isEmpty()) {
-            handler.handle(Future.failedFuture("No login for this user"));
-        } else {
-            neo4jService.getLoginFromIds(aliasList, neoResponse -> {
-                if(neoResponse.isRight()) {
-                    this.entLogin = neoResponse.right().getValue().getString("login");
-                    handler.handle(Future.succeededFuture(neoResponse.right().getValue()));
-                } else {
-                    handler.handle(Future.failedFuture(neoResponse.left().getValue()));
-                }
-            });
-        }
-    }
 
     private void processGetAccountInfo(JsonObject zimbraData) throws InvalidPropertiesFormatException{
         JsonObject getInfoResp = zimbraData.getJsonObject(BODY)

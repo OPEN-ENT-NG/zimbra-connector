@@ -21,8 +21,13 @@ package fr.openent.zimbra;
 
 import fr.openent.zimbra.controllers.ExternalWebservicesController;
 import fr.openent.zimbra.controllers.SynchroController;
+import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.service.synchro.SynchroTask;
 import org.entcore.common.http.BaseServer;
 import fr.openent.zimbra.controllers.ZimbraController;
+import fr.wseduc.cron.CronTrigger;
+
+import java.text.ParseException;
 
 
 public class Zimbra extends BaseServer {
@@ -32,16 +37,25 @@ public class Zimbra extends BaseServer {
 	public static final String URL = "/zimbra";
 	public static String domain;
 	public static String synchroLang;
+	public static ConfigManager appConfig;
 
 	@Override
 	public void start() throws Exception {
 		super.start();
 
-		Zimbra.domain = config.getString("zimbra-domain", "");
-		Zimbra.synchroLang = config.getString("zimbra-synchro-lang", "fr");
+		appConfig = new ConfigManager(config);
+		Zimbra.domain = appConfig.getZimbraDomain();
+		Zimbra.synchroLang = appConfig.getSynchroLang();
 		addController(new ZimbraController());
 		addController(new SynchroController());
 		addController(new ExternalWebservicesController());
+
+		try {
+			new CronTrigger(vertx, appConfig.getSynchroCronDate()).schedule(new SynchroTask(vertx.eventBus()));
+			log.info("Cron launched with date : " + appConfig.getSynchroCronDate());
+		} catch (ParseException e) {
+			log.fatal(e);
+		}
 	}
 
 }

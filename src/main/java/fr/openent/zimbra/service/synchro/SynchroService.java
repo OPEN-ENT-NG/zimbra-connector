@@ -1,5 +1,6 @@
 package fr.openent.zimbra.service.synchro;
 
+import fr.openent.zimbra.model.constant.BusConstants;
 import fr.openent.zimbra.model.synchro.SynchroInfos;
 import fr.openent.zimbra.model.constant.SynchroConstants;
 import fr.openent.zimbra.service.data.SqlSynchroService;
@@ -15,15 +16,27 @@ import java.util.List;
 
 public class SynchroService {
 
-    private SqlSynchroService sqlSynchroService;
-
     private static final String UAI_REGEX = "[a-zA-Z0-9]{8}";
 
+
+    private SqlSynchroService sqlSynchroService;
+
+    private static SynchroLauncher synchroLauncher = null;
     private static Logger log = LoggerFactory.getLogger(SynchroService.class);
 
 
     public SynchroService(SqlSynchroService sqlSynchroService) {
         this.sqlSynchroService = sqlSynchroService;
+    }
+
+    public void startSynchro(Handler<AsyncResult<JsonObject>> handler) {
+        if(synchroLauncher == null) {
+            synchroLauncher = new SynchroLauncher();
+            synchroLauncher.start(handler);
+        } else {
+            handler.handle(Future.succeededFuture(new JsonObject()
+                    .put(BusConstants.BUS_MESSAGE, "Synchronisation already running")));
+        }
     }
 
     public void updateDeployedStructures(List<String> updatedList, Handler<AsyncResult<JsonObject>> handler) {

@@ -7,12 +7,14 @@ import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.service.synchro.SynchroExportService;
 import fr.openent.zimbra.service.synchro.SynchroService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
+import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.request.RequestUtils;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -25,6 +27,7 @@ import java.util.Map;
 
 import static org.entcore.common.http.response.DefaultResponseHandler.arrayResponseHandler;
 import static org.entcore.common.http.response.DefaultResponseHandler.defaultResponseHandler;
+import static fr.openent.zimbra.model.constant.BusConstants.*;
 
 
 public class SynchroController extends BaseController {
@@ -32,6 +35,9 @@ public class SynchroController extends BaseController {
     private SynchroExportService synchroExportService;
     private SynchroUserService synchroUserService;
     private SynchroService synchroService;
+
+
+
     private static final Logger log = LoggerFactory.getLogger(SynchroController.class);
 
     @Override
@@ -121,5 +127,30 @@ public class SynchroController extends BaseController {
     public void listUsersByStructure(final HttpServerRequest request) {
         final List<String> structures = request.params().getAll("uai");
         synchroExportService.listUsersByStructure(structures, arrayResponseHandler(request));
+    }
+
+    @BusAddress(SYNCHRO_BUSADDR)
+    public void handleSynchro(Message<JsonObject> message) {
+        String action = message.body().getString(BUS_ACTION, "");
+        if(ACTION_STARTSYNCHRO.equals(action)) {
+            log.info("Trying to start synchronization");
+            JsonObject json = new JsonObject();
+            synchroService.startSynchro( res -> {
+                if(res.succeeded()) {
+                    json.put(BUS_STATUS, STATUS_OK)
+                            .put(BUS_MESSAGE, res.result());
+                } else {
+                    json.put(BUS_STATUS, STATUS_ERROR)
+                            .put(BUS_MESSAGE, MESSAGE_INVALID_ACTION);
+                }
+                message.reply(json);
+            });
+        } else {
+            log.error("Zimbra synchro invalid action : " + action);
+            JsonObject json = new JsonObject()
+                    .put(BUS_STATUS, STATUS_ERROR)
+                    .put(BUS_MESSAGE, MESSAGE_INVALID_ACTION);
+            message.reply(json);
+        }
     }
 }

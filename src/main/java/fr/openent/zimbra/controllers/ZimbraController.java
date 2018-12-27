@@ -82,7 +82,7 @@ public class ZimbraController extends BaseController {
 
 		ServiceManager serviceManager = ServiceManager.init(vertx, config, eb, pathPrefix);
 
-		this.appConfig = serviceManager.getConfig();
+		this.appConfig = Zimbra.appConfig;
 		this.sqlService = serviceManager.getSqlService();
 		this.userService = serviceManager.getUserService();
 		this.folderService = serviceManager.getFolderService();

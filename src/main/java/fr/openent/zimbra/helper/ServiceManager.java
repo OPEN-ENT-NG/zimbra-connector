@@ -13,11 +13,11 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
 import org.entcore.common.notification.TimelineHelper;
 
+@SuppressWarnings("unused")
 public class ServiceManager {
 
     private static ServiceManager serviceManager = null;
 
-    private ConfigManager appConfig;
 
     private TimelineHelper timelineHelper;
     private SoapZimbraService soapService;
@@ -43,12 +43,10 @@ public class ServiceManager {
 
     private ServiceManager(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
 
-        appConfig = new ConfigManager(config);
-
         timelineHelper = new TimelineHelper(vertx, eb, config);
         this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
         this.sqlSynchroService = new SqlSynchroService(config.getString("db-schema", "zimbra"));
-        this.soapService = new SoapZimbraService(vertx, appConfig);
+        this.soapService = new SoapZimbraService(vertx);
         this.neoService = new Neo4jZimbraService();
         this.synchroUserService = new SynchroUserService(sqlService, sqlSynchroService);
         this.userService = new UserService(soapService, synchroUserService, sqlService);
@@ -79,10 +77,6 @@ public class ServiceManager {
 
     public static ServiceManager getServiceManager() {
         return serviceManager;
-    }
-
-    public ConfigManager getConfig() {
-        return appConfig;
     }
 
     public TimelineHelper getTimelineHelper() {

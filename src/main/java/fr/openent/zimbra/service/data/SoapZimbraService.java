@@ -60,10 +60,11 @@ public class SoapZimbraService {
     private String zimbraAdminAccount;
     private String zimbraAdminPassword;
 
-    public SoapZimbraService(Vertx vertx, ConfigManager config) {
+    public SoapZimbraService(Vertx vertx) {
         this.userService = null;
         this.synchroUserService = null;
 
+        ConfigManager config = Zimbra.appConfig;
         String zimbraBaseUri = config.getZimbraUri();
         this.zimbraUri = zimbraBaseUri + URI_SOAP;
         this.zimbraAdminUri = config.getZimbraAdminUri();

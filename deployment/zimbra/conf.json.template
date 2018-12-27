@@ -22,6 +22,7 @@
         "zimbra-admin-uri" : "$zimbraAdminUri",
         "admin-account" : "$zimbraAdminAccount",
         "admin-password" : "$zimbraAdminPassword",
+        "zimbra-synchro-cron" : "$zimbraSynchroCron",
         "entcore.port" : 8009
       }
     }

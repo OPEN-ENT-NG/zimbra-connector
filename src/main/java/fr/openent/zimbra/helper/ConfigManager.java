@@ -15,10 +15,10 @@ public class ConfigManager {
     private String preauthKey;
     private String zimbraDomain;
     private String synchroLang;
+    private String synchroCronDate;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
-    @SuppressWarnings("WeakerAccess")
     public ConfigManager(JsonObject config) {
         this.zimbraUri = config.getString("zimbra-uri", "");
         this.zimbraAdminUri = config.getString("zimbra-admin-uri", "");
@@ -27,6 +27,7 @@ public class ConfigManager {
         this.preauthKey = config.getString("preauth-key","");
         this.zimbraDomain = config.getString("zimbra-domain", "");
         this.synchroLang = config.getString("zimbra-synchro-lang", "fr");
+        this.synchroCronDate = config.getString("zimbra-synchro-cron", "");
 
         if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
                 || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty() || zimbraDomain.isEmpty()) {
@@ -41,4 +42,5 @@ public class ConfigManager {
     public String getPreauthKey() { return preauthKey;}
     public String getZimbraDomain() { return zimbraDomain;}
     public String getSynchroLang() { return synchroLang;}
+    public String getSynchroCronDate() { return synchroCronDate;}
 }
