@@ -1,6 +1,5 @@
 package fr.openent.zimbra.helper;
 
-import fr.openent.zimbra.Zimbra;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -16,8 +15,10 @@ public class ConfigManager {
     private String zimbraDomain;
     private String synchroLang;
     private String synchroCronDate;
+    private Integer maxRecipients;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
+
 
     public ConfigManager(JsonObject config) {
         this.zimbraUri = config.getString("zimbra-uri", "");
@@ -28,6 +29,7 @@ public class ConfigManager {
         this.zimbraDomain = config.getString("zimbra-domain", "");
         this.synchroLang = config.getString("zimbra-synchro-lang", "fr");
         this.synchroCronDate = config.getString("zimbra-synchro-cron", "");
+        this.maxRecipients = config.getInteger("max-recipients", 50);
 
         if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
                 || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty() || zimbraDomain.isEmpty()) {
@@ -43,4 +45,6 @@ public class ConfigManager {
     public String getZimbraDomain() { return zimbraDomain;}
     public String getSynchroLang() { return synchroLang;}
     public String getSynchroCronDate() { return synchroCronDate;}
+    public Integer getMaxRecipients() { return maxRecipients;}
+
 }

@@ -14,6 +14,7 @@
         "app-registry.port" : 8012,
         "mode" : "${mode}",
         "sql": true,
+        "max-recipients": $zimbraMaxRecipients,
         "db-schema": "zimbra",
         "zimbra-uri" : "$zimbraUri",
         "preauth-key" : "$zimbraPreauthKey",

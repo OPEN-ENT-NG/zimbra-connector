@@ -468,9 +468,13 @@ export let zimbraController = ng.controller("ZimbraController", [
             // const mail: Mail = $scope.state.newItem;
             const mail: Mail = Mix.castAs(Mail, $scope.state.newItem);
             $scope.result = await mail.send();
-            $scope.state.newItem = new Mail();
-            $scope.state.newItem.setMailSignature($scope.getSignature());
-            await $scope.openFolder(Zimbra.instance.folders.inbox.folderName);
+
+            if (!$scope.result.undelivered) {
+                $scope.state.newItem = new Mail();
+                $scope.state.newItem.setMailSignature($scope.getSignature());
+                await $scope.openFolder(Zimbra.instance.folders.inbox.folderName);
+            }
+
             $scope.sending = false;
         };
 

@@ -2,6 +2,7 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.model.constant.FrontConstants;
+import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.data.SqlZimbraService;
@@ -467,6 +468,18 @@ public class MessageService {
     public void sendMessage(String messageId, JsonObject frontMessage, UserInfos user,
                             Handler<Either<String, JsonObject>> result) {
 
+        Integer maxRecipients = Zimbra.appConfig.getMaxRecipients();
+
+        JsonArray listRecipientsTo = frontMessage.getJsonArray(FrontConstants.MAIL_TO, new JsonArray());
+        JsonArray listRecipientsCC = frontMessage.getJsonArray(FrontConstants.MAIL_CC, new JsonArray());
+
+        Integer totalRecipients = listRecipientsTo.size() + listRecipientsCC.size();
+
+        if (totalRecipients > maxRecipients) {
+            result.handle(new Either.Left<>(I18nConstants.ERROR_MAXRECIPIENTS));
+            return;
+        }
+
         transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
             if(messageId != null && !messageId.isEmpty()) {
                 mailContent.put(MSG_ID, messageId);
@@ -479,13 +492,13 @@ public class MessageService {
                             .put(MSG, mailContent));
 
             soapService.callUserSoapAPI(sendMsgRequest, user, response -> {
-                if(response.isLeft()) {
-                    result.handle(response);
-                } else {
-                    JsonObject rightResponse = new JsonObject()
-                            .put("sent", 1);
-                    result.handle(new Either.Right<>(rightResponse));
-                }
+                 if (response.isLeft()) {
+                     result.handle(response);
+                 } else {
+                     JsonObject rightResponse = new JsonObject()
+                             .put("sent", 1);
+                     result.handle(new Either.Right<>(rightResponse));
+                 }
             });
         });
 

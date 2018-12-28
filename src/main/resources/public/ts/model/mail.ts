@@ -364,7 +364,9 @@ export class Mail implements Selectable {
             };
         } catch (e) {
             notify.error(e.response.data.error);
-            return {};
+            return {
+                undelivered: true
+            };
         }
     }
 

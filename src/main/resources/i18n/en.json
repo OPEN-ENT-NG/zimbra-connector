@@ -11,6 +11,7 @@
     "clickhere": "Click here ",
     "confirm.empty.trash": "Attention ! Vous allez supprimer définitivement l'ensemble des messages et dossiers présents dans votre corbeille",
     "zimbra.send.error": "Aucun destinataire n'a pu recevoir le messsage.<br/><i><small>Raisons fréquentes : compte inactif, quota plein, messagerie bloquée, ...</small></i>",
+    "zimbra.maxrecipients.error": "Too many recipients",
     "zimbra.title": "Messaging",
     "copy": "Copy",
     "create": "create",
