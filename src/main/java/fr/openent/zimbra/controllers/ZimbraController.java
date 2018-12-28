@@ -784,7 +784,7 @@ public class ZimbraController extends BaseController {
 	@Get("message/:id/allAttachments")
 	@SecuredAction(value = "", type = ActionType.RESOURCE)
 	public void getAllAttachment(final HttpServerRequest request){
-
+		// todo implement getAllAttachment
 	}
 
 	//Delete an attachment

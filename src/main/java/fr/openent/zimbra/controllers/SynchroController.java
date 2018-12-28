@@ -5,6 +5,7 @@ import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.service.synchro.SynchroExportService;
+import fr.openent.zimbra.service.synchro.SynchroMailerService;
 import fr.openent.zimbra.service.synchro.SynchroService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.bus.BusAddress;
@@ -13,6 +14,7 @@ import fr.wseduc.rs.Post;
 import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.request.RequestUtils;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpServerRequest;
@@ -35,6 +37,7 @@ public class SynchroController extends BaseController {
     private SynchroExportService synchroExportService;
     private SynchroUserService synchroUserService;
     private SynchroService synchroService;
+    private SynchroMailerService synchroMailerService;
 
 
 
@@ -50,7 +53,7 @@ public class SynchroController extends BaseController {
         this.synchroExportService = new SynchroExportService();
         this.synchroUserService = serviceManager.getSynchroUserService();
         this.synchroService = serviceManager.getSynchroService();
-
+        this.synchroMailerService = serviceManager.getSynchroMailerService();
     }
 
     /**
@@ -100,7 +103,15 @@ public class SynchroController extends BaseController {
     @Get("/synchro/test/triggreruser")
     @SecuredAction("synchro.test.triggeruser")
     public void triggerUserSynchro(final HttpServerRequest request) {
-        synchroUserService.syncUserFromBase(AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
+        synchroService.startSynchro(AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
+    }
+
+    @Get("/synchro/test/triggrermail")
+    @SecuredAction("synchro.test.triggeruser")
+    public void triggerMailing(final HttpServerRequest request) {
+        ServiceManager sm = ServiceManager.getServiceManager();
+        SynchroMailerService synchroMailerService = sm.getSynchroMailerService();
+        synchroMailerService.startMailing(AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
     }
 
 
@@ -132,25 +143,34 @@ public class SynchroController extends BaseController {
     @BusAddress(SYNCHRO_BUSADDR)
     public void handleSynchro(Message<JsonObject> message) {
         String action = message.body().getString(BUS_ACTION, "");
-        if(ACTION_STARTSYNCHRO.equals(action)) {
-            log.info("Trying to start synchronization");
-            JsonObject json = new JsonObject();
-            synchroService.startSynchro( res -> {
-                if(res.succeeded()) {
-                    json.put(BUS_STATUS, STATUS_OK)
-                            .put(BUS_MESSAGE, res.result());
-                } else {
-                    json.put(BUS_STATUS, STATUS_ERROR)
-                            .put(BUS_MESSAGE, MESSAGE_INVALID_ACTION);
-                }
-                message.reply(json);
-            });
-        } else {
-            log.error("Zimbra synchro invalid action : " + action);
-            JsonObject json = new JsonObject()
-                    .put(BUS_STATUS, STATUS_ERROR)
-                    .put(BUS_MESSAGE, MESSAGE_INVALID_ACTION);
-            message.reply(json);
+        JsonObject jsonResponse = new JsonObject();
+        switch (action) {
+            case ACTION_STARTSYNCHRO:
+                log.info("Trying to start synchronization");
+                synchroService.startSynchro( res -> message.reply(getDefaultResponse(res)) );
+                break;
+            case ACTION_MAILINGSYNCHRO:
+                synchroMailerService.startMailing( res -> message.reply(getDefaultResponse(res)) );
+                break;
+            default:
+                log.error("Zimbra synchro invalid action : " + action);
+                jsonResponse
+                        .put(BUS_STATUS, STATUS_ERROR)
+                        .put(BUS_MESSAGE, MESSAGE_INVALID_ACTION);
+                message.reply(jsonResponse);
+                break;
         }
+    }
+
+    private JsonObject getDefaultResponse(AsyncResult<JsonObject> result) {
+        JsonObject jsonResponse = new JsonObject();
+        if(result.succeeded()) {
+            jsonResponse.put(BUS_STATUS, STATUS_OK)
+                    .put(BUS_MESSAGE, result.result());
+        } else {
+            jsonResponse.put(BUS_STATUS, STATUS_ERROR)
+                    .put(BUS_MESSAGE, MESSAGE_INVALID_ACTION);
+        }
+        return jsonResponse;
     }
 }

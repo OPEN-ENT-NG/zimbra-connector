@@ -91,14 +91,6 @@ public class Neo4jZimbraService {
 		neo.execute(query, params, validUniqueResultHandler(handler));
 	}
 
-	public void getLoginFromIds(JsonArray idList, Handler<Either<String,JsonObject>> handler) {
-		String query = "MATCH (u:User) "
-				+ "WHERE u.id in {ids} "
-				+ "return u.login as login";
-
-		neo.execute(query, new JsonObject().put("ids", idList), validUniqueResultHandler(handler));
-	}
-
 	/**
 	 * Get every info from Neo4j that needs to be synchronized with Zimbra
 	 * @param id User Id

@@ -32,7 +32,14 @@ public class SynchroService {
     public void startSynchro(Handler<AsyncResult<JsonObject>> handler) {
         if(synchroLauncher == null) {
             synchroLauncher = new SynchroLauncher();
-            synchroLauncher.start(handler);
+            synchroLauncher.start( res -> {
+                synchroLauncher = null;
+                if(res.succeeded()) {
+                        handler.handle(Future.succeededFuture(new JsonObject()));
+                } else {
+                        handler.handle(Future.failedFuture(res.cause()));
+                }
+            });
         } else {
             handler.handle(Future.succeededFuture(new JsonObject()
                     .put(BusConstants.BUS_MESSAGE, "Synchronisation already running")));
@@ -84,7 +91,6 @@ public class SynchroService {
                 JsonObject result = new JsonObject().put("idsynchro", synchroInfos.getId());
                 handler.handle(Future.succeededFuture(result));
             } else {
-                // todo add log to bdd
                 log.error("Synchro : error when adding users to database : " + res.cause().getMessage());
             }
         });

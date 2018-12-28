@@ -21,7 +21,7 @@ public class NotificationService {
     private UserService userService;
 
 
-    public NotificationService(SoapZimbraService soapService, UserService userService,
+    public NotificationService(UserService userService,
                                String pathPrefix, TimelineHelper timelineHelper) {
         this.neo = Neo4j.getInstance();
         this.pathPrefix = pathPrefix;

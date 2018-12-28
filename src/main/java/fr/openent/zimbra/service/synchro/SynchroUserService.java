@@ -1,5 +1,6 @@
 package fr.openent.zimbra.service.synchro;
 
+import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.synchro.SynchroUser;
 import fr.openent.zimbra.model.constant.SoapConstants;
@@ -23,9 +24,12 @@ import static fr.openent.zimbra.service.data.SoapZimbraService.ERROR_CODE;
 
 public class SynchroUserService {
 
+    public static final String EMPTY_BDD = "empty_bdd";
+
     private UserService userService;
     private SqlZimbraService sqlService;
     private SqlSynchroService sqlSynchroService;
+
     private static Logger log = LoggerFactory.getLogger(SynchroUserService.class);
 
     public SynchroUserService(SqlZimbraService sqlService,
@@ -54,30 +58,25 @@ public class SynchroUserService {
      * @param handler synchronization result
      */
     public void syncUserFromBase(Handler<AsyncResult<JsonObject>> handler) {
-        Future<JsonObject> startFuture = Future.future();
-        startFuture.setHandler(handler);
+        Future<JsonObject> startFuture = AsyncHelper.getJsonObjectFinalFuture(handler);
+        Future<JsonObject> fetchedUser = Future.future();
 
-
-        sqlSynchroService.fetchUserToSynchronize(res -> {
-            if(res.failed()) {
-                handler.handle(res);
+        sqlSynchroService.fetchUserToSynchronize(fetchedUser.completer());
+        fetchedUser.compose(bddRes -> {
+            if(bddRes.isEmpty()) {
+                startFuture.complete(new JsonObject().put(EMPTY_BDD, true));
             } else {
-                JsonObject bddRes = res.result();
-                if(bddRes.isEmpty()) {
-                    handler.handle(res);
-                } else {
-                    int idRow = bddRes.getInteger(SqlSynchroService.USER_IDROW);
-                    String idUser = bddRes.getString(SqlSynchroService.USER_IDUSER);
-                    String sync_action = bddRes.getString(SqlSynchroService.USER_SYNCACTION);
-                    try {
-                        SynchroUser user = new SynchroUser(idUser);
-                        user.synchronize(idRow, sync_action, handler);
-                    } catch (IllegalArgumentException e) {
-                        handler.handle(Future.failedFuture(e));
-                    }
+                int idRow = bddRes.getInteger(SqlSynchroService.USER_IDROW);
+                String idUser = bddRes.getString(SqlSynchroService.USER_IDUSER);
+                String sync_action = bddRes.getString(SqlSynchroService.USER_SYNCACTION);
+                try {
+                    SynchroUser user = new SynchroUser(idUser);
+                    user.synchronize(idRow, sync_action, startFuture.completer());
+                } catch (IllegalArgumentException e) {
+                    startFuture.fail(e);
                 }
             }
-        });
+        }, startFuture);
     }
 
     /**

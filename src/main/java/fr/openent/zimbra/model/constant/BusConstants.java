@@ -8,6 +8,7 @@ public class BusConstants {
     public static final String BUS_MESSAGE = "message";
 
     public static final String ACTION_STARTSYNCHRO = "start-synchro";
+    public static final String ACTION_MAILINGSYNCHRO = "mailling-synchro";
 
     public static final String STATUS_ERROR = "error";
     public static final String STATUS_OK = "ok";

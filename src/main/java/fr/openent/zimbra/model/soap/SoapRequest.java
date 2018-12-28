@@ -18,6 +18,7 @@ public class SoapRequest {
     private String userId;
     private JsonObject content = null;
 
+    @SuppressWarnings("SameParameterValue")
     private SoapRequest(String name, String namespace, boolean isAdmin) {
         this.name = name;
         this.namespace = namespace;

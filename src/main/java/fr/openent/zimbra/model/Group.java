@@ -24,7 +24,7 @@ public class Group {
 
     private static Logger log = LoggerFactory.getLogger(Group.class);
 
-    public Group(JsonObject json) throws IllegalArgumentException {
+    private Group(JsonObject json) throws IllegalArgumentException {
         init();
         try {
             id = json.getString(GROUP_ID, "");

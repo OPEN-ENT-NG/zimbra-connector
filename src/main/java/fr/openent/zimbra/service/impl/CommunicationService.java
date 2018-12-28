@@ -15,7 +15,7 @@ public class CommunicationService {
     private Neo4jZimbraService neoZimbraService;
     private static Logger log = LoggerFactory.getLogger(CommunicationService.class);
 
-    public CommunicationService(MessageService messageService) {
+    public CommunicationService() {
         neoZimbraService = new Neo4jZimbraService();
     }
 

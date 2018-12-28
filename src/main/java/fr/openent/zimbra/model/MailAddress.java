@@ -46,11 +46,6 @@ public class MailAddress {
     }
 
 
-    @SuppressWarnings("WeakerAccess")
-    public String getLocalPart() {
-        return localPart;
-    }
-
     public MailAddress(String rawAddress) throws IllegalArgumentException {
         this.rawAddress = rawAddress;
         processRawAddress();

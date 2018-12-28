@@ -22,7 +22,11 @@ package fr.openent.zimbra;
 import fr.openent.zimbra.controllers.ExternalWebservicesController;
 import fr.openent.zimbra.controllers.SynchroController;
 import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.model.constant.BusConstants;
+import fr.openent.zimbra.model.constant.SynchroConstants;
 import fr.openent.zimbra.service.synchro.SynchroTask;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.BaseServer;
 import fr.openent.zimbra.controllers.ZimbraController;
 import fr.wseduc.cron.CronTrigger;
@@ -39,6 +43,8 @@ public class Zimbra extends BaseServer {
 	public static String synchroLang;
 	public static ConfigManager appConfig;
 
+	private static Logger log = LoggerFactory.getLogger(Zimbra.class);
+
 	@Override
 	public void start() throws Exception {
 		super.start();
@@ -51,10 +57,17 @@ public class Zimbra extends BaseServer {
 		addController(new ExternalWebservicesController());
 
 		try {
-			new CronTrigger(vertx, appConfig.getSynchroCronDate()).schedule(new SynchroTask(vertx.eventBus()));
+			SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
+			new CronTrigger(vertx, appConfig.getSynchroCronDate()).schedule(syncLauncherTask);
 			log.info("Cron launched with date : " + appConfig.getSynchroCronDate());
 		} catch (ParseException e) {
 			log.fatal(e);
+		}
+		try {
+			SynchroTask syncMailerTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_MAILINGSYNCHRO);
+			new CronTrigger(vertx, appConfig.getMailerCron()).schedule(syncMailerTask);
+		} catch (ParseException e) {
+			log.warn("Mailer Cron deactivated");
 		}
 	}
 

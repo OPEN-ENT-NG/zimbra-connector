@@ -6,11 +6,14 @@ import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.data.SqlSynchroService;
 import fr.openent.zimbra.service.synchro.SynchroGroupService;
+import fr.openent.zimbra.service.synchro.SynchroMailerService;
 import fr.openent.zimbra.service.synchro.SynchroService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
+import fr.wseduc.webutils.email.EmailSender;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
+import org.entcore.common.email.EmailFactory;
 import org.entcore.common.notification.TimelineHelper;
 
 @SuppressWarnings("unused")
@@ -20,6 +23,8 @@ public class ServiceManager {
 
 
     private TimelineHelper timelineHelper;
+    private EmailSender emailSender;
+
     private SoapZimbraService soapService;
     private UserService userService;
     private FolderService folderService;
@@ -38,12 +43,16 @@ public class ServiceManager {
     private SynchroService synchroService;
     private SqlSynchroService sqlSynchroService;
     private SynchroGroupService synchroGroupService;
+    private SynchroMailerService synchroMailerService;
 
 
 
     private ServiceManager(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
 
         timelineHelper = new TimelineHelper(vertx, eb, config);
+        EmailFactory emailFactory = new EmailFactory(vertx, config);
+        emailSender = emailFactory.getSender();
+
         this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
         this.sqlSynchroService = new SqlSynchroService(config.getString("db-schema", "zimbra"));
         this.soapService = new SoapZimbraService(vertx);
@@ -55,14 +64,14 @@ public class ServiceManager {
         this.messageService = new MessageService(soapService, folderService,
                 sqlService, userService, synchroUserService);
         this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
-        this.notificationService = new NotificationService(soapService, userService, pathPrefix, timelineHelper);
-        this.communicationService = new CommunicationService(messageService);
+        this.notificationService = new NotificationService(userService, pathPrefix, timelineHelper);
+        this.communicationService = new CommunicationService();
         this.groupService = new GroupService(soapService, sqlService, synchroUserService);
         this.expertModeService = new ExpertModeService();
 
         this.synchroService = new SynchroService(sqlSynchroService);
         this.synchroGroupService = new SynchroGroupService(soapService, synchroUserService);
-
+        this.synchroMailerService = new SynchroMailerService(sqlSynchroService);
 
         soapService.setServices(userService, synchroUserService);
         synchroUserService.setUserService(userService);
@@ -81,6 +90,10 @@ public class ServiceManager {
 
     public TimelineHelper getTimelineHelper() {
         return timelineHelper;
+    }
+
+    public EmailSender getEmailSender() {
+        return emailSender;
     }
 
     public SoapZimbraService getSoapService() {
@@ -145,5 +158,9 @@ public class ServiceManager {
 
     public SynchroGroupService getSynchroGroupService() {
         return synchroGroupService;
+    }
+
+    public SynchroMailerService getSynchroMailerService() {
+        return synchroMailerService;
     }
 }

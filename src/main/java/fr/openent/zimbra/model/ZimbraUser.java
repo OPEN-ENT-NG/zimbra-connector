@@ -71,17 +71,17 @@ public class ZimbraUser {
 
 
     public void checkIfExists(Handler<AsyncResult<ZimbraUser>> handler) {
-        JsonObject response = new JsonObject();
 
         fetchAccountInfoFromEmail(address.toString(), result -> {
             if(result.succeeded()) {
-                response.put("login", entLogin);
+                this.accountExists = true;
                 handler.handle(Future.succeededFuture(ZimbraUser.this));
             } else {
                 String errorStr = result.cause().getMessage();
                 try {
                     SoapError error = new SoapError(errorStr);
                     if(ZimbraConstants.ERROR_NOSUCHACCOUNT.equals(error.getCode())) {
+                        this.accountExists = false;
                         handler.handle(Future.succeededFuture(ZimbraUser.this));
                     } else {
                         handler.handle(Future.failedFuture(errorStr));

@@ -13,8 +13,11 @@ import io.vertx.core.json.JsonObject;
 import org.entcore.common.user.UserInfos;
 import io.vertx.core.Handler;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static fr.openent.zimbra.model.constant.SynchroConstants.*;
@@ -44,6 +47,7 @@ public class EntUser {
         initUser(userInfos.getUserId());
     }
 
+    @SuppressWarnings("WeakerAccess")
     public EntUser(String userId) throws IllegalArgumentException {
         initUser(userId);
     }
@@ -56,14 +60,7 @@ public class EntUser {
         this.sqlZimbraService = sm.getSqlService();
     }
 
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
+    @SuppressWarnings("WeakerAccess")
     public String getUserId() {
         return userId;
     }
@@ -72,6 +69,7 @@ public class EntUser {
         return userZimbraAddress.toString();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public MailAddress getUserMailAddress() {
         return userZimbraAddress;
     }
@@ -133,31 +131,36 @@ public class EntUser {
             structuresStr.append(" ");
         }
 
-        JsonArray attributes = new JsonArray()
-                .add(new JsonObject()
-                        .put(SoapConstants.ATTR_NAME, FIRSTNAME)
-                        .put(SoapConstants.ATTR_VALUE, firstName))
-                .add(new JsonObject()
-                        .put(SoapConstants.ATTR_NAME, LASTNAME)
-                        .put(SoapConstants.ATTR_VALUE, lastName))
-                .add(new JsonObject()
-                        .put(SoapConstants.ATTR_NAME, DISPLAYNAME)
-                        .put(SoapConstants.ATTR_VALUE, displayName))
-                .add(new JsonObject()
-                        .put(SoapConstants.ATTR_NAME, LOGIN)
-                        .put(SoapConstants.ATTR_VALUE, login))
-                .add(new JsonObject()
+        JsonArray attributes = new JsonArray();
+        if(!delete) {
+            attributes.add(new JsonObject()
+                    .put(SoapConstants.ATTR_NAME, FIRSTNAME)
+                    .put(SoapConstants.ATTR_VALUE, firstName))
+                    .add(new JsonObject()
+                            .put(SoapConstants.ATTR_NAME, LASTNAME)
+                            .put(SoapConstants.ATTR_VALUE, lastName))
+                    .add(new JsonObject()
+                            .put(SoapConstants.ATTR_NAME, DISPLAYNAME)
+                            .put(SoapConstants.ATTR_VALUE, displayName))
+                    .add(new JsonObject()
+                            .put(SoapConstants.ATTR_NAME, LOGIN)
+                            .put(SoapConstants.ATTR_VALUE, login));
+        }
+        attributes.add(new JsonObject()
                         .put(SoapConstants.ATTR_NAME, PROFILE)
-                        .put(SoapConstants.ATTR_VALUE, profile))
+                        .put(SoapConstants.ATTR_VALUE, delete ? SoapConstants.EMPTY_VALUE : profile))
                 .add(new JsonObject()
                         .put(SoapConstants.ATTR_NAME, STRUCTURES)
-                        .put(SoapConstants.ATTR_VALUE, structuresStr.toString()))
+                        .put(SoapConstants.ATTR_VALUE, delete ? SoapConstants.EMPTY_VALUE : structuresStr.toString()))
                 .add(new JsonObject()
                         .put(SoapConstants.ATTR_NAME, ACCOUNT_STATUS)
                         .put(SoapConstants.ATTR_VALUE, delete ? ACCT_STATUS_LOCKED : ACCT_STATUS_ACTIVE))
                 .add(new JsonObject()
                         .put(SoapConstants.ATTR_NAME, HIDEINSEARCH)
-                        .put(SoapConstants.ATTR_VALUE, delete ? SoapConstants.TRUE_VALUE : SoapConstants.FALSE_VALUE));
+                        .put(SoapConstants.ATTR_VALUE, delete ? SoapConstants.TRUE_VALUE : SoapConstants.FALSE_VALUE))
+                .add(new JsonObject()
+                        .put(SoapConstants.ATTR_NAME, DATE_MODIFICATION)
+                        .put(SoapConstants.ATTR_VALUE, new SimpleDateFormat("yyyyMMdd").format(new Date().getTime())));
 
         if(delete) {
             attributes.add(new JsonObject()

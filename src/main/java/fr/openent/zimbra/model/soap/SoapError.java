@@ -15,6 +15,7 @@ public class SoapError {
         code = errorData.getString(SoapZimbraService.ERROR_CODE, "");
     }
 
+    @SuppressWarnings("unused")
     public String getMessage() {
         return message;
     }

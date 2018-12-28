@@ -22,9 +22,11 @@ public class SqlSynchroService {
     private static final String IS_DEPLOYED = "is_deployed";
     private static final String DATE_MODIFIED = "date_modified";
 
-    public static final String SYNCHRO_ID = "synchroid";
-    private static final String SYNCHRO_MAILLINGLIST = "maillinglist";
+    public static final String SYNCHRO_ID = "id";
+    public static final String SYNCHRO_MAILLINGLIST = "maillinglist";
     private static final String SYNCHRO_STATUS = "status";
+    public static final String SYNCHRO_AGG_LOGS = "aggregated_logs";
+    public static final String SYNCHRO_DATE = "date_synchro";
 
     public static final String USER_IDROW = "id";
     public static final String USER_IDUSER = "id_user";
@@ -33,6 +35,10 @@ public class SqlSynchroService {
     private static final String USER_SYNCTYPE = "synchro_type";
     public static final String USER_SYNCACTION = "synchro_action";
     private static final String USER_STATUS = "status";
+    private static final String USER_LOGID = "id_logs";
+
+    private static final String LOGS_ID = "id";
+    private static final String LOGS_CONTENT = "content";
 
 
     private final Sql sql;
@@ -40,6 +46,7 @@ public class SqlSynchroService {
     private final String deployedStructuresTable;
     private final String synchroTable;
     private final String userSynchroTable;
+    private final String synchroLogsTable;
 
     private static Logger log = LoggerFactory.getLogger(SqlSynchroService.class);
 
@@ -48,6 +55,7 @@ public class SqlSynchroService {
         this.deployedStructuresTable = schema + ".deployed_structures";
         this.synchroTable = schema + ".synchro";
         this.userSynchroTable = schema + ".synchro_user";
+        this.synchroLogsTable = schema + ".synchro_logs";
     }
 
     public void getDeployedStructures(Handler<AsyncResult<List<String>>> handler) {
@@ -89,6 +97,12 @@ public class SqlSynchroService {
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 
+
+    /**
+     * Initialize a synchronisation
+     * @param maillingList mailling to use for reporting
+     * @param handler result
+     */
     public void initializeSynchro(String maillingList, Handler<AsyncResult<JsonObject>> handler) {
         String query = "INSERT INTO " + synchroTable
                 + String.format("(%s,%s) ", SYNCHRO_MAILLINGLIST, SYNCHRO_STATUS)
@@ -101,6 +115,14 @@ public class SqlSynchroService {
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 
+
+    /**
+     * Add a list of users to synchronize, for a synchro
+     * @param idSynchro id of current synchro
+     * @param users list of users ids
+     * @param modification modification type (CREATE, MODIFY or DELETE)
+     * @param handler result
+     */
     public void addUsersToSynchronize(int idSynchro, List<String> users, String modification,
                                Handler<AsyncResult<JsonObject>> handler) {
         if(users.isEmpty()) {
@@ -120,15 +142,16 @@ public class SqlSynchroService {
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 
+
+    // Get an user in TO-DO state from database in order to synchronize it
     public void fetchUserToSynchronize(Handler<AsyncResult<JsonObject>> handler) {
-        // Get an user in TO-DO state from database
         // Explanation for : FOR UPDATE SKIP LOCKED :
         // https://dba.stackexchange.com/questions/69471/postgres-update-limit-1
         String query = "UPDATE " + userSynchroTable
                 + " SET " + USER_STATUS + "='" + SynchroConstants.STATUS_INPROGRESS + "'"
                 + ", " + USER_SYNCDATE+ "=now()"
-                + " WHERE " + USER_IDUSER + "= ("
-                    + "SELECT " + USER_IDUSER
+                + " WHERE " + USER_IDROW + "= ("
+                    + "SELECT " + USER_IDROW
                     + " FROM " + userSynchroTable
                     + " WHERE " + USER_STATUS + "='" + SynchroConstants.STATUS_TODO + "'"
                     + " LIMIT 1"
@@ -139,7 +162,82 @@ public class SqlSynchroService {
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 
+
+    /**
+     * Update a user to synchronize
+     * @param idRow row to update
+     * @param state new state
+     * @param logs create an entry in synchro_logs table if not empty
+     * @param handler result
+     */
     public void updateSynchroUser(int idRow, String state, String logs, Handler<AsyncResult<JsonObject>> handler) {
-        // TODO update synchro user
+        JsonArray params = new JsonArray();
+        String logIdQuery = "";
+        String logCondition = "";
+        if(!logs.isEmpty()) {
+            logIdQuery = "WITH tmp_log AS ( "
+                            + "INSERT INTO " + synchroLogsTable + String.format("(%s) ", LOGS_CONTENT)
+                            + "VALUES (?) "
+                            + "RETURNING id as logid"
+                        + ") ";
+            logCondition = String.format(", %s=tmp_log.logid FROM tmp_log ", USER_LOGID);
+            params.add(logs);
+        }
+        String query = logIdQuery
+                + "UPDATE " + userSynchroTable
+                + String.format(" SET %s=? ", USER_STATUS)
+                + logCondition
+                + String.format("WHERE %s=? ", USER_IDROW);
+        params.add(state).add(idRow);
+        sql.prepared(query, params,
+                SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
+    }
+
+
+    /**
+     * Update all Synchros status
+     * @param oldStatus status to change
+     * @param newStatus new status
+     * @param handler return updated synchros ids
+     */
+    public void updateSynchros(String oldStatus, String newStatus, Handler<AsyncResult<JsonArray>> handler) {
+        JsonArray params = new JsonArray();
+        String query = "UPDATE " + synchroTable
+                + String.format(" SET %s=? ", SYNCHRO_STATUS)
+                + String.format("WHERE %s=?", SYNCHRO_STATUS)
+                + " returning " + SYNCHRO_ID;
+        params.add(newStatus).add(oldStatus);
+        sql.prepared(query, params,
+                SqlResult.validResultHandler(AsyncHelper.getJsonArrayEitherHandler(handler)));
+    }
+
+
+    /**
+     * Get information from synchro  : id, mailling list, aggregation of all logs
+     * @param synchroId synchro id
+     * @param handler result (one line per synchro)
+     */
+    public void getSynchroInfos(String synchroId, Handler<AsyncResult<JsonObject>> handler) {
+        JsonArray params = new JsonArray();
+        String query = String.format("SELECT %s.%s AS %s, %s.%s AS %s, %s.%s as %s, ",
+                                        synchroTable, SYNCHRO_ID, SYNCHRO_ID,
+                                        synchroTable, SYNCHRO_MAILLINGLIST, SYNCHRO_MAILLINGLIST,
+                                        synchroTable, SYNCHRO_DATE, SYNCHRO_DATE)
+                + String.format("string_agg(%s.%s || ' ' || %s.%s, '<br/>\r\n') as %s ",
+                                    userSynchroTable, USER_IDUSER,
+                                    synchroLogsTable, LOGS_CONTENT,
+                                    SYNCHRO_AGG_LOGS)
+                + "FROM " + synchroTable
+                + " LEFT JOIN " + userSynchroTable
+                + String.format(" ON %s.%s=%s.%s", synchroTable, SYNCHRO_ID, userSynchroTable, USER_SYNCID)
+                + " LEFT JOIN " + synchroLogsTable
+                + String.format(" ON %s.%s=%s.%s", synchroLogsTable, LOGS_ID, userSynchroTable, USER_LOGID)
+                + String.format(" WHERE %s.%s=?",
+                                synchroTable, SYNCHRO_ID)
+                //+ String.format(" AND %s.%s IS NOT NULL", userSynchroTable, USER_LOGID)
+                + String.format(" GROUP BY %s.%s", synchroTable, SYNCHRO_ID);
+        params.add(synchroId);
+        sql.prepared(query, params,
+                SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 }

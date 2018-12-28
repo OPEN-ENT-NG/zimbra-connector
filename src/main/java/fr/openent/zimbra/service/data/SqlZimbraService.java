@@ -143,6 +143,7 @@ public class SqlZimbraService {
             JsonObject jsonUser = new JsonObject()
                     .put("name", user.getName())
                     .put("aliases", new JsonArray(user.getAliases()));
+            jsonUsers.add(jsonUser);
         }
         updateUsers(jsonUsers, handler);
     }

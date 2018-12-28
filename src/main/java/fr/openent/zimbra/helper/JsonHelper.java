@@ -26,11 +26,11 @@ public class JsonHelper {
                 throw new IllegalArgumentException("JsonArray is not a JsonObject list");
             }
             JsonObject jo = (JsonObject)o;
-            String res = jo.getString(key);
+            Object res = jo.getValue(key);
             if(res == null) {
                 throw new IllegalArgumentException(key + " value of JsonObject is not a String or key does not exists");
             }
-            finalList.add(res);
+            finalList.add(res.toString());
         }
         return finalList;
     }

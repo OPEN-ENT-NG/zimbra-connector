@@ -4,7 +4,6 @@ import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.soap.SoapRequest;
-import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;

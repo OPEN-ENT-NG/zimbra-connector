@@ -17,7 +17,7 @@ public class SynchroInfos {
     private static final String USERS_DELETED = "deletedUsers";
 
     private int id;
-    private List<MailAddress> maillingList = new ArrayList<>();
+    private String maillingListRaw;
     private List<String> users_created;
     private List<String> users_modified;
     private List<String> users_deleted;
@@ -34,19 +34,7 @@ public class SynchroInfos {
         users_modified = JsonHelper.getStringList(jsonData.getJsonArray(USERS_MODIFIED));
         users_deleted = JsonHelper.getStringList(jsonData.getJsonArray(USERS_DELETED));
         if(jsonData.containsKey(MAILLINGLIST)) {
-            processMaillingList(jsonData.getString(MAILLINGLIST, ""));
-        }
-    }
-
-    private void processMaillingList(String rawList) {
-        String[] rawMails = rawList.split(",");
-        for( String mail : rawMails ) {
-            try {
-                MailAddress addr = MailAddress.createFromRawAddress(mail);
-                maillingList.add(addr);
-            } catch (IllegalArgumentException e) {
-                log.warn("Synchro : Invalid email address : " + mail);
-            }
+            maillingListRaw = jsonData.getString(MAILLINGLIST, "");
         }
     }
 
@@ -59,15 +47,7 @@ public class SynchroInfos {
     }
 
     public String getMaillinglistRaw() {
-        StringBuilder rawlist = new StringBuilder();
-        boolean first = true;
-        for(MailAddress mail : maillingList) {
-            if(!first)
-                rawlist.append(",");
-            first = false;
-            rawlist.append(mail.toString());
-        }
-        return rawlist.toString();
+        return maillingListRaw;
     }
 
     public List<String> getUsersCreated() {

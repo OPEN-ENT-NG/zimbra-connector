@@ -7,18 +7,19 @@ import io.vertx.core.logging.LoggerFactory;
 public class ConfigManager {
 
 
-    private String zimbraUri;
-    private String zimbraAdminUri;
-    private String zimbraAdminAccount;
-    private String zimbraAdminPassword;
-    private String preauthKey;
-    private String zimbraDomain;
-    private String synchroLang;
-    private String synchroCronDate;
-    private Integer maxRecipients;
+    private final String zimbraUri;
+    private final String zimbraAdminUri;
+    private final String zimbraAdminAccount;
+    private final String zimbraAdminPassword;
+    private final String preauthKey;
+    private final String zimbraDomain;
+    private final String synchroLang;
+    private final String synchroCronDate;
+    private final String synchroFromMail;
+    private final String mailerCron;
+    private final Integer maxRecipients;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
-
 
     public ConfigManager(JsonObject config) {
         this.zimbraUri = config.getString("zimbra-uri", "");
@@ -29,6 +30,8 @@ public class ConfigManager {
         this.zimbraDomain = config.getString("zimbra-domain", "");
         this.synchroLang = config.getString("zimbra-synchro-lang", "fr");
         this.synchroCronDate = config.getString("zimbra-synchro-cron", "");
+        this.synchroFromMail = config.getString("zimbra-synchro-frommail", "zimbra-sync@cgi.com");
+        this.mailerCron = config.getString("zimbra-mailer-cron", "");
         this.maxRecipients = config.getInteger("max-recipients", 50);
 
         if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
@@ -45,6 +48,8 @@ public class ConfigManager {
     public String getZimbraDomain() { return zimbraDomain;}
     public String getSynchroLang() { return synchroLang;}
     public String getSynchroCronDate() { return synchroCronDate;}
+    public String getSynchroFromMail() { return synchroFromMail;}
+    public String getMailerCron() { return mailerCron;}
     public Integer getMaxRecipients() { return maxRecipients;}
 
 }

@@ -2,16 +2,18 @@ package fr.openent.zimbra.model.synchro;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.JsonHelper;
+import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.EntUser;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
-import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
+import fr.openent.zimbra.service.data.SqlSynchroService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -73,7 +75,7 @@ public class SynchroUser extends EntUser {
         if(ACTION_CREATION.equals(sync_action)) {
             handler.handle(Future.succeededFuture(""));
         } else {
-            SoapRequest getInfoRequest = SoapRequest.AccountSoapRequest(GET_ACCOUNT_INFO_REQUEST, getUserId());
+            SoapRequest getInfoRequest = SoapRequest.AdminSoapRequest(GET_ACCOUNT_INFO_REQUEST);
             getInfoRequest.setContent(new JsonObject()
                     .put(ACCT_INFO_ACCOUNT, new JsonObject()
                         .put(SoapConstants.ID_BY, ZimbraConstants.ACCT_NAME)
@@ -202,13 +204,22 @@ public class SynchroUser extends EntUser {
         return account.getString(ACCT_ID);
     }
 
-    @SuppressWarnings("RedundantThrows")
     private String getZimbraIdFromGetUserInfoResponse(JsonObject getUserInfoResponse) throws Exception{
-        return getUserInfoResponse
+
+        JsonArray attrs = getUserInfoResponse
                 .getJsonObject(BODY)
                 .getJsonObject(GET_ACCOUNT_INFO_RESPONSE)
-                .getJsonObject(ACCT_INFO_ATTRIBUTES)
-                .getString(ACCT_INFO_ZIMBRA_ID, "");
+                .getJsonArray(ACCT_ATTRIBUTES);
+        for(Object o : attrs) {
+            if(!(o instanceof JsonObject)) {
+                continue;
+            }
+            JsonObject attr = (JsonObject)o;
+            if(ACCT_INFO_ZIMBRA_ID.equals(attr.getString(ACCT_ATTRIBUTES_NAME))) {
+                return attr.getString(ACCT_ATTRIBUTES_CONTENT);
+            }
+        }
+        throw new Exception("No zimbraId in attributes");
     }
 
     private void addAlias(String zimbraId, Handler<AsyncResult<JsonObject>> handler) {
@@ -238,10 +249,18 @@ public class SynchroUser extends EntUser {
     }
 
     private void updateDatabase(AsyncResult<JsonObject> result, Handler<AsyncResult<JsonObject>> handler) {
-        // TODO update database
-        /*ServiceManager sm = ServiceManager.getServiceManager();
+        ServiceManager sm = ServiceManager.getServiceManager();
         SqlSynchroService sqlSynchroService = sm.getSqlSynchroService();
-        sqlSynchroService.updateSynchroUser(idRowBdd, STATUS_DONE, "", handler);*/
-        handler.handle(Future.succeededFuture(new JsonObject()));
+        String status = STATUS_DONE;
+        String logs = "";
+        if(result.failed()) {
+            status = STATUS_ERROR;
+            logs = result.cause().getMessage();
+        }
+        if(idRowBdd == 0) {
+            handler.handle(Future.succeededFuture(new JsonObject()));
+        } else {
+            sqlSynchroService.updateSynchroUser(idRowBdd, status, logs, handler);
+        }
     }
 }
