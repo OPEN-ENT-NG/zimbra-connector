@@ -1,0 +1,22 @@
+<div class="twelve cell zero-mobile-fat-mobile" >
+    <container template="header" >
+
+    </container>
+    <container ng-class="{'four cell': showRightSide() }" template="main-right-side">
+
+    </container>
+    <div  class="eight cell horizontal-spacing"  ng-if="showRightSide()" >
+        <container  template="right-view-mail">
+
+        </container>
+    </div>
+
+</div>
+<div class="mobile-fat-mobile">
+    <container template="header">
+
+    </container>
+    <container template="main-right-side">
+
+    </container>
+</div>

@@ -1,8 +1,8 @@
 import { routes, ng } from "entcore";
 import { zimbraController } from "./controllers/controller";
 import { printController } from "./controllers/printController";
-import { recipientList } from "./directives/recipientList";
-import { switchSearch } from "./directives/switchSearch";
+import { recipientList, switchSearch, ngBottomScroll } from "./directives/index";
+
 
 routes.define(function($routeProvider) {
     $routeProvider
@@ -30,3 +30,4 @@ ng.controllers.push(zimbraController);
 ng.controllers.push(printController);
 ng.directives.push(recipientList);
 ng.directives.push(switchSearch);
+ng.directives.push(ngBottomScroll);

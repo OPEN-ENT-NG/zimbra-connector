@@ -1,24 +1,7 @@
-import {
-    ng,
-    notify,
-    idiom as lang,
-    template,
-    skin,
-    moment,
-    Document,
-    $,
-    _
-} from "entcore";
-import {
-    Mail,
-    User,
-    UserFolder,
-    quota,
-    Zimbra,
-    Trash,
-    SystemFolder
-} from "../model";
-import { Mix } from "entcore-toolkit";
+import {$, _, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
+import {DISPLAY, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra,} from "../model";
+
+import {Mix} from "entcore-toolkit";
 
 export let zimbraController = ng.controller("ZimbraController", [
     "$scope",
@@ -40,17 +23,19 @@ export let zimbraController = ng.controller("ZimbraController", [
             searchFailed: false,
             draftSaveDate: null
         };
-
+        $scope.display = new DISPLAY();
+        $scope.viewMode = $scope.display.LIST;
         $scope.zimbra = Zimbra.instance;
 
         route({
             readMail: async function(params) {
                 Zimbra.instance.folders.openFolder("inbox");
                 template.open("page", "folders");
+                template.open("right-side","right-side");
+                template.open("header","header-lists");
                 $scope.readMail(new Mail(params.mailId));
                 await Zimbra.instance.sync();
                 await Zimbra.instance.folders.draft.countTotal();
-                $scope.nextPage();
                 $scope.constructNewItem();
                 $scope.$apply();
             },
@@ -58,9 +43,11 @@ export let zimbraController = ng.controller("ZimbraController", [
                 Zimbra.instance.folders.openFolder("inbox");
                 await Zimbra.instance.sync();
                 template.open("page", "folders");
+                template.open("right-side","right-side");
+                template.open("header","header-lists");
                 let user = new User(params.userId);
                 await user.findData();
-                template.open("main", "mail-actions/write-mail");
+                template.open("right-side", "mail-actions/write-mail");
 
                 $scope.constructNewItem();
                 if(_.isString(params.userId)){
@@ -79,6 +66,8 @@ export let zimbraController = ng.controller("ZimbraController", [
             },
             inbox: async () => {
                 template.open("page", "folders");
+                template.open("right-side","right-side");
+                template.open("header","header-lists");
                 await Zimbra.instance.folders.openFolder("inbox");
                 await Zimbra.instance.sync();
                 await Zimbra.instance.folders.draft.countTotal();
@@ -98,7 +87,9 @@ export let zimbraController = ng.controller("ZimbraController", [
             found: [],
             foundCC: []
         };
-        template.open("main", "folders-templates/inbox");
+        template.open("right-side","right-side");
+        template.open("header","header-lists");
+        template.open("main-right-side", "folders-templates/inbox");
         template.open("toaster", "folders-templates/toaster");
         $scope.formatFileType = Document.role;
         $scope.sending = false;
@@ -150,10 +141,13 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
             $scope.state.newItem = new Mail();
             $scope.state.newItem.setMailSignature($scope.getSignature());
-            template.open("main", "folders-templates/" + folderName);
+            template.open("right-side","right-side");
+            template.open("header","header-lists");
+            template.open("main-right-side-side", "folders-templates/" + folderName);
             $scope.resetState();
             await Zimbra.instance.folders.openFolder(folderName);
             await Zimbra.instance.currentFolder.countUnread();
+            $scope.openRightSide($scope.viewMode);
             $scope.nextPage();
             $scope.$apply();
             $scope.updateWherami();
@@ -169,10 +163,14 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.state.newItem = new Mail();
             $scope.state.newItem.setMailSignature($scope.getSignature());
             obj.template = "folder-content";
-            template.open("main", "folders-templates/user-folder");
+            template.open("right-side","right-side");
+            template.open("header","header-lists");
+            template.open("main-right-side", "folders-templates/user-folder");
+            $scope.openRightSide($scope.viewMode);
             $scope.resetState();
             await folder.open();
             $scope.$apply();
+            $scope.nextPage();
             $scope.updateWherami();
         };
 
@@ -205,7 +203,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.nextPage = async () => {
-            if (template.containers.main.indexOf("mail-actions") < 0) {
+            if (template.containers['main-right-side'].indexOf("folders-templates") > 0) {
                 await Zimbra.instance.currentFolder.nextPage(
                     $scope.state.selectAll
                 );
@@ -233,7 +231,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         }
 
         $scope.viewMail = async function(mail) {
-            template.open("main", "mail-actions/view-mail");
+            template.open("right-side", "mail-actions/view-mail");
             window.scrollTo(0, 0);
             setCurrentMail(mail);
             try {
@@ -251,18 +249,21 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.$apply();
         };
 
-        $scope.readMail = async (mail: Mail) => {
-            template.open("main", "mail-actions/read-mail");
-            window.scrollTo(0, 0);
+        $scope.readMail = async (mail: Mail, notMakeItRead?: boolean) => {
+            if($scope.viewMode !== $scope.display.COLUMN){
+                template.open("right-side", "mail-actions/read-mail");
+                window.scrollTo(0, 0);
+            }else{
+                $scope.openMailOnRightTemplate();
+            }
             setCurrentMail(mail, true);
             try {
-                await mail.open();
+                await mail.open(false,notMakeItRead);
                 $scope.$root.$emit("refreshMails");
             } catch (e) {
                 template.open("page", "errors/e404");
             }
         };
-
         $scope.search = async (text: string) => {
             if (text.trim().length > 2) {
                 $scope.state.searchFailed = false;
@@ -288,9 +289,13 @@ export let zimbraController = ng.controller("ZimbraController", [
 
         $scope.filterUnread = async () => {
             setTimeout(async function() {
+                if($scope.zimbra.currentFolder.nbUnread == 0) {
+                    $scope.state.filterUnread = false;
+                }
                 await Zimbra.instance.currentFolder.filterUnread(
                     $scope.state.filterUnread
                 );
+                if(!$scope.isMobileScreen() ) $scope.openRightSide($scope.viewMode);
                 $scope.$apply();
             }, 1);
         };
@@ -342,7 +347,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.transfer = async () => {
-            template.open("main", "mail-actions/write-mail");
+            template.open("right-side", "mail-actions/write-mail");
             const mail = $scope.state.newItem as Mail;
             mail.parentConversation = $scope.mail;
             mail.replyType = "F";
@@ -362,7 +367,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.reply = async (outbox?: boolean) => {
-            template.open("main", "mail-actions/write-mail");
+            template.open("right-side", "mail-actions/write-mail");
             const mail = $scope.state.newItem as Mail;
             mail.parentConversation = $scope.mail;
             await mail.setMailContent(
@@ -380,7 +385,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.replyAll = async () => {
-            template.open("main", "mail-actions/write-mail");
+            template.open("right-side", "mail-actions/write-mail");
             const mail = $scope.state.newItem as Mail;
             mail.parentConversation = $scope.mail;
             await mail.setMailContent(
@@ -407,7 +412,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.editDraft = async (draft: Mail) => {
-            template.open("main", "mail-actions/write-mail");
+            template.open("right-side", "mail-actions/write-mail");
             window.scrollTo(0, 0);
             $scope.state.newItem = draft;
             await draft.open();
@@ -528,12 +533,12 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.allReceivers = function(mail) {
             var receivers = mail.to.slice(0);
             mail.toName &&
-                mail.toName.forEach(function(deletedReceiver) {
-                    receivers.push({
-                        deleted: true,
-                        displayName: deletedReceiver
-                    });
+            mail.toName.forEach(function(deletedReceiver) {
+                receivers.push({
+                    deleted: true,
+                    displayName: deletedReceiver
                 });
+            });
             return receivers;
         };
 
@@ -726,12 +731,12 @@ export let zimbraController = ng.controller("ZimbraController", [
                     event.dataTransfer.types.indexOf("application/json") > -1
                         ? "application/json" //Chrome & Safari
                         : event.dataTransfer.types.contains &&
-                          event.dataTransfer.types.contains("application/json")
-                            ? "application/json" //Firefox
-                            : event.dataTransfer.types.contains &&
-                              event.dataTransfer.types.contains("Text")
-                                ? "Text" //IE
-                                : undefined;
+                        event.dataTransfer.types.contains("application/json")
+                        ? "application/json" //Firefox
+                        : event.dataTransfer.types.contains &&
+                        event.dataTransfer.types.contains("Text")
+                            ? "Text" //IE
+                            : undefined;
 
                 if (
                     targetItem.foldersName &&
@@ -856,6 +861,33 @@ export let zimbraController = ng.controller("ZimbraController", [
 
         $scope.openExpertMode = () => {
             window.open('/zimbra/preauth');
-        }
+        };
+        $scope.openRightSide = async (mode) => {
+            if($scope.display.isColumn(mode)){
+                $scope.viewMode = $scope.display.COLUMN;
+                await $scope.readMail($scope.zimbra.currentFolder.mails.all[0], true);
+                $scope.$apply();
+            }else{
+                $scope.viewMode = $scope.display.LIST;
+                template.close("right-view-mail");
+                $scope.$apply();
+            }
+        };
+        $scope.openMailOnRightTemplate = () => {
+            if(!$scope.isMobileScreen()){
+                template.open("right-view-mail", "mail-actions/read-mail");
+            }else{
+                template.open("main-right-side", "mail-actions/read-mail");
+            }
+        };
+        $scope.isMobileScreen = () =>{
+            return (window.outerWidth < SCREENS.FAT_MOBILE);
+        };
+        $scope.showRightSide = () => {
+          return $scope.display.COLUMN == $scope.viewMode  && ($scope.getFolder() !== 'draft')
+        };
+        $scope.getFolder=()=>{
+           return (Zimbra.instance.currentFolder as SystemFolder).folderName;
+        };
     }
 ]);

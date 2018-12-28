@@ -1,24 +1,4 @@
-<div class="overflow-hd">
-	<h3 whereami></h3>
-	<nav class="twelve bottom-spacing-twice">
-		<div class="">
-			<switch-search
-				ng-model="searchField.words"
-				ng-change="search(words)"
-				cancel="cancelSearch()">
-				<button class="cell-ellipsis right-magnet" ng-click="template.open('main', 'mail-actions/write-mail')">
-					<i18n>new.message</i18n>
-				</button>
-			</switch-search>
-		</div>
-	</nav>
 
-	<div class="row" ng-if="folders.trash.userFolders.all.length > 0 || zimbra.currentFolder.mails.all.length > 0  || state.searching">
-		<a href="#" class="cell flex-row align-center justify-start horizontal-spacing bottom-spacing zero-mobile" ng-click="emptyTrash()">
-			<i class="trash small-text"></i>
-			<span class="horizontal-margin small-text"><i18n>empty.trash</i18n></span>
-		</a>
-	</div>
 	<div class="mailbox-tools notification twelve flex-row align-center centered-text zero-mobile-fat-mobile no-margin" ng-if="folders.trash.userFolders.all.length > 0 || zimbra.currentFolder.mails.all.length > 0 || state.searching">
 		<div class="check-col">
 			<label class="wrapping-checkbox relative">
@@ -52,7 +32,7 @@
 
 
 
-	<div class="mailbox simple-notifications">
+	<div class="mailbox simple-notifications" ng-class="{'scroll-list' : showRightSide()}"  ng-bottom-scroll="nextPage()">
 
 		<div ng-if="isLoading()">
 			<div class="info fade-in"><i18n>loading</i18n></div>

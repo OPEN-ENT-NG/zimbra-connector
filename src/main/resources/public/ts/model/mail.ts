@@ -377,11 +377,10 @@ export class Mail implements Selectable {
         }
     }
 
-    async open(forPrint?: boolean) {
-        if (this.unread && this.state !== "DRAFT") {
+    async open(forPrint?: boolean, notMakeItRead?:boolean ) {
+        if (this.unread && this.state !== "DRAFT" && !notMakeItRead) {
             Zimbra.instance.currentFolder.nbUnread--;
         }
-        this.unread = false;
         let response = await http.get("/zimbra/message/" + this.id);
         Mix.extend(this, response.data);
         this.to = this.to.map(user =>

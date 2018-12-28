@@ -3,3 +3,4 @@ export * from "./mail";
 export * from "./user";
 export * from "./quota";
 export * from "./zimbra";
+export * from "./constantes"

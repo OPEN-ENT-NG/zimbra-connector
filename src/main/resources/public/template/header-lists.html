@@ -1,0 +1,77 @@
+<div class="bottom-spacing" ng-hide="(!isLoading() && zimbra.currentFolder.mails.all.length === 0) || isLoading()">
+    <div class="mobile-fat-mobile">
+        <h3 whereami></h3>
+        <nav class="twelve bottom-spacing-twice">
+            <div class="">
+                <switch-search
+                        ng-model="searchField.words"
+                        ng-change="search(words)"
+                        cancel="cancelSearch()">
+                    <button class="cell-ellipsis aligned right-magnet" ng-click="template.open('right-side', 'mail-actions/write-mail')">
+                        <i18n>new.message</i18n>
+                    </button>
+                </switch-search>
+            </div>
+        </nav>
+    </div>
+    <div class=" bottom-spacing-twice twelve cell zero-mobile-fat-mobile">
+        <div class="aligned display-filter "
+             ng-if="zimbra.currentFolder.nbUnread > 0 || ( state.filterUnread && showRightSide())">
+            <label class="chip aligned bottom-magnet bottom-spacing"
+                   tooltip="filter.unread"
+                   ng-class="{ selected: state.filterUnread }">
+                <i class="mail"></i>
+                <span ng-model="zimbra.currentFolder.nbUnread">([[zimbra.currentFolder.nbUnread]])</span>
+                <input type="checkbox" ng-model="state.filterUnread" ng-change="filterUnread()" />
+            </label>
+        </div>
+
+        <div class="aligned  horizontal-margin-twice display-filter-trash  bottom-spacing"
+             ng-if="zimbra.currentFolder.folderName == 'trash' && ( folders.trash.userFolders.all.length > 0 || zimbra.currentFolder.mails.all.length > 0  || state.searching)">
+            <label class="aligned bottom-magnet">
+                <a href="#" class="cell flex-row align-center justify-start horizontal-spacing bottom-spacing zero-mobile" ng-click="emptyTrash()">
+                    <i class="trash small-text"></i>
+                    <span class="horizontal-margin small-text"><i18n>empty.trash</i18n></span>
+                </a>
+            </label>
+        </div>
+
+        <div class="aligned  horizontal-margin-twice display-filter bottom-magnet bottom-spacing" ng-if="getFolder() !== 'draft'">
+            <label
+                   tooltip="filter.list"
+                   ng-if="zimbra.currentFolder.mails.all.length > 0"
+                   ng-click="openRightSide('list')">
+                <i class="show-row" ng-class="{ selected: display.LIST == viewMode }"></i>
+                <span class="horizontal-margin small-text">&nbsp;</span>
+            </label>
+            <label
+                   tooltip="filter.row"
+                   ng-if="zimbra.currentFolder.mails.all.length > 0"
+                   ng-click="openRightSide('column')">
+                <i class="show-column" ng-class="{ selected: display.COLUMN == viewMode }"></i>
+                <span class="horizontal-margin small-text">&nbsp;</span>
+            </label>
+        </div>
+
+        <plus class="right-magnet" ng-if="showRightSide()">
+            <button ng-click="replyAll()" ng-disabled="!mail.allowReplyAll"><i18n>replyall</i18n></button>
+            <button ng-click="transfer()"><i18n>transfer</i18n></button>
+            <a class="button"   target="_blank" ng-href="/zimbra/print#/printMail/[[mail.id]]"><i18n>print</i18n></a>
+            <button ng-click="removeMail()"><i18n>remove</i18n></button>
+        </plus>
+        <button class="cell-ellipsis horizontal-margin right-magnet" ng-click="template.open('right-side', 'mail-actions/write-mail')">
+            <i18n>new.message</i18n>
+        </button>
+
+
+        <!-- Reply not allowed if deleted user -->
+        <button class="right-magnet" ng-click="reply()" ng-disabled="!mail.allowReply" ng-if="showRightSide()">
+            <i18n>reply</i18n>
+        </button>
+    </div>
+
+</div>
+
+<button class="cell-ellipsis horizontal-margin right-magnet" ng-click="template.open('right-side', 'mail-actions/write-mail')" ng-if="(!isLoading() && zimbra.currentFolder.mails.all.length === 0)">
+    <i18n>new.message</i18n>
+</button>

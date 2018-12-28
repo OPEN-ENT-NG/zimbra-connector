@@ -1,17 +1,3 @@
-<h3 whereami></h3>
-<nav class="twelve bottom-spacing-twice">
-	<div class="">
-		<switch-search
-			ng-model="searchField.words"
-			ng-change="search(words)"
-			cancel="cancelSearch()">
-			<button class="cell-ellipsis right-magnet" ng-click="template.open('main', 'mail-actions/write-mail')">
-				<i18n>new.message</i18n>
-			</button>
-		</switch-search>
-	</div>
-</nav>
-
 
 <div class="mailbox-tools notification twelve flex-row align-center centered-text zero-mobile-fat-mobile no-margin" ng-if="zimbra.currentFolder.mails.all.length > 0 || state.searching">
 	<div class="check-col">
@@ -38,7 +24,7 @@
 </div>
 
 
-<div class="mailbox simple-notifications">
+<div class="mailbox simple-notifications"  ng-bottom-scroll="nextPage()">
 
 	<div ng-if="isLoading()">
 		<div class="info fade-in"><i18n>loading</i18n></div>
