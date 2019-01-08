@@ -195,6 +195,7 @@ public class MessageService {
 
         msgFront.put("to", new JsonArray());
         msgFront.put("cc", new JsonArray());
+        msgFront.put("bcc", new JsonArray());
         msgFront.put("displayNames", new JsonArray());
         msgFront.put("attachments", new JsonArray());
 
@@ -254,7 +255,8 @@ public class MessageService {
 
         if(!(type.equals(ADDR_TYPE_FROM))
             && !(type.equals(ADDR_TYPE_CC))
-            && !(type.equals(ADDR_TYPE_TO))) {
+            && !(type.equals(ADDR_TYPE_TO))
+            && !(type.equals(ADDR_TYPE_BCC))) {
             zimbraMails.remove(0);
             translateMaillistToUidlist(frontMsg, zimbraMails, handler);
             return;
@@ -278,6 +280,9 @@ public class MessageService {
                         break;
                     case ADDR_TYPE_CC:
                         frontMsg.put("cc", frontMsg.getJsonArray("cc").add(userUuid));
+                        break;
+                    case ADDR_TYPE_BCC:
+                        frontMsg.put("bcc", frontMsg.getJsonArray("bcc").add(userUuid));
                         break;
                 }
                 frontMsg.put("displayNames", frontMsg.getJsonArray("displayNames")
@@ -547,6 +552,11 @@ public class MessageService {
      *     "ccrecipient2",
      *     ...
      *   ]
+     *   "bcc" : [
+     *     "bccrecipient1",
+     *     "bccrecipient2",
+     *     ...
+     *   ]
      * }
      * @param user User infos
      * @param messageId Id of existing draft to update. Null for draft creation
@@ -617,6 +627,7 @@ public class MessageService {
     void transformMessageFrontToZimbra(JsonObject frontMessage, String messageId, Handler<JsonObject> handler) {
         JsonArray toFront = frontMessage.getJsonArray("to");
         JsonArray ccFront = frontMessage.getJsonArray("cc");
+        JsonArray bccFront = frontMessage.getJsonArray("bcc");
         String bodyFront = frontMessage.getString("body");
         String subjectFront = frontMessage.getString("subject");
         JsonArray attsFront = frontMessage.getJsonArray("attachments");
@@ -625,42 +636,44 @@ public class MessageService {
             addRecipientToList(mailContacts, toFront, toResult, ADDR_TYPE_TO);
             userService.getMailAddresses(ccFront, ccResult -> {
                 addRecipientToList(mailContacts, ccFront, ccResult, ADDR_TYPE_CC);
+                userService.getMailAddresses(bccFront, bccResult -> {
+                    addRecipientToList(mailContacts, bccFront, bccResult, ADDR_TYPE_BCC);
 
-                JsonArray mailMessages = new JsonArray()
-                        .add(new JsonObject()
-                                .put("content", new JsonObject()
-                                        .put("_content", bodyFront))
-                                .put(MULTIPART_CONTENT_TYPE, "text/html"));
-                JsonArray attsZimbra = new JsonArray();
-                if(messageId != null && !messageId.isEmpty() && !attsFront.isEmpty()) {
-                    for(Object o : attsFront) {
-                        if(!(o instanceof JsonObject)) continue;
-                        JsonObject attFront = (JsonObject) o;
-                        JsonObject attZimbra = new JsonObject();
-                        attZimbra.put(MULTIPART_PART_ID, attFront.getString("id"));
-                        attZimbra.put(MULTIPART_MSG_ID, messageId);
-                        attsZimbra.add(attZimbra);
+                    JsonArray mailMessages = new JsonArray()
+                            .add(new JsonObject()
+                                    .put("content", new JsonObject()
+                                            .put("_content", bodyFront))
+                                    .put(MULTIPART_CONTENT_TYPE, "text/html"));
+                    JsonArray attsZimbra = new JsonArray();
+                    if(messageId != null && !messageId.isEmpty() && !attsFront.isEmpty()) {
+                        for(Object o : attsFront) {
+                            if(!(o instanceof JsonObject)) continue;
+                            JsonObject attFront = (JsonObject) o;
+                            JsonObject attZimbra = new JsonObject();
+                            attZimbra.put(MULTIPART_PART_ID, attFront.getString("id"));
+                            attZimbra.put(MULTIPART_MSG_ID, messageId);
+                            attsZimbra.add(attZimbra);
+                        }
                     }
-                }
 
-                JsonObject mailContent = new JsonObject()
-                        .put(MSG_EMAILS, mailContacts)
-                        .put(MSG_SUBJECT, new JsonObject()
-                                .put("_content", subjectFront)
-                        )
-                        .put(MSG_MULTIPART, new JsonObject()
-                                .put(MULTIPART_CONTENT_TYPE, "multipart/alternative")
-                                .put(MSG_MULTIPART, mailMessages)
-                        );
-                if(!attsZimbra.isEmpty()) {
-                    JsonObject atts = new JsonObject().put(MSG_MULTIPART, attsZimbra);
-                    mailContent.put(MSG_NEW_ATTACHMENTS, atts);
-                }
-                handler.handle(mailContent);
+                    JsonObject mailContent = new JsonObject()
+                            .put(MSG_EMAILS, mailContacts)
+                            .put(MSG_SUBJECT, new JsonObject()
+                                    .put("_content", subjectFront)
+                            )
+                            .put(MSG_MULTIPART, new JsonObject()
+                                    .put(MULTIPART_CONTENT_TYPE, "multipart/alternative")
+                                    .put(MSG_MULTIPART, mailMessages)
+                            );
+                    if(!attsZimbra.isEmpty()) {
+                        JsonObject atts = new JsonObject().put(MSG_MULTIPART, attsZimbra);
+                        mailContent.put(MSG_NEW_ATTACHMENTS, atts);
+                    }
+                    handler.handle(mailContent);
+                });
             });
         });
     }
-
 
     /**
      * Process response from Zimbra API to draft an email

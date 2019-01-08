@@ -46,6 +46,7 @@ export class Mail implements Selectable {
     body: string;
     to: User[];
     cc: User[];
+    bcc: User[];
     unread: boolean;
     state: string;
     parentConversation: Mail;
@@ -199,6 +200,7 @@ export class Mail implements Selectable {
 
         if (copyReceivers) {
             this.cc = origin.cc;
+            this.bcc = origin.bcc;
             this.to = origin.to;
         }
 
@@ -308,6 +310,7 @@ export class Mail implements Selectable {
         var data: any = { subject: this.subject, body: this.body };
         data.to = _.pluck(this.to, "id");
         data.cc = _.pluck(this.cc, "id");
+        data.bcc = _.pluck(this.bcc, "id");
         data.attachments = this.attachments;
 
         var path = "/zimbra/draft";
@@ -329,11 +332,15 @@ export class Mail implements Selectable {
         var data: any = { subject: this.subject, body: this.body };
         data.to = _.pluck(this.to, "id");
         data.cc = _.pluck(this.cc, "id");
+        data.bcc = _.pluck(this.bcc, "id");
         data.attachments = this.attachments;
         if (data.to.indexOf(model.me.userId) !== -1) {
             Zimbra.instance.folders["inbox"].nbUnread++;
         }
         if (data.cc.indexOf(model.me.userId) !== -1) {
+            Zimbra.instance.folders["inbox"].nbUnread++;
+        }
+        if (data.bcc.indexOf(model.me.userId) !== -1) {
             Zimbra.instance.folders["inbox"].nbUnread++;
         }
         var path = "/zimbra/send?";
@@ -394,6 +401,16 @@ export class Mail implements Selectable {
                 )[1]
             })
         );
+
+        this.bcc = this.bcc.map(user =>
+            Mix.castAs(User, {
+                id: user,
+                displayName: this.displayNames.find(
+                    name => name[0] === (user as any)
+                )[1]
+            })
+        );
+
         if (!forPrint) {
             await Zimbra.instance.folders["inbox"].countUnread();
             await this.updateAllowReply();

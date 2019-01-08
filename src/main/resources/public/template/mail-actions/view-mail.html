@@ -95,6 +95,18 @@
 						</span>
 					</div>
 
+					<!-- blind copies -->
+					<div ng-if="(mail.bcc.length + mail.bccName.length) > 0">
+						<strong><span translate key="bcc"></span>
+							<span> : </span></strong>
+
+						<span ng-repeat="receiver in receivers = (mail.bcc | filter: filterUsers(mail))">
+							<a ng-if="!receiver.isMe() && !receiver.isAGroup() && !receiver.isAMail()" href="/userbook/annuaire#[[mail.map(receiver).id]]">[[receiver.displayName]]</a>
+							<span ng-if="receiver.isMe()"><i18n>me</i18n></span>
+							<span ng-if="receiver.isAGroup() || receiver.isAMail()">[[receiver.displayName]]</span>
+							<span ng-if="$index !== receivers.length - 1 && receiver.displayName">,</span>
+						</span>
+					</div>
 				</div>
 
 			</div>
