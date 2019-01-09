@@ -61,10 +61,6 @@
                 </li>
             </ul>
 
-            <button class="cancel vertical-spacing-four" workflow="zimbra.expert" ng-click="openExpertMode()">
-                <i18n>expert.mode.access</i18n>
-            </button>
-
             <lightbox show="lightbox.show" on-close="lightbox.show = false">
                 <container template="lightbox"></container>
             </lightbox>
@@ -85,6 +81,11 @@
                 <h2><i18n>used.space</i18n></h2>
                 <progress-bar max="quota.max" filled="quota.used" unit="[[quota.unit]]"></progress-bar>
             </nav>
+
+            <br />
+            <button class="cancel vertical-spacing-four" workflow="zimbra.expert" ng-click="openExpertMode()">
+                <i18n>expert.mode.access</i18n>
+            </button>
 
         </nav>
 
