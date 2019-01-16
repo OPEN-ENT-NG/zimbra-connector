@@ -348,6 +348,7 @@ export let zimbraController = ng.controller("ZimbraController", [
 
         $scope.transfer = async () => {
             template.open("right-side", "mail-actions/write-mail");
+            $('contextual-menu').removeClass('show');
             const mail = $scope.state.newItem as Mail;
             mail.parentConversation = $scope.mail;
             mail.replyType = "F";
@@ -363,6 +364,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 mail.parentConversation,
                 $scope.state.newItem
             );
+            $('div.drawing-zone').trigger('click')
             $scope.$apply();
         };
 
