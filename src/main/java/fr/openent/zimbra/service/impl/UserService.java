@@ -1,6 +1,8 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.JsonHelper;
+import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.helper.AsyncHelper;
@@ -21,6 +23,8 @@ import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static fr.openent.zimbra.service.data.Neo4jZimbraService.TYPE_GROUP;
@@ -311,6 +315,22 @@ public class UserService {
             handler.handle(new JsonObject());
             return;
         }
+        List<String> idStrList = new ArrayList<>();
+        List<String> emailList = new ArrayList<>();
+        try {
+            idStrList = JsonHelper.getStringList(idList);
+        } catch (IllegalArgumentException e) {
+            handler.handle(new JsonObject());
+            log.error("idList is not a String list");
+            return;
+        }
+        for(String idStr : idStrList) {
+            try {
+                new MailAddress(idStr);
+                emailList.add(idStr);
+            } catch (Exception ignored) {}
+        }
+
         neoService.getIdsType(idList, neoResult -> {
             if(neoResult.isLeft()) {
                 handler.handle(new JsonObject());
@@ -318,6 +338,9 @@ public class UserService {
                 return;
             }
             JsonArray idListWithTypes = neoResult.right().getValue();
+            for(String mail : emailList) {
+                idListWithTypes.add(mail);
+            }
             final AtomicInteger processedIds = new AtomicInteger(idListWithTypes.size());
             JsonObject addressList = new JsonObject();
             for(Object o : idListWithTypes) {

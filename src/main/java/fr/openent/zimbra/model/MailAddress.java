@@ -51,7 +51,7 @@ public class MailAddress {
         return localPart;
     }
 
-    private MailAddress(String rawAddress) throws IllegalArgumentException {
+    public MailAddress(String rawAddress) throws IllegalArgumentException {
         this.rawAddress = rawAddress;
         processRawAddress();
         initServices();
@@ -76,8 +76,12 @@ public class MailAddress {
         if(completeCleanAddress.isEmpty()) {
             throw new IllegalArgumentException("Empty address can't be processed");
         }
-        setLocalPart( completeCleanAddress.substring(0, completeCleanAddress.indexOf('@')) );
-        setDomain( completeCleanAddress.substring(completeCleanAddress.indexOf('@')+1) );
+        try {
+            setLocalPart(completeCleanAddress.substring(0, completeCleanAddress.indexOf('@')));
+            setDomain(completeCleanAddress.substring(completeCleanAddress.indexOf('@') + 1));
+        } catch (StringIndexOutOfBoundsException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     public MailAddress(String localPart, String domain) throws IllegalArgumentException {
