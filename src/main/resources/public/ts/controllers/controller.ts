@@ -143,7 +143,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.state.newItem.setMailSignature($scope.getSignature());
             template.open("right-side","right-side");
             template.open("header","header-lists");
-            template.open("main-right-side-side", "folders-templates/" + folderName);
+            template.open("main-right-side", "folders-templates/" + folderName);
             $scope.resetState();
             await Zimbra.instance.folders.openFolder(folderName);
             await Zimbra.instance.currentFolder.countUnread();
