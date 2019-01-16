@@ -49,6 +49,7 @@ export class Mail implements Selectable {
     bcc: User[];
     unread: boolean;
     state: string;
+    systemFolder:string;
     parentConversation: Mail;
     replyType: string;
     newAttachments: FileList;
@@ -73,21 +74,7 @@ export class Mail implements Selectable {
     }
 
     getSystemFolder(): string {
-        if (
-            Zimbra.instance.currentFolder.getName() !== "OUTBOX" &&
-            (this.isMeInsideGroup(this.to) || this.isMeInsideGroup(this.cc)) &&
-            this.state === "SENT"
-        )
-            return "INBOX";
-        if (
-            Zimbra.instance.currentFolder.getName() !== "INBOX" &&
-            this.isUserAuthor() &&
-            this.state === "SENT"
-        )
-            return "OUTBOX";
-        if (this.from === model.me.userId && this.state === "DRAFT")
-            return "DRAFT";
-        return "";
+     return this.systemFolder ;
     }
 
     matchSystemIcon(): string {
@@ -112,7 +99,9 @@ export class Mail implements Selectable {
     }
 
     isAvatarUnknown(systemFolder: string): boolean {
-        if (systemFolder === "INBOX" && !this.from) return true;
+        if (systemFolder === "INBOX") {
+            return !this.from
+        }
         if (systemFolder === "OUTBOX" && this.to.length === 1 && !this.to[0])
             return true;
         return this.to.length === 0;

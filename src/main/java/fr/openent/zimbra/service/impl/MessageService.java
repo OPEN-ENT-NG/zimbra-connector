@@ -188,11 +188,20 @@ public class MessageService {
 
         String flags = msgZimbra.getString(MSG_FLAGS, "");
         String state = flags.contains(MSG_FLAG_DRAFT) ? "DRAFT" : "SENT";
+        String folder ;
+        if(flags.contains(MSG_FLAG_DRAFT)){
+            folder = "DRAFT";
+        }else if (flags.contains(MSG_FLAG_SENTBYME)) {
+            folder = "OUTBOX";
+        }else {
+            folder = "INBOX";
+        }
+
         msgFront.put("state", state);
         msgFront.put("unread", flags.contains(MSG_FLAG_UNREAD));
         msgFront.put("response", flags.contains(MSG_FLAG_REPLIED));//TODO QMER : verify sendmsgresponse : modified f : r ?
         msgFront.put("hasAttachment", flags.contains(MSG_FLAG_HASATTACHMENT));
-
+        msgFront.put("systemFolder",folder);
         msgFront.put("to", new JsonArray());
         msgFront.put("cc", new JsonArray());
         msgFront.put("bcc", new JsonArray());
