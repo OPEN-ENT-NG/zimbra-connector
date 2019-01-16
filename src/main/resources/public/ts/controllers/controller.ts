@@ -367,7 +367,14 @@ export let zimbraController = ng.controller("ZimbraController", [
             $('div.drawing-zone').trigger('click')
             $scope.$apply();
         };
-
+        $scope.cantSendMail = ()=>{
+            let noA = $scope.state.newItem.to ? $scope.state.newItem.to.length===0 : !$scope.state.newItem.to;
+            let noCC = $scope.state.newItem.cc  ? $scope.state.newItem.cc.length===0 : !$scope.state.newItem.cc;
+            let noBCC = $scope.state.newItem.bcc ? $scope.state.newItem.bcc.length ===0 : !$scope.state.newItem.bcc;
+            return  (  noA && noCC && noBCC)
+            || ($scope.state.newItem.loadingAttachments && $scope.state.newItem.loadingAttachments.length > 0)
+            || $scope.sending;
+        };
         $scope.reply = async (outbox?: boolean) => {
             template.open("right-side", "mail-actions/write-mail");
             const mail = $scope.state.newItem as Mail;
