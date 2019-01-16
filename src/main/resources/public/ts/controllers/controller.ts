@@ -364,7 +364,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 mail.parentConversation,
                 $scope.state.newItem
             );
-            $('div.drawing-zone').trigger('click')
+            $('div.drawing-zone').trigger('click') ;
             $scope.$apply();
         };
         $scope.cantSendMail = ()=>{
@@ -389,8 +389,8 @@ export let zimbraController = ng.controller("ZimbraController", [
             );
             if (outbox) mail.to = $scope.mail.to;
             else $scope.addUser($scope.mail.sender());
-
             $scope.$apply();
+            $('div.drawing-zone').trigger('click');
         };
 
         $scope.replyAll = async () => {
@@ -418,6 +418,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 $scope.addUser($scope.mail.sender());
             }
             $scope.$apply();
+            $('div.drawing-zone').trigger('click');
         };
 
         $scope.editDraft = async (draft: Mail) => {
@@ -477,6 +478,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.result = {};
 
         $scope.sendMail = async () => {
+            $('div.drawing-zone').trigger('click');
             $scope.sending = true; //Blocks submit button while message hasn't been send
             // todo qmer : has been modified
             // const mail: Mail = $scope.state.newItem;
