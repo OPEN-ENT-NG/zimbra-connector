@@ -51,26 +51,31 @@
 			<div class="flex-row align-center medium-importance medium-text">
 
 				<div class="avatar">
-					<img ng-src="/userbook/avatar/[[mail.from]]?thumbnail=100x100"/>
+					<img ng-if="mail.sender().isAMail()" ng-src="public/img/external-avatar.png?thumbnail=100x100"/>
+					<img ng-if="!mail.sender().isAMail()" ng-src="/userbook/avatar/[[mail.from]]?thumbnail=100x100"/>
 				</div>
 
 				<div class="horizontal-spacing-twice">
 					<!-- from -->
 					<strong><span translate key="from"></span>
 					<span> : </span></strong>
-					<a ng-if="!mail.sender().isMe() && !mail.sender().isAMail()" href="/userbook/annuaire#[[mail.sender().id]]">[[mail.sender().displayName]]</a>
-					<span ng-if="mail.sender().isMe()"><i18n>me</i18n></span>
-					<span ng-if="mail.sender().isAMail()"><i18n>[[mail.sender().displayName]]</i18n></span>
+					<div ng-click="displayUser(mail.sender())" class="aligned">
+						<span ng-if="!mail.sender().isMe() && !mail.sender().isAMail()" class="isInternalEmail">[[mail.sender().displayName]]</span>
+						<span ng-if="mail.sender().isMe()"><i18n>me</i18n></span>
+						<span ng-if="mail.sender().isAMail()" tooltip="[[mail.sender().id]]" class="isExternalEmail">[[mail.sender().displayName]]</span>
+					</div>
 
 					<!-- to -->
 					<div>
 						<strong><span translate key="to"></span>
 						<span> : </span></strong>
-
 						<span ng-repeat="receiver in receivers = (mail.to | filter: filterUsers(mail))">
-							<a ng-if="!receiver.isMe() && !receiver.isAGroup() && !receiver.isAMail()" href="/userbook/annuaire#[[mail.map(receiver).id]]">[[receiver.displayName]]</a>
-							<span ng-if="receiver.isMe()"><i18n>me</i18n></span>
-							<span ng-if="receiver.isAGroup() || receiver.isAMail()">[[receiver.displayName]]</span>
+							<div ng-click="displayUser(receiver)" class="aligned">
+								<span ng-if="!receiver.isMe() && !receiver.isAGroup() && !receiver.isAMail()" class="isInternalEmail">[[receiver.displayName]]</span>
+								<span ng-if="receiver.isMe()"><i18n>me</i18n></span>
+								<span ng-if="receiver.isAGroup()" class="isInternalEmail">[[receiver.displayName]]</span>
+								<span ng-if="receiver.isAMail()" class="isExternalEmail">[[receiver.displayName]]</span>
+							</div>
 							<span ng-if="$index !== receivers.length - 1 && receiver.displayName">,</span>
 						</span>
 					</div>
@@ -79,11 +84,13 @@
 					<div ng-if="(mail.cc.length + mail.ccName.length) > 0">
 						<strong><span translate key="cc"></span>
 						<span> : </span></strong>
-
 						<span ng-repeat="receiver in receivers = (mail.cc | filter: filterUsers(mail))">
-							<a ng-if="!receiver.isMe() && !receiver.isAGroup() && !receiver.isAMail()" href="/userbook/annuaire#[[mail.map(receiver).id]]">[[receiver.displayName]]</a>
-							<span ng-if="receiver.isMe()"><i18n>me</i18n></span>
-							<span ng-if="receiver.isAGroup() || receiver.isAMail()">[[receiver.displayName]]</span>
+							<div ng-click="displayUser(receiver)" class="aligned">
+								<span ng-if="!receiver.isMe() && !receiver.isAGroup() && !receiver.isAMail()" class="isInternalEmail">[[receiver.displayName]]</span>
+								<span ng-if="receiver.isMe()"><i18n>me</i18n></span>
+								<span ng-if="receiver.isAGroup()" class="isInternalEmail">[[receiver.displayName]]</span>
+								<span ng-if="receiver.isAMail()" class="isExternalEmail">[[receiver.displayName]]</span>
+							</div>
 							<span ng-if="$index !== receivers.length - 1 && receiver.displayName">,</span>
 						</span>
 					</div>
@@ -92,7 +99,12 @@
 
 			</div>
 
+			<lightbox show="displayLightBox.readMail" on-close="displayLightBox.readMail = false">
+				<container template="readmail-lightbox"></container>
+			</lightbox>
+
 			<hr />
+
 			<div class="row horizontal-spacing">
 				<div class="twelve cell escape_cke" bind-html="mail.body"></div>
 			</div>

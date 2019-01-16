@@ -4,13 +4,14 @@ import {DISPLAY, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra,} 
 import {Mix} from "entcore-toolkit";
 
 export let zimbraController = ng.controller("ZimbraController", [
+    "$location",
     "$scope",
     "$timeout",
     "$compile",
     "$sanitize",
     "model",
     "route",
-    function($scope, $timeout, $compile, $sanitize, model, route) {
+    function($location, $scope, $timeout, $compile, $sanitize, model, route) {
         $scope.state = {
             selectAll: false,
             filterUnread: false,
@@ -26,7 +27,9 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.display = new DISPLAY();
         $scope.viewMode = $scope.display.LIST;
         $scope.zimbra = Zimbra.instance;
-
+        $scope.displayLightBox = {
+            readMail : false
+        };
         route({
             readMail: async function(params) {
                 Zimbra.instance.folders.openFolder("inbox");
@@ -873,6 +876,11 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.openExpertMode = () => {
             window.open('/zimbra/preauth');
         };
+
+        $scope.goToExternal = (path) => {
+            window.location.href = path;
+        };
+
         $scope.openRightSide = async (mode) => {
             if($scope.display.isColumn(mode)){
                 $scope.viewMode = $scope.display.COLUMN;
@@ -900,5 +908,10 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.getFolder=()=>{
            return (Zimbra.instance.currentFolder as SystemFolder).folderName;
         };
+        $scope.displayUser = (user) =>  {
+            $scope.userInfo = user;
+            $scope.displayLightBox.readMail = true;
+            template.open("readmail-lightbox", "mail-actions/user-info");
+        }
     }
 ]);

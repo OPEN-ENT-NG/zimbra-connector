@@ -120,8 +120,12 @@ export class Mail implements Selectable {
         if (this.isAvatarUnknown(systemFolder))
             return "/img/illustrations/unknown-avatar.svg?thumbnail=100x100";
         if (this.isAvatarAlone()) {
-            var id = systemFolder === "INBOX" ? this.from : this.to[0];
-            return "/userbook/avatar/" + id + "?thumbnail=100x100";
+            const id : User = systemFolder === "INBOX" ? this.map(this.from) : this.map(this.to[0]);
+            if (id.isAMail()) {
+                return "public/img/external-avatar.png?thumbnail=100x100";
+            } else {
+                return "/userbook/avatar/" + id.id + "?thumbnail=100x100";
+            }
         }
         return "";
     }

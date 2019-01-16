@@ -27,6 +27,13 @@
     }
   }
 
+  .isInternalEmail{
+    color: #4bafd5;
+  }
+
+  .isExternalEmail{
+    color: firebrick;
+  }
   div.scroll-list{
     max-height: 600px;
     overflow-y: scroll;
