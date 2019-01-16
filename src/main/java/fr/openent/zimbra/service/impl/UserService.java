@@ -231,11 +231,10 @@ public class UserService {
      * @param jsonResponse Zimbra API Responsek
      * @param handler result handler
      */
-    private void processGetAccountInfo(JsonObject jsonResponse,
-                                    Handler<Either<String, JsonObject>> handler) {
+    private void processGetAccountInfo(JsonObject jsonResponse, Handler<JsonObject> handler) {
 
-        JsonObject getInfoResp = jsonResponse.getJsonObject("Body")
-                .getJsonObject("GetAccountResponse");
+        JsonObject getInfoResp = jsonResponse.getJsonObject(SoapConstants.BODY)
+                .getJsonObject(SoapConstants.GET_ACCOUNT_RESPONSE);
         JsonObject frontData = new JsonObject();
 
         UserInfoService.processAccountInfo(getInfoResp, frontData);
@@ -247,7 +246,7 @@ public class UserService {
                     }
                 });
 
-        handler.handle(new Either.Right<>(frontData));
+        handler.handle(frontData);
     }
 
     /**
@@ -279,7 +278,9 @@ public class UserService {
                             handler.handle(new Either.Left<>(response.cause().getMessage()));
                         }
                     } else {
-                        processGetAddress(response.result(), handler);
+                        processGetAccountInfo(response.result(), resInfo ->
+                                processGetAddress(resInfo, handler)
+                        );
                     }
                 });
             } else {
