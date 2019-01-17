@@ -363,7 +363,9 @@ export class Mail implements Selectable {
                 undelivered: result.undelivered
             };
         } catch (e) {
-            notify.error(e.response.data.error);
+            let jsonError = JSON.parse(e.response.data.error);
+
+            notify.error(lang.translate(jsonError? jsonError.code : e.response.data.error));
             return {
                 undelivered: true
             };
