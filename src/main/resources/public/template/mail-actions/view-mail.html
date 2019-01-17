@@ -82,7 +82,7 @@
 							<div ng-click="displayUser(receiver)" class="aligned">
 								<span ng-if="!receiver.isMe() && !receiver.isAGroup() && !receiver.isAMail()" class="isInternalEmail">[[receiver.displayName]]</span>
 								<span ng-if="receiver.isMe()"><i18n>me</i18n></span>
-								<span ng-if="receiver.isAGroup()" class="isInternalEmail">[[receiver.displayName]]</span>
+								<span ng-if="receiver.isAGroup() && !receiver.isAMail()" class="isInternalEmail">[[receiver.displayName]]</span>
 								<span ng-if="receiver.isAMail()" class="isExternalEmail">[[receiver.displayName]]</span>
 							</div>
 							<span ng-if="$index !== receivers.length - 1 && receiver.displayName">,</span>
