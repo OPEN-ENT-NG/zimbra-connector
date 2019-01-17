@@ -38,6 +38,7 @@ public class Neo4jZimbraService {
 
 	public static final String TYPE_GROUP = "group";
 	public static final String TYPE_USER = "user";
+	public static final String TYPE_EXTERNAL = "external";
 
 	public static final String GROUP_NAME = "groupName";
 	public static final String GROUP_DISPLAYNAME = "groupDisplayName";

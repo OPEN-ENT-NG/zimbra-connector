@@ -1,4 +1,5 @@
 import { ng, _ } from "entcore";
+import {User } from "../model";
 import http from 'axios';
 
 /**
@@ -32,6 +33,7 @@ export const recipientList = ng.directive("recipientList", () => {
                 <form class="input-help" ng-submit="update(true)">
                     <input class="chip-input right-magnet" type="text" ng-model="searchText" ng-change="update()" autocomplete="off" ng-class="{ move: searchText.length > 0 }" 
                     i18n-placeholder="[[restriction ? 'share.search.help' : 'share.search.placeholder' ]]"
+                    ng-keydown="addExternalItem($event)"
                     />
                     
                 </form>
@@ -143,14 +145,26 @@ export const recipientList = ng.directive("recipientList", () => {
                 scope.ngModel.push(item);
                 return true;
             };
+            scope.addExternalItem = ( event)=>{
+                let keyCode = event.which || event.keyCode;
+                let myUser =new User(scope.searchText, scope.searchText);
+                if((keyCode === 13 || keyCode ===190) && myUser.isAMail()){
+                    scope.addItem((myUser));
+                    scope.clearSearch();
+                    scope.$apply();
+                }
+            };
 
-            scope.addItem = async () => {
+            scope.addItem = async (mail?:User) => {
                 scope.focused = true;
                 element.find('input').focus();
                 if (!scope.ngModel) {
                     scope.ngModel = [];
                 }
-                if (scope.currentReceiver.type === 'sharebookmark') {
+                if(mail){
+                    scope.ngModel.push(mail);
+                }
+                else if (scope.currentReceiver.type === 'sharebookmark') {
                     scope.loading = true;
                     var response = await http.get('/directory/sharebookmark/' + scope.currentReceiver.id);
                     response.data.groups.forEach(item => {

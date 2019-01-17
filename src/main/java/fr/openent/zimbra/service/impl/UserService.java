@@ -27,8 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static fr.openent.zimbra.service.data.Neo4jZimbraService.TYPE_GROUP;
-import static fr.openent.zimbra.service.data.Neo4jZimbraService.TYPE_USER;
+import static fr.openent.zimbra.service.data.Neo4jZimbraService.*;
 
 public class UserService {
 
@@ -339,7 +338,7 @@ public class UserService {
             }
             JsonArray idListWithTypes = neoResult.right().getValue();
             for(String mail : emailList) {
-                idListWithTypes.add(mail);
+                idListWithTypes.add(new JsonObject().put("id",mail).put("type", TYPE_EXTERNAL));
             }
             final AtomicInteger processedIds = new AtomicInteger(idListWithTypes.size());
             JsonObject addressList = new JsonObject();
@@ -378,6 +377,13 @@ public class UserService {
                                 handler.handle(addressList);
                             }
                         });
+                        break;
+                    case TYPE_EXTERNAL:
+                        // todo get display name for external addresses
+                        addressList.put(elemId, new JsonObject().put("email", elemId));
+                        if(processedIds.decrementAndGet() == 0) {
+                            handler.handle(addressList);
+                        }
                         break;
                     default:
                         if(processedIds.decrementAndGet() == 0) {
