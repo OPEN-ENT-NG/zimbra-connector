@@ -15,43 +15,48 @@
         </nav>
     </div>
     <div class=" bottom-spacing-twice twelve cell zero-mobile-fat-mobile">
-        <div class="aligned display-filter "
-             ng-if="zimbra.currentFolder.nbUnread > 0 || ( state.filterUnread && showRightSide())">
-            <label class="chip aligned bottom-magnet bottom-spacing"
+        <div class="aligned " >
+            <label class="chip aligned "
                    tooltip="filter.unread"
+                   ng-if="zimbra.currentFolder.nbUnread > 0 || ( state.filterUnread && showRightSide())"
                    ng-class="{ selected: state.filterUnread }">
                 <i class="mail"></i>
                 <span ng-model="zimbra.currentFolder.nbUnread">([[zimbra.currentFolder.nbUnread]])</span>
                 <input type="checkbox" ng-model="state.filterUnread" ng-change="filterUnread()" />
             </label>
+
+            <div class="aligned Choice-chip" ng-if="getFolder() !== 'draft'">
+                <label class="chip aligned bottom-spacing"
+                       ng-class="{ selected: display.LIST == viewMode }"
+                        tooltip="filter.list"
+                        ng-if="zimbra.currentFolder.mails.all.length > 0"
+                        ng-click="openRightSide('list')">
+                    <i class="show-row" ></i>
+
+                </label>
+                <label  class="chip aligned bottom-spacing"
+                        ng-class="{ selected: display.COLUMN == viewMode }"
+                        tooltip="filter.row"
+                        ng-if="zimbra.currentFolder.mails.all.length > 0"
+                        ng-click="openRightSide('column')">
+                    <i class="show-column" ></i>
+                </label>
+            </div>
         </div>
 
-        <div class="aligned  horizontal-margin-twice display-filter-trash  bottom-spacing"
+        <div class="aligned "
              ng-if="zimbra.currentFolder.folderName == 'trash' && ( folders.trash.userFolders.all.length > 0 || zimbra.currentFolder.mails.all.length > 0  || state.searching)">
-            <label class="aligned bottom-magnet">
-                <a href="#" class="cell flex-row align-center justify-start horizontal-spacing bottom-spacing zero-mobile" ng-click="emptyTrash()">
-                    <i class="trash small-text"></i>
-                    <span class="horizontal-margin small-text"><i18n>empty.trash</i18n></span>
+            <label class="aligned">
+                <a href="#" class="cell margin-top-10 flex-row align-center justify-start small-text zero-mobile" ng-click="emptyTrash()">
+                    <i class="trash horizontal-spacing"></i>
+                    <i18n class="bottom-border">empty.trash</i18n>
                 </a>
             </label>
         </div>
 
-        <div class="aligned  horizontal-margin-twice display-filter bottom-magnet bottom-spacing" ng-if="getFolder() !== 'draft'">
-            <label
-                   tooltip="filter.list"
-                   ng-if="zimbra.currentFolder.mails.all.length > 0"
-                   ng-click="openRightSide('list')">
-                <i class="show-row" ng-class="{ selected: display.LIST == viewMode }"></i>
-                <span class="horizontal-margin small-text">&nbsp;</span>
-            </label>
-            <label
-                   tooltip="filter.row"
-                   ng-if="zimbra.currentFolder.mails.all.length > 0"
-                   ng-click="openRightSide('column')">
-                <i class="show-column" ng-class="{ selected: display.COLUMN == viewMode }"></i>
-                <span class="horizontal-margin small-text">&nbsp;</span>
-            </label>
-        </div>
+
+
+
 
         <plus class="right-magnet" ng-if="showRightSide()">
             <button ng-click="replyAll()" ng-disabled="!mail.allowReplyAll"><i18n>replyall</i18n></button>
