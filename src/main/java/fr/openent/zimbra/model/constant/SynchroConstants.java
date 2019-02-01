@@ -46,4 +46,5 @@ public class SynchroConstants {
     public static final String STATUS_DONE = "DONE";
     public static final String STATUS_MAILLING_DONE = "MAILLING_DONE";
     public static final String STATUS_ERROR = "ERROR";
+
 }

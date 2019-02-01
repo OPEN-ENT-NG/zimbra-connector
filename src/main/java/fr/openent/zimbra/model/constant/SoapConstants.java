@@ -52,4 +52,5 @@ public class SoapConstants {
     // Accounts Requests
     public static final String GET_ACCOUNT_INFO_REQUEST = "GetAccountInfoRequest";
     public static final String GET_ACCOUNT_INFO_RESPONSE = "GetAccountInfoResponse";
+    public static final String GET_FOLDER_REQUEST = "GetFolderRequest";
 }

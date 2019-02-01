@@ -20,10 +20,7 @@ package fr.openent.zimbra.helper;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.*;
 import fr.openent.zimbra.service.impl.*;
-import fr.openent.zimbra.service.synchro.SynchroGroupService;
-import fr.openent.zimbra.service.synchro.SynchroMailerService;
-import fr.openent.zimbra.service.synchro.SynchroService;
-import fr.openent.zimbra.service.synchro.SynchroUserService;
+import fr.openent.zimbra.service.synchro.*;
 import fr.wseduc.webutils.email.EmailSender;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
@@ -60,6 +57,8 @@ public class ServiceManager {
     private SqlSynchroService sqlSynchroService;
     private SynchroGroupService synchroGroupService;
     private SynchroMailerService synchroMailerService;
+    private SynchroAddressBookService synchroAddressBookService;
+    private Neo4jAddrbookService neo4jAddrbookService;
 
 
 
@@ -89,6 +88,8 @@ public class ServiceManager {
         this.synchroService = new SynchroService(sqlSynchroService);
         this.synchroGroupService = new SynchroGroupService(soapService, synchroUserService);
         this.synchroMailerService = new SynchroMailerService(sqlSynchroService);
+        this.neo4jAddrbookService = new Neo4jAddrbookService();
+        this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
 
         soapService.setServices(userService, synchroUserService);
         synchroUserService.setUserService(userService);
@@ -183,5 +184,13 @@ public class ServiceManager {
 
     public SynchroMailerService getSynchroMailerService() {
         return synchroMailerService;
+    }
+
+    public SynchroAddressBookService getSynchroAddressBookService() {
+        return synchroAddressBookService;
+    }
+
+    public Neo4jAddrbookService getNeo4jAddrbookService() {
+        return neo4jAddrbookService;
     }
 }

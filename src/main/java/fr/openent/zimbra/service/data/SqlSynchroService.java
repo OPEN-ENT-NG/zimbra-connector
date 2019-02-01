@@ -251,7 +251,6 @@ public class SqlSynchroService {
                 + String.format(" ON %s.%s=%s.%s", synchroLogsTable, LOGS_ID, userSynchroTable, USER_LOGID)
                 + String.format(" WHERE %s.%s=?",
                                 synchroTable, SYNCHRO_ID)
-                //+ String.format(" AND %s.%s IS NOT NULL", userSynchroTable, USER_LOGID)
                 + String.format(" GROUP BY %s.%s", synchroTable, SYNCHRO_ID);
         params.add(synchroId);
         sql.prepared(query, params,
