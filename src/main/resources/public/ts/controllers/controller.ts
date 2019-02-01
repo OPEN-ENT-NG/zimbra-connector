@@ -662,6 +662,12 @@ export let zimbraController = ng.controller("ZimbraController", [
             template.close("lightbox");
             $scope.$apply();
         };
+        $scope.isOpenedFolder = (folder: UserFolder) => {
+            return $scope.zimbra.currentFolder.id === folder.id || $scope.isParentOf(folder, $scope.zimbra.currentFolder);
+        };
+        $scope.isClosedFolder = (folder: UserFolder) => {
+            return !$scope.isOpenedFolder(folder);
+        };
         $scope.trashFolder = async (folder: UserFolder) => {
             await folder.trash();
             await $scope.refreshFolders();
