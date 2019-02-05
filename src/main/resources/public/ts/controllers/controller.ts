@@ -653,6 +653,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 await Zimbra.instance.currentFolder.countUnread();
                 await folderTarget.countUnread();
             }
+            $scope.refresh();
             $scope.$apply();
         };
 
@@ -689,7 +690,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.$apply();
         };
         $scope.isOpenedFolder = (folder: UserFolder) => {
-            return $scope.zimbra.currentFolder.id === folder.id || $scope.isParentOf(folder, $scope.zimbra.currentFolder);
+            return folder.selected;
         };
         $scope.isClosedFolder = (folder: UserFolder) => {
             return !$scope.isOpenedFolder(folder);

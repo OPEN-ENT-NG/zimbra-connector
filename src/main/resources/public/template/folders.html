@@ -1,6 +1,6 @@
 <!-- Folders - main screen recursive templates -->
 <script type="text/ng-template" id="folder-content">
-	<a ng-click="openUserFolder(folder, obj)"
+	<a ng-click="openUserFolder(folder, obj); folder.selected = !folder.selected "
 	   ng-init="obj = { template: '' }"
 	   ng-class="{ selected: zimbra.currentFolder.id === folder.id, opened: isOpenedFolder(folder) }"
 	   dragdrop="dropTo(folder, $originalEvent)"
