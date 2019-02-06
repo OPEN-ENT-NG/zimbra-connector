@@ -10,16 +10,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static fr.openent.zimbra.model.constant.SynchroConstants.*;
+
 
 @SuppressWarnings("WeakerAccess")
 public abstract class AddressBookSynchro {
 
     protected String uai;
     protected Map<String,AddressBookUser> guestList = new HashMap<>();
-    protected List<AddressBookSubDir> persList = new ArrayList<>();
-    protected List<AddressBookSubDir> studentList = new ArrayList<>();
-    protected List<AddressBookSubDir> relativeList = new ArrayList<>();
-    protected List<AddressBookSubDir> teacherList = new ArrayList<>();
+    protected AddressBookFolder directoryPersonnel = new AddressBookFolder();
+    protected List<AddressBookFolder> studentList = new ArrayList<>();
+    protected List<AddressBookFolder> relativeList = new ArrayList<>();
+    protected List<AddressBookFolder> teacherList = new ArrayList<>();
 
     AddressBookSynchro(String uai) throws NullPointerException {
         if(uai == null || uai.isEmpty()) {
@@ -34,12 +36,11 @@ public abstract class AddressBookSynchro {
         return null;
     }
 
-    private String getFolder() {
-        // todo get folder
-        return "";
+    private String getRootAbookFolder() {
+        return ABOOK_ROOT_FOLDER + "/" + uai;
     }
 
-    private List<AddressBookModifications> compareFolderContent(Map<String,AddressBookUser> sourceMap,
+    private static List<AddressBookModifications> compareFolderContent(Map<String,AddressBookUser> sourceMap,
                                                                 Map<String,AddressBookUser> targetMap,
                                                                 String folder) {
 
@@ -51,28 +52,24 @@ public abstract class AddressBookSynchro {
         for(Map.Entry<String, AddressBookUser> entry : commonList) {
             String key = entry.getKey();
             if(!sourceMap.get(key).equals(targetMap.get(key))) {
-                applyModifications(entry, folderModifications, AddressBookAction.MODIFY, folder);
+                folderModifications.add(
+                        new AddressBookModifications(folder, entry.getValue(),AddressBookAction.MODIFY)
+                );
             }
             sourceMap.remove(entry.getKey());
             targetMap.remove(entry.getKey());
         }
         for(Map.Entry<String, AddressBookUser> entry : sourceMap.entrySet()) {
-            applyModifications(entry, folderModifications, AddressBookAction.CREATE,folder);
+            folderModifications.add(
+                    new AddressBookModifications(folder, entry.getValue(),AddressBookAction.CREATE)
+            );
         }
         for(Map.Entry<String, AddressBookUser> entry : targetMap.entrySet()) {
-            applyModifications(entry, folderModifications, AddressBookAction.DELETE,folder);
+            folderModifications.add(
+                    new AddressBookModifications(folder, entry.getValue(),AddressBookAction.DELETE)
+            );
         }
         return folderModifications;
     }
 
-    private void applyModifications(Map.Entry<String, AddressBookUser> entry,
-                                    List<AddressBookModifications> folderModifications,
-                                    AddressBookAction action,
-                                    String folder) {
-            AddressBookModifications mod = new AddressBookModifications();
-            mod.action = action;
-            mod.folder = folder;
-            mod.user = entry.getValue();
-            folderModifications.add(mod);
-    }
 }

@@ -6,4 +6,10 @@ public class AddressBookModifications {
     AddressBookUser user;
     AddressBookAction action;
 
+    AddressBookModifications(String folder, AddressBookUser user, AddressBookAction action) {
+        this.folder = folder;
+        this.user = user;
+        this.action = action;
+    }
+
 }

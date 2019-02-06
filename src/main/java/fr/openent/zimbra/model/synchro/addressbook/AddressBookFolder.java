@@ -5,18 +5,26 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
-class AddressBookSubDir {
+class AddressBookFolder {
 
+    String folderName;
     private Map<String,AddressBookUser> users = new HashMap<>();
+    protected List<AddressBookFolder> directories = new ArrayList<>();
 
-    private static Logger log = LoggerFactory.getLogger(AddressBookSubDir.class);
+    private static Logger log = LoggerFactory.getLogger(AddressBookFolder.class);
 
-    AddressBookSubDir(JsonObject json) throws IllegalArgumentException {
+    AddressBookFolder() {
+
+    }
+
+    AddressBookFolder(JsonObject json) throws IllegalArgumentException {
         if(json == null
                 ||  json.getString(SUBDIR_NAME, "").isEmpty()) {
             throw new IllegalArgumentException("Invalid AddressBookSubDir data");

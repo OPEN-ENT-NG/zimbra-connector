@@ -84,8 +84,8 @@ public class AddressBookSynchroNeo extends AddressBookSynchro {
                     try {
                         log.info("Subdir : " + o.toString());
                         JsonObject subdirContent = ((JsonObject)o).getJsonObject(SUBDIRS);
-                        AddressBookSubDir abSubdir = new AddressBookSubDir(subdirContent);
-                        List<AddressBookSubDir> curList = getListForProfile(profile);
+                        AddressBookFolder abSubdir = new AddressBookFolder(subdirContent);
+                        List<AddressBookFolder> curList = getListForProfile(profile);
                         if(curList != null) {
                             curList.add(abSubdir);
                         }
@@ -118,7 +118,7 @@ public class AddressBookSynchroNeo extends AddressBookSynchro {
         }
     }
 
-    private List<AddressBookSubDir> getListForProfile(String profile) {
+    private List<AddressBookFolder> getListForProfile(String profile) {
         switch (profile) {
             case PROFILE_PERSONNEL:
                 return persList;
