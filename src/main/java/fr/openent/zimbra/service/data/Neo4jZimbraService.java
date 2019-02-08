@@ -63,7 +63,7 @@ public class Neo4jZimbraService {
 	}
 
 	public void checkUserCommunication(String senderId, String recipientId, Handler<Either<String,JsonObject>> handler) {
-		String query = "MATCH (s:User), (r:User) "
+		String query = "MATCH (s:User), (r:Visible) "
 				+ "where s.id = {senderId} and r.id = {recipientId} "
 				+ "return s.id as senderId, r.id as recipientId, "
 				+ "exists((r)<-[:COMMUNIQUE*1..2]-()<-[:COMMUNIQUE]-(s)) OR "

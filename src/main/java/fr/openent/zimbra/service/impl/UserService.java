@@ -3,6 +3,7 @@ package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.MailAddress;
+import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.constant.SoapConstants;
@@ -137,18 +138,38 @@ public class UserService {
     }
 
     /**
-     * Get name and aliases of specified user from Zimbra
-     * @param account Zimbra account name or alias
-     * @param handler Result handler
+     * Process response from Zimbra API to get alias details of specified user
+     * In case of success, return a Json Object :
+     * {
+     * 	    "name" : "user mail address"
+     * 	    "aliases" :
+     * 	    [
+     * 	        "alias"
+     * 	    ]
+     * }
+     * @param mail mail identifier for Zimbra ccount
+     * @param handler Handler result
      */
-    public void getAliases(String account, Handler<AsyncResult<JsonObject>> handler) {
+    public void getAliases(String mail, Handler<AsyncResult<JsonObject>> handler) {
 
-        getUserAccount(account, response -> {
-            if(response.failed()) {
-                handler.handle(response);
-            } else {
-                processGetAliases(response.result(), AsyncHelper.getJsonObjectEitherHandler(handler));
-            }
+        ZimbraUser user = new ZimbraUser(new MailAddress(mail));
+        user.checkIfExists(v -> {
+           if(user.existsInZimbra()) {
+               List<String> aliases = user.getAliases();
+               if(aliases.isEmpty()) {
+                   handler.handle(Future.failedFuture("No Matching Zimbra Alias for : " + mail));
+               } else {
+                   if(aliases.size() > 1) {
+                       log.warn("More than one alias for : " + mail);
+                       JsonObject result = new JsonObject()
+                               .put("name", user.getName())
+                               .put("aliases", new JsonArray(aliases));
+                       handler.handle(Future.succeededFuture(result));
+                   }
+               }
+           } else {
+               handler.handle(Future.failedFuture("No Matching Zimbra Account for : " + mail));
+           }
         });
     }
 
