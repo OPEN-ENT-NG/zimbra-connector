@@ -1,0 +1,38 @@
+<div class="twelve cell">
+    <div ng-include="'structure-tree'"></div>
+    <div class="side-tabs-content nine cell top-spacing-twice" ng-if="structure" >
+        <article ng-init="selected = 0">
+                <div class="small leaf-menu-container">
+                    <div class="leaf-menu" ng-class="{ selected: selected === 0 }">
+                        <a ng-click="selected=0">[[lang.translate("access.rights")]]</a>
+                    </div>
+                </div>
+
+                <div ng-if="selected===0"  ng-init="linkedGroupsOpts.reorderGroups()">
+                    <h4>
+                        <i18n>massage.info.access.rights</i18n>
+                    </h4>
+
+                    <div>
+                        <div class="ten inline-middle">
+                            <input type="text" class="search-input" i18n-placeholder="search" ng-model="filterGroups">
+                        </div>
+                        <div class="filterbar inline-middle">
+                            <i class="funnel square-icon small" ng-click="linkedGroupsOpts.showLinked = !linkedGroupsOpts.showLinked" tooltip="show.linked.groups"
+                               ng-class="{'selected': linkedGroupsOpts.showLinked}"></i>
+                        </div>
+                    </div>
+
+                    <ul class="checklist">
+                        <li ng-repeat="group in structure.groups.all | filter: {name: filterGroups} | filter: linkedGroupsOpts.filterLinked() | orderBy: 'name' | orderBy: linkedGroupsOpts.orderByLinked()"
+                            ng-click="switchExternalAppGroupLink(group)"
+                            ng-class="{'checked': isLinked(group)}">
+                            [[group.name]]
+                        </li>
+                    </ul>
+                </div>
+
+        </article>
+    </div>
+
+</div>

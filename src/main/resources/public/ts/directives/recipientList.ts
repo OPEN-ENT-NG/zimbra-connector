@@ -1,6 +1,7 @@
-import { ng, _ } from "entcore";
+import { ng, _, model } from "entcore";
 import {User } from "../model";
 import http from 'axios';
+
 
 /**
  * @description Displays chips of items list with a search input and dropDown options. If more than
@@ -148,7 +149,8 @@ export const recipientList = ng.directive("recipientList", () => {
             scope.addExternalItem = ( event)=>{
                 let keyCode = event.which || event.keyCode;
                 let myUser =new User(scope.searchText, scope.searchText);
-                if((keyCode === 13 || keyCode ===190) && myUser.isAMail()){
+                if((keyCode === 13 || keyCode ===190) && myUser.isAMail() &&
+                model.me.hasWorkflow('fr.openent.zimbra.controllers.ZimbraController|zimbraOutside')){
                     scope.addItem((myUser));
                     scope.clearSearch();
                     scope.$apply();
