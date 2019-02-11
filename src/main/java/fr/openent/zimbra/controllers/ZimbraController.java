@@ -934,5 +934,10 @@ public class ZimbraController extends BaseController {
 		});
 
 	}
-
+    @Get("/zimbraOutside")
+    @SecuredAction("zimbra.outsideCommunication")
+    public void zimbraOutside(final HttpServerRequest request) {
+        // This route is used to create zimbraOutsideCommunication Workflow right, nothing to do
+        return;
+    }
 }

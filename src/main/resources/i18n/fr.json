@@ -151,5 +151,10 @@
     "wait.attachments.completion": "Une pièce jointe est en cours de chargement, le message pourra être envoyé après complétion.",
     "yesterday": "Hier",
     "you.answered": "Vous avez répondu à ce message",
-    "mail.SEND_ABORTED_ADDRESS_FAILURE":"Votre adresse mail est incorrecte"
+    "mail.SEND_ABORTED_ADDRESS_FAILURE":"Votre adresse mail est incorrecte",
+    "admin.zimbra":"Droits de communication",
+    "access.rights":"Droits d'accès",
+    "communication.outside":"Communication extérieure",
+    "directory.search":"Rechercher",
+    "massage.info.access.rights":"Choisissez ci-dessous les groupes d'utilisateurs qui pourront envoyer des messages vers des adresses extérieures."
 }

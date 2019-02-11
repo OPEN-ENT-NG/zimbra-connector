@@ -20,7 +20,10 @@ export let printController = ng.controller("PrintController", [
                     console.log(e);
                     template.open("page", "errors/e404");
                 }
-            }
+            },
+            redirectToZimbra: async function(){
+                window.location.href = window.location.origin + "/zimbra/zimbra";
+        }
         });
     }
 ]);
