@@ -67,6 +67,7 @@ public class Neo4jZimbraService {
 				+ "where s.id = {senderId} and r.id = {recipientId} "
 				+ "return s.id as senderId, r.id as recipientId, "
 				+ "exists((r)<-[:COMMUNIQUE*1..2]-()<-[:COMMUNIQUE]-(s)) OR "
+				+ "exists((r)-[:DEPENDS*0..1]->()<-[:COMMUNIQUE*0..1]-()<-[:COMMUNIQUE]-(s)) OR "
 				+ "exists((r)<-[:COMMUNIQUE_DIRECT]-(s)) as " + CommunicationService.CAN_COMMUNICATE;
 
 		JsonObject params = new JsonObject()
