@@ -22,6 +22,7 @@ package fr.openent.zimbra.service.data;
 
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.service.impl.CommunicationService;
+import fr.openent.zimbra.service.impl.ZimbraAdminService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import org.entcore.common.neo4j.Neo4j;
@@ -62,12 +63,23 @@ public class Neo4jZimbraService {
 		neo.execute(query, new JsonObject().put("ids", idList), validResultHandler(handler));
 	}
 
+	public void hasExternalCommunicationRole(String userId, Handler<AsyncResult<JsonObject>> handler) {
+		String query = "MATCH (u:User), (r:Role) "
+				+ "WHERE u.id = {userId} "
+				+ "AND r.name = {roleName} "
+				+ "RETURN exists((r)<-[:AUTHORIZED]-(:Group)-[:IN]-(u)) as " + CommunicationService.HAS_EXTERNAL_ROLE;
+		JsonObject params = new JsonObject()
+				.put("userId", userId)
+				.put("roleName", ZimbraAdminService.ROLE_NAME);
+		neo.execute(query, params, validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
+	}
+
 	public void checkUserCommunication(String senderId, String recipientId, Handler<Either<String,JsonObject>> handler) {
-		String query = "MATCH (s:User), (r:Visible) "
+		String query = "MATCH (s:User), (r:User) "
 				+ "where s.id = {senderId} and r.id = {recipientId} "
 				+ "return s.id as senderId, r.id as recipientId, "
 				+ "exists((r)<-[:COMMUNIQUE*1..2]-()<-[:COMMUNIQUE]-(s)) OR "
-				+ "exists((r)-[:DEPENDS*0..1]->()<-[:COMMUNIQUE*0..1]-()<-[:COMMUNIQUE]-(s)) OR "
+				//+ "exists((r)-[:DEPENDS*0..1]->()<-[:COMMUNIQUE*0..1]-()<-[:COMMUNIQUE]-(s)) OR "
 				+ "exists((r)<-[:COMMUNIQUE_DIRECT]-(s)) as " + CommunicationService.CAN_COMMUNICATE;
 
 		JsonObject params = new JsonObject()

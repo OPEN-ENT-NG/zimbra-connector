@@ -127,5 +127,6 @@
     "widget.empty": "You don't have any message",
     "widget.title": "messages",
     "yesterday": "Hier",
-    "you.answered": "You answered to this message"
+    "you.answered": "You answered to this message",
+    "zimbra.outside.donotchange": "External Mail [Do Not Change]"
 }

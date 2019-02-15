@@ -18,7 +18,7 @@ public class ZimbraAdminService {
 
     private static final Neo4j neo = Neo4j.getInstance();
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
-    private static final String ROLE_NAME = "Messagerie - outSide [ne pas modifier]";
+    public static final String ROLE_NAME = "zimbra.outside.donotchange";
     private static final String ACTION_NAME = "fr.openent.zimbra.controllers.ZimbraController|zimbraOutside";
 
     public static void listGroupsWithRole(String structureId, boolean classGroups, Handler<Either<String, JsonArray>> handler) {

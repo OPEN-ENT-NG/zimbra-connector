@@ -21,7 +21,7 @@ package fr.openent.zimbra;
 
 import fr.openent.zimbra.controllers.ExternalWebservicesController;
 import fr.openent.zimbra.controllers.SynchroController;
-import fr.openent.zimbra.controllers.zimbraAdminController;
+import fr.openent.zimbra.controllers.ZimbraAdminController;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.BusConstants;
 import fr.openent.zimbra.service.synchro.SynchroTask;
@@ -55,7 +55,7 @@ public class Zimbra extends BaseServer {
 		addController(new ZimbraController());
 		addController(new SynchroController());
 		addController(new ExternalWebservicesController());
-		addController(new zimbraAdminController());
+		addController(new ZimbraAdminController());
 
 		try {
 			SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);

@@ -156,5 +156,6 @@
     "access.rights":"Droits d'accès",
     "communication.outside":"Communication extérieure",
     "directory.search":"Rechercher",
-    "massage.info.access.rights":"Choisissez ci-dessous les groupes d'utilisateurs qui pourront envoyer des messages vers des adresses extérieures."
+    "massage.info.access.rights":"Choisissez ci-dessous les groupes d'utilisateurs qui pourront envoyer des messages vers des adresses extérieures.",
+    "zimbra.outside.donotchange": "Messagerie Externe [Ne Pas Modifier]"
 }

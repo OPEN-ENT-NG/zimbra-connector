@@ -16,7 +16,7 @@ import static org.entcore.common.http.response.DefaultResponseHandler.defaultRes
 import static org.entcore.common.http.response.DefaultResponseHandler.leftToResponse;
 
 
-public class zimbraAdminController extends BaseController {
+public class ZimbraAdminController extends BaseController {
 
     @Get("/admin-console")
     @ResourceFilter(AdminFilter.class)
