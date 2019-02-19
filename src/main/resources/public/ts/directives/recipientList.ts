@@ -148,8 +148,9 @@ export const recipientList = ng.directive("recipientList", () => {
             };
             scope.addExternalItem = ( event)=>{
                 let keyCode = event.which || event.keyCode;
+                let key = event.key;
                 let myUser =new User(scope.searchText, scope.searchText);
-                if((keyCode === 13 || keyCode ===190) && myUser.isAMail() &&
+                if((keyCode === 13 || (keyCode ===190 && key ==";") ) && myUser.isAMail() && scope.searchText &&
                 model.me.hasWorkflow('fr.openent.zimbra.controllers.ZimbraController|zimbraOutside')){
                     scope.addItem((myUser));
                     scope.clearSearch();
