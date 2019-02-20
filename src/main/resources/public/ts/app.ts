@@ -1,6 +1,6 @@
 import { routes, ng , ui } from "entcore";
 import { zimbraController, printController } from "./controllers/index";
-import { recipientList, switchSearch, ngBottomScroll } from "./directives/index";
+import { recipientList, switchSearch, ngBottomScroll, folderLoader } from "./directives/index";
 
 
 
@@ -52,3 +52,4 @@ ng.controllers.push(printController);
 ng.directives.push(recipientList);
 ng.directives.push(switchSearch);
 ng.directives.push(ngBottomScroll);
+ng.directives.push(folderLoader);

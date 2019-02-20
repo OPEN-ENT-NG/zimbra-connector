@@ -150,7 +150,7 @@ export const recipientList = ng.directive("recipientList", () => {
                 let keyCode = event.which || event.keyCode;
                 let key = event.key;
                 let myUser =new User(scope.searchText, scope.searchText);
-                if((keyCode === 13 || (keyCode ===190 && key ==";") ) && myUser.isAMail() && scope.searchText &&
+                if((keyCode === 13 || key == ";" ) && myUser.isAMail() && scope.searchText &&
                 model.me.hasWorkflow('fr.openent.zimbra.controllers.ZimbraController|zimbraOutside')){
                     scope.addItem((myUser));
                     scope.clearSearch();
@@ -164,7 +164,7 @@ export const recipientList = ng.directive("recipientList", () => {
                 if (!scope.ngModel) {
                     scope.ngModel = [];
                 }
-                if(mail){
+                if(mail && _.findWhere(scope.ngModel, {id: mail.id}) == undefined ){
                     scope.ngModel.push(mail);
                 }
                 else if (scope.currentReceiver.type === 'sharebookmark') {

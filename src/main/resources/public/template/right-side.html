@@ -1,4 +1,4 @@
-<div class="twelve cell zero-mobile-fat-mobile" >
+<div class="twelve cell zero-mobile-fat-mobile" ng-hide="isLoading()"  >
     <container template="header" >
 
     </container>
@@ -12,11 +12,14 @@
     </div>
 
 </div>
-<div class="mobile-fat-mobile">
+<div class="mobile-fat-mobile" ng-hide="isLoading()" >
     <container template="header">
-
     </container>
     <container template="main-right-side">
-
     </container>
 </div>
+
+<folder-loader
+        display="isLoading()"
+        folder-name="zimbra.currentFolder.folderName" >
+</folder-loader>
