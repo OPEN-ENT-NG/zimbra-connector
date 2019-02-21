@@ -569,7 +569,9 @@ export let zimbraController = ng.controller("ZimbraController", [
                 );
             };
         };
-
+        $scope.anyRecipients = () => {
+            return ($scope.state.newItem.cc && $scope.state.newItem.cc.length!==0) || ($scope.state.newItem.bcc && $scope.state.newItem.bcc.length!==0)
+        };
         $scope.updateFoundUsers = async (search, model, founds) => {
             var include = [];
             var exclude = model || [];
