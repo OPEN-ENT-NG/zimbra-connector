@@ -58,7 +58,7 @@
 
 
 
-        <plus class="right-magnet" ng-if="showRightSide()">
+        <plus id="mailOptions" class="right-magnet" ng-if="showRightSide()" ng-click="displayMailOptions()">
             <button ng-click="replyAll()" ng-disabled="!mail.allowReplyAll"><i18n>replyall</i18n></button>
             <button ng-click="transfer()"><i18n>transfer</i18n></button>
             <a class="button"   target="_blank" ng-href="/zimbra/print#/printMail/[[mail.id]]"><i18n>print</i18n></a>

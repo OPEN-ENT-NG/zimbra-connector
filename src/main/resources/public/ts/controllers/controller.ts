@@ -222,8 +222,13 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
         };
 
-        $scope.refreshSelectionState = function(mail) {
+        $scope.refreshSelectionState =  function(mail) {
             if (!mail.selected) $scope.state.selectAll = false;
+            if($('plus#mailOptions').children('div.opener').hasClass('minus')){
+               $scope.stopPropagation= true;
+               $('plus#mailOptions').trigger('click');
+            }
+
         };
 
         function setCurrentMail(mail: Mail, doNotSelect?: boolean) {
@@ -929,6 +934,12 @@ export let zimbraController = ng.controller("ZimbraController", [
             return $scope.state.current
                 ? mail.id === $scope.state.current.id && $scope.display.COLUMN === $scope.viewMode
                 : false;
-        }
-    }
-]);
+        };
+        $scope.displayMailOptions = () => {
+            if($('plus#mailOptions').children('div.opener').hasClass('plus') && !$scope.stopPropagation){
+                Zimbra.instance.currentFolder.deselectAll();
+            }
+            $scope.stopPropagation = false;
+
+        };
+    }]);
