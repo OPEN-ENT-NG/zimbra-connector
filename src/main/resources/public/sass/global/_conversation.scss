@@ -231,9 +231,10 @@
       padding: 0px !important;
       vertical-align: super;
     }
-
-
-
   }
-
+  .mail-line{
+    &.selected{
+      border-left: 5px #FF8500 solid;
+    }
+  }
 }

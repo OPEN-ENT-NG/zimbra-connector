@@ -234,9 +234,13 @@ export let zimbraController = ng.controller("ZimbraController", [
         }
 
         $scope.viewMail = async function(mail) {
-            template.open("right-side", "mail-actions/view-mail");
-            window.scrollTo(0, 0);
-            setCurrentMail(mail);
+            if($scope.viewMode !== $scope.display.COLUMN){
+                template.open("right-side", "mail-actions/view-mail");
+                window.scrollTo(0, 0);
+            }else{
+                $scope.openMailOnRightTemplate();
+            }
+            setCurrentMail(mail, true);
             try {
                 await mail.open();
                 $scope.$root.$emit("refreshMails");
@@ -375,8 +379,8 @@ export let zimbraController = ng.controller("ZimbraController", [
             let noCC = $scope.state.newItem.cc  ? $scope.state.newItem.cc.length===0 : !$scope.state.newItem.cc;
             let noBCC = $scope.state.newItem.bcc ? $scope.state.newItem.bcc.length ===0 : !$scope.state.newItem.bcc;
             return  (  noA && noCC && noBCC)
-            || ($scope.state.newItem.loadingAttachments && $scope.state.newItem.loadingAttachments.length > 0)
-            || $scope.sending;
+                || ($scope.state.newItem.loadingAttachments && $scope.state.newItem.loadingAttachments.length > 0)
+                || $scope.sending;
         };
         $scope.reply = async (outbox?: boolean) => {
             template.open("right-side", "mail-actions/write-mail");
@@ -911,15 +915,20 @@ export let zimbraController = ng.controller("ZimbraController", [
             return (window.outerWidth < SCREENS.FAT_MOBILE);
         };
         $scope.showRightSide = () => {
-          return $scope.display.COLUMN == $scope.viewMode  && ($scope.getFolder() !== 'draft')
+            return $scope.display.COLUMN == $scope.viewMode  && ($scope.getFolder() !== 'draft')
         };
         $scope.getFolder=()=>{
-           return (Zimbra.instance.currentFolder as SystemFolder).folderName;
+            return (Zimbra.instance.currentFolder as SystemFolder).folderName;
         };
         $scope.displayUser = (user) =>  {
             $scope.userInfo = user;
             $scope.displayLightBox.readMail = true;
             template.open("readmail-lightbox", "mail-actions/user-info");
+        };
+        $scope.selectedMail = (mail) => {
+            return $scope.state.current
+                ? mail.id === $scope.state.current.id && $scope.display.COLUMN === $scope.viewMode
+                : false;
         }
     }
 ]);

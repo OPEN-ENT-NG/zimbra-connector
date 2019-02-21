@@ -64,9 +64,9 @@
 		</div>
 
 		<!-- mails -->
-		<div class="notification relative no-margin" ng-if="!isLoading()"
+		<div class="notification mail-line relative no-margin" ng-if="!isLoading()"
 			ng-repeat="mail in zimbra.currentFolder.mails.all"
-			ng-class="{ checked: mail.selected, 'new-element': mail.isUnread(zimbra.currentFolder) }" >
+			ng-class="{ checked: mail.selected, 'new-element': mail.isUnread(zimbra.currentFolder), selected: selectedMail(mail) }" >
 
 			<article ng-click="viewMail(mail);$event.stopPropagation();">
 				<div class="flex-row align-center">

@@ -33,9 +33,9 @@
 		<div class="info fade-in"><i18n>[[state.emptyMessage]]</i18n></div>
 	</div>
 
-	<div class="notification relative no-margin" ng-if="!isLoading()"
+	<div class="notification relative mail-line no-margin" ng-if="!isLoading()"
 		ng-repeat="mail in zimbra.currentFolder.mails.all"
-		ng-class="{checked: mail.selected}"
+		ng-class="{checked: mail.selected, selected: selectedMail(mail) }"
 		dragstart="drag(mail, $originalEvent)">
 
 		<article ng-click="viewMail(mail);$event.stopPropagation();">
