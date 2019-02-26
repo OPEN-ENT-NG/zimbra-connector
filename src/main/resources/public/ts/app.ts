@@ -40,14 +40,11 @@ routes.define(function($routeProvider) {
                 action: "preferences"
             });
     }
-    else {
+    else if(location.pathname==="zimbra/admin-console"){
         $routeProvider
-            .when("", {
-                action: "outSide"
-            })
             .otherwise({
                 action: "outSide"
-            });
+            })
     }
 
 

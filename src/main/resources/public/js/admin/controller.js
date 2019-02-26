@@ -3,9 +3,10 @@ function AdminController($location, $scope, $timeout, $compile, $sanitize, model
     route({
         outSide:  function() {
             template.open("body", "out-side-communication");
+            $scope.selectLeafMenu($scope.leafMenu[0]);
         }
     });
-   $scope.structures = model.structures;
+    $scope.structures = model.structures;
     $scope.template = template;
     $scope.lang = lang;
 
@@ -197,5 +198,9 @@ function AdminController($location, $scope, $timeout, $compile, $sanitize, model
             }
         }
     ];
+    $scope.selectLeafMenu = function (menuItem) {
+        template.open('body', menuItem.templateName);
+        menuItem.onClick();
+    }
 
 }

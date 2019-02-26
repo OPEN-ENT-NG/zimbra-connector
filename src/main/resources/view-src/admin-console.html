@@ -16,11 +16,11 @@
 
 <admin-portal>
     <div class="twelve">
-        <article class="twelve cell list-view">
+        <article class="twelve cell list-view" ng-init="selectLeafMenu(leafMenu[0])">
 
             <div class="twelve leaf-menu-container">
                 <div ng-repeat="menuItem in leafMenu | filter: filterLeafMenuItems" class="leaf-menu" ng-class="{ selected: template.contains('body', menuItem.templateName) }">
-                    <a ng-click="template.open('body', menuItem.templateName); menuItem.onClick();">[[menuItem.text]]</a>
+                    <a ng-click="selectLeafMenu(menuItem)">[[menuItem.text]]</a>
                     <loading-icon
                             ng-if="menuItem.requestName"
                             request="[[menuItem.requestName]]" only-loading-icon
