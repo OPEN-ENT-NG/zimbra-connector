@@ -23,6 +23,7 @@ import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.helper.ServiceManager;
+import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.filters.VisiblesFilter;
@@ -939,5 +940,11 @@ public class ZimbraController extends BaseController {
     public void zimbraOutside(final HttpServerRequest request) {
         // This route is used to create zimbraOutsideCommunication Workflow right, nothing to do
         return;
+    }
+    @Get("/preferences")
+    @ResourceFilter(ExpertAccess.class)
+    @SecuredAction(value = "", type = ActionType.RESOURCE)
+    public void zimbraSetting(HttpServerRequest request) {
+        renderView(request);
     }
 }

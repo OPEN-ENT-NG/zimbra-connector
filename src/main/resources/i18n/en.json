@@ -128,5 +128,6 @@
     "widget.title": "messages",
     "yesterday": "Hier",
     "you.answered": "You answered to this message",
-    "zimbra.outside.donotchange": "External Mail [Do Not Change]"
+    "zimbra.outside.donotchange": "External Mail [Do Not Change]",
+  "account.myaccount": "My account"
 }

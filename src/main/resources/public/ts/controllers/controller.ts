@@ -2,6 +2,7 @@ import {$, _, Document, idiom as lang, moment, ng, notify, skin, template} from 
 import {DISPLAY, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra,} from "../model";
 
 import {Mix} from "entcore-toolkit";
+import {Preference} from "../model/preferences";
 
 export let zimbraController = ng.controller("ZimbraController", [
     "$location",
@@ -76,6 +77,11 @@ export let zimbraController = ng.controller("ZimbraController", [
                 await Zimbra.instance.folders.draft.countTotal();
                 $scope.nextPage();
                 $scope.constructNewItem();
+                $scope.$apply();
+            },
+            preferences: async () => {
+                template.open("body", "expert");
+                $scope.modeExpert = new Preference();
                 $scope.$apply();
             }
         });

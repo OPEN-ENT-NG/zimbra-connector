@@ -1,5 +1,5 @@
 import { routes, ng , ui } from "entcore";
-import { zimbraController, printController } from "./controllers/index";
+import { zimbraController, printController, preferenceController } from "./controllers/index";
 import { recipientList, switchSearch, ngBottomScroll, folderLoader } from "./directives/index";
 
 
@@ -34,7 +34,13 @@ routes.define(function($routeProvider) {
             .otherwise({
                 action: "redirectToZimbra"
             });
-    }else {
+    }else if(location.pathname==="/zimbra/preferences"){
+        $routeProvider
+            .otherwise({
+                action: "preferences"
+            });
+    }
+    else {
         $routeProvider
             .when("", {
                 action: "outSide"
@@ -49,6 +55,7 @@ routes.define(function($routeProvider) {
 
 ng.controllers.push(zimbraController);
 ng.controllers.push(printController);
+ng.controllers.push(preferenceController);
 ng.directives.push(recipientList);
 ng.directives.push(switchSearch);
 ng.directives.push(ngBottomScroll);

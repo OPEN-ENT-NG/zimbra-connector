@@ -157,5 +157,13 @@
     "communication.outside":"Communication extérieure",
     "directory.search":"Rechercher",
     "massage.info.access.rights":"Choisissez ci-dessous les groupes d'utilisateurs qui pourront envoyer des messages vers des adresses extérieures.",
-    "zimbra.outside.donotchange": "Messagerie Externe [Ne Pas Modifier]"
+    "zimbra.outside.donotchange": "Messagerie Externe [Ne Pas Modifier]",
+    "panel.user.messagerie":"Messagerie",
+    "account.myaccount": "Mon compte",
+    "panel.my.profile": "Mon profil",
+    "panel.user.history": "Mon historique",
+    "panel.notifications.set": "Gérer mes notifications externes",
+    "zimbra.message.outside.accessible":"Votre messagerie est ouverte. Vous pouvez envoyer et recevoir des messages depuis l'exterieur de l'ENT.",
+    "zimbra.expert.mode.activation":"Accès directe au mode Expert de la messagerie",
+    "zimbra.expert.mode.activation.comment":"En sélectionnant cette option, vous accédez directement au mode expert de la messagerie en cliquant sur l'icône situé dans le bandeau de navigation"
 }

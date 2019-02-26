@@ -111,5 +111,7 @@
     "widget.empty": "Vous n'avez aucun message",
     "widget.title": "messages",
     "yesterday": "Hier",
-    "you.answered": "Vous avez répondu à ce message"
+    "you.answered": "Vous avez répondu à ce message",
+    "account.myaccount": "Mon compte",
+
 }

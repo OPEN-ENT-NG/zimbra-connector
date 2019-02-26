@@ -11,6 +11,7 @@ export class User implements Selectable {
     id: string;
     selected: boolean;
     isGroup: boolean;
+    email: string;
 
     constructor(id?: string, displayName?: string) {
         this.displayName = displayName;
@@ -26,7 +27,7 @@ export class User implements Selectable {
     }
 
     async findData(): Promise<boolean> {
-        var that = this;
+        let that = this;
         const response = await http.get("/userbook/api/person?id=" + this.id);
         const userData = response.data;
         if (!userData.result[0])
@@ -38,6 +39,12 @@ export class User implements Selectable {
             displayName: userData.result[0].displayName
         });
 
+        return true;
+    }
+    async findMe(): Promise<boolean> {
+        let {data} = await http.get("/userbook/api/person");
+        if (data && data.result[0])
+            Mix.extend(this, data.result[0]);
         return true;
     }
 

@@ -1,0 +1,40 @@
+
+<app-title>
+    <h1>
+        <a href="/userbook/mon-compte"><i class="orange-user"></i><span translate content="account.myaccount"></span></a>
+    </h1>
+</app-title>
+
+<!-- <h2><i18n>xtnotifications.title</i18n></h2> -->
+
+
+    <div class="twelve tabs vertical-spacing-twice heading-tabs">
+        <header class="horizontal-spacing-twice">
+            <a href="/userbook/mon-compte#/edit-me">
+                <span><i class="person"></i><i18n>panel.my.profile</i18n></span>
+            </a>
+        </header>
+        <header class="horizontal-spacing-twice"
+                ng-if="account.email.length && hasNotificationWorkflow()">
+            <a href="/timeline/preferencesView">
+                <span><i class="bell"></i><i18n>panel.notifications.set</i18n></span>
+            </a>
+        </header>
+        <header class="horizontal-spacing-twice"  ng-if=" hasHistoryWorkflow()">
+            <a href="/timeline/historyView">
+                <span><i class="history"></i><i18n>panel.user.history</i18n></span>
+            </a>
+        </header>
+        <header class="horizontal-spacing-twice" ng-if="pickTheme && hasSwitchThemeWorkflow()" >
+            <a href="/userbook/mon-compte#/themes">
+                <span><i class="desktop"></i><i18n>panel.user.pickTheme</i18n></span>
+            </a>
+        </header>
+        <header class="horizontal-spacing-twice selected">
+            <a href="/zimbra/preferences">
+                <span><i class="mail-large"></i><i18n>panel.user.messagerie</i18n></span>
+            </a>
+        </header>
+    </div>
+
+<container ng-include="template.containers.body"></container>
