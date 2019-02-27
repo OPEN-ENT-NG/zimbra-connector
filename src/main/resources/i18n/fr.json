@@ -166,5 +166,7 @@
     "zimbra.message.outside.accessible":"Votre messagerie est ouverte. Vous pouvez envoyer et recevoir des messages depuis l'exterieur de l'ENT.",
     "zimbra.expert.mode.activation":"Accès directe au mode Expert de la messagerie",
     "zimbra.expert.mode.activation.comment":"En sélectionnant cette option, vous accédez directement au mode expert de la messagerie en cliquant sur l'icône situé dans le bandeau de navigation",
-    "massage.info.consequences":"Attention, lorsque vous ouvrez des droits vers l'extérieur, les règles de communication définies par l'établissement ne sont plus appliquées dans la messagerie pour les utilisateurs contenus dans les groupes sélectionnés."
+    "massage.info.consequences":"Attention, lorsque vous ouvrez des droits vers l'extérieur, les règles de communication définies par l'établissement ne sont plus appliquées dans la messagerie pour les utilisateurs contenus dans les groupes sélectionnés.",
+    "message.confirm.delete.mail":"Voulez-vous vraiment supprimer définitivement le(s) mail(s) sélectionné(s) ?",
+    "delete.mail": "Suppression de mail"
 }

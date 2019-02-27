@@ -1,7 +1,7 @@
 <section class="toggle-buttons" ng-class="{ hide: zimbra.currentFolder.mails.selection.length === 0 && (!zimbra.currentFolder.userFolders || zimbra.currentFolder.userFolders.selected.length === 0) }">
     <div class="toggle">
         <div class="row">
-            <button ng-click="removeSelection()" ng-if="zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length">
+            <button ng-click="showConfirm()" ng-if="zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length">
                 <i18n>remove</i18n>
             </button>
             <button ng-click="restore()" ng-if="(zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length) && zimbra.currentFolder.folderName === 'trash'">

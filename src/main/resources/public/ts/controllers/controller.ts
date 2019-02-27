@@ -528,6 +528,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             await Zimbra.instance.currentFolder.countUnread();
             $scope.refreshFolders();
             $scope.state.selectAll = false;
+            $scope.displayLightBox.folder =false;
             $scope.$apply();
         };
 
@@ -947,5 +948,17 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
             $scope.stopPropagation = false;
 
+        };
+        $scope.showConfirm = () => {
+            if($scope.getFolder() === 'trash'){
+            $scope.displayLightBox.folder = true;
+            template.open('folder-lightbox','folders-templates/lightboxs/confirm-delete-mail');
+            }else{
+                $scope.removeSelection();
+            }
+        };
+        $scope.cancelDelete = () => {
+            $scope.displayLightBox.folder = true;
+            Zimbra.instance.currentFolder.deselectAll();
         };
     }]);
