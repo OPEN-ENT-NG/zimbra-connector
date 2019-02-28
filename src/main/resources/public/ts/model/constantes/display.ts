@@ -1,15 +1,7 @@
-export  class DISPLAY {
-    LIST:String  = 'list';
-    COLUMN :String = 'column';
-
-    isList = (mode) => {
-        return mode == this.LIST;
-    };
-    isColumn=(mode) => {
-        return mode == this.COLUMN;
-    };
+export enum ViewMode {
+    LIST = 'list',
+    COLUMN = 'column'
 }
-
 export var SCREENS = {
     TABLETTE: 800,
     SMALL_TABLETTE: 65,

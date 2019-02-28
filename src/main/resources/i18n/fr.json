@@ -168,5 +168,6 @@
     "zimbra.expert.mode.activation.comment":"En sélectionnant cette option, vous accédez directement au mode expert de la messagerie en cliquant sur l'icône situé dans le bandeau de navigation",
     "massage.info.consequences":"Attention, lorsque vous ouvrez des droits vers l'extérieur, les règles de communication définies par l'établissement ne sont plus appliquées dans la messagerie pour les utilisateurs contenus dans les groupes sélectionnés.",
     "message.confirm.delete.mail":"Voulez-vous vraiment supprimer définitivement le(s) mail(s) sélectionné(s) ?",
-    "delete.mail": "Suppression de mail"
+    "delete.mail": "Suppression de mail",
+    "zimbra.setting": "Paramétrage messagerie"
 }

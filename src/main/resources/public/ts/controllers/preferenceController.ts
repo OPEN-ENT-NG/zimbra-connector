@@ -1,7 +1,7 @@
-import {$, _, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
-import {DISPLAY, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra,} from "../model";
+import {$, _, Document, moment, ng, notify, skin, template} from "entcore";
+import { User} from "../model";
 
-import {Mix} from "entcore-toolkit";
+
 import {Preference} from "../model/preferences";
 
 export let preferenceController = ng.controller("preferenceController", [
@@ -13,24 +13,6 @@ export let preferenceController = ng.controller("preferenceController", [
     "model",
     "route",
     function($location, $scope, $timeout, $compile, $sanitize, model, route) {
-        $scope.state = {
-            selectAll: false,
-            filterUnread: false,
-            searching: false,
-            current: undefined,
-            newItem: undefined,
-            draftError: false,
-            dragFolder: undefined,
-            emptyMessage: lang.translate("folder.empty"),
-            searchFailed: false,
-            draftSaveDate: null
-        };
-        $scope.display = new DISPLAY();
-        $scope.viewMode = $scope.display.LIST;
-        $scope.zimbra = Zimbra.instance;
-        $scope.displayLightBox = {
-            readMail : false
-        };
         route({
             preferences: async () => {
                 template.open("main", "setting/main");
@@ -55,6 +37,5 @@ export let preferenceController = ng.controller("preferenceController", [
         };
         $scope.saveModeExpert = async (preference: Preference) => {
           let result = await preference.save();
-
         }
     }]);

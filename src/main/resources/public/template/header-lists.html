@@ -27,18 +27,18 @@
 
             <div class="aligned Choice-chip" ng-if="getFolder() !== 'draft'">
                 <label class="chip aligned bottom-spacing"
-                       ng-class="{ selected: display.LIST == viewMode }"
-                        tooltip="filter.list"
-                        ng-if="zimbra.currentFolder.mails.all.length > 0"
-                        ng-click="openRightSide('list')">
+                       ng-class="{ selected: preference.isList() }"
+                       tooltip="filter.list"
+                       ng-if="zimbra.currentFolder.mails.all.length > 0"
+                       ng-click="switchViewMode('LIST')">
                     <i class="show-row" ></i>
 
                 </label>
                 <label  class="chip aligned bottom-spacing"
-                        ng-class="{ selected: display.COLUMN == viewMode }"
+                        ng-class="{ selected: preference.isColumn() }"
                         tooltip="filter.row"
                         ng-if="zimbra.currentFolder.mails.all.length > 0"
-                        ng-click="openRightSide('column')">
+                        ng-click="switchViewMode('COLUMN')">
                     <i class="show-column" ></i>
                 </label>
             </div>
@@ -56,22 +56,33 @@
 
 
 
+        <span ng-if="getFolder() !== 'trash' && showRightSide()">
+            <plus id="mailOptions" class="right-magnet"  ng-click="displayMailOptions()">
+                <button ng-click="reply(true)" ng-disabled="!mail.allowReply" ng-if="getFolder() == 'outbox'" ><i18n>reply</i18n></button>
+                <button ng-click="replyAll()" ng-disabled="!mail.allowReplyAll"><i18n>replyall</i18n></button>
 
+                <button ng-click="transfer()" ng-if="getFolder() !== 'outbox'" ><i18n>transfer</i18n></button>
+                <a class="button"   target="_blank" ng-href="/zimbra/print#/printMail/[[mail.id]]"><i18n>print</i18n></a>
+                <button ng-click="removeMail()"><i18n>remove</i18n></button>
+            </plus>
 
-        <plus id="mailOptions" class="right-magnet" ng-if="showRightSide()" ng-click="displayMailOptions()">
-            <button ng-click="replyAll()" ng-disabled="!mail.allowReplyAll"><i18n>replyall</i18n></button>
-            <button ng-click="transfer()"><i18n>transfer</i18n></button>
-            <a class="button"   target="_blank" ng-href="/zimbra/print#/printMail/[[mail.id]]"><i18n>print</i18n></a>
-            <button ng-click="removeMail()"><i18n>remove</i18n></button>
-        </plus>
+            <!-- Reply not allowed if deleted user -->
+            <button class="right-magnet" ng-click="reply()" ng-disabled="!mail.allowReply" ng-if="showRightSide() && getFolder() !== 'outbox'">
+                <i18n>reply</i18n>
+            </button>
+            <button class="right-magnet" ng-click="transfer()" class="right-magnet" ng-if="showRightSide() && getFolder() == 'outbox'">
+                <i18n>transfer</i18n>
+            </button>
+        </span>
+        <span ng-if="getFolder() === 'trash' && showRightSide()">
+            <plus class="right-magnet">
+                <a class="button"   target="_blank" ng-href="/zimbra/print#/printMail/[[mail.id]]"><i18n>print</i18n></a>
+                <button ng-click="mail.remove(); openFolder()"><i18n>remove</i18n></button>
+            </plus>
+            <button ng-click="mail.restore(); openFolder('trash')" class="right-magnet"><i18n>restore</i18n></button>
+        </span>
         <button class="cell-ellipsis horizontal-margin right-magnet" ng-click="template.open('right-side', 'mail-actions/write-mail')">
             <i18n>new.message</i18n>
-        </button>
-
-
-        <!-- Reply not allowed if deleted user -->
-        <button class="right-magnet" ng-click="reply()" ng-disabled="!mail.allowReply" ng-if="showRightSide()">
-            <i18n>reply</i18n>
         </button>
     </div>
 

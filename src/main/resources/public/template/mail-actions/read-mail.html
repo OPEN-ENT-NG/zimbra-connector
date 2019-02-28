@@ -1,6 +1,6 @@
 <!-- read from inbox -->
 <div class="twelve cell"  >
-	<div class="row" ng-if=" display.COLUMN !== viewMode">
+	<div class="row" ng-if="!preference.isColumn()">
 		<plus class="right-magnet">
 			<button ng-click="replyAll()" ng-disabled="!mail.allowReplyAll"><i18n>replyall</i18n></button>
 			<button ng-click="transfer()"><i18n>transfer</i18n></button>
@@ -12,7 +12,7 @@
 			<i18n>reply</i18n>
 		</button>
 
-		<nav class="prev-next" ng-if="zimbra.currentFolder.count > 1 && display.COLUMN !== viewMode">
+		<nav class="prev-next" ng-if="zimbra.currentFolder.count > 1 && !preference.isColumn()">
 			<button class=""
 			ng-click="previousMail()"
 			ng-disabled="zimbra.currentFolder.mails.all.indexOf(state.current) === 0">
@@ -33,7 +33,7 @@
 
 	</div>
 
-	<article class="twelve cell  mail" ng-class="{'vertical-spacing': display.COLUMN !== viewMode}">
+	<article class="twelve cell  mail" ng-class="{'vertical-spacing': !preference.isColumn()}">
 		<div class="row">
 			<em class="cell small-text right-magnet">
 				<span ng-if="mail.isToday()"><i18n>today</i18n> <i18n>at</i18n> [[mail.getHours()]]<i18n>hour.date</i18n>[[mail.getMinutes()]]</span>
