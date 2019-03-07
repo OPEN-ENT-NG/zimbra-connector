@@ -1,19 +1,19 @@
 .zimbra{
-    plus{
-        padding-right: 0;
+  plus{
+    padding-right: 0;
+  }
+  .receivers{
+    margin-bottom: 21px;
+  }
+  editor{
+    .option.attachment{
+      display: none !important;
     }
-    .receivers{
-        margin-bottom: 21px;
-    }
-	editor{
-		.option.attachment{
-			display: none !important;
-		}
-	}
-.display-filter{
-  width: 80px;
-  height: 25px;
-}
+  }
+  .display-filter{
+    width: 80px;
+    height: 25px;
+  }
 
   div.element-circle-add{
     width: 50px;
@@ -58,11 +58,11 @@
     }
   }
 
-.display-filter-trash
-{ width: 111px;
-  height: 25px;
+  .display-filter-trash
+  { width: 111px;
+    height: 25px;
 
-}
+  }
   i.show-column{
     text-align: center;
     line-height: initial;
@@ -207,18 +207,18 @@
     bottom: 2px;
   }
   .recipients{
-   margin-bottom: 0px !important;
-  .drop-down-label{
-    border-bottom: none !important;
     margin-bottom: 0px !important;
-  }
+    .drop-down-label{
+      border-bottom: none !important;
+      margin-bottom: 0px !important;
+    }
     hr{
-     width: calc(100% - 20px );
-     right: 0;
-     display: inline-block;
-     border: 1px #aaa solid;
-     padding: 0px;
-   }
+      width: calc(100% - 20px );
+      right: 0;
+      display: inline-block;
+      border: 1px #aaa solid;
+      padding: 0px;
+    }
     .drop-down-label:hover{
       hr{
         border: 1px solid #FF8500;
@@ -235,6 +235,23 @@
   .mail-line{
     &.selected{
       border-left: 5px #FF8500 solid;
+    }
+  }
+
+  .status-filter{
+    &.column{
+      width: auto !important;
+    }
+  }
+  .notification-attachment {
+    &.column {
+      .attachment{
+      width: 16px !important;
+      height: 16px !important;
+      min-width: 16px !important;
+      min-height: 16px !important;
+      display: contents;
+    }
     }
   }
 }
