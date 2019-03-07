@@ -26,7 +26,10 @@ export let zimbraController = ng.controller("ZimbraController", [
             searchFailed: false,
             draftSaveDate: null
         };
-
+        $scope.display = {
+            searchLong: 'search.condition',
+            searchSmall: 'search.condition.small',
+        };
 
         $scope.zimbra = Zimbra.instance;
         $scope.displayLightBox = {
@@ -925,11 +928,10 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.isMobileScreen = () =>{
             return (window.outerWidth < SCREENS.FAT_MOBILE);
         };
-        $scope.showRightSide = () => {
-            return $scope.preference.isColumn()
-                && ($scope.getFolder() !== 'draft')
-                && $scope.zimbra.currentFolder.mails.all.length
-        };
+        $scope.showRightSide = () =>
+            $scope.preference.isColumn()
+            && ($scope.getFolder() !== 'draft')
+            && $scope.zimbra.currentFolder.mails.all.length;
         $scope.getFolder=()=>{
             return (Zimbra.instance.currentFolder as SystemFolder).folderName;
         };
@@ -962,5 +964,5 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.displayLightBox.folder = true;
             Zimbra.instance.currentFolder.deselectAll();
         };
-
+        $scope.searchText = () => $scope.showRightSide() ? $scope.display.searchSmall : $scope.display.searchLong;
     }]);
