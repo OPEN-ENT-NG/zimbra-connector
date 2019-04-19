@@ -152,7 +152,13 @@ public class UserService {
      */
     public void getAliases(String mail, Handler<AsyncResult<JsonObject>> handler) {
 
-        ZimbraUser user = new ZimbraUser(new MailAddress(mail));
+        ZimbraUser user;
+        try {
+            user = new ZimbraUser(new MailAddress(mail));
+        } catch (IllegalArgumentException e) {
+            log.error("Error when getting aliases from email",e);
+            return;
+        }
         user.checkIfExists(v -> {
            if(user.existsInZimbra()) {
                List<String> aliases = user.getAliases();
@@ -329,7 +335,7 @@ public class UserService {
      * @param idList Array with the list of Ids
      * @param handler result handler
      */
-    void getMailAddresses(JsonArray idList, Handler<JsonObject> handler) {
+    public void getMailAddresses(JsonArray idList, Handler<JsonObject> handler) {
         if(idList == null || idList.isEmpty()) {
             handler.handle(new JsonObject());
             return;

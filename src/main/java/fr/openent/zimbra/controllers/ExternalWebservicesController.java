@@ -68,7 +68,8 @@ public class ExternalWebservicesController extends BaseController {
 
     /**
      * Create notification in timeline when receiving a mail
-     * Return empty Json Object if successful
+     * Respond to the request immediatly to free it, then send the notification internally
+     * Return empty Json Object if params are well formatted
      * @param request request containing data :
      *                sender : mail address of the sender
      *                recipient : neo4j id of the recipient
@@ -89,8 +90,9 @@ public class ExternalWebservicesController extends BaseController {
                     || messageId == null || messageId.isEmpty()) {
                 badRequest(request);
             } else {
+                renderJson(request, new JsonObject());
                 notificationService.sendNewMailNotification(zimbraSender, zimbraRecipient, messageId, subject,
-                        defaultResponseHandler(request));
+                        v -> {});
             }
         });
     }
