@@ -36,6 +36,7 @@ import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 
 import fr.wseduc.webutils.request.RequestUtils;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.filter.ResourceFilter;
@@ -835,6 +836,23 @@ public class ZimbraController extends BaseController {
 			default:
 				message.reply(new JsonObject().put("status", "error")
 						.put("message", "invalid.action"));
+		}
+	}
+
+
+	@BusAddress("fr.openent.zimbra")
+	public void zimbraEventBusHandler(Message<JsonObject> message) {
+		String action = message.body().getString("action", "");
+		switch(action) {
+			case "getMailUser" :
+				JsonArray idList = message.body().getJsonArray("idList", new JsonArray());
+				userService.getMailAddresses(idList, res -> {
+					message.reply(new JsonObject().put("status", "ok")
+						.put("message", res));
+				});
+				break;
+			default:
+				conversationEventBusHandler(message);
 		}
 	}
 
