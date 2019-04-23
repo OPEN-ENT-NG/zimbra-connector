@@ -79,7 +79,6 @@ public class Neo4jZimbraService {
 				+ "where s.id = {senderId} and r.id = {recipientId} "
 				+ "return s.id as senderId, r.id as recipientId, "
 				+ "exists((r)<-[:COMMUNIQUE*1..2]-()<-[:COMMUNIQUE]-(s)) OR "
-				//+ "exists((r)-[:DEPENDS*0..1]->()<-[:COMMUNIQUE*0..1]-()<-[:COMMUNIQUE]-(s)) OR "
 				+ "exists((r)<-[:COMMUNIQUE_DIRECT]-(s)) as " + CommunicationService.CAN_COMMUNICATE;
 
 		JsonObject params = new JsonObject()
@@ -93,9 +92,9 @@ public class Neo4jZimbraService {
 		String query = "MATCH (s:User), (r:Group) "
 				+ "where s.id = {senderId} and r.id = {recipientId} "
 				+ "return s.id as senderId, r.id as recipientId, "
-				+ "exists((r)<-[:COMMUNIQUE*1..2]-()<-[:DEPENDS]-(s)) OR "
+				+ "exists((s)-[:COMMUNIQUE*1..2]->()<-[:DEPENDS]-(r)) OR "
 				+ "exists((r)<-[:COMMUNIQUE]-()<-[:COMMUNIQUE]-(s)) OR "
-				+ "exists((r)<-[:COMMUNIQUE]-(s)) as " + CommunicationService.CAN_COMMUNICATE;
+				+ "(exists((r)<-[:COMMUNIQUE]-(s)) AND gp.users <> 'INCOMING') as " + CommunicationService.CAN_COMMUNICATE;
 
 		JsonObject params = new JsonObject()
 				.put("senderId", senderId)
