@@ -42,7 +42,8 @@ public class NotificationService {
                 String timelineSender = (user != null && user.getUsername() != null)
                         ? user.getUsername()
                         : null;
-                String messageUri = pathPrefix + "/zimbra#/read-mail/" + messageId;
+                //String messageUri = pathPrefix + "/zimbra#/read-mail/" + messageId;
+                String messageUri = pathPrefix + "/zimbra";
                 final JsonObject params = new JsonObject()
                         .put("subject", timelineSubject)
                         .put("messageUri", messageUri)
