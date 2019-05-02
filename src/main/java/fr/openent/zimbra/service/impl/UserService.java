@@ -167,11 +167,11 @@ public class UserService {
                } else {
                    if(aliases.size() > 1) {
                        log.warn("More than one alias for : " + mail);
-                       JsonObject result = new JsonObject()
-                               .put("name", user.getName())
-                               .put("aliases", new JsonArray(aliases));
-                       handler.handle(Future.succeededFuture(result));
                    }
+                   JsonObject result = new JsonObject()
+                           .put("name", user.getName())
+                           .put("aliases", new JsonArray(aliases));
+                   handler.handle(Future.succeededFuture(result));
                }
            } else {
                handler.handle(Future.failedFuture("No Matching Zimbra Account for : " + mail));
