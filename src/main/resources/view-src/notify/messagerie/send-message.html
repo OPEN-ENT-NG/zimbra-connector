@@ -1,2 +1,10 @@
-<a href="{{#host}}{{uri}}{{/host}}">{{username}}</a>
+{{#uri}}<a href="{{#host}}{{#username}}{{uri}}{{/username}}{{/host}}">{{username}}</a>{{/uri}}
+{{^uri}}
+    {{#username}}
+        {{username}}
+    {{/username}}
+    {{^username}}
+        <span>{{#i18n}}timeline.no.sender{{/i18n}}</span>
+    {{/username}}
+{{/uri}}
 <br /><span>{{#i18n}}timeline.zimbra.sent.message{{/i18n}}</span>: <a href="{{#host}}{{messageUri}}{{/host}}">{{subject}}</a>.

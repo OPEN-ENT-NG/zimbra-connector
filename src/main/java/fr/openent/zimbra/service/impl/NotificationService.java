@@ -41,15 +41,19 @@ public class NotificationService {
             getUserInfos(userId, user -> {
                 String timelineSender = (user != null && user.getUsername() != null)
                         ? user.getUsername()
-                        : "<span translate key=\"timeline.no.sender\"></span>";
+                        : null;
                 String messageUri = pathPrefix + "/zimbra#/read-mail/" + messageId;
                 final JsonObject params = new JsonObject()
-                        .put("uri", "/userbook/annuaire#" + userId )
-                        .put("username", timelineSender)
                         .put("subject", timelineSubject)
                         .put("messageUri", messageUri)
                         .put("resourceUri", messageUri)
                         .put("disableAntiFlood", true);
+                if(timelineSender != null) {
+                    params.put("username", timelineSender)
+                            .put("uri", "/userbook/annuaire#" + userId );
+                } else {
+                    params.put("username", zimbraSender);
+                }
                 List<String> recipients = new ArrayList<>();
                 recipients.add(zimbraRecipient);
                 timelineHelper.notifyTimeline(null, "messagerie.send-message",
