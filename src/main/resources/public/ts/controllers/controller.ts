@@ -37,17 +37,19 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
         route({
             readMail: async function(params) {
+                $scope.preference = await new Preference();
                 Zimbra.instance.folders.openFolder("inbox");
-                $scope.readMail(new Mail(params.mailId));
                 await Zimbra.instance.sync();
                 await Zimbra.instance.folders.draft.countTotal();
                 $scope.constructNewItem();
                 template.open("page", "folders");
                 template.open("right-side","right-side");
                 template.open("header","header-lists");
+                $scope.readMail(new Mail(params.mailId));
                 $scope.$apply();
             },
             writeMail: async function(params) {
+                $scope.preference = await new Preference();
                 await Zimbra.instance.sync();
                 Zimbra.instance.folders.openFolder("inbox");
                 let user = new User(params.userId);
@@ -264,6 +266,9 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.readMail = async (mail: Mail, notMakeItRead?: boolean) => {
+            if(!$scope.preference) {
+                $scope.preference = await new Preference();
+            }
             if(!$scope.preference.isColumn()){
                 template.open("right-side", "mail-actions/read-mail");
                 window.scrollTo(0, 0);
