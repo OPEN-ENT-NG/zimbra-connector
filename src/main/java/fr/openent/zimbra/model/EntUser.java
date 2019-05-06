@@ -93,6 +93,7 @@ public class EntUser {
                     applyJson(jsonUser);
                 } catch (Exception e) {
                     handler.handle(Future.failedFuture(e));
+                    return;
                 }
                 handler.handle(Future.succeededFuture());
             }

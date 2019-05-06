@@ -59,7 +59,6 @@ public class MailAddress {
 
     private void processRawAddress() throws IllegalArgumentException {
         if(rawAddress.isEmpty()) {
-            log.error("Empty address can't be processed");
             throw new IllegalArgumentException("Empty address can't be processed");
         }
         String addr = rawAddress.replaceAll(".*<","");
@@ -70,14 +69,12 @@ public class MailAddress {
 
     private void processCleanAddress() throws IllegalArgumentException {
         if(completeCleanAddress.isEmpty()) {
-            log.error("Empty address can't be processed");
             throw new IllegalArgumentException("Empty address can't be processed");
         }
         try {
             setLocalPart(completeCleanAddress.substring(0, completeCleanAddress.indexOf('@')));
             setDomain(completeCleanAddress.substring(completeCleanAddress.indexOf('@') + 1));
         } catch (StringIndexOutOfBoundsException e) {
-            log.error("Badly formatted email : " + completeCleanAddress);
             throw new IllegalArgumentException(e);
         }
     }

@@ -258,9 +258,14 @@ public class SynchroUser extends EntUser {
             logs = result.cause().getMessage();
         }
         if(idRowBdd == 0) {
-            handler.handle(Future.succeededFuture(new JsonObject()));
+            handler.handle(result);
         } else {
-            sqlSynchroService.updateSynchroUser(idRowBdd, status, logs, handler);
+            sqlSynchroService.updateSynchroUser(idRowBdd, status, logs, bddres -> {
+                if(bddres.failed()) {
+                    log.error("Update in bdd failed : " + bddres.cause().getMessage());
+                }
+                handler.handle(result);
+            });
         }
     }
 }
