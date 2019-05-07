@@ -30,6 +30,7 @@ import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.request.RequestUtils;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -135,5 +136,28 @@ public class ExternalWebservicesController extends BaseController {
         } else {
             badRequest(request);
         }
+    }
+
+    @Get("wstest")
+    @SecuredAction("zimbra.ws.test")
+    public void testWs(final HttpServerRequest request) {
+        String action = request.params().get("action");
+        if(action == null || action.isEmpty()) {
+            badRequest(request);
+        } else {
+            switch (action) {
+                case "getmail":
+                    String userid = request.params().get("userid");
+                    eb.send("fr.openent.zimbra",
+                            new JsonObject().put("action", "getMailUser")
+                            .put("idList", new JsonArray().add(userid)),
+                            res -> {
+                                renderJson(request, (JsonObject)res.result().body());
+                            });
+                    return;
+            }
+            badRequest(request);
+        }
+
     }
 }
