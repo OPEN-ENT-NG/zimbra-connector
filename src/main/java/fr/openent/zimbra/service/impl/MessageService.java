@@ -18,6 +18,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
@@ -384,7 +385,7 @@ public class MessageService {
     public void getMessage(String messageId, UserInfos user, Handler<Either<String,JsonObject>> handler) {
         JsonObject messageReq = new JsonObject()
                 .put("html", 1)
-                .put("read", 1)
+                .put("read", Zimbra.appConfig.isActionBlocked(ConfigManager.UPDATE_ACTION) ? 0 : 1)
                 .put("needExp", 1)
                 .put("neuter", 0)
                 .put("id", messageId);

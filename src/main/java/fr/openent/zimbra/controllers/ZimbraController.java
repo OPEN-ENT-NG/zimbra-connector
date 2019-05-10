@@ -18,13 +18,13 @@
 package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.filters.DevLevelFilter;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.*;
-import fr.openent.zimbra.filters.VisiblesFilter;
 
 import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.Delete;
@@ -138,8 +138,12 @@ public class ZimbraController extends BaseController {
 	 */
 	@Post("draft")
 	@SecuredAction("zimbra.create.draft")
+	@ResourceFilter(DevLevelFilter.class)
 	public void createDraft(final HttpServerRequest request) {
-
+		if(Zimbra.appConfig.isActionBlocked(ConfigManager.UPDATE_ACTION)) {
+			badRequest(request);
+			return;
+		}
 		final String parentMessageId = request.params().get("In-Reply-To");
 		String replyType = request.params().get("reply");
 
@@ -174,7 +178,8 @@ public class ZimbraController extends BaseController {
 	 * 	              	cc : id of each cc recipient
 	 */
 	@Put("draft/:id")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void updateDraft(final HttpServerRequest request) {
 		final String messageId = request.params().get("id");
 		if (messageId == null || messageId.trim().isEmpty()) {
@@ -204,8 +209,8 @@ public class ZimbraController extends BaseController {
 	 * 	              cc : id of each cc recipient
 	 */
 	@Post("send")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
-	@ResourceFilter(VisiblesFilter.class)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void send(final HttpServerRequest request) {
         final String messageId = request.params().get("id");
 		getUserInfos(eb, request, user -> {
@@ -372,7 +377,8 @@ public class ZimbraController extends BaseController {
 	 *                	]
 	 */
 	@Put("trash")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void trash(final HttpServerRequest request) {
 		final List<String> messageIds = request.params().getAll("id");
 		if(messageIds == null || messageIds.size() == 0){
@@ -402,7 +408,8 @@ public class ZimbraController extends BaseController {
 	 *                	]
 	 */
 	@Put("restore")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void restore(final HttpServerRequest request) {
 		final List<String> messageIds = request.params().getAll("id");
 		if(messageIds == null || messageIds.size() == 0){
@@ -432,7 +439,8 @@ public class ZimbraController extends BaseController {
 	 *                	]
 	 */
 	@Delete("delete")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void delete(final HttpServerRequest request) {
 		final List<String> messageIds = request.params().getAll("id");
 		if (messageIds == null || messageIds.isEmpty()) {
@@ -456,6 +464,7 @@ public class ZimbraController extends BaseController {
      */
 	@Delete("emptyTrash")
 	@SecuredAction(value="zimbra.empty.trash", type = ActionType.AUTHENTICATED)
+	@ResourceFilter(DevLevelFilter.class)
 	public void emptyTrash(final HttpServerRequest request) {
         getUserInfos(eb, request, user -> {
             if (user != null) {
@@ -481,7 +490,8 @@ public class ZimbraController extends BaseController {
 	 *                  unread : boolean
 	 */
 	@Post("toggleUnread")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void toggleUnread(final HttpServerRequest request) {
 		final List<String> ids = request.params().getAll("id");
 		final String unread = request.params().get("unread");
@@ -552,7 +562,8 @@ public class ZimbraController extends BaseController {
 	 *                	createFolder.json
 	 */
 	@Post("folder")
-	@SecuredAction(value = "zimbra.folder.create", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void createFolder(final HttpServerRequest request) {
 		UserUtils.getUserInfos(eb, request,  user -> {
 			if(user == null){
@@ -582,7 +593,8 @@ public class ZimbraController extends BaseController {
 	 *                	updateFolder.json
 	 */
 	@Put("folder/:folderId")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void updateFolder(final HttpServerRequest request) {
         final String folderId = request.params().get("folderId");
 
@@ -618,7 +630,8 @@ public class ZimbraController extends BaseController {
 	 *                	]
 	 */
 	@Put("move/userfolder/:folderId")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void move(final HttpServerRequest request) {
 		final String folderId = request.params().get("folderId");
 		final List<String> messageIds = request.params().getAll("id");
@@ -649,7 +662,8 @@ public class ZimbraController extends BaseController {
 	 *                	]
 	 */
 	@Put("move/root")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void rootMove(final HttpServerRequest request) {
 		final List<String> messageIds = request.params().getAll("id");
 		if(messageIds == null || messageIds.size() == 0){
@@ -674,7 +688,8 @@ public class ZimbraController extends BaseController {
 	 *                "folderId" : "folder Id"
 	 */
 	@Put("folder/trash/:folderId")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void trashFolder(final HttpServerRequest request) {
 		final String folderId = request.params().get("folderId");
 
@@ -696,7 +711,8 @@ public class ZimbraController extends BaseController {
 	 *                folder id
 	 */
 	@Put("folder/restore/:folderId")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void restoreFolder(final HttpServerRequest request) {
 		final String folderId = request.params().get("folderId");
 
@@ -717,7 +733,8 @@ public class ZimbraController extends BaseController {
 	 *                folder id
 	 */
 	@Delete("folder/:folderId")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
     public void deleteFolder(final HttpServerRequest request) {
         final String folderId = request.params().get("folderId");
 
@@ -740,7 +757,8 @@ public class ZimbraController extends BaseController {
 	 * @param request http request
 	 */
 	@Post("message/:id/attachment")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void postAttachment(final HttpServerRequest request){
 		final String messageId = request.params().get("id");
 
@@ -789,7 +807,8 @@ public class ZimbraController extends BaseController {
 
 	//Delete an attachment
 	@Delete("message/:id/attachment/:attachmentId")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void deleteAttachment(final HttpServerRequest request){
 		final String messageId = request.params().get("id");
 		final String attachmentId = request.params().get("attachmentId");
@@ -807,7 +826,8 @@ public class ZimbraController extends BaseController {
 	}
 
 	@Put("message/:id/forward/:forwardedId")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void forwardAttachments(final HttpServerRequest request){
 		final String messageId = request.params().get("id");
 		final String forwardedId = request.params().get("forwardedId");
@@ -912,7 +932,8 @@ public class ZimbraController extends BaseController {
 	 *                Users infos
 	 */
 	@Put("signature")
-	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
 	public void putSignatureUser(final HttpServerRequest request) {
 		UserUtils.getUserInfos(eb, request,  user -> {
 			if(user == null){

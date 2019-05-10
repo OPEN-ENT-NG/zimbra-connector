@@ -17,7 +17,9 @@
 
 package fr.openent.zimbra.service.synchro;
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.AsyncHelper;
+import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.synchro.SynchroUser;
 import fr.openent.zimbra.model.constant.SoapConstants;
@@ -103,6 +105,11 @@ public class SynchroUserService {
      * @param handler result handler
      */
     public void exportUser(String userId, Handler<AsyncResult<JsonObject>> handler) {
+        if(Zimbra.appConfig.isActionBlocked(ConfigManager.SYNC_ACTION)) {
+            handler.handle(Future.failedFuture("action blocked by devlevel"));
+            log.error("user synchro blocked by dev level");
+            return;
+        }
         try {
             SynchroUser user = new SynchroUser(userId);
             user.synchronize(SynchroConstants.ACTION_CREATION, handler);

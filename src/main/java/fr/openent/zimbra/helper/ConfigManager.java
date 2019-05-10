@@ -23,6 +23,12 @@ import io.vertx.core.logging.LoggerFactory;
 
 public class ConfigManager {
 
+    private static final int DEFAULT_ACTION = 0;
+    public static final int SYNC_ACTION = 1;
+    public static final int UPDATE_ACTION = 2;
+
+    private static final String NOSYNC = "no-sync";
+    private static final String NOUPDATE = "no-update";
 
     private final String zimbraUri;
     private final String zimbraAdminUri;
@@ -35,6 +41,7 @@ public class ConfigManager {
     private final String synchroFromMail;
     private final String mailerCron;
     private final Integer maxRecipients;
+    private final int devLevel;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -51,10 +58,23 @@ public class ConfigManager {
         this.mailerCron = config.getString("zimbra-mailer-cron", "");
         this.maxRecipients = config.getInteger("max-recipients", 50);
 
+        String devLevelStr = config.getString("dev-level", "");
+        if(NOSYNC.equals(devLevelStr)) {
+            devLevel = SYNC_ACTION;
+        } else if (NOUPDATE.equals(devLevelStr)) {
+            devLevel = UPDATE_ACTION;
+        } else {
+            devLevel = DEFAULT_ACTION;
+        }
+
         if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
                 || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty() || zimbraDomain.isEmpty()) {
             log.fatal("Zimbra : Missing configuration in conf.properties");
         }
+    }
+
+    public boolean isActionBlocked(int actionLevel) {
+        return actionLevel <= devLevel;
     }
 
     public String getZimbraUri() { return zimbraUri;}
