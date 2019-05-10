@@ -299,17 +299,22 @@ public class AttachmentService {
                 frontAtt.put("contentType", zimbraAtt.getString(MULTIPART_CONTENT_TYPE));
                 frontAtt.put("size", zimbraAtt.getLong(MULTIPART_SIZE));
                 msgFront.put("attachments", msgFront.getJsonArray("attachments", new JsonArray()).add(frontAtt));
-            } else if(MULTIPART_INLINE.equals(zimbraAtt.getString(MULTIPART_CONTENT_DISPLAY))
-                    && zimbraAtt.containsKey(MULTIPART_CONTENT_INLINE)) {
+            } else if(MULTIPART_INLINE.equals(zimbraAtt.getString(MULTIPART_CONTENT_DISPLAY))) {
                 String msgId = msgFront.getString("id");
                 String partId = zimbraAtt.getString(MULTIPART_PART_ID);
                 String attchUrl = Zimbra.URL + "/message/" + msgId + "/attachment/" + partId;
-                String cid = zimbraAtt.getString(MULTIPART_CONTENT_INLINE);
+                if(zimbraAtt.containsKey(MULTIPART_CONTENT_INLINE)) {
+                    String cid = zimbraAtt.getString(MULTIPART_CONTENT_INLINE);
 
-                String regex = "<img([^>]*)\\ssrc=\"cid:" + cid.substring(1, cid.length() - 1);
-                String replaceRegex = "<img$1 src=\"" + attchUrl;
-                String body = msgFront.getString("body", "").replaceAll(regex, replaceRegex);
-                msgFront.put("body", body);
+                    String regex = "<img([^>]*)\\ssrc=\"cid:" + cid.substring(1, cid.length() - 1);
+                    String replaceRegex = "<img$1 src=\"" + attchUrl;
+                    String body = msgFront.getString("body", "").replaceAll(regex, replaceRegex);
+                    msgFront.put("body", body);
+                } else if(zimbraAtt.getBoolean(MSG_MPART_ISBODY, false)){
+                    // Image is the whole body
+                    String body = "<img src=\"" + attchUrl + "\"/>";
+                    msgFront.put("body", body);
+                }
             }
         }
     }

@@ -35,6 +35,7 @@ import org.entcore.common.user.UserInfos;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
 public class MessageService {
@@ -250,7 +251,12 @@ public class MessageService {
             if(!(obj instanceof JsonObject)) continue;
             JsonObject mpart = (JsonObject)obj;
             if(mpart.getBoolean(MSG_MPART_ISBODY, false)) {
-                msgFront.put("body", mpart.getString("content", ""));
+                String contentType = mpart.getString(MULTIPART_CONTENT_TYPE, "");
+                String content = mpart.getString("content", "");
+                if (MULTIPART_CT_TEXTPLAIN.equals(contentType)) {
+                    content = escapeHtml4(content);
+                }
+                msgFront.put("body", content);
             }
             if(mpart.containsKey(MULTIPART_CONTENT_DISPLAY)) {
                 attachments.add(mpart);

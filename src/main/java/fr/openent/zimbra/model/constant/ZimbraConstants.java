@@ -61,7 +61,9 @@ public class ZimbraConstants {
     public static final String MSG_CON_TRASH = "t";
 
     public static final String MULTIPART_CONTENT_DISPLAY = "cd";
+    public static final String MULTIPART_MSG_ATTACHED = "message/rfc822";
     public static final String MULTIPART_CONTENT_TYPE = "ct";
+    public static final String MULTIPART_CT_TEXTPLAIN = "text/plain";
     public static final String MULTIPART_CONTENT_INLINE = "ci";
     public static final String MULTIPART_PART_ID = "part";
     public static final String MULTIPART_FILENAME = "filename";
