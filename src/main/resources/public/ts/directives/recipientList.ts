@@ -51,7 +51,7 @@ export const recipientList = ng.directive("recipientList", () => {
                 <form class="input-help" ng-submit="update(true)">
                     <input class="chip-input right-magnet" type="text" ng-model="searchText" ng-change="update()" autocomplete="off" ng-class="{ move: searchText.length > 0 }" 
                     i18n-placeholder="[[restriction ? 'share.search.help' : 'share.search.placeholder' ]]"
-                    ng-keydown="addExternalItem($event)"
+                    ng-keyup="addExternalItem($event)"
                     />
                     
                 </form>
@@ -169,6 +169,7 @@ export const recipientList = ng.directive("recipientList", () => {
                 let myUser =new User(scope.searchText, scope.searchText);
                 if((keyCode === 13 || key == ";" ) && myUser.isAMail() && scope.searchText &&
                 model.me.hasWorkflow('fr.openent.zimbra.controllers.ZimbraController|zimbraOutside')){
+                    myUser.cleanMail();
                     scope.addItem((myUser));
                     scope.clearSearch();
                     scope.$apply();

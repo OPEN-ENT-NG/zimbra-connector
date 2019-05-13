@@ -89,6 +89,11 @@ export class User implements Selectable {
         if (!this.id) return false;
         return this.id.includes("@");
     }
+
+    cleanMail() {
+        this.id = this.id.replace(";","");
+        this.displayName = this.displayName.replace(";","");
+    }
 }
 
 export class Users {
