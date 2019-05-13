@@ -173,7 +173,9 @@ public class UserService {
         try {
             user = new ZimbraUser(new MailAddress(mail));
         } catch (IllegalArgumentException e) {
-            log.error("Error when getting aliases from email",e);
+            log.warn("Badly formatted email : " + mail);
+            log.debug(e);
+            handler.handle(Future.failedFuture("Badly formatted email : " + mail));
             return;
         }
         user.checkIfExists(v -> {
