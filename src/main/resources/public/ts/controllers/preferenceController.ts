@@ -20,6 +20,7 @@ import { User} from "../model";
 
 
 import {Preference} from "../model/preferences";
+import http from "axios";
 
 export let preferenceController = ng.controller("preferenceController", [
     "$location",
@@ -39,6 +40,7 @@ export let preferenceController = ng.controller("preferenceController", [
                 $scope.account = new User();
                 await $scope.account.findMe();
                 $scope.preference = await new Preference();
+                $scope.mailConfig = await $scope.getMailConfig();
                 $scope.$apply();
             }
         });
@@ -54,5 +56,10 @@ export let preferenceController = ng.controller("preferenceController", [
         };
         $scope.saveModeExpert = async (preference: Preference) => {
           let result = await preference.save();
-        }
+        };
+
+        $scope.getMailConfig = async () => {
+            let config = await http.get("/zimbra/mailconfig");
+            return config.data;
+        };
     }]);

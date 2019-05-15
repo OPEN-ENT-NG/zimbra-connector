@@ -21,8 +21,8 @@ import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
+import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.soap.SoapRequest;
-import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
@@ -228,12 +228,12 @@ public class UserService {
      * @param handler Handler result
      */
     private void processGetAddress(JsonObject jsonResponse,
-                                   Handler<Either<String,String>> handler) {
+                                   Handler<AsyncResult<String>> handler) {
 
         if(jsonResponse.containsKey(UserInfoService.ALIAS)) {
-            handler.handle(new Either.Right<>(jsonResponse.getJsonObject(UserInfoService.ALIAS).getString("name")));
+            handler.handle(Future.succeededFuture(jsonResponse.getJsonObject(UserInfoService.ALIAS).getString("name")));
         } else {
-            handler.handle(new Either.Left<>("Could not get Quota from GetInfoRequest"));
+            handler.handle(Future.failedFuture("Could not get Quota from GetInfoRequest"));
         }
     }
 
@@ -298,6 +298,29 @@ public class UserService {
     }
 
     /**
+     * Get configuration for mail client for a specific user
+     * @param userId id of the user
+     * @param handler final handler
+     */
+    public void getMailConfig(String userId, Handler<AsyncResult<JsonObject>> handler) {
+        JsonObject mailConfig = Zimbra.appConfig.getMailConfig();
+        if(!mailConfig.containsKey(FrontConstants.MAILCONFIG_IMAP)
+                || !mailConfig.containsKey(FrontConstants.MAILCONFIG_SMTP)) {
+            handler.handle(Future.failedFuture("No mail configuration"));
+            return;
+        }
+        getUserAddress(userId, res -> {
+            if(res.failed() || res.result().isEmpty()) {
+                handler.handle(Future.failedFuture("No user address"));
+                log.error("No user adress for user " + userId);
+            } else {
+                mailConfig.put(FrontConstants.MAILCONFIG_LOGIN, res.result());
+                handler.handle(Future.succeededFuture(mailConfig));
+            }
+        });
+    }
+
+    /**
      * Get a user adress
      * First query database
      * If not present, query Zimbra
@@ -305,7 +328,7 @@ public class UserService {
      * @param userId User Id
      * @param handler result handler
      */
-    private void getUserAddress(String userId, Handler<Either<String,String>> handler) {
+    private void getUserAddress(String userId, Handler<AsyncResult<String>> handler) {
         sqlService.getUserMailFromId(userId, result -> {
             if(result.isLeft() || result.right().getValue().isEmpty()) {
                 log.debug("no user in database for id : " + userId);
@@ -317,13 +340,13 @@ public class UserService {
                                 .equals(callResult.getString(SoapZimbraService.ERROR_CODE, ""))) {
                             synchroUserService.exportUser(userId, resultSync -> {
                                 if (resultSync.failed()) {
-                                    handler.handle(new Either.Left<>(resultSync.cause().getMessage()));
+                                    handler.handle(Future.failedFuture(resultSync.cause()));
                                 } else {
                                     getUserAddress(userId, handler);
                                 }
                             });
                         } else {
-                            handler.handle(new Either.Left<>(response.cause().getMessage()));
+                            handler.handle(Future.failedFuture(response.cause()));
                         }
                     } else {
                         processGetAccountInfo(response.result(), resInfo ->
@@ -337,7 +360,7 @@ public class UserService {
                     log.warn("More than one address for user id : " + userId);
                 }
                 String mail = results.getJsonObject(0).getString(SqlZimbraService.ZIMBRA_NAME);
-                handler.handle(new Either.Right<>(mail));
+                handler.handle(Future.succeededFuture(mail));
             }
         });
     }
@@ -398,8 +421,8 @@ public class UserService {
                 switch (idInfos.getString("type", "")) {
                     case TYPE_USER:
                         getUserAddress(elemId, result -> {
-                            if(result.isRight()) {
-                                elemInfos.put("email", result.right().getValue());
+                            if(result.succeeded()) {
+                                elemInfos.put("email", result.result());
                                 addressList.put(elemId, elemInfos);
                             }
                             if(processedIds.decrementAndGet() == 0) {

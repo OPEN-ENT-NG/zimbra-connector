@@ -25,3 +25,52 @@
         <div class="annex-info vertical-spacing"><i18n>zimbra.expert.mode.activation.comment</i18n></div>
     </article>
 </div>
+<div class="row" ng-if="mailConfig.login">
+    <article class="twelve cell vertical-spacing">
+    <h2>
+        <span class="" no-style><i18n>mailconfig.title</i18n></span>
+    </h2>
+    <h5><i18n>mailconfig.server.imap</i18n></h5>
+    <label class="row">
+        <span class="cell two"><i18n>mailconfig.login</i18n></span>
+        <em class="cell">[[mailConfig.login]]</em>
+    </label>
+    <label class="row">
+        <span class="cell two"><i18n>mailconfig.url</i18n></span>
+        <em class="cell">[[mailConfig.imaps.server]]</em>
+    </label>
+    <label class="row">
+        <span class="cell two"><i18n>mailconfig.port</i18n></span>
+        <em class="cell">[[mailConfig.imaps.port]]</em>
+    </label>
+    <label class="row">
+        <span class="cell two"><i18n>mailconfig.ssl</i18n></span>
+        <em class="cell">[[mailConfig.imaps.ssl]]</em>
+    </label>
+    <label class="row">
+        <span class="cell two"><i18n>mailconfig.auth</i18n></span>
+        <em class="cell">[[mailConfig.imaps.auth]]</em>
+    </label>
+    <h5><i18n>mailconfig.server.smtp</i18n></h5>
+    <label class="row">
+        <span class="cell two"><i18n>mailconfig.login</i18n></span>
+        <em class="cell">[[mailConfig.login]]</em>
+    </label>
+    <label class="row">
+        <span class="cell two"><i18n>mailconfig.url</i18n></span>
+        <em class="cell">[[mailConfig.smtps.server]]</em>
+    </label>
+    <label class="row">
+        <span class="cell two"><i18n>mailconfig.port</i18n></span>
+        <em class="cell">[[mailConfig.smtps.port]]</em>
+    </label>
+    <label class="row">
+        <span class="cell two"><i18n>mailconfig.ssl</i18n></span>
+        <em class="cell">[[mailConfig.smtps.ssl]]</em>
+    </label>
+    <label class="row">
+        <span class="cell two"><i18n>mailconfig.auth</i18n></span>
+        <em class="cell">[[mailConfig.smtps.auth]]</em>
+    </label>
+</article>
+</div>

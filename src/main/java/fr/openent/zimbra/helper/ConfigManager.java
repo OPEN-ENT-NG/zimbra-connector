@@ -42,6 +42,7 @@ public class ConfigManager {
     private final String mailerCron;
     private final Integer maxRecipients;
     private final int devLevel;
+    private final JsonObject mailConfig;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -57,6 +58,7 @@ public class ConfigManager {
         this.synchroFromMail = config.getString("zimbra-synchro-frommail", "zimbra-sync@cgi.com");
         this.mailerCron = config.getString("zimbra-mailer-cron", "");
         this.maxRecipients = config.getInteger("max-recipients", 50);
+        this.mailConfig = config.getJsonObject("mail-config", new JsonObject());
 
         String devLevelStr = config.getString("dev-level", "");
         if(NOSYNC.equals(devLevelStr)) {
@@ -88,5 +90,6 @@ public class ConfigManager {
     public String getSynchroFromMail() { return synchroFromMail;}
     public String getMailerCron() { return mailerCron;}
     public Integer getMaxRecipients() { return maxRecipients;}
+    public JsonObject getMailConfig() { return mailConfig;}
 
 }

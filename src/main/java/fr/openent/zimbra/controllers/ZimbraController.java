@@ -19,6 +19,7 @@ package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.filters.DevLevelFilter;
+import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.helper.ServiceManager;
@@ -972,16 +973,33 @@ public class ZimbraController extends BaseController {
 		});
 
 	}
-    @Get("/zimbraOutside")
+
+    @SuppressWarnings("UnnecessaryReturnStatement")
+	@Get("/zimbraOutside")
     @SecuredAction("zimbra.outsideCommunication")
     public void zimbraOutside(final HttpServerRequest request) {
         // This route is used to create zimbraOutsideCommunication Workflow right, nothing to do
         return;
     }
+
     @Get("/preferences")
     @ResourceFilter(ExpertAccess.class)
     @SecuredAction(value = "", type = ActionType.RESOURCE)
     public void zimbraSetting(HttpServerRequest request) {
         renderView(request);
     }
+
+    @Get("/mailconfig")
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(ExpertAccess.class)
+    public void getMailConfig(final HttpServerRequest request) {
+		UserUtils.getUserInfos(eb, request,  user -> {
+			if (user == null) {
+				unauthorized(request);
+				return;
+			}
+			userService.getMailConfig(user.getUserId(),
+					AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
+		});
+	}
 }

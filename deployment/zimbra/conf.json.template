@@ -24,6 +24,7 @@
         "admin-account" : "$zimbraAdminAccount",
         "admin-password" : "$zimbraAdminPassword",
         "zimbra-synchro-cron" : "$zimbraSynchroCron",
+        "mail-config" : {"imaps":{"server":"mx.monlycee.net","port":993,"ssl":"SSL/TLS","auth":"Mot de passe normal"},"smtps":{"server":"mx.monlycee.net","port":587,"ssl":"STARTTLS","auth":"Mot de passe normal"}},
         "entcore.port" : 8009
       }
     }

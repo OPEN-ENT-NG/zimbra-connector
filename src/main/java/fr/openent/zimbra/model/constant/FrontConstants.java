@@ -28,4 +28,8 @@ public class FrontConstants {
 
     public static final String MAIL_TO = "to";
     public static final String MAIL_CC = "cc";
+
+    public static final String MAILCONFIG_IMAP = "imaps";
+    public static final String MAILCONFIG_SMTP = "smtps";
+    public static final String MAILCONFIG_LOGIN = "login";
 }
