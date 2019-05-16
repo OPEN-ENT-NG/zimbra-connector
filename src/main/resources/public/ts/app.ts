@@ -16,8 +16,17 @@
  */
 
 import { routes, ng , ui } from "entcore";
-import { zimbraController, printController, preferenceController } from "./controllers/index";
-import { recipientList, switchSearch, ngBottomScroll, folderLoader } from "./directives/index";
+
+import * as controllers from './controllers';
+import * as directives from './directives';
+
+for (let controller in controllers) {
+    ng.controllers.push(controllers[controller]);
+}
+
+for (let directive in directives) {
+    ng.directives.push(directives[directive]);
+}
 
 
 
@@ -66,11 +75,3 @@ routes.define(function($routeProvider) {
 
 
 });
-
-ng.controllers.push(zimbraController);
-ng.controllers.push(printController);
-ng.controllers.push(preferenceController);
-ng.directives.push(recipientList);
-ng.directives.push(switchSearch);
-ng.directives.push(ngBottomScroll);
-ng.directives.push(folderLoader);

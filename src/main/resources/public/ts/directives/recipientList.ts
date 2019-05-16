@@ -49,7 +49,7 @@ export const recipientList = ng.directive("recipientList", () => {
                 </label>
                 <img skin-src="/img/illustrations/loading.gif" width="30px" heigh="30px" ng-if="loading"/>
                 <form class="input-help" ng-submit="update(true)">
-                    <input class="chip-input right-magnet" type="text" ng-model="searchText" ng-change="update()" autocomplete="off" ng-class="{ move: searchText.length > 0 }" 
+                    <input class="chip-input right-magnet" type="text" ng-model="searchText" end-user-typing="update()" autocomplete="off" ng-class="{ move: searchText.length > 0 }" 
                     i18n-placeholder="[[restriction ? 'share.search.help' : 'share.search.placeholder' ]]"
                     ng-keyup="addExternalItem($event)"
                     />

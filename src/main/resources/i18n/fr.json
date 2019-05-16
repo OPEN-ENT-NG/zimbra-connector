@@ -155,6 +155,7 @@
     "admin.zimbra":"Paramétrage messagerie",
     "access.rights":"Droits d'accès",
     "communication.outside":"Communication extérieure",
+    "communication.outside.tooltip":"Séparez les adresses par des points virgules ou en appuyant sur le bouton Entrée",
     "directory.search":"Rechercher",
     "massage.info.access.rights":"Choisissez ci-dessous les groupes d'utilisateurs qui pourront envoyer des messages vers des adresses extérieures.",
     "zimbra.outside.donotchange": "Messagerie Externe [Ne Pas Modifier]",
