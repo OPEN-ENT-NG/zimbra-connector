@@ -169,8 +169,6 @@ export const recipientList = ng.directive("recipientList", () => {
                 let myUser =new User(scope.searchText, scope.searchText);
                 if((keyCode === 13 || key == ";" ) && myUser.isAMail() && scope.searchText &&
                 model.me.hasWorkflow('fr.openent.zimbra.controllers.ZimbraController|zimbraOutside')){
-                    myUser.cleanMail();
-                    scope.addItem((myUser));
                     scope.clearSearch();
                     scope.$apply();
                 }
@@ -218,6 +216,12 @@ export const recipientList = ng.directive("recipientList", () => {
             };
 
             scope.clearSearch = () => {
+                let myUser =new User(scope.searchText, scope.searchText);
+                if( myUser.isAMail() && scope.searchText &&
+                model.me.hasWorkflow('fr.openent.zimbra.controllers.ZimbraController|zimbraOutside') ) {
+                    myUser.cleanMail();
+                    scope.addItem((myUser));
+                }
                 scope.itemsFound = [];
                 scope.searchText = "";
                 scope.addedFavorites = [];
