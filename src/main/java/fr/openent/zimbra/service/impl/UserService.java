@@ -25,9 +25,10 @@ import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
-import fr.openent.zimbra.service.data.SqlZimbraService;
+import fr.openent.zimbra.service.data.SqlDbMailService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
@@ -49,19 +50,19 @@ import static fr.openent.zimbra.service.data.Neo4jZimbraService.*;
 public class UserService {
 
     private SoapZimbraService soapService;
-    private SqlZimbraService sqlService;
+    private DbMailService dbMailService;
     private SynchroUserService synchroUserService;
     private Neo4jZimbraService neoService;
     private GroupService groupService;
     private static Logger log = LoggerFactory.getLogger(UserService.class);
 
     public UserService(SoapZimbraService soapService, SynchroUserService synchroUserService,
-                       SqlZimbraService sqlService) {
+                       DbMailService dbMailService) {
         this.soapService = soapService;
         this.synchroUserService = synchroUserService;
-        this.sqlService = sqlService;
+        this.dbMailService = dbMailService;
         this.neoService = new Neo4jZimbraService();
-        this.groupService = new GroupService(soapService, sqlService, synchroUserService);
+        this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
     }
 
     /**
@@ -144,7 +145,7 @@ public class UserService {
         UserInfoService.processAliases(getInfoResp, frontData);
         UserInfoService.processSignaturePref(getInfoResp, frontData);
 
-        sqlService.updateUsers(new JsonArray().add(frontData.getJsonObject(UserInfoService.ALIAS)),
+        dbMailService.updateUsers(new JsonArray().add(frontData.getJsonObject(UserInfoService.ALIAS)),
                                 sqlResponse -> {
             if(sqlResponse.isLeft()) {
                 log.error("Error when updating Zimbra users : " + sqlResponse.left().getValue());
@@ -287,7 +288,7 @@ public class UserService {
 
         UserInfoService.processAccountInfo(getInfoResp, frontData);
 
-        sqlService.updateUsers(new JsonArray().add(frontData.getJsonObject(UserInfoService.ALIAS)),
+        dbMailService.updateUsers(new JsonArray().add(frontData.getJsonObject(UserInfoService.ALIAS)),
                 sqlResponse -> {
                     if(sqlResponse.isLeft()) {
                         log.error("Error when updating Zimbra users : " + sqlResponse.left().getValue());
@@ -329,7 +330,7 @@ public class UserService {
      * @param handler result handler
      */
     private void getUserAddress(String userId, Handler<AsyncResult<String>> handler) {
-        sqlService.getUserMailFromId(userId, result -> {
+        dbMailService.getUserMailFromId(userId, result -> {
             if(result.isLeft() || result.right().getValue().isEmpty()) {
                 log.debug("no user in database for id : " + userId);
                 String account = userId + "@" + Zimbra.domain;
@@ -359,7 +360,7 @@ public class UserService {
                 if(results.size() > 1) {
                     log.warn("More than one address for user id : " + userId);
                 }
-                String mail = results.getJsonObject(0).getString(SqlZimbraService.ZIMBRA_NAME);
+                String mail = results.getJsonObject(0).getString(SqlDbMailService.ZIMBRA_NAME);
                 handler.handle(Future.succeededFuture(mail));
             }
         });

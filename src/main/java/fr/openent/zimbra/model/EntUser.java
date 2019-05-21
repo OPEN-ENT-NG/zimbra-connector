@@ -21,8 +21,8 @@ import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
-import fr.openent.zimbra.service.data.SqlZimbraService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -30,7 +30,6 @@ import io.vertx.core.json.JsonObject;
 import org.entcore.common.user.UserInfos;
 import io.vertx.core.Handler;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,7 +43,7 @@ public class EntUser {
 
     @SuppressWarnings("WeakerAccess")
     protected Neo4jZimbraService neoService;
-    protected SqlZimbraService sqlZimbraService;
+    protected DbMailService dbMailService;
 
     private String userId;
     private String externalId = "";
@@ -74,7 +73,7 @@ public class EntUser {
         userZimbraAddress = MailAddress.createFromLocalpartAndDomain(userId, Zimbra.domain);
         ServiceManager sm = ServiceManager.getServiceManager();
         this.neoService = sm.getNeoService();
-        this.sqlZimbraService = sm.getSqlService();
+        this.dbMailService = sm.getDbMailService();
     }
 
     @SuppressWarnings("WeakerAccess")

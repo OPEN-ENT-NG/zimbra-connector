@@ -29,7 +29,7 @@ import java.util.List;
 public class DatabaseSynchro {
 
     private String synchroId;
-    private List<MailAddress> maillingList = new ArrayList();
+    private List<MailAddress> maillingList = new ArrayList<>();
     private String logsContent;
     private String date;
 

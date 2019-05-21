@@ -26,7 +26,7 @@ import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
 import fr.openent.zimbra.model.soap.SoapError;
 import fr.openent.zimbra.model.soap.SoapRequest;
-import fr.openent.zimbra.service.data.SqlZimbraService;
+import fr.openent.zimbra.service.DbMailService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -47,7 +47,7 @@ class SynchroGroup extends Group {
     private MailAddress ddlAddress;
     private String zimbraID = "";
 
-    private SqlZimbraService sqlZimbraService;
+    private DbMailService dbMailService;
 
     private static final String MEMBER_URL_TPL = "ldap:///??sub?(&(objectClass=zimbraAccount)(|(ou=%s)(ou=allgroupsaccount)))";
     private static Logger log = LoggerFactory.getLogger(SynchroGroup.class);
@@ -81,7 +81,7 @@ class SynchroGroup extends Group {
     private void init() {
         ddlAddress = new MailAddress(getId(), Zimbra.domain);
         ServiceManager sm = ServiceManager.getServiceManager();
-        sqlZimbraService = sm.getSqlService();
+        dbMailService = sm.getDbMailService();
     }
 
 
@@ -144,7 +144,7 @@ class SynchroGroup extends Group {
             }
             return zimbraUpdated;
         }).compose( updatedRes ->
-            sqlZimbraService.updateGroup(getId(), ddlAddress.toString(), startFuture.completer())
+            dbMailService.updateGroup(getId(), ddlAddress.toString(), startFuture.completer())
         , startFuture);
     }
 

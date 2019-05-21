@@ -19,8 +19,9 @@ package fr.openent.zimbra.model;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ServiceManager;
+import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.impl.GroupService;
-import fr.openent.zimbra.service.data.SqlZimbraService;
+import fr.openent.zimbra.service.data.SqlDbMailService;
 import fr.openent.zimbra.service.impl.UserService;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -40,7 +41,7 @@ public class MailAddress {
     private String neoId = "";
     private boolean isLocal;
 
-    private SqlZimbraService sqlService;
+    private DbMailService dbMailService;
     private UserService userService;
     private GroupService groupService;
 
@@ -115,7 +116,7 @@ public class MailAddress {
 
     private void initServices() {
         ServiceManager serviceManager = ServiceManager.getServiceManager();
-        sqlService = serviceManager.getSqlService();
+        dbMailService = serviceManager.getDbMailService();
         userService = serviceManager.getUserService();
         groupService = serviceManager.getGroupService();
     }
@@ -125,7 +126,7 @@ public class MailAddress {
             handler.handle(neoId);
             return;
         }
-        sqlService.getNeoIdFromMail(completeCleanAddress, sqlResponse -> {
+        dbMailService.getNeoIdFromMail(completeCleanAddress, sqlResponse -> {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
                 log.debug("no user in database for address : " + completeCleanAddress);
                 userService.getAliases(completeCleanAddress, zimbraResponse -> {
@@ -147,7 +148,7 @@ public class MailAddress {
                 if(results.size() > 1) {
                     log.warn("More than one user id for address : " + completeCleanAddress);
                 }
-                this.neoId = results.getJsonObject(0).getString(SqlZimbraService.NEO4J_UID);
+                this.neoId = results.getJsonObject(0).getString(SqlDbMailService.NEO4J_UID);
                 handler.handle(this.neoId);
             }
         });

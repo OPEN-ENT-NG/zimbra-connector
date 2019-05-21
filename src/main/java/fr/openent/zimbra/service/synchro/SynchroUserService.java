@@ -24,8 +24,8 @@ import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.synchro.SynchroUser;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.SynchroConstants;
+import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SqlSynchroService;
-import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.impl.*;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
@@ -46,14 +46,14 @@ public class SynchroUserService {
     public static final String EMPTY_BDD = "empty_bdd";
 
     private UserService userService;
-    private SqlZimbraService sqlService;
+    private DbMailService dbMailService;
     private SqlSynchroService sqlSynchroService;
 
     private static Logger log = LoggerFactory.getLogger(SynchroUserService.class);
 
-    public SynchroUserService(SqlZimbraService sqlService,
+    public SynchroUserService(DbMailService dbMailService,
                               SqlSynchroService sqlSynchroService){
-        this.sqlService = sqlService;
+        this.dbMailService = dbMailService;
         this.sqlSynchroService = sqlSynchroService;
     }
 
@@ -68,7 +68,7 @@ public class SynchroUserService {
      * @param handler Final handler
      */
     public void removeUserFromBase(String userId, String userMail, Handler<Either<String,JsonObject>> handler) {
-        sqlService.removeUserFrombase(userId, userMail, handler);
+        dbMailService.removeUserFrombase(userId, userMail, handler);
     }
 
 

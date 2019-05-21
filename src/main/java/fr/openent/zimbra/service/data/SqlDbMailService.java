@@ -20,50 +20,35 @@ package fr.openent.zimbra.service.data;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.Group;
 import fr.openent.zimbra.model.ZimbraUser;
+import fr.openent.zimbra.service.DbMailService;
 import fr.wseduc.webutils.Either;
-import fr.wseduc.webutils.Server;
-import fr.wseduc.webutils.Utils;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.sql.Sql;
 import org.entcore.common.sql.SqlResult;
-import org.entcore.common.user.UserInfos;
-import org.entcore.common.user.UserUtils;
-import org.entcore.common.validation.StringValidation;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SqlZimbraService {
+public class SqlDbMailService extends DbMailService {
 
-    private final EventBus eb;
     private final Sql sql;
 
 
     private final String userTable;
     private final String groupTable;
 
-    public static final String ZIMBRA_NAME = "mailzimbra";
-    public static final String NEO4J_UID = "uuidneo";
+    private static Logger log = LoggerFactory.getLogger(SqlDbMailService.class);
 
-    private static Logger log = LoggerFactory.getLogger(SqlZimbraService.class);
-
-    public SqlZimbraService(Vertx vertx, String schema) {
-        this.eb = Server.getEventBus(vertx);
+    public SqlDbMailService(String schema) {
         this.sql = Sql.getInstance();
         this.userTable = schema + ".users";
         this.groupTable = schema + ".groups";
-    }
-
-    private String getUserNameFromMail(String mail) {
-        return mail.split("@")[0];
     }
 
     /**
@@ -73,10 +58,10 @@ public class SqlZimbraService {
      */
     public void getNeoIdFromMail(String mail, Handler<Either<String, JsonArray>> handler) {
 
-        String query = "SELECT " + NEO4J_UID + " FROM "
+        String query = "SELECT " + NEO4J_UID + ", 'user' as type FROM "
                 + userTable + " WHERE " + ZIMBRA_NAME + " = ? "
                 + "UNION ALL "
-                + "SELECT " + NEO4J_UID + " FROM "
+                + "SELECT " + NEO4J_UID + " 'group' as type FROM "
                 + groupTable + " WHERE " + ZIMBRA_NAME + " = ? ";
         JsonArray values = new JsonArray().add(mail).add(mail);
 
@@ -207,74 +192,6 @@ public class SqlZimbraService {
         } else {
             sql.prepared(query.toString(), new JsonArray(), SqlResult.validUniqueResultHandler(handler));
         }
-    }
-
-
-    public void findVisibleRecipients(final UserInfos user, final String acceptLanguage, final String search,
-                                      final Handler<Either<String, JsonObject>> result) {
-        if (validationParamsError(user, result))
-            return;
-
-        final JsonObject visible = new JsonObject();
-
-        final JsonObject params = new JsonObject();
-
-        final String preFilter;
-        if (Utils.isNotEmpty(search)) {
-            preFilter = "AND (m:Group OR m.displayNameSearchField CONTAINS {search}) ";
-            params.put("search", StringValidation.removeAccents(search.trim()).toLowerCase());
-        } else {
-            preFilter = null;
-        }
-
-
-            String customReturn =
-                    "RETURN DISTINCT visibles.id as id, visibles.name as name, " +
-                            "visibles.displayName as displayName, visibles.groupDisplayName as groupDisplayName, " +
-                            "visibles.profiles[0] as profile, visibles.structureName as structureName ";
-            callFindVisibles(user, acceptLanguage, result, visible, params, preFilter, customReturn);
-    }
-
-    private void callFindVisibles(UserInfos user, final String acceptLanguage, final Handler<Either<String, JsonObject>> result,
-                                  final JsonObject visible, JsonObject params, String preFilter, String customReturn) {
-        UserUtils.findVisibles(eb, user.getUserId(), customReturn, params, true, true, false,
-                acceptLanguage, preFilter, visibles -> {
-
-                JsonArray users = new fr.wseduc.webutils.collections.JsonArray();
-                JsonArray groups = new fr.wseduc.webutils.collections.JsonArray();
-                visible.put("groups", groups).put("users", users);
-                for (Object o: visibles) {
-                    if (!(o instanceof JsonObject)) continue;
-                    JsonObject j = (JsonObject) o;
-                    if (j.getString("name") != null) {
-                        j.remove("displayName");
-                        UserUtils.groupDisplayName(j, acceptLanguage);
-                        groups.add(j);
-                    } else {
-                        j.remove("name");
-                        users.add(j);
-                    }
-                }
-                result.handle(new Either.Right<>(visible));
-        });
-    }
-
-
-    private boolean validationParamsError(UserInfos user,
-                                          Handler<Either<String, JsonObject>> result, String ... params) {
-        if (user == null) {
-            result.handle(new Either.Left<>("zimbra.invalid.user"));
-            return true;
-        }
-        if (params.length > 0) {
-            for (String s : params) {
-                if (s == null) {
-                    result.handle(new Either.Left<>("zimbra.invalid.parameter"));
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
 

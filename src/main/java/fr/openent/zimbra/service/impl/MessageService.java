@@ -22,8 +22,8 @@ import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
-import fr.openent.zimbra.service.data.SqlZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
@@ -43,18 +43,18 @@ public class MessageService {
 
     private SoapZimbraService soapService;
     private FolderService folderService;
-    private SqlZimbraService sqlService;
+    private DbMailService dbMailService;
     private UserService userService;
     private GroupService groupService;
     private static Logger log = LoggerFactory.getLogger(MessageService.class);
 
     public MessageService(SoapZimbraService soapService, FolderService folderService,
-                          SqlZimbraService sqlService, UserService userService, SynchroUserService synchroUserService) {
+                          DbMailService dbMailService, UserService userService, SynchroUserService synchroUserService) {
         this.soapService = soapService;
         this.folderService = folderService;
-        this.sqlService = sqlService;
+        this.dbMailService = dbMailService;
         this.userService = userService;
-        this.groupService = new GroupService(soapService, sqlService, synchroUserService);
+        this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
     }
 
     /**
@@ -336,7 +336,7 @@ public class MessageService {
      * @param handler result handler
      */
     private void translateMail(String mail, Handler<String> handler) {
-        sqlService.getNeoIdFromMail(mail, sqlResponse -> {
+        dbMailService.getNeoIdFromMail(mail, sqlResponse -> {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
                 log.debug("no user in database for address : " + mail);
                 userService.getAliases(mail, zimbraResponse -> {
@@ -359,7 +359,7 @@ public class MessageService {
                 if(results.size() > 1) {
                     log.warn("More than one user id for address : " + mail);
                 }
-                String uuid = results.getJsonObject(0).getString(SqlZimbraService.NEO4J_UID);
+                String uuid = results.getJsonObject(0).getString(DbMailService.NEO4J_UID);
                 handler.handle(uuid);
             }
         });

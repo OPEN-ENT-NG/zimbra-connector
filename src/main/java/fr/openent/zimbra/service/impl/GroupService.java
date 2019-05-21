@@ -21,8 +21,9 @@ package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
-import fr.openent.zimbra.service.data.SqlZimbraService;
+import fr.openent.zimbra.service.data.SqlDbMailService;
 import fr.openent.zimbra.service.synchro.SynchroGroupService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
@@ -35,13 +36,13 @@ import io.vertx.core.logging.LoggerFactory;
 public class GroupService {
 
     private SoapZimbraService soapService;
-    private SqlZimbraService sqlService;
+    private DbMailService dbMailService;
     private SynchroGroupService synchroGroupService;
     private static Logger log = LoggerFactory.getLogger(GroupService.class);
 
-    public GroupService(SoapZimbraService soapService, SqlZimbraService sqlService, SynchroUserService synchroUserService) {
+    public GroupService(SoapZimbraService soapService, DbMailService dbMailService, SynchroUserService synchroUserService) {
         this.soapService = soapService;
-        this.sqlService = sqlService;
+        this.dbMailService = dbMailService;
         this.synchroGroupService = new SynchroGroupService(soapService, synchroUserService);
     }
 
@@ -55,7 +56,7 @@ public class GroupService {
      * @param handler result handler
      */
     void getGroupAddress(String groupId, Handler<Either<String,String>> handler) {
-        sqlService.getGroupMailFromId(groupId, result -> {
+        dbMailService.getGroupMailFromId(groupId, result -> {
             if(result.isLeft() || result.right().getValue().isEmpty()) {
                 log.debug("no group in database for id : " + groupId);
                 String groupAddress = groupId + "@" + Zimbra.domain;
@@ -83,7 +84,7 @@ public class GroupService {
                 if(results.size() > 1) {
                     log.warn("More than one address for user id : " + groupId);
                 }
-                String mail = results.getJsonObject(0).getString(SqlZimbraService.ZIMBRA_NAME);
+                String mail = results.getJsonObject(0).getString(SqlDbMailService.ZIMBRA_NAME);
                 handler.handle(new Either.Right<>(mail));
             }
         });

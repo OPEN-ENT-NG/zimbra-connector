@@ -136,7 +136,7 @@ public class SynchroUser extends EntUser {
     }
 
     private void syncGroups() {
-        sqlZimbraService.checkGroupsExistence(getGroups(), sqlResult -> {
+        dbMailService.checkGroupsExistence(getGroups(), sqlResult -> {
             if(sqlResult.failed()) {
                 log.error("Error when getting unsynced groups : " + sqlResult.cause().getMessage());
             } else {

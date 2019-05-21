@@ -24,7 +24,7 @@ import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.security.ExpertAccess;
-import fr.openent.zimbra.service.data.SqlZimbraService;
+import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.service.impl.*;
 
 import fr.wseduc.bus.BusAddress;
@@ -70,7 +70,7 @@ public class ZimbraController extends BaseController {
 	private AttachmentService attachmentService;
 	private MessageService messageService;
 	private SignatureService signatureService;
-	private SqlZimbraService sqlService;
+	private SearchService searchService;
 	private ExpertModeService expertModeService;
 
 
@@ -84,7 +84,7 @@ public class ZimbraController extends BaseController {
 		ServiceManager serviceManager = ServiceManager.init(vertx, config, eb, pathPrefix);
 
 		this.appConfig = Zimbra.appConfig;
-		this.sqlService = serviceManager.getSqlService();
+		this.searchService = serviceManager.getSearchService();
 		this.userService = serviceManager.getUserService();
 		this.folderService = serviceManager.getFolderService();
 		this.signatureService = serviceManager.getSignatureService();
@@ -307,7 +307,7 @@ public class ZimbraController extends BaseController {
 	public void visible(final HttpServerRequest request) {
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
-				sqlService.findVisibleRecipients(user, I18n.acceptLanguage(request), request.params().get("search"),
+				searchService.findVisibleRecipients(user, I18n.acceptLanguage(request), request.params().get("search"),
 						defaultResponseHandler(request));
 			} else {
 				unauthorized(request);
@@ -848,6 +848,7 @@ public class ZimbraController extends BaseController {
 		renderView(request, null, "print.html", null);
 	}
 
+	@SuppressWarnings("SwitchStatementWithTooFewBranches")
 	@BusAddress("org.entcore.conversation")
 	public void conversationEventBusHandler(Message<JsonObject> message) {
 		switch (message.body().getString("action", "")) {
@@ -861,16 +862,17 @@ public class ZimbraController extends BaseController {
 	}
 
 
+	@SuppressWarnings("SwitchStatementWithTooFewBranches")
 	@BusAddress("fr.openent.zimbra")
 	public void zimbraEventBusHandler(Message<JsonObject> message) {
 		String action = message.body().getString("action", "");
 		switch(action) {
 			case "getMailUser" :
 				JsonArray idList = message.body().getJsonArray("idList", new JsonArray());
-				userService.getMailAddresses(idList, res -> {
+				userService.getMailAddresses(idList, res ->
 					message.reply(new JsonObject().put("status", "ok")
-						.put("message", res));
-				});
+						.put("message", res))
+				);
 				break;
 			default:
 				conversationEventBusHandler(message);

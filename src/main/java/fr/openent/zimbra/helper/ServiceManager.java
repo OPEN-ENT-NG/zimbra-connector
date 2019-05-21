@@ -17,11 +17,9 @@
 
 package fr.openent.zimbra.helper;
 
-import fr.openent.zimbra.service.data.Neo4jZimbraService;
-import fr.openent.zimbra.service.data.SoapZimbraService;
-import fr.openent.zimbra.service.data.SqlZimbraService;
+import fr.openent.zimbra.service.DbMailService;
+import fr.openent.zimbra.service.data.*;
 import fr.openent.zimbra.service.impl.*;
-import fr.openent.zimbra.service.data.SqlSynchroService;
 import fr.openent.zimbra.service.synchro.SynchroGroupService;
 import fr.openent.zimbra.service.synchro.SynchroMailerService;
 import fr.openent.zimbra.service.synchro.SynchroService;
@@ -48,7 +46,8 @@ public class ServiceManager {
     private AttachmentService attachmentService;
     private MessageService messageService;
     private SignatureService signatureService;
-    private SqlZimbraService sqlService;
+    private DbMailService dbMailService;
+    private SearchService searchService;
     private NotificationService notificationService;
     private CommunicationService communicationService;
     private GroupService groupService;
@@ -70,20 +69,21 @@ public class ServiceManager {
         EmailFactory emailFactory = new EmailFactory(vertx, config);
         emailSender = emailFactory.getSender();
 
-        this.sqlService = new SqlZimbraService(vertx, config.getString("db-schema", "zimbra"));
+        this.dbMailService = new NeoDbMailService(vertx);
+        this.searchService = new SearchService(vertx);
         this.sqlSynchroService = new SqlSynchroService(config.getString("db-schema", "zimbra"));
         this.soapService = new SoapZimbraService(vertx);
         this.neoService = new Neo4jZimbraService();
-        this.synchroUserService = new SynchroUserService(sqlService, sqlSynchroService);
-        this.userService = new UserService(soapService, synchroUserService, sqlService);
+        this.synchroUserService = new SynchroUserService(dbMailService, sqlSynchroService);
+        this.userService = new UserService(soapService, synchroUserService, dbMailService);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
         this.messageService = new MessageService(soapService, folderService,
-                sqlService, userService, synchroUserService);
+                dbMailService, userService, synchroUserService);
         this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
         this.notificationService = new NotificationService(userService, pathPrefix, timelineHelper);
         this.communicationService = new CommunicationService();
-        this.groupService = new GroupService(soapService, sqlService, synchroUserService);
+        this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
         this.expertModeService = new ExpertModeService();
 
         this.synchroService = new SynchroService(sqlSynchroService);
@@ -117,8 +117,12 @@ public class ServiceManager {
         return soapService;
     }
 
-    public SqlZimbraService getSqlService() {
-        return sqlService;
+    public DbMailService getDbMailService() {
+        return dbMailService;
+    }
+
+    public SearchService getSearchService() {
+        return searchService;
     }
 
     public UserService getUserService() {
