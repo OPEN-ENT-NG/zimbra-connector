@@ -32,6 +32,25 @@ public class Neo4jAddrbookService {
         this.neo = Neo4j.getInstance();
     }
 
+    public void getAllUsersFromStructure(String uai, Handler<AsyncResult<JsonArray>> handler) {
+        String query = "MATCH (u:User)-[:IN]-(pg:ProfileGroup)-[:DEPENDS]-(s:Structure) " +
+                "WHERE s.UAI={uai} " +
+                "OPTIONAL MATCH (u)-[:IN]-(pgc:ProfileGroup)-[:DEPENDS]-(c:Class)-[:BELONGS]-(s) " +
+                "OPTIONAL MATCH (u)-[:IN]-(fg:FunctionGroup)-[:DEPENDS]-(s) " +
+                "RETURN u.lastName as lastName, " +
+                "u.firstName as firstName, " +
+                "u.emailInternal as email, " +
+                "fg.filter as function, " +
+                "pg.filter as profile, " +
+                "c.name as class " +
+                "ORDER BY profile, class, lastName, firstName";
+
+        JsonObject params = new JsonObject()
+                .put("uai", uai);
+
+        neo.execute(query, params, validResultHandler(AsyncHelper.getJsonArrayEitherHandler(handler)));
+    }
+
     public void getUsersProfileStructure(String uai, String profile,
                                          Handler<AsyncResult<JsonObject>> handler) {
         String query = "MATCH (u:User)-[:IN]-(pg:ProfileGroup)-[:DEPENDS]->(s:Structure) " +

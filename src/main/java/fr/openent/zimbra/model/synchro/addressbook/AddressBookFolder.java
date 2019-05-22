@@ -15,7 +15,7 @@ import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 class AddressBookFolder {
 
     String folderName;
-    private Map<String,AddressBookUser> users = new HashMap<>();
+    private Map<String, Contact> users = new HashMap<>();
     protected List<AddressBookFolder> directories = new ArrayList<>();
 
     private static Logger log = LoggerFactory.getLogger(AddressBookFolder.class);
@@ -34,7 +34,7 @@ class AddressBookFolder {
         for(Object o : jsonUsers) {
             if(!(o instanceof JsonObject)) continue;
             try {
-                AddressBookUser abUser = new AddressBookUser((JsonObject)o);
+                Contact abUser = new Contact((JsonObject)o);
                 users.put(abUser.getId(), abUser);
             } catch (IllegalArgumentException e) {
                 log.error("Error when loading abookuser : " + o.toString());

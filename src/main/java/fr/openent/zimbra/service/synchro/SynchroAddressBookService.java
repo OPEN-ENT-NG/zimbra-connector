@@ -2,7 +2,7 @@ package fr.openent.zimbra.service.synchro;
 
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
-import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchroNeo;
+import fr.openent.zimbra.model.synchro.addressbook.DefaultAddressBookSynchroImpl;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchroZimbra;
 import fr.openent.zimbra.service.data.SqlSynchroService;
 import io.vertx.core.AsyncResult;
@@ -65,7 +65,7 @@ public class SynchroAddressBookService {
         AddressBookSynchro addressBook;
         AddressBookSynchro addressBookZimbra;
         try {
-            addressBook = new AddressBookSynchroNeo(structureUAI);
+            addressBook = new DefaultAddressBookSynchroImpl(structureUAI);
             addressBookZimbra = new AddressBookSynchroZimbra(structureUAI);
         } catch (NullPointerException e) {
             // todo handle and log error

@@ -6,12 +6,12 @@ import java.util.Objects;
 
 import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
-class AddressBookUser {
+class Contact {
 
     private String id;
     private String displayName;
 
-    AddressBookUser(JsonObject json) throws IllegalArgumentException {
+    Contact(JsonObject json) throws IllegalArgumentException {
         if(json == null
                 ||  json.getString(USER_ID, "").isEmpty()
                 ||  json.getString(USER_DISPLAYNAME, "").isEmpty()) {
@@ -23,13 +23,13 @@ class AddressBookUser {
 
     public String getId() { return id;}
     public String getDisplayName() { return displayName;}
-    public AddressBookUser getThis() { return this;}
+    public Contact getThis() { return this;}
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof AddressBookUser)) return false;
-        AddressBookUser that = (AddressBookUser) o;
+        if (!(o instanceof Contact)) return false;
+        Contact that = (Contact) o;
         return Objects.equals(id, that.id) &&
                 Objects.equals(displayName, that.displayName);
     }

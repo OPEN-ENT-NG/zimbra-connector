@@ -14,14 +14,14 @@ import java.util.List;
 
 import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
-public class AddressBookSynchroNeo extends AddressBookSynchro {
+public class DefaultAddressBookSynchroImpl extends AddressBookSynchro {
 
     private Neo4jAddrbookService neo4jAddrbookService;
 
 
-    private static Logger log = LoggerFactory.getLogger(AddressBookSynchroNeo.class);
+    private static Logger log = LoggerFactory.getLogger(DefaultAddressBookSynchroImpl.class);
 
-    public AddressBookSynchroNeo(String uai) throws NullPointerException {
+    public DefaultAddressBookSynchroImpl(String uai) throws NullPointerException {
         super(uai);
         ServiceManager sm = ServiceManager.getServiceManager();
         this.neo4jAddrbookService = sm.getNeo4jAddrbookService();
@@ -35,7 +35,7 @@ public class AddressBookSynchroNeo extends AddressBookSynchro {
                 loadUsersByProfile(PROFILE_STUDENT, vStud -> {
                     loadUsersByProfile(PROFILE_RELATIVE, vRelative -> {
                         loadUsersByProfile(PROFILE_TEACHER, vTeach -> {
-                            handler.handle(Future.succeededFuture(AddressBookSynchroNeo.this));
+                            handler.handle(Future.succeededFuture(DefaultAddressBookSynchroImpl.this));
                         });
                     });
                 });
@@ -57,7 +57,7 @@ public class AddressBookSynchroNeo extends AddressBookSynchro {
                 for(Object o : guestJsonList) {
                     if(!(o instanceof JsonObject)) continue;
                     try {
-                        AddressBookUser abUser = new AddressBookUser((JsonObject)o);
+                        Contact abUser = new Contact((JsonObject)o);
                         guestList.put(abUser.getId(), abUser);
                     } catch (IllegalArgumentException e) {
                         log.error("Error when loading guest : " + o.toString());
