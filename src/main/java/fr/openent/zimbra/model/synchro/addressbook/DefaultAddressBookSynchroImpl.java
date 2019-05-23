@@ -1,8 +1,13 @@
 package fr.openent.zimbra.model.synchro.addressbook;
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ServiceManager;
+import fr.openent.zimbra.model.constant.I18nConstants;
+import fr.openent.zimbra.model.synchro.addressbook.contacts.*;
 import fr.openent.zimbra.service.data.Neo4jAddrbookService;
+import fr.wseduc.webutils.I18n;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -10,140 +15,119 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-import java.util.List;
 
 import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
+// todo documentation synchronisation
 public class DefaultAddressBookSynchroImpl extends AddressBookSynchro {
 
     private Neo4jAddrbookService neo4jAddrbookService;
-
+    private final String FNAME_MEMBERS;
 
     private static Logger log = LoggerFactory.getLogger(DefaultAddressBookSynchroImpl.class);
+
 
     public DefaultAddressBookSynchroImpl(String uai) throws NullPointerException {
         super(uai);
         ServiceManager sm = ServiceManager.getServiceManager();
         this.neo4jAddrbookService = sm.getNeo4jAddrbookService();
+        FNAME_MEMBERS = I18n.getInstance().translate(
+                I18nConstants.AB_MEMBERS_FOLDER,
+                "default-domain",
+                Zimbra.appConfig.getSynchroLang());
     }
 
     @Override
     public void load(Handler<AsyncResult<AddressBookSynchro>> handler) {
-        // todo use compose for load
-        loadGuests(vGuest ->  {
-            loadUsersByProfile(PROFILE_PERSONNEL, vPers -> {
-                loadUsersByProfile(PROFILE_STUDENT, vStud -> {
-                    loadUsersByProfile(PROFILE_RELATIVE, vRelative -> {
-                        loadUsersByProfile(PROFILE_TEACHER, vTeach -> {
-                            handler.handle(Future.succeededFuture(DefaultAddressBookSynchroImpl.this));
-                        });
-                    });
-                });
-            });
-        });
-    }
-
-    private void loadGuests(Handler<AsyncResult<Void>> handler) {
-        neo4jAddrbookService.getUsersProfileStructure(uai, PROFILE_GUEST, res ->  {
+        Future<AddressBookSynchro> users = Future.future();
+        Future<AddressBookSynchro> groups = Future.future();
+        neo4jAddrbookService.getAllUsersFromStructure(uai, res ->  {
             if(res.failed()) {
-                handler.handle(Future.failedFuture(res.cause()));
+                users.fail(res.cause());
             } else {
-                JsonObject guestData = res.result();
-                if(!validateData(guestData)) {
-                    handler.handle(Future.failedFuture("Invalid guests Neo4j data"));
-                    return;
-                }
-                JsonArray guestJsonList = guestData.getJsonArray(USERS, new JsonArray());
-                for(Object o : guestJsonList) {
-                    if(!(o instanceof JsonObject)) continue;
-                    try {
-                        Contact abUser = new Contact((JsonObject)o);
-                        guestList.put(abUser.getId(), abUser);
-                    } catch (IllegalArgumentException e) {
-                        log.error("Error when loading guest : " + o.toString());
-                    }
-                }
-                handler.handle(Future.succeededFuture());
+                processUsers(res.result(), users.completer());
+            }
+        });
+        // todo get and process lists
+        CompositeFuture.all(users,groups).setHandler(compositeResult -> {
+            if(compositeResult.failed()) {
+                handler.handle(Future.failedFuture(compositeResult.cause()));
+            } else {
+                handler.handle(Future.succeededFuture(this));
             }
         });
     }
 
 
-    private void loadUsersByProfile(String profile, Handler<AsyncResult<Void>> handler) {
-        fetchUsersInBdd(uai, profile, res -> {
-            if(res.failed()) {
-                handler.handle(Future.failedFuture(res.cause()));
-            } else {
-                JsonArray usersArray = res.result();
-                if(!validateData(usersArray)) {
-                    handler.handle(Future.failedFuture("Invalid users Neo4j data"));
-                    return;
-                }
-                for(Object o : usersArray) {
-                    if(!(o instanceof JsonObject)) continue;
-                    try {
-                        log.info("Subdir : " + o.toString());
-                        JsonObject subdirContent = ((JsonObject)o).getJsonObject(SUBDIRS);
-                        AddressBookFolder abSubdir = new AddressBookFolder(subdirContent);
-                        List<AddressBookFolder> curList = getListForProfile(profile);
-                        if(curList != null) {
-                            curList.add(abSubdir);
-                        }
-                    } catch (IllegalArgumentException e) {
-                        log.error("Error when loading personnel function : " + o.toString());
-                    }
-                }
-                handler.handle(Future.succeededFuture());
+    private void processUsers(JsonArray neoData, Handler<AsyncResult<AddressBookSynchro>> handler) {
+        for(Object o : neoData) {
+            if(!(o instanceof JsonObject)) continue;
+            try{
+                processUser((JsonObject)o);
+            } catch (IllegalArgumentException e) {
+                log.warn("ABSync : Unable to process user " + o);
             }
-        });
-    }
-
-    private void fetchUsersInBdd(String uai, String profile,
-                                 Handler<AsyncResult<JsonArray>> handler) {
-        switch (profile) {
-            case PROFILE_PERSONNEL:
-                neo4jAddrbookService.getUsersProfileWithFunction(uai, profile, handler);
-                break;
-            case PROFILE_STUDENT:
-                neo4jAddrbookService.getUsersProfileWithClass(uai, profile, handler);
-                break;
-            case PROFILE_RELATIVE:
-                neo4jAddrbookService.getUsersProfileWithClass(uai, profile, handler);
-                break;
-            case PROFILE_TEACHER:
-                neo4jAddrbookService.getUsersProfileWithClass(uai, profile, handler);
-                break;
-            default:
-                handler.handle(Future.failedFuture("Unrecognized profile."));
+        }
+        if(folders.isEmpty()) {
+            handler.handle(Future.failedFuture("no address book generated"));
+        } else {
+            handler.handle(Future.succeededFuture(this));
         }
     }
 
-    private List<AddressBookFolder> getListForProfile(String profile) {
-        switch (profile) {
-            case PROFILE_PERSONNEL:
-                return persList;
-            case PROFILE_STUDENT:
-                return studentList;
-            case PROFILE_RELATIVE:
-                return relativeList;
-            case PROFILE_TEACHER:
-                return teacherList;
-            default:
-                return null;
+    private void processUser(JsonObject neoUser) throws IllegalArgumentException {
+        String profile = neoUser.getString(PROFILE, "");
+        if(profile.isEmpty()) {
+            log.warn("ABSync : no profile for user " + neoUser.toString());
+        } else {
+            Contact contact;
+            switch (profile) {
+                case PROFILE_PERSONNEL:
+                    contact = new Personnel(neoUser, uai);
+                    break;
+                case PROFILE_TEACHER:
+                    contact = new Teacher(neoUser, uai);
+                    break;
+                case PROFILE_STUDENT:
+                    contact = new Student(neoUser, uai);
+                    break;
+                case PROFILE_RELATIVE:
+                    contact = new Relative(neoUser, uai);
+                    break;
+                default:
+                    contact = new Guest(neoUser, uai);
+                    profile = PROFILE_GUEST;
+            }
+            if(PROFILE_RELATIVE.equals(profile) || PROFILE_STUDENT.equals(profile)) {
+                addToClassSubFolder(contact, profile);
+            } else if(PROFILE_GUEST.equals(profile) ) {
+                getFolder(profile).addUser(contact);
+            } else {
+                addToMembersSubFolder(contact, profile);
+            }
         }
     }
 
-    private boolean validateData(JsonObject data) {
-        return (data != null && data.getString(STRUCT_UAI, "").equals(uai));
+    // Users that must be displayed in a class subfolder that does not have a class are not displayed
+    private void addToMembersSubFolder(Contact user, String profile) {
+        AddressBookFolder folderProfile = getFolder(profile);
+        AddressBookFolder subFolder = folderProfile.getSubFolder(FNAME_MEMBERS);
+        subFolder.addUser(user);
     }
 
-    private boolean validateData(JsonArray data) {
-        if(data == null) return false;
-        for(Object o : data) {
-            if(!(o instanceof JsonObject)) return false;
-            JsonObject jObj = (JsonObject)o;
-            if(!jObj.getString(STRUCT_UAI, "").equals(uai)) return false;
+    // Users that must be displayed in a class subfolder that does not have a class are not displayed
+    private void addToClassSubFolder(Contact user, String foldername) {
+        AddressBookFolder folder = getFolder(foldername);
+        if(user.getClasses().isEmpty()) {
+            return;
         }
-        return true;
+        String[] classes = user.getClasses().split(", ");
+        for (String classe : classes) {
+            folder.getSubFolder(classe).addUser(user);
+        }
     }
+
+
+
+
 }

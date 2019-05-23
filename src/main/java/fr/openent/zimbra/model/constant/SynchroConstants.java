@@ -55,4 +55,5 @@ public class SynchroConstants {
     public static final String ABOOK_RELATIVE = "Relative";
     public static final String ABOOK_GUEST = "Guest";
 
+    public static final String ABOOK_CSV_COLUMNS = "\"company\",\"department\",\"email\",\"firstName\",\"fullName\",\"jobTitle\",\"lastName\"\n";
 }

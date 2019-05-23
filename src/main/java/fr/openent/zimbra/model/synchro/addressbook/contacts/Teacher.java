@@ -15,11 +15,26 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-package fr.openent.zimbra.model.constant;
+package fr.openent.zimbra.model.synchro.addressbook.contacts;
 
-public class I18nConstants {
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
-    public static final String ERROR_MAXRECIPIENTS = "zimbra.maxrecipients.error";
-    public static final String AB_MEMBERS_FOLDER = "zimbra.abook.folder.members";
+import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
+public class Teacher extends Contact{
+
+    public Teacher(JsonObject json, String uai) throws IllegalArgumentException {
+        super(json, uai);
+        JsonArray neoFunctions = json.getJsonArray(FUNCTIONS, new JsonArray());
+        String concatFunctions = concatField(neoFunctions);
+        if(!concatFunctions.isEmpty()) {
+            functions = "Enseignant " + concatFunctions;
+        }
+    }
+
+    @Override
+    public String getProfile() {
+        return PROFILE_TEACHER;
+    }
 }

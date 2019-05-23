@@ -179,5 +179,6 @@
     "mailconfig.url": "Adresse",
     "mailconfig.port": "Port",
     "mailconfig.ssl": "SSL",
-    "mailconfig.auth": "Authentification"
+    "mailconfig.auth": "Authentification",
+    "zimbra.abook.folder.members": "Membres"
 }

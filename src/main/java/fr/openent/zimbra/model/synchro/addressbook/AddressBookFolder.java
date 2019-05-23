@@ -1,44 +1,61 @@
 package fr.openent.zimbra.model.synchro.addressbook;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import fr.openent.zimbra.model.constant.SynchroConstants;
+import fr.openent.zimbra.model.synchro.addressbook.contacts.Contact;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
 class AddressBookFolder {
 
-    String folderName;
-    private Map<String, Contact> users = new HashMap<>();
-    protected List<AddressBookFolder> directories = new ArrayList<>();
+
+    private SortedSet<Contact> contacts = new TreeSet<>(Contact.getComparator());
+    private Map<String,AddressBookFolder> subFolders = new HashMap<>();
 
     private static Logger log = LoggerFactory.getLogger(AddressBookFolder.class);
 
-    AddressBookFolder() {
 
+    void addUser(Contact contact) {
+        contacts.add(contact);
     }
 
-    AddressBookFolder(JsonObject json) throws IllegalArgumentException {
-        if(json == null
-                ||  json.getString(SUBDIR_NAME, "").isEmpty()) {
-            throw new IllegalArgumentException("Invalid AddressBookSubDir data");
+    AddressBookFolder getSubFolder(String folderName) {
+        AddressBookFolder folder = subFolders.get(folderName);
+        if(folder == null) {
+            folder = new AddressBookFolder();
+            subFolders.put(folderName, folder);
         }
-        log.info("Subdir : " + json.toString());
-        JsonArray jsonUsers = json.getJsonArray(USERS, new JsonArray());
-        for(Object o : jsonUsers) {
-            if(!(o instanceof JsonObject)) continue;
-            try {
-                Contact abUser = new Contact((JsonObject)o);
-                users.put(abUser.getId(), abUser);
-            } catch (IllegalArgumentException e) {
-                log.error("Error when loading abookuser : " + o.toString());
-            }
+        return folder;
+    }
+
+    public String getCsv() {
+        StringBuilder stringBuilder = new StringBuilder(SynchroConstants.ABOOK_CSV_COLUMNS);
+        Iterator<Contact> it = contacts.iterator();
+        //noinspection WhileLoopReplaceableByForEach
+        while (it.hasNext()) {
+            Contact currentContact = it.next();
+            addCsvElem(stringBuilder, currentContact.getClasses());
+            addCsvElem(stringBuilder, currentContact.getStructure());
+            addCsvElem(stringBuilder, currentContact.getEmail());
+            addCsvElem(stringBuilder, currentContact.getFirstName());
+            addCsvElem(stringBuilder, currentContact.getDisplayName());
+            addCsvElem(stringBuilder, currentContact.getFunctions());
+            addLastCsvElem(stringBuilder, currentContact.getLastName());
         }
+        return stringBuilder.toString();
+    }
+
+    private void addCsvElem(StringBuilder sb, String elem) {
+        addCsvElem(sb, elem, false);
+    }
+
+    private void addLastCsvElem(StringBuilder sb, String elem) {
+        addCsvElem(sb, elem, true);
+    }
+
+    private void addCsvElem(StringBuilder sb, String elem, boolean last) {
+        sb.append("\"").append(elem.replace('"','\'')).append(last ? "\n" : ",");
     }
 }

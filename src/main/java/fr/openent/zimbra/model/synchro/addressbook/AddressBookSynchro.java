@@ -2,15 +2,14 @@ package fr.openent.zimbra.model.synchro.addressbook;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-
-
+// todo documentation
 public abstract class AddressBookSynchro {
 
     protected String uai;
-    protected List<AddressBookFolder> folders = new ArrayList<>();
+    protected Map<String,AddressBookFolder> folders = new HashMap<>();
 
     AddressBookSynchro(String uai) throws NullPointerException {
         if(uai == null || uai.isEmpty()) {
@@ -20,4 +19,13 @@ public abstract class AddressBookSynchro {
     }
 
     public abstract void load(Handler<AsyncResult<AddressBookSynchro>> handler);
+
+    AddressBookFolder getFolder(String folderName) {
+        AddressBookFolder folder = folders.get(folderName);
+        if(folder == null) {
+            folder = new AddressBookFolder();
+            folders.put(folderName, folder);
+        }
+        return folder;
+    }
 }
