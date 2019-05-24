@@ -39,11 +39,12 @@ import io.vertx.core.logging.LoggerFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
 import static fr.openent.zimbra.service.data.SoapZimbraService.ERROR_CODE;
 
 public class SynchroUserService {
 
-    public static final String EMPTY_BDD = "empty_bdd";
+    static final String EMPTY_BDD = "empty_bdd";
 
     private UserService userService;
     private DbMailService dbMailService;
@@ -76,7 +77,7 @@ public class SynchroUserService {
      * Get the first user to synchronize from bdd (if any) and synchronize its information in Zimbra
      * @param handler synchronization result
      */
-    public void syncUserFromBase(Handler<AsyncResult<JsonObject>> handler) {
+    void syncUserFromBase(Handler<AsyncResult<JsonObject>> handler) {
         Future<JsonObject> startFuture = AsyncHelper.getJsonObjectFinalFuture(handler);
         Future<JsonObject> fetchedUser = Future.future();
 

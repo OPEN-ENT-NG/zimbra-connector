@@ -19,6 +19,8 @@ package fr.openent.zimbra.controllers;
 
 
 import fr.openent.zimbra.helper.ServiceManager;
+import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
+import fr.openent.zimbra.model.synchro.addressbook.DefaultAddressBookSynchroImpl;
 import fr.openent.zimbra.service.impl.CommunicationService;
 import fr.openent.zimbra.service.impl.NotificationService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
@@ -151,10 +153,27 @@ public class ExternalWebservicesController extends BaseController {
                     eb.send("fr.openent.zimbra",
                             new JsonObject().put("action", "getMailUser")
                             .put("idList", new JsonArray().add(userid)),
-                            res -> {
-                                renderJson(request, (JsonObject)res.result().body());
-                            });
+                            res -> renderJson(request, (JsonObject)res.result().body()));
                     return;
+                case "syncuserab":
+                    String useridsync = request.params().get("userid");
+                    String uai = request.params().get("uai");
+                    AddressBookSynchro absync = new DefaultAddressBookSynchroImpl(uai);
+                    absync.load( res -> {
+                        if(res.failed()) {
+                            renderError(request);
+                        } else {
+                            absync.sync(useridsync, ressync -> {
+                                if(ressync.failed()) {
+                                    renderError(request);
+                                } else {
+                                    renderJson(request, ressync.result());
+                                }
+                            });
+                        }
+                    });
+
+
             }
             badRequest(request);
         }

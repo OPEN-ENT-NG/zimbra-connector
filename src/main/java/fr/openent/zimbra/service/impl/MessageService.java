@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.SoapConstants.*;
 
 public class MessageService {
 
@@ -81,7 +82,7 @@ public class MessageService {
                             .getJsonObject("GetFolderResponse")
                             .getJsonArray("folder").getJsonObject(0);
 
-                    String folderPath = folder.getString(GETFOLDER_FOLDERPATH);
+                    String folderPath = folder.getString(FOLDER_PATH);
 
                     String query = pathToQuery(folderPath);
                     if(unread) {

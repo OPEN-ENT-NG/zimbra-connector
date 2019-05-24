@@ -40,6 +40,7 @@ import java.util.List;
 import static fr.openent.zimbra.model.constant.SynchroConstants.*;
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
 
 
 public class SynchroUser extends EntUser {

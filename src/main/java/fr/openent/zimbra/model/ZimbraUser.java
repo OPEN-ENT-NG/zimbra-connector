@@ -21,6 +21,7 @@ package fr.openent.zimbra.model;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.SynchroConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.model.constant.ZimbraErrors;
 import fr.openent.zimbra.model.soap.SoapError;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
@@ -97,7 +98,7 @@ public class ZimbraUser {
                 String errorStr = result.cause().getMessage();
                 try {
                     SoapError error = new SoapError(errorStr);
-                    if(ZimbraConstants.ERROR_NOSUCHACCOUNT.equals(error.getCode())) {
+                    if(ZimbraErrors.ERROR_NOSUCHACCOUNT.equals(error.getCode())) {
                         this.accountExists = false;
                         handler.handle(Future.succeededFuture(ZimbraUser.this));
                     } else {

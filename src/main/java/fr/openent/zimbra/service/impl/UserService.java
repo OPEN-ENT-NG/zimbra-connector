@@ -22,6 +22,7 @@ import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
+import fr.openent.zimbra.model.constant.ZimbraErrors;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
@@ -200,29 +201,6 @@ public class UserService {
     }
 
     /**
-     * Process response from Zimbra API to get alias details of specified user
-     * In case of success, return a Json Object :
-     * {
-     * 	    "name" : "user mail address"
-     * 	    "aliases" :
-     * 	    [
-     * 	        "alias"
-     * 	    ]
-     * }
-     * @param jsonResponse Zimbra API Response
-     * @param handler Handler result
-     */
-    private void processGetAliases(JsonObject jsonResponse,
-                                 Handler<Either<String,JsonObject>> handler) {
-
-        if(jsonResponse.containsKey(UserInfoService.ALIAS)) {
-            handler.handle(new Either.Right<>(jsonResponse.getJsonObject(UserInfoService.ALIAS)));
-        } else {
-            handler.handle(new Either.Left<>("Could not get Quota from GetInfoRequest"));
-        }
-    }
-
-    /**
      * Process response from Zimbra API to get email address of specified user
      * In case of success, return a String with the address
      * @param jsonResponse Zimbra API Response
@@ -337,7 +315,7 @@ public class UserService {
                 getUserAccount(account, response -> {
                     if(response.failed()) {
                         JsonObject callResult = new JsonObject(response.cause().getMessage());
-                        if(ZimbraConstants.ERROR_NOSUCHACCOUNT
+                        if(ZimbraErrors.ERROR_NOSUCHACCOUNT
                                 .equals(callResult.getString(SoapZimbraService.ERROR_CODE, ""))) {
                             synchroUserService.exportUser(userId, resultSync -> {
                                 if (resultSync.failed()) {
@@ -383,7 +361,7 @@ public class UserService {
             handler.handle(new JsonObject());
             return;
         }
-        List<String> idStrList = new ArrayList<>();
+        List<String> idStrList;
         List<String> emailList = new ArrayList<>();
         try {
             idStrList = JsonHelper.getStringList(idList);
