@@ -41,8 +41,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
 
-@SuppressWarnings("WeakerAccess")
 public class SoapZimbraService {
 
     private static final Long LIFETIME_OFFSET = (long)3600000; // 1h

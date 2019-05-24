@@ -2,6 +2,8 @@ package fr.openent.zimbra.model.synchro.addressbook;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +21,8 @@ public abstract class AddressBookSynchro {
     }
 
     public abstract void load(Handler<AsyncResult<AddressBookSynchro>> handler);
+
+    public abstract void sync(String userId, Handler<AsyncResult<JsonObject>> handler);
 
     AddressBookFolder getFolder(String folderName) {
         AddressBookFolder folder = folders.get(folderName);

@@ -89,13 +89,13 @@ public class FolderService {
 
             Integer nbMsg;
             if(unread != null && unread) {
-                if(folder.containsKey(ZimbraConstants.GETFOLDER_UNREAD)) {
-                    nbMsg = folder.getInteger(ZimbraConstants.GETFOLDER_UNREAD);
+                if(folder.containsKey(ZimbraConstants.FOLDER_NBUNREAD)) {
+                    nbMsg = folder.getInteger(ZimbraConstants.FOLDER_NBUNREAD);
                 } else {
                     nbMsg = 0;
                 }
             } else {
-                nbMsg = folder.getInteger(ZimbraConstants.GETFOLDER_NBMSG);
+                nbMsg = folder.getInteger(ZimbraConstants.FOLDER_NBITEMS);
             }
 
             JsonObject finalResponse = new JsonObject()
@@ -244,7 +244,7 @@ public class FolderService {
                             Handler<Either<String,JsonObject>> handler) {
         JsonObject actionReq = new JsonObject()
                 .put("id", folderId)
-                .put("op", ZimbraConstants.OP_TRASH);
+                .put("op", SoapConstants.OP_TRASH);
 
         JsonObject folderActionRequest = new JsonObject()
                 .put("name", "FolderActionRequest")
@@ -273,7 +273,7 @@ public class FolderService {
         JsonObject actionReq = new JsonObject()
                 .put("id", folderId)
                 .put("name", name)
-                .put("op", ZimbraConstants.OP_RENAME);
+                .put("op", SoapConstants.OP_RENAME);
 
         JsonObject folderActionRequest = new JsonObject()
                 .put("name", "FolderActionRequest")
@@ -301,7 +301,7 @@ public class FolderService {
         JsonObject actionReq = new JsonObject()
                 .put("id", folderId)
                 .put("l", ZimbraConstants.FOLDER_INBOX_ID)
-                .put("op", ZimbraConstants.OP_MOVE);
+                .put("op", SoapConstants.OP_MOVE);
 
         JsonObject folderActionRequest = new JsonObject()
                 .put("name", "FolderActionRequest")
@@ -329,7 +329,7 @@ public class FolderService {
                             Handler<Either<String,JsonObject>> handler) {
         JsonObject actionReq = new JsonObject()
                 .put("id", folderId)
-                .put("op", ZimbraConstants.OP_DELETE);
+                .put("op", SoapConstants.OP_DELETE);
 
         JsonObject folderActionRequest = new JsonObject()
                 .put("name", "FolderActionRequest")

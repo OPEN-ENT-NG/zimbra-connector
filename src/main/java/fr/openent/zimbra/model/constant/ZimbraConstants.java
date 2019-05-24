@@ -31,20 +31,6 @@ public class ZimbraConstants {
     public static final String FOLDER_DRAFT_ID = "6";
     public static final String FOLDER_TRASH_ID = "3";
 
-    public static final String OP_TRASH = "trash";
-    public static final String OP_RENAME = "rename";
-    public static final String OP_MOVE = "move";
-    public static final String OP_DELETE = "delete";
-    public static final String OP_EMPTY = "empty";
-    public static final String OP_READ = "read";
-    public static final String OP_UNREAD = "!read";
-    public static final String OPERATION = "op";
-
-
-    public static final String GETFOLDER_UNREAD = "u";
-    public static final String GETFOLDER_NBMSG = "n";
-    public static final String GETFOLDER_FOLDERPATH = "absFolderPath";
-
     public static final String MSG = "m";
     public static final String MSG_ID = "id";
     public static final String MSG_ORIGINAL_ID = "origid";
@@ -135,69 +121,36 @@ public class ZimbraConstants {
     public static final String DLIST_DYNAMIC = "dynamic";
     public static final String DLIST_ID = "id";
 
+    public static final String FOLDER = "folder";
+    public static final String FOLDER_DEPTH = "depth";
+    public static final String FOLDER_PATH = "path";
+    public static final String FOLDER_NAME = "name";
+    public static final String FOLDER_ABSPATH = "absFolderPath";
+    public static final String FOLDER_PARENTID = "l";
+    public static final String FOLDER_PARENTUUID = "luuid";
+    public static final String FOLDER_FLAGS = "f";
+    public static final String FOLDER_COLOR = "color";
+    public static final String FOLDER_RGB = "rgb";
+    public static final String FOLDER_NBUNREAD = "u";
+    public static final String FOLDER_NBITEMS = "n";
+    public static final String FOLDER_VIEW = "view";
+    public static final String FOLDER_MODIFIED_DATE = "md";
+    public static final String FOLDER_SIZEITEMS = "s";
+
+    public static final String VIEW = "view";
+    public static final String VIEW_SEARCHFOLDER = "search folder";
+    public static final String VIEW_TAG = "tag";
+    public static final String VIEW_CONVERSATION = "conversation";
+    public static final String VIEW_MESSAGE = "message";
+    public static final String VIEW_CONTACT = "contact";
+    public static final String VIEW_DOCUMENT = "document";
+    public static final String VIEW_APPOINTMENT = "appointment";
+    public static final String VIEW_VIRTUALCONV = "virtual conversation";
+    public static final String VIEW_REMOTEFOLDER = "remote folder";
+    public static final String VIEW_WIKI = "wiki";
+    public static final String VIEW_TASK = "task";
+    public static final String VIEW_CHAT = "chat";
 
     public static final String ACCT_STATUS_LOCKED = "locked";
     public static final String ACCT_STATUS_ACTIVE = "active";
-
-    // Error codes can be found in /opt/zimbra/docs/soap.txt
-    public static final String ERROR_GENERIC = "service.FAILURE";
-    public static final String ERROR_BADREQUEST = "service.INVALID_REQUEST";
-    public static final String ERROR_UNKNOWNREQ = "service.UNKNOWN_DOCUMENT";
-    public static final String ERROR_PARSEERROR = "service.PARSE_ERROR";
-    public static final String ERROR_PERMDENIED = "service.PERM_DENIED";
-    public static final String ERROR_AUTHREQUIRED = "service.AUTH_REQUIRED";
-    public static final String ERROR_AUTHEXPIRED = "service.AUTH_EXPIRED";
-    public static final String ERROR_WRONGHOST = "service.WRONG_HOST";
-    public static final String ERROR_PROXYERROR = "service.PROXY_ERROR";
-    public static final String ERROR_TOOMANYHOPS = "service.TOO_MANY_HOPS";
-    public static final String ERROR_INTERRUPTED = "service.INTERRUPTED";
-    public static final String ERROR_NOTINPROGRESS = "service.NOT_IN_PROGRESS";
-    public static final String ERROR_ALREADYINPROGRESS = "service.ALREADY_IN_PROGRESS";
-    public static final String ERROR_NOSPELLCHECKURL = "service.NO_SPELL_CHECK_URL";
-    public static final String ERROR_UNREACHABLE = "service.RESOURCE_UNREACHABLE";
-    public static final String ERROR_TEMP_UNVAVAILABLE = "service.TEMPORARILY_UNAVAILABLE";
-    public static final String ERROR_NONREADONLY_OPDENIED = "service.NON_READONLY_OPERATION_DENIED";
-
-    public static final String ERROR_AUTHFAILED = "account.AUTH_FAILED";
-    public static final String ERROR_CHANGEPWD = "account.CHANGE_PASSWORD";
-    public static final String ERROR_PWDLOCK = "account.PASSWORD_LOCKED";
-    public static final String ERROR_PWDTEMPLOCK = "account.PASSWORD_CHANGE_TOO_SOON";
-    public static final String ERROR_PWDRECENTUSED = "account.PASSWORD_RECENTLY_USED";
-    public static final String ERROR_INVALIDPWD = "account.INVALID_PASSWORD";
-    public static final String ERROR_INVALIDATTRNAME = "account.INVALID_ATTR_NAME";
-    public static final String ERROR_INVALIDATTRVALUE = "account.INVALID_ATTR_VALUE";
-    public static final String ERROR_MULTIPLEACCOUNTMATCHED = "account.MULTIPLE_ACCOUNTS_MATCHED";
-    public static final String ERROR_NOSUCHACCOUNT = "account.NO_SUCH_ACCOUNT";
-    public static final String ERROR_NOSUCHALIAS = "account.NO_SUCH_ALIAS";
-    public static final String ERROR_NOSUCHDOMAIN = "account.NO_SUCH_DOMAIN";
-    public static final String ERROR_NOSUCHCOS = "account.NO_SUCH_COS";
-    public static final String ERROR_NOSUCHID = "account.NO_SUCH_IDENTITY";
-    public static final String ERROR_NOSUCHSIGNATURE = "account.NO_SUCH_SIGNATURE";
-    public static final String ERROR_NOSUCHDATASRC = "account.NO_SUCH_DATA_SOURCE";
-    public static final String ERROR_NOSUCHSERVER = "account.NO_SUCH_SERVER";
-    public static final String ERROR_NOSUCHZIMLET = "account.NO_SUCH_ZIMLET";
-    public static final String ERROR_NOSUCHDLIST = "account.NO_SUCH_DISTRIBUTION_LIST";
-    public static final String ERROR_NOSUCHCALENDARRSC = "account.NO_SUCH_CALENDAR_RESOURCE";
-    public static final String ERROR_NOSUCHMEMBER = "account.NO_SUCH_MEMBER";
-    public static final String ERROR_MEMBEREXISTS = "account.MEMBER_EXISTS";
-    public static final String ERROR_ACCOUNTEXISTS = "account.ACCOUNT_EXISTS";
-    public static final String ERROR_DOMAINEXISTS = "account.DOMAIN_EXISTS";
-    public static final String ERROR_COSEXISTS = "account.COS_EXISTS";
-    public static final String ERROR_SERVEREXISTS = "account.SERVER_EXISTS";
-    public static final String ERROR_DLISTEXISTS = "account.DISTRIBUTION_LIST_EXISTS";
-    public static final String ERROR_IDEXISTS = "account.IDENTITY_EXISTS";
-    public static final String ERROR_SIGNATUREEXISTS = "account.SIGNATURE_EXISTS";
-    public static final String ERROR_DATASRCEXISTS = "account.DATA_SOURCE_EXISTS";
-    public static final String ERROR_DOMAINNOTEMPTY = "account.DOMAIN_NOT_EMPTY";
-    public static final String ERROR_MAINTENANCEMODE = "account.MAINTENANCE_MODE";
-    public static final String ERROR_ACCOUNTINACTIVE = "account.ACCOUNT_INACTIVE";
-    public static final String ERROR_TOOMANYACCOUNT = "account.TOO_MANY_ACCOUNTS";
-    public static final String ERROR_TOOMANYIDS = "account.TOO_MANY_IDENTITIES";
-    public static final String ERROR_TOOMANYSIGNATURE = "account.TOO_MANY_SIGNATURES";
-    public static final String ERROR_TOOMANYDATASRC = "account.TOO_MANY_DATA_SOURCES";
-    public static final String ERROR_TOOMANYSRCHRESULTS = "account.TOO_MANY_SEARCH_RESULTS";
-    public static final String ERROR_2FAAUTHFAILED = "account.TWO_FACTOR_AUTH_FAILED";
-    public static final String ERROR_2FASETUPFAILED = "account.TWO_FACTOR_SETUP_REQUIRED";
-
-
 }

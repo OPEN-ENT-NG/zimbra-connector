@@ -3,7 +3,6 @@ package fr.openent.zimbra.service.synchro;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
 import fr.openent.zimbra.model.synchro.addressbook.DefaultAddressBookSynchroImpl;
-import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchroZimbra;
 import fr.openent.zimbra.service.data.SqlSynchroService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -44,13 +43,13 @@ public class SynchroAddressBookService {
 
         Future<List<String>> structureListFetched = Future.future();
         sqlSynchroService.getDeployedStructures(structureListFetched.completer());
-        structureListFetched.compose( structureList -> {
+        structureListFetched.compose( structureList ->
             AsyncHelper.processListSynchronously(structureList, (structure, hand) -> {
                 log.info("Synchronizing addressbook for structure "+ structure);
                 synchronizeStructure(structure, v -> hand.handle(Future.succeededFuture(structure)));
             },
-            finalFuture.completer());
-        }, finalFuture);
+            finalFuture.completer())
+        , finalFuture);
 
     }
 
@@ -63,19 +62,15 @@ public class SynchroAddressBookService {
 
     private void synchronizeStructure(String structureUAI, Handler<AsyncResult<JsonObject>> handler) {
         AddressBookSynchro addressBook;
-        AddressBookSynchro addressBookZimbra;
         try {
             addressBook = new DefaultAddressBookSynchroImpl(structureUAI);
-            addressBookZimbra = new AddressBookSynchroZimbra(structureUAI);
         } catch (NullPointerException e) {
             // todo handle and log error
             handler.handle(Future.succeededFuture(new JsonObject()));
             return;
         }
-        addressBook.load(vNeo -> {
-            addressBookZimbra.load(vZimbra -> {
-                handler.handle(Future.succeededFuture(new JsonObject()));
-            });
-        });
+        addressBook.load(vNeo ->
+            handler.handle(Future.succeededFuture(new JsonObject()))
+        );
     }
 }

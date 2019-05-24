@@ -58,6 +58,11 @@ public class DefaultAddressBookSynchroImpl extends AddressBookSynchro {
         });
     }
 
+    public void sync(String userId, Handler<AsyncResult<JsonObject>> handler) {
+        AddressBookZimbraSynchro zimbraSynchro = new AddressBookZimbraSynchro();
+        zimbraSynchro.initSync(userId, handler);
+    }
+
 
     private void processUsers(JsonArray neoData, Handler<AsyncResult<AddressBookSynchro>> handler) {
         for(Object o : neoData) {
