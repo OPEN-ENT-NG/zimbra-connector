@@ -54,7 +54,7 @@ public class SoapFolder {
 
     public static void createFolderByPath(String userId, String folderPath, String view,
                                           Handler<AsyncResult<SoapFolder>> handler) {
-        SoapRequest createFolderRequest = SoapRequest.AccountSoapRequest(SoapConstants.CREATE_FOLDER_REQUEST, userId);
+        SoapRequest createFolderRequest = SoapRequest.MailSoapRequest(SoapConstants.CREATE_FOLDER_REQUEST, userId);
         JsonObject content = new JsonObject()
                 .put(FOLDER, new JsonObject()
                     .put(VIEW, view)
@@ -65,7 +65,7 @@ public class SoapFolder {
 
     public static void getFolderByPath(String userId, String folderPath, String view, int depth,
                                        Handler<AsyncResult<SoapFolder>> handler) {
-        SoapRequest getFolderRequest = SoapRequest.AccountSoapRequest(SoapConstants.GET_FOLDER_REQUEST, userId);
+        SoapRequest getFolderRequest = SoapRequest.MailSoapRequest(SoapConstants.GET_FOLDER_REQUEST, userId);
         JsonObject content = new JsonObject()
                 .put(VIEW, view)
                 .put(FOLDER_DEPTH, depth)
@@ -76,7 +76,7 @@ public class SoapFolder {
     }
 
     public void emptyFolder(String userId, Handler<AsyncResult<JsonObject>> handler) {
-        SoapRequest actionRequest = SoapRequest.AccountSoapRequest(SoapConstants.FOLDER_ACTION_REQUEST, userId);
+        SoapRequest actionRequest = SoapRequest.MailSoapRequest(SoapConstants.FOLDER_ACTION_REQUEST, userId);
         JsonObject content = new JsonObject()
                 .put(ACTION, new JsonObject()
                     .put(RECURSIVE, ONE_TRUE)

@@ -23,8 +23,8 @@ public class Neo4jAddrbookService {
     public static final String PROFILE_GUEST = "Guest";
     public static final String PROFILE_PERSONNEL = "Personnel";
     public static final String PROFILE_STUDENT = "Student";
-    public static final String PROFILE_RELATIVE = "Teacher";
-    public static final String PROFILE_TEACHER = "Relative";
+    public static final String PROFILE_RELATIVE = "Relative";
+    public static final String PROFILE_TEACHER = "Teacher";
 
     public Neo4jAddrbookService() {
         this.neo = Neo4j.getInstance();
@@ -40,8 +40,8 @@ public class Neo4jAddrbookService {
                 "u.emailInternal as " + EMAIL + ", " +
                 "fg.filter as " + FUNCTIONS + ", " +
                 "pg.filter as " + PROFILE + ", " +
-                "c.name as " + CLASSES + ", " +
-                "ORDER BY " + PROFILE + ", " + CLASSES + ", " + LASTNAME + ", " + FIRSTNAME;
+                "collect(c.name) as " + CLASSES +
+                " ORDER BY " + PROFILE + ", " + CLASSES + "[0], " + LASTNAME + ", " + FIRSTNAME;
 
         JsonObject params = new JsonObject()
                 .put("uai", uai);

@@ -53,6 +53,10 @@ public class SoapRequest {
         return new SoapRequest(name, NAMESPACE_ACCOUNT, false, userId);
     }
 
+    public static SoapRequest MailSoapRequest(String name, String userId) {
+        return new SoapRequest(name, NAMESPACE_MAIL, false, userId);
+    }
+
     public static SoapRequest AdminSoapRequest(String name) {
         return new SoapRequest(name, NAMESPACE_ADMIN, true);
     }

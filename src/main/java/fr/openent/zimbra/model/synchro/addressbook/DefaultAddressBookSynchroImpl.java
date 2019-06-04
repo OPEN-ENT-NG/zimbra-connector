@@ -49,6 +49,7 @@ public class DefaultAddressBookSynchroImpl extends AddressBookSynchro {
             }
         });
         // todo get and process lists
+        groups.complete(null);
         CompositeFuture.all(users,groups).setHandler(compositeResult -> {
             if(compositeResult.failed()) {
                 handler.handle(Future.failedFuture(compositeResult.cause()));
@@ -71,6 +72,8 @@ public class DefaultAddressBookSynchroImpl extends AddressBookSynchro {
                 processUser((JsonObject)o);
             } catch (IllegalArgumentException e) {
                 log.warn("ABSync : Unable to process user " + o);
+            }catch (Exception e) {
+                log.error("ABSync : Unknown Error when processing user : " + o, e);
             }
         }
         if(folders.isEmpty()) {

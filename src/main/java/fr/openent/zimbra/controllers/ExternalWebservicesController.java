@@ -172,10 +172,10 @@ public class ExternalWebservicesController extends BaseController {
                             });
                         }
                     });
-
-
+                    break;
+                default:
+                    badRequest(request);
             }
-            badRequest(request);
         }
 
     }
