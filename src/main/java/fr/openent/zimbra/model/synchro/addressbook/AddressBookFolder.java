@@ -30,7 +30,11 @@ class AddressBookFolder {
         return folder;
     }
 
-    public String getCsv() {
+    Map<String,AddressBookFolder> getSubFolders() {
+        return subFolders;
+    }
+
+    String getCsv() {
         StringBuilder stringBuilder = new StringBuilder(SynchroConstants.ABOOK_CSV_COLUMNS);
         Iterator<Contact> it = contacts.iterator();
         //noinspection WhileLoopReplaceableByForEach

@@ -35,7 +35,6 @@ public class SoapRequest {
     private String userId;
     private JsonObject content = null;
 
-    @SuppressWarnings("SameParameterValue")
     private SoapRequest(String name, String namespace, boolean isAdmin) {
         this.name = name;
         this.namespace = namespace;
@@ -49,8 +48,14 @@ public class SoapRequest {
         this.userId = userId;
     }
 
+    @SuppressWarnings("unused")
     public static SoapRequest AccountSoapRequest(String name, String userId) {
         return new SoapRequest(name, NAMESPACE_ACCOUNT, false, userId);
+    }
+
+    @SuppressWarnings("unused")
+    public static SoapRequest ZimbraSoapRequest(String name, String userId) {
+        return new SoapRequest(name, NAMESPACE_ZIMBRA, false, userId);
     }
 
     public static SoapRequest MailSoapRequest(String name, String userId) {

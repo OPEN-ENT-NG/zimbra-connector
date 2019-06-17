@@ -18,13 +18,19 @@
 package fr.openent.zimbra.model.synchro.addressbook;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.model.soap.model.SoapContactFolder;
 import fr.openent.zimbra.model.soap.model.SoapFolder;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
@@ -32,9 +38,14 @@ import static fr.openent.zimbra.service.data.SoapZimbraService.ERROR_CODE;
 
 class AddressBookZimbraSynchro {
 
+    private String userId;
     private static Logger log = LoggerFactory.getLogger(AddressBookZimbraSynchro.class);
 
-    void initSync(String userId, Handler<AsyncResult<JsonObject>> handler) {
+    AddressBookZimbraSynchro(String userId) {
+        this.userId = userId;
+    }
+
+    void initSync(Handler<AsyncResult<JsonObject>> handler) {
         String rootFolderName = Zimbra.appConfig.getSharedFolderName();
         getFolder(userId, rootFolderName, res -> {
            if(res.failed()) {
@@ -63,6 +74,45 @@ class AddressBookZimbraSynchro {
                 }
             } else {
                 handler.handle(res);
+            }
+        });
+    }
+
+    public void sync(Map<String,AddressBookFolder> folders, Handler<AsyncResult<JsonObject>> handler) {
+        String rootFolderName = Zimbra.appConfig.getSharedFolderName();
+        syncSubFolders(rootFolderName, folders, handler);
+    }
+
+    private void syncSubFolders(String path, Map<String,AddressBookFolder> subFolders,
+                                Handler<AsyncResult<JsonObject>> handler) {
+        // todo secure and handle error
+        List<Future> folderFutures = new ArrayList<>();
+        subFolders.forEach( (name, folder) -> {
+            String subFolderPath = path + "/" + name;
+            Future<JsonObject> folderFuture = Future.future();
+            folderFutures.add(folderFuture);
+            syncFolder(subFolderPath, folder, folderFuture.completer());
+        });
+        CompositeFuture.all(folderFutures).setHandler( res -> {
+            if(res.failed()) {
+                handler.handle(Future.failedFuture(res.cause()));
+            } else {
+                handler.handle(Future.succeededFuture(new JsonObject()));
+            }
+        });
+    }
+
+    private void syncFolder(String path, AddressBookFolder folder, Handler<AsyncResult<JsonObject>> handler) {
+        // todo secure and handle error
+        SoapFolder.createFolderByPath(userId, path, VIEW_CONTACT, resCreateFolder -> {
+            if(resCreateFolder.failed()) {
+                handler.handle(Future.failedFuture(resCreateFolder.cause()));
+            } else {
+                String folderId = resCreateFolder.result().getId();
+                SoapContactFolder.importContactsFromCsv(userId, folderId, folder.getCsv(), res -> {
+                    //todo handler error
+                    syncSubFolders(path, folder.getSubFolders(), handler);
+                });
             }
         });
     }

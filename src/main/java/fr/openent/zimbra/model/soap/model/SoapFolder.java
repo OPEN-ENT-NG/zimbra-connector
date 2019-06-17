@@ -52,6 +52,8 @@ public class SoapFolder {
 
     private static Logger log = LoggerFactory.getLogger(SoapFolder.class);
 
+    public String getId() { return id; }
+
     public static void createFolderByPath(String userId, String folderPath, String view,
                                           Handler<AsyncResult<SoapFolder>> handler) {
         SoapRequest createFolderRequest = SoapRequest.MailSoapRequest(SoapConstants.CREATE_FOLDER_REQUEST, userId);

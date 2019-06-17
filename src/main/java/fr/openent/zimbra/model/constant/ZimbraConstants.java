@@ -137,6 +137,11 @@ public class ZimbraConstants {
     public static final String FOLDER_MODIFIED_DATE = "md";
     public static final String FOLDER_SIZEITEMS = "s";
 
+    public static final String IMPORT_CONTENT_TYPE = "ct";
+    public static final String IMPORT_CT_CSV = "csv";
+    public static final String IMPORT_FOLDER_ID = "l";
+    public static final String IMPORT_CONTACTS_DATA = "content";
+
     public static final String VIEW = "view";
     public static final String VIEW_SEARCHFOLDER = "search folder";
     public static final String VIEW_TAG = "tag";
