@@ -180,5 +180,11 @@
     "mailconfig.port": "Port",
     "mailconfig.ssl": "SSL",
     "mailconfig.auth": "Authentification",
-    "zimbra.abook.folder.members": "Membres"
+    "zimbra.abook.folder.members": "Membres",
+    "folder.Guest": "Invités",
+    "folder.Personnel": "Personnels",
+    "folder.Student": "Élèves",
+    "folder.Relative": "Parents",
+    "folder.Teacher": "Enseignants",
+    "Teacher": "Enseignant"
 }

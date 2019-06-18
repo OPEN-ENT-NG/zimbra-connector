@@ -17,6 +17,8 @@
 
 package fr.openent.zimbra.model.synchro.addressbook.contacts;
 
+import fr.openent.zimbra.Zimbra;
+import fr.wseduc.webutils.I18n;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -26,10 +28,14 @@ public class Teacher extends Contact{
 
     public Teacher(JsonObject json, String uai) throws IllegalArgumentException {
         super(json, uai);
-        JsonArray neoFunctions = json.getJsonArray(FUNCTIONS, new JsonArray());
-        String concatFunctions = concatField(neoFunctions);
-        if(!concatFunctions.isEmpty()) {
-            functions = "Enseignant " + concatFunctions;
+        String profileName = I18n.getInstance().translate(
+                "Teacher",
+                "default-domain",
+                Zimbra.appConfig.getSynchroLang());
+        JsonArray neoSubjects = json.getJsonArray(SUBJECTS, new JsonArray());
+        String concatSubjects = concatField(neoSubjects);
+        if(!concatSubjects.isEmpty()) {
+            functions = profileName + " " + concatSubjects;
         }
     }
 

@@ -17,6 +17,8 @@
 
 package fr.openent.zimbra.model.synchro.addressbook.contacts;
 
+import fr.openent.zimbra.Zimbra;
+import fr.wseduc.webutils.I18n;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -75,9 +77,17 @@ public abstract class Contact {
                     sb.append(", ");
                 }
             });
-            sb.delete(sb.length()-3, sb.length()-1);
+            sb.delete(sb.length()-2, sb.length());
         }
         return sb.toString();
+    }
+
+    public String getProfileFolderName() {
+        String profile = getProfile();
+        return I18n.getInstance().translate(
+                "folder." + profile,
+                "default-domain",
+                Zimbra.appConfig.getSynchroLang());
     }
 
     public String getEmail() { return email; }

@@ -22,7 +22,8 @@ import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 public class DefaultAddressBookSynchroImpl extends AddressBookSynchro {
 
     private Neo4jAddrbookService neo4jAddrbookService;
-    private final String FNAME_MEMBERS;
+    private final String FOLDER_NAME_MEMBERS;
+    private boolean loaded = false;
 
     private static Logger log = LoggerFactory.getLogger(DefaultAddressBookSynchroImpl.class);
 
@@ -31,7 +32,7 @@ public class DefaultAddressBookSynchroImpl extends AddressBookSynchro {
         super(uai);
         ServiceManager sm = ServiceManager.getServiceManager();
         this.neo4jAddrbookService = sm.getNeo4jAddrbookService();
-        FNAME_MEMBERS = I18n.getInstance().translate(
+        FOLDER_NAME_MEMBERS = I18n.getInstance().translate(
                 I18nConstants.AB_MEMBERS_FOLDER,
                 "default-domain",
                 Zimbra.appConfig.getSynchroLang());
@@ -113,25 +114,24 @@ public class DefaultAddressBookSynchroImpl extends AddressBookSynchro {
                     profile = PROFILE_GUEST;
             }
             if(PROFILE_RELATIVE.equals(profile) || PROFILE_STUDENT.equals(profile)) {
-                addToClassSubFolder(contact, profile);
+                addToClassSubFolder(contact);
             } else if(PROFILE_GUEST.equals(profile) ) {
-                getFolder(profile).addUser(contact);
+                getFolder(contact.getProfileFolderName()).addUser(contact);
             } else {
-                addToMembersSubFolder(contact, profile);
+                addToMembersSubFolder(contact);
             }
         }
     }
-
     // Users that must be displayed in a class subfolder that does not have a class are not displayed
-    private void addToMembersSubFolder(Contact user, String profile) {
-        AddressBookFolder folderProfile = getFolder(profile);
-        AddressBookFolder subFolder = folderProfile.getSubFolder(FNAME_MEMBERS);
+    private void addToMembersSubFolder(Contact user) {
+        AddressBookFolder folderProfile = getFolder(user.getProfileFolderName());
+        AddressBookFolder subFolder = folderProfile.getSubFolder(FOLDER_NAME_MEMBERS);
         subFolder.addUser(user);
     }
 
     // Users that must be displayed in a class subfolder that does not have a class are not displayed
-    private void addToClassSubFolder(Contact user, String foldername) {
-        AddressBookFolder folder = getFolder(foldername);
+    private void addToClassSubFolder(Contact user) {
+        AddressBookFolder folder = getFolder(user.getProfileFolderName());
         if(user.getClasses().isEmpty()) {
             return;
         }
