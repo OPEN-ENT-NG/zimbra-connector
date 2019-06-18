@@ -60,7 +60,7 @@ public class DefaultAddressBookSynchroImpl extends AddressBookSynchro {
     }
 
     public void sync(String userId, Handler<AsyncResult<JsonObject>> handler) {
-        AddressBookZimbraSynchro zimbraSynchro = new AddressBookZimbraSynchro(userId);
+        AddressBookZimbraSynchro zimbraSynchro = new AddressBookZimbraSynchro(userId, uai);
         zimbraSynchro.initSync(res -> {
             if(res.failed()) {
                 handler.handle(res);

@@ -39,32 +39,43 @@ import static fr.openent.zimbra.service.data.SoapZimbraService.ERROR_CODE;
 class AddressBookZimbraSynchro {
 
     private String userId;
+    private String uai;
+    private String structureRootFolderPath;
+    private String rootFolderName;
     private static Logger log = LoggerFactory.getLogger(AddressBookZimbraSynchro.class);
 
-    AddressBookZimbraSynchro(String userId) {
+    AddressBookZimbraSynchro(String userId, String uai) {
         this.userId = userId;
+        this.uai = uai;
+        this.rootFolderName = Zimbra.appConfig.getSharedFolderName();
+        this.structureRootFolderPath = rootFolderName + "/" + uai;
     }
 
     void initSync(Handler<AsyncResult<JsonObject>> handler) {
-        String rootFolderName = Zimbra.appConfig.getSharedFolderName();
         getFolder(userId, rootFolderName, res -> {
            if(res.failed()) {
                handler.handle(Future.failedFuture(res.cause()));
            } else {
-               SoapFolder zimbraFolder = res.result();
-               zimbraFolder.emptyFolder(userId, handler);
+               getFolder(userId, structureRootFolderPath, resSubfolder -> {
+                   if(resSubfolder.failed()) {
+                       handler.handle(Future.failedFuture(resSubfolder.cause()));
+                   } else {
+                       SoapFolder zimbraFolder = resSubfolder.result();
+                       zimbraFolder.emptyFolder(userId, handler);
+                   }
+               });
            }
         });
     }
 
-    private void getFolder(String userId, String folderName, Handler<AsyncResult<SoapFolder>> handler) {
-        SoapFolder.getFolderByPath(userId, folderName, VIEW_CONTACT, 0, res ->  {
+    private void getFolder(String userId, String path, Handler<AsyncResult<SoapFolder>> handler) {
+        SoapFolder.getFolderByPath(userId, path, VIEW_CONTACT, 0, res ->  {
             if(res.failed()) {
                 try  {
                     JsonObject error = new JsonObject(res.cause().getMessage());
                     String errorCode = error.getString(ERROR_CODE, "");
                     if(ERROR_NOSUCHFOLDER.equals(errorCode)) {
-                        SoapFolder.createFolderByPath(userId, folderName, VIEW_CONTACT, handler);
+                        SoapFolder.createFolderByPath(userId, path, VIEW_CONTACT, handler);
                     } else {
                         handler.handle(res);
                     }
@@ -79,13 +90,16 @@ class AddressBookZimbraSynchro {
     }
 
     public void sync(Map<String,AddressBookFolder> folders, Handler<AsyncResult<JsonObject>> handler) {
-        String rootFolderName = Zimbra.appConfig.getSharedFolderName();
-        syncSubFolders(rootFolderName, folders, handler);
+        syncSubFolders(structureRootFolderPath, folders, res -> {
+            if(res.failed()) {
+                log.error("AddrBookSync : Error when syncing etab " + uai + " for user " + userId, res.cause());
+            }
+            handler.handle(res);
+        });
     }
 
     private void syncSubFolders(String path, Map<String,AddressBookFolder> subFolders,
                                 Handler<AsyncResult<JsonObject>> handler) {
-        // todo secure and handle error
         List<Future> folderFutures = new ArrayList<>();
         subFolders.forEach( (name, folder) -> {
             String subFolderPath = path + "/" + name;
@@ -103,15 +117,17 @@ class AddressBookZimbraSynchro {
     }
 
     private void syncFolder(String path, AddressBookFolder folder, Handler<AsyncResult<JsonObject>> handler) {
-        // todo secure and handle error
         SoapFolder.createFolderByPath(userId, path, VIEW_CONTACT, resCreateFolder -> {
             if(resCreateFolder.failed()) {
                 handler.handle(Future.failedFuture(resCreateFolder.cause()));
             } else {
                 String folderId = resCreateFolder.result().getId();
                 SoapContactFolder.importContactsFromCsv(userId, folderId, folder.getCsv(), res -> {
-                    //todo handler error
-                    syncSubFolders(path, folder.getSubFolders(), handler);
+                    if(res.failed()) {
+                        handler.handle(res);
+                    } else {
+                        syncSubFolders(path, folder.getSubFolders(), handler);
+                    }
                 });
             }
         });

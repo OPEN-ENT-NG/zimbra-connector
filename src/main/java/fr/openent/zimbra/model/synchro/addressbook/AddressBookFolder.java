@@ -36,10 +36,7 @@ class AddressBookFolder {
 
     String getCsv() {
         StringBuilder stringBuilder = new StringBuilder(SynchroConstants.ABOOK_CSV_COLUMNS);
-        Iterator<Contact> it = contacts.iterator();
-        //noinspection WhileLoopReplaceableByForEach
-        while (it.hasNext()) {
-            Contact currentContact = it.next();
+        contacts.forEach( currentContact -> {
             addCsvElem(stringBuilder, currentContact.getClasses());
             addCsvElem(stringBuilder, currentContact.getStructure());
             addCsvElem(stringBuilder, currentContact.getEmail());
@@ -47,7 +44,7 @@ class AddressBookFolder {
             addCsvElem(stringBuilder, currentContact.getDisplayName());
             addCsvElem(stringBuilder, currentContact.getFunctions());
             addLastCsvElem(stringBuilder, currentContact.getLastName());
-        }
+        });
         return stringBuilder.toString();
     }
 
@@ -60,6 +57,6 @@ class AddressBookFolder {
     }
 
     private void addCsvElem(StringBuilder sb, String elem, boolean last) {
-        sb.append("\"").append(elem.replace('"','\'')).append(last ? "\n" : ",");
+        sb.append("\"").append(elem.replace('"','\'')).append("\"").append(last ? "\n" : ",");
     }
 }

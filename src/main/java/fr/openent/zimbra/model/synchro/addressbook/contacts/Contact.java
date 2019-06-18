@@ -27,11 +27,11 @@ import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
 public abstract class Contact {
 
-    String lastName;
-    String firstName;
+    private String lastName;
+    private String firstName;
     String displayName;
-    String functions;
-    String classes;
+    String functions = "";
+    String classes = "";
 
     private String email;
     private String structure;
