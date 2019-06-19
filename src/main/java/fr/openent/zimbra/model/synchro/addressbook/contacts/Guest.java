@@ -23,7 +23,7 @@ import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
 public class Guest extends Contact{
 
-    public Guest(JsonObject json, String uai) throws IllegalArgumentException {
+    public Guest(JsonObject json, String uai) {
         super(json, uai);
     }
 

@@ -17,7 +17,7 @@ class AddressBookFolder {
     private static Logger log = LoggerFactory.getLogger(AddressBookFolder.class);
 
 
-    void addUser(Contact contact) {
+    void addContact(Contact contact) {
         contacts.add(contact);
     }
 

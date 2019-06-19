@@ -38,7 +38,7 @@ public abstract class Contact {
     private String email;
     private String structure;
 
-    Contact(JsonObject json, String uai) throws IllegalArgumentException {
+    Contact(JsonObject json, String uai) {
         lastName = json.getString(LASTNAME, "");
         firstName = json.getString(FIRSTNAME, "");
         if(lastName.isEmpty() || firstName.isEmpty()) {
@@ -48,9 +48,6 @@ public abstract class Contact {
         }
         email = json.getString(EMAIL, "");
         structure = uai;
-        if(email.isEmpty() || uai.isEmpty()) {
-            throw new IllegalArgumentException("Invalid Contact Data");
-        }
     }
 
     public static Comparator<Contact> getComparator() {

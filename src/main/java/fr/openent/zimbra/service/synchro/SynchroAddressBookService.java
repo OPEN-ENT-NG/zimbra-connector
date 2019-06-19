@@ -2,7 +2,6 @@ package fr.openent.zimbra.service.synchro;
 
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
-import fr.openent.zimbra.model.synchro.addressbook.DefaultAddressBookSynchroImpl;
 import fr.openent.zimbra.service.data.SqlSynchroService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -63,7 +62,7 @@ public class SynchroAddressBookService {
     private void synchronizeStructure(String structureUAI, Handler<AsyncResult<JsonObject>> handler) {
         AddressBookSynchro addressBook;
         try {
-            addressBook = new DefaultAddressBookSynchroImpl(structureUAI);
+            addressBook = new AddressBookSynchro(structureUAI);
         } catch (NullPointerException e) {
             // todo handle and log error
             handler.handle(Future.succeededFuture(new JsonObject()));

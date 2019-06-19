@@ -82,7 +82,7 @@ public class MessageService {
                             .getJsonObject("GetFolderResponse")
                             .getJsonArray("folder").getJsonObject(0);
 
-                    String folderPath = folder.getString(FOLDER_PATH);
+                    String folderPath = folder.getString(FOLDER_ABSPATH);
 
                     String query = pathToQuery(folderPath);
                     if(unread) {

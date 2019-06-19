@@ -23,13 +23,12 @@ public class Neo4jAddrbookService {
     public static final String CLASSES = "classes";
     public static final String GROUPNAME = "name";
     public static final String GROUP_TYPE = "grouptype";
-    public static final String I18N_NEEDED = "i18n_needed";
     public static final String PROFILE_GUEST = "Guest";
     public static final String PROFILE_PERSONNEL = "Personnel";
     public static final String PROFILE_STUDENT = "Student";
     public static final String PROFILE_RELATIVE = "Relative";
     public static final String PROFILE_TEACHER = "Teacher";
-    public static final String GROUP_OTHER = "other";
+    private static final String GROUP_OTHER = "OtherGroups";
 
     public Neo4jAddrbookService() {
         this.neo = Neo4j.getInstance();
@@ -63,17 +62,13 @@ public class Neo4jAddrbookService {
                 "OPTIONAL MATCH (g)-[:HAS_PROFILE]->(p1:Profile) " +
                 "OPTIONAL MATCH (g)-[:DEPENDS*]->(:Group)-[:HAS_PROFILE]->(p2:Profile) " +
                 "RETURN g.name AS " + GROUPNAME + ", " +
+                    "g.emailInternal as " + EMAIL + ", " +
                     "CASE WHEN (g:ProfileGroup) THEN coalesce(p1,p2).name" +
-                        " WHEN (g:FuncGroup) THEN " + PROFILE_PERSONNEL +
-                        " WHEN (g:DisciplineGroup) THEN " + PROFILE_TEACHER +
-                        " WHEN (g:HTGroup) THEN " + PROFILE_TEACHER +
-                        " ELSE " + GROUP_OTHER +
-                        " END AS " + GROUP_TYPE + ", " +
-                    " CASE WHEN (g:ProfileGroup) THEN true" +
-                        " WHEN (g:HTGroup) THEN true" +
-                        " WHEN (g:FunctionGroup) THEN true" +
-                        " ELSE false"+
-                        " END AS " + I18N_NEEDED;
+                        " WHEN (g:FuncGroup) THEN '" + PROFILE_PERSONNEL + "'" +
+                        " WHEN (g:DisciplineGroup) THEN '" + PROFILE_TEACHER + "'" +
+                        " WHEN (g:HTGroup) THEN '" + PROFILE_TEACHER + "'" +
+                        " ELSE '" + GROUP_OTHER + "'" +
+                        " END AS " + GROUP_TYPE;
 
         JsonObject params = new JsonObject()
                 .put("uai", uai);

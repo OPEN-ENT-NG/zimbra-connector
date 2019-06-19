@@ -17,25 +17,21 @@
 
 package fr.openent.zimbra.model.synchro.addressbook.contacts;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
-public class Relative extends Contact{
+public class GroupContact extends Contact {
 
-    public Relative(JsonObject json, String uai) {
-        super(json, uai);
-        JsonArray neoClasses = json.getJsonArray(CLASSES, new JsonArray());
-        String concatClasses = concatField(neoClasses);
-        if(!concatClasses.isEmpty()) {
-            classes = concatClasses;
-            displayName = displayName + " (" + concatClasses + ")";
-        }
+    private final String profile;
+
+    public GroupContact(JsonObject json, String uai) {
+        super(json.put(LASTNAME, json.getString(GROUPNAME)), uai);
+        profile = json.getString(GROUP_TYPE);
     }
 
     @Override
     public String getProfile() {
-        return PROFILE_RELATIVE;
+        return profile;
     }
 }

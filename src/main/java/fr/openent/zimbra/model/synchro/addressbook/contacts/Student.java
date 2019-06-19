@@ -24,7 +24,7 @@ import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
 public class Student extends Contact{
 
-    public Student(JsonObject json, String uai) throws IllegalArgumentException {
+    public Student(JsonObject json, String uai) {
         super(json, uai);
         JsonArray neoClasses = json.getJsonArray(CLASSES, new JsonArray());
         String concatClasses = concatField(neoClasses);

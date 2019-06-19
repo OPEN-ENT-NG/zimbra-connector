@@ -26,7 +26,7 @@ import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
 public class Teacher extends Contact{
 
-    public Teacher(JsonObject json, String uai) throws IllegalArgumentException {
+    public Teacher(JsonObject json, String uai) {
         super(json, uai);
         String profileName = I18n.getInstance().translate(
                 "Teacher",

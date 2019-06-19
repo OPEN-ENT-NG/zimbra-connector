@@ -20,7 +20,6 @@ package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
-import fr.openent.zimbra.model.synchro.addressbook.DefaultAddressBookSynchroImpl;
 import fr.openent.zimbra.service.impl.CommunicationService;
 import fr.openent.zimbra.service.impl.NotificationService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
@@ -158,7 +157,7 @@ public class ExternalWebservicesController extends BaseController {
                 case "syncuserab":
                     String useridsync = request.params().get("userid");
                     String uai = request.params().get("uai");
-                    AddressBookSynchro absync = new DefaultAddressBookSynchroImpl(uai);
+                    AddressBookSynchro absync = new AddressBookSynchro(uai);
                     absync.load( res -> {
                         if(res.failed()) {
                             renderError(request);
