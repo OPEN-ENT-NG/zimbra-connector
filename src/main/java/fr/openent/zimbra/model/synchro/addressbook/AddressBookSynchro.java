@@ -32,9 +32,9 @@ public class AddressBookSynchro {
     protected String uai;
     protected Map<String,AddressBookFolder> folders = new HashMap<>();
 
-    private Neo4jAddrbookService neo4jAddrbookService;
+    Neo4jAddrbookService neo4jAddrbookService;
     private final String FOLDER_NAME_MEMBERS;
-    private boolean loaded = false;
+    boolean loaded = false;
 
     private static Logger log = LoggerFactory.getLogger(AddressBookSynchro.class);
 
@@ -115,7 +115,7 @@ public class AddressBookSynchro {
     }
 
 
-    private void processUser(JsonObject neoUser)  {
+    void processUser(JsonObject neoUser)  {
         String profile = neoUser.getString(PROFILE, "");
         if(profile.isEmpty()) {
             log.warn("ABSync : no profile for user " + neoUser.toString());
@@ -193,7 +193,7 @@ public class AddressBookSynchro {
     }
 
 
-    private void addToProfileFolder(Contact contact) {
+    void addToProfileFolder(Contact contact) {
         AddressBookFolder folderProfile = getFolder(contact.getProfileFolderName());
         folderProfile.addContact(contact);
     }
