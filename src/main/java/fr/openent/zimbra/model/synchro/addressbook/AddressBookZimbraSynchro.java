@@ -33,8 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
-import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
-import static fr.openent.zimbra.service.data.SoapZimbraService.ERROR_CODE;
 
 class AddressBookZimbraSynchro {
 
@@ -52,11 +50,11 @@ class AddressBookZimbraSynchro {
     }
 
     void initSync(Handler<AsyncResult<JsonObject>> handler) {
-        getFolder(userId, rootFolderName, res -> {
+        SoapFolder.getOrCreateFolderByPath(userId, rootFolderName, res -> {
            if(res.failed()) {
                handler.handle(Future.failedFuture(res.cause()));
            } else {
-               getFolder(userId, structureRootFolderPath, resSubfolder -> {
+               SoapFolder.getOrCreateFolderByPath(userId, structureRootFolderPath, resSubfolder -> {
                    if(resSubfolder.failed()) {
                        handler.handle(Future.failedFuture(resSubfolder.cause()));
                    } else {
@@ -68,26 +66,6 @@ class AddressBookZimbraSynchro {
         });
     }
 
-    private void getFolder(String userId, String path, Handler<AsyncResult<SoapFolder>> handler) {
-        SoapFolder.getFolderByPath(userId, path, VIEW_CONTACT, 0, res ->  {
-            if(res.failed()) {
-                try  {
-                    JsonObject error = new JsonObject(res.cause().getMessage());
-                    String errorCode = error.getString(ERROR_CODE, "");
-                    if(ERROR_NOSUCHFOLDER.equals(errorCode)) {
-                        SoapFolder.createFolderByPath(userId, path, VIEW_CONTACT, handler);
-                    } else {
-                        handler.handle(res);
-                    }
-                } catch (Exception e) {
-                    log.warn("ABSync : Unable to decode Zimbra error : " + res.cause().getMessage());
-                    handler.handle(res);
-                }
-            } else {
-                handler.handle(res);
-            }
-        });
-    }
 
     public void sync(Map<String,AddressBookFolder> folders, Handler<AsyncResult<JsonObject>> handler) {
         syncSubFolders(structureRootFolderPath, folders, res -> {

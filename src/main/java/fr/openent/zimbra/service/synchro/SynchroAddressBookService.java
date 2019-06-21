@@ -1,9 +1,14 @@
 package fr.openent.zimbra.service.synchro;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.AsyncContainer;
+import fr.openent.zimbra.helper.AsyncHandler;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.soap.model.SoapAccount;
+import fr.openent.zimbra.model.soap.model.SoapFolder;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
+import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchroVisibles;
+import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SqlSynchroService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -14,15 +19,19 @@ import io.vertx.core.logging.LoggerFactory;
 
 import java.util.List;
 
+import static fr.openent.zimbra.service.impl.CommunicationService.HAS_EXTERNAL_ROLE;
+
 public class SynchroAddressBookService {
 
     private SqlSynchroService sqlSynchroService;
+    private Neo4jZimbraService neoZimbraService;
     private static Logger log = LoggerFactory.getLogger(SynchroAddressBookService.class);
 
     private boolean synchroStarted = false;
 
     public SynchroAddressBookService(SqlSynchroService sqlSynchroService) {
         this.sqlSynchroService = sqlSynchroService;
+        neoZimbraService = new Neo4jZimbraService();
     }
 
     public void startSynchro(Handler<AsyncResult<JsonObject>> handler) {
@@ -36,6 +45,66 @@ public class SynchroAddressBookService {
                 handler.handle(res);
             });
         }
+    }
+
+    public void syncUser(String userId, List<String> uaiList, Handler<AsyncResult<String>> handler) {
+
+        Future<String> finalFuture = Future.future();
+        finalFuture.setHandler(handler);
+        Future<JsonObject> roleFetched = Future.future();
+
+        neoZimbraService.hasExternalCommunicationRole(userId, roleFetched.completer());
+
+        AsyncContainer<AsyncHandler<String>> asyncContainer = new AsyncContainer<>();
+        roleFetched.compose( neoResult -> {
+            AsyncHandler<String> userHandler = getHandlerFromCommunicationRole(userId, uaiList, neoResult);
+            asyncContainer.setValue(userHandler);
+
+            Future<SoapFolder> folderInitiated = Future.future();
+            SoapFolder.getOrCreateFolderByPath(userId, Zimbra.appConfig.getSharedFolderName(),
+                    folderInitiated.completer());
+            return folderInitiated;
+        }).compose( soapFolder ->  {
+            Future<JsonObject> folderEmptied = Future.future();
+            soapFolder.emptyFolder(userId, folderEmptied.completer());
+            return folderEmptied;
+        }).compose( v -> {
+            AsyncHelper.processListSynchronously(uaiList, asyncContainer.getValue(), finalFuture.completer());
+        },finalFuture);
+    }
+
+    private AsyncHandler<String> getHandlerFromCommunicationRole(String userId, List<String> uaiList,
+                                                                 JsonObject neoResult) {
+        AsyncHandler<String> handler;
+        if (neoResult.getBoolean(HAS_EXTERNAL_ROLE, false)) {
+            handler = (uai, handlerStructure) -> {
+                shareAddressBook(userId, uaiList.get(0), handlerStructure);
+            };
+        } else {
+            // todo si non lancer synchro user sur tous les étabs
+            handler = (uai, handlerStructure) -> {
+                AddressBookSynchro absync = new AddressBookSynchroVisibles(uaiList.get(0), userId);
+                absync.load( res -> {
+                    if(res.failed()) {
+                        handlerStructure.handle(Future.failedFuture(res.cause()));
+                    } else {
+                        absync.sync(userId, ressync -> {
+                            if(ressync.failed()) {
+                                handlerStructure.handle(Future.failedFuture(res.cause()));
+                            } else {
+                                // fixme weird handler
+                                handlerStructure.handle(Future.succeededFuture(""));
+                            }
+                        });
+                    }
+                });
+            };
+        }
+        return handler;
+    }
+
+    private void shareAddressBook(String userId, String uai, Handler<AsyncResult<String>> handler) {
+        // todo shareAddressBook
     }
 
     private void start(Handler<AsyncResult<JsonObject>> handler) {

@@ -30,6 +30,8 @@ import io.vertx.core.logging.LoggerFactory;
 
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraErrors.ERROR_NOSUCHFOLDER;
+import static fr.openent.zimbra.service.data.SoapZimbraService.ERROR_CODE;
 
 public class SoapFolder {
 
@@ -75,6 +77,27 @@ public class SoapFolder {
                         .put(FOLDER_PATH, folderPath));
         getFolderRequest.setContent(content);
         getFolderRequest.start(processFolderHandler(GET_FOLDER_RESPONSE, handler));
+    }
+
+    public static void getOrCreateFolderByPath(String userId, String path, Handler<AsyncResult<SoapFolder>> handler) {
+        SoapFolder.getFolderByPath(userId, path, VIEW_CONTACT, 0, res ->  {
+            if(res.failed()) {
+                try  {
+                    JsonObject error = new JsonObject(res.cause().getMessage());
+                    String errorCode = error.getString(ERROR_CODE, "");
+                    if(ERROR_NOSUCHFOLDER.equals(errorCode)) {
+                        SoapFolder.createFolderByPath(userId, path, VIEW_CONTACT, handler);
+                    } else {
+                        handler.handle(res);
+                    }
+                } catch (Exception e) {
+                    log.warn("getFolder : Unable to decode Zimbra error : " + res.cause().getMessage());
+                    handler.handle(res);
+                }
+            } else {
+                handler.handle(res);
+            }
+        });
     }
 
     public void emptyFolder(String userId, Handler<AsyncResult<JsonObject>> handler) {
