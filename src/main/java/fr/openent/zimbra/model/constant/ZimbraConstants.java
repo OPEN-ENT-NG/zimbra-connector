@@ -104,6 +104,7 @@ public class ZimbraConstants {
     public static final String ACCT_ATTRIBUTES_NAME = "n";
     public static final String ACCT_ATTRIBUTES_CONTENT = "_content";
     public static final String ACCT_ALIAS = "alias";
+    public static final String ACCT_ISEXTERNAL = "isExternal";
 
     public static final String ACCT_INFO_ATTRIBUTES = "_attrs";
     public static final String ACCT_INFO_ATTRIBUTE_NAME = "name";

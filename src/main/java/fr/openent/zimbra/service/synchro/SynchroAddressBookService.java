@@ -1,6 +1,8 @@
 package fr.openent.zimbra.service.synchro;
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.AsyncHelper;
+import fr.openent.zimbra.model.soap.model.SoapAccount;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
 import fr.openent.zimbra.service.data.SqlSynchroService;
 import io.vertx.core.AsyncResult;
@@ -40,9 +42,14 @@ public class SynchroAddressBookService {
         Future<String> finalFuture = Future.future();
         finalFuture.setHandler(getFinalSyncHandler(handler));
 
-        Future<List<String>> structureListFetched = Future.future();
-        sqlSynchroService.getDeployedStructures(structureListFetched.completer());
-        structureListFetched.compose( structureList ->
+        Future<SoapAccount> abookAccountFetched = Future.future();
+        SoapAccount.getUserAccount(Zimbra.appConfig.getAddressBookAccountName(), abookAccountFetched.completer());
+
+        abookAccountFetched.compose( soapAccount -> {
+                Future<List<String>> deployedStructuresFetched = Future.future();
+                sqlSynchroService.getDeployedStructures(deployedStructuresFetched.completer());
+                return deployedStructuresFetched;
+        }).compose( structureList ->
             AsyncHelper.processListSynchronously(structureList, (structure, hand) -> {
                 log.info("Synchronizing addressbook for structure "+ structure);
                 synchronizeStructure(structure, v -> hand.handle(Future.succeededFuture(structure)));
@@ -54,8 +61,11 @@ public class SynchroAddressBookService {
 
     private Handler<AsyncResult<String>> getFinalSyncHandler(Handler<AsyncResult<JsonObject>> handler) {
         return json -> {
-            // todo final addr book sync handler
-            handler.handle(Future.succeededFuture(new JsonObject()));
+            if(json.failed()) {
+                handler.handle(Future.failedFuture(json.cause()));
+            } else {
+                handler.handle(Future.succeededFuture(new JsonObject().put("data", json.result())));
+            }
         };
     }
 
@@ -64,12 +74,16 @@ public class SynchroAddressBookService {
         try {
             addressBook = new AddressBookSynchro(structureUAI);
         } catch (NullPointerException e) {
-            // todo handle and log error
+            log.error("Empty UAI in ABook sync");
             handler.handle(Future.succeededFuture(new JsonObject()));
             return;
         }
-        addressBook.load(vNeo ->
-            handler.handle(Future.succeededFuture(new JsonObject()))
-        );
+        addressBook.load(res -> {
+            if (res.failed()) {
+                handler.handle(Future.failedFuture(res.cause()));
+            } else {
+                addressBook.sync(Zimbra.appConfig.getAddressBookAccountName(), handler);
+            }
+        });
     }
 }

@@ -245,6 +245,7 @@ public class UserService {
             return;
         }
         String account = userId + "@" + Zimbra.domain;
+        //fixme does not work, response data not processed
         getUserAccount(account, handler);
     }
 

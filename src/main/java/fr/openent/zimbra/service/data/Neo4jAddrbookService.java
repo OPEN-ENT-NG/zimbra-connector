@@ -122,7 +122,9 @@ public class Neo4jAddrbookService {
     	MATCH p=(n:User)-[:COMMUNIQUE*0..2]->ipg-[:COMMUNIQUE*0..1]->g<-[:DEPENDS*0..1]-m
         WHERE n.id = {userId}
             AND (NOT(HAS(m.blocked)) OR m.blocked = false)
-            AND (( (length(p) >= 2 OR m.users <> 'INCOMING') AND (length(p) < 3 OR (ipg:Group AND (m:User OR g<-[:DEPENDS]-m) AND length(p) = 3))))
+            AND (( (length(p) >= 2 OR m.users <> 'INCOMING')
+            AND (length(p) < 3
+                OR (ipg:Group AND (m:User OR g<-[:DEPENDS]-m) AND length(p) = 3))))
             AND (m:User OR m.nbUsers is not null AND m.nbUsers > 0)
         WITH DISTINCT m as visibles
             MATCH (visibles-[:IN*0..1]-(pgs:ProfileGroup)-[:DEPENDS*1..2]-(s:Structure))
