@@ -118,12 +118,21 @@ public class SynchroAddressBookService {
             } else {
                 String folderId = resFolder.result().getId();
 
-                SoapFolder.getOrCreateMountpointByPath(userId, uai, VIEW_CONTACT, adminName, folderId, resLink -> {
-                    if(resLink.failed()) {
-                        handler.handle(Future.failedFuture(resLink.cause()));
+                SoapFolder.getOrCreateFolderByPath(userId, rootFolderPath, VIEW_CONTACT, resRootFolder -> {
+                    if(resRootFolder.failed()) {
+                        handler.handle(Future.failedFuture(resRootFolder.cause()));
                     } else {
-                        // fixme weird handler
-                        handler.handle(Future.succeededFuture(""));
+                        String rootFolderId = resRootFolder.result().getId();
+
+                        SoapFolder.getOrCreateMountpointByPath(userId, rootFolderPath + "/" + uai, VIEW_CONTACT, uai,
+                                rootFolderId, adminName, folderId, resLink -> {
+                                    if (resLink.failed()) {
+                                        handler.handle(Future.failedFuture(resLink.cause()));
+                                    } else {
+                                        // fixme weird handler
+                                        handler.handle(Future.succeededFuture(""));
+                                    }
+                                });
                     }
                 });
 
