@@ -34,11 +34,11 @@ import static org.entcore.common.neo4j.Neo4jResult.validUniqueResultHandler;
 public class ZimbraAdminService {
 
     private static final Neo4j neo = Neo4j.getInstance();
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final Logger log = LoggerFactory.getLogger(ZimbraAdminService.class);
     public static final String ROLE_NAME = "zimbra.outside.donotchange";
     private static final String ACTION_NAME = "fr.openent.zimbra.controllers.ZimbraController|zimbraOutside";
 
-    public static void listGroupsWithRole(String structureId, boolean classGroups, Handler<Either<String, JsonArray>> handler) {
+    public static void listGroupsWithRole(String structureId, Handler<Either<String, JsonArray>> handler) {
        getTheRole(event -> {
            if(event.isRight()){
                String query =
@@ -58,15 +58,14 @@ public class ZimbraAdminService {
        });
     }
     public static void getTheRole(Handler<Either<String, JsonObject>> handler){
-        StringBuilder query = new StringBuilder()
-                .append(" MATCH (w:Action{name:{actionName}}) " )
-                .append(" MERGE (n:Role {name:{roleName}}) ON CREATE SET n.id = {roleId}" )
-                .append(" MERGE (n)-[a:AUTHORIZE]->(w) ")
-                .append(" return  {name :n.name, id: n.id} as role");
+        String query = " MATCH (w:Action{name:{actionName}}) "
+                 + " MERGE (n:Role {name:{roleName}}) ON CREATE SET n.id = {roleId}"
+                 + " MERGE (n)-[a:AUTHORIZE]->(w) "
+                 + " return  {name :n.name, id: n.id} as role";
         JsonObject params = new JsonObject()
                 .put("actionName",ACTION_NAME)
                 .put("roleName",ROLE_NAME)
                 .put("roleId",  UUID.randomUUID().toString());
-        neo.execute(query.toString(), params,validUniqueResultHandler(handler));
+        neo.execute(query, params,validUniqueResultHandler(handler));
     }
 }

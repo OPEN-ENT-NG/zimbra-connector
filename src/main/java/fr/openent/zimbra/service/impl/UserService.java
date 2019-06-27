@@ -30,6 +30,7 @@ import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.data.SqlDbMailService;
+import fr.openent.zimbra.service.synchro.SynchroAddressBookService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
@@ -55,15 +56,18 @@ public class UserService {
     private SynchroUserService synchroUserService;
     private Neo4jZimbraService neoService;
     private GroupService groupService;
+    private SynchroAddressBookService synchroAddressBookService;
+
     private static Logger log = LoggerFactory.getLogger(UserService.class);
 
     public UserService(SoapZimbraService soapService, SynchroUserService synchroUserService,
-                       DbMailService dbMailService) {
+                       DbMailService dbMailService, SynchroAddressBookService synchroAddressBookService) {
         this.soapService = soapService;
         this.synchroUserService = synchroUserService;
         this.dbMailService = dbMailService;
         this.neoService = new Neo4jZimbraService();
         this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
+        this.synchroAddressBookService = synchroAddressBookService;
     }
 
     /**
@@ -438,6 +442,16 @@ public class UserService {
                             handler.handle(addressList);
                         }
                 }
+            }
+        });
+    }
+
+    public void syncAddressBookAsync(UserInfos user) {
+        synchroAddressBookService.syncUser(user.getUserId(), user.getUai(), res -> {
+            if(res.failed()) {
+                log.error("zimbra ABsync failed for user " + user.getUserId());
+            } else {
+                log.info("zimbra ABSync successful for user " + user.getUserId());
             }
         });
     }

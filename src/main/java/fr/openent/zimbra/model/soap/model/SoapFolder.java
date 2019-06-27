@@ -56,6 +56,7 @@ public class SoapFolder {
 
     public String getId() { return id; }
 
+
     public static void createFolderByPath(String userId, String folderPath, String view,
                                           Handler<AsyncResult<SoapFolder>> handler) {
         SoapRequest createFolderRequest = SoapRequest.MailSoapRequest(SoapConstants.CREATE_FOLDER_REQUEST, userId);
@@ -65,6 +66,21 @@ public class SoapFolder {
                     .put(FOLDER_NAME, folderPath));
         createFolderRequest.setContent(content);
         createFolderRequest.start(processFolderHandler(CREATE_FOLDER_RESPONSE, handler));
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public static void createMountpointByPath(String userId, String path, String view,
+                                              String shareUserMail, String shareFolderId,
+                                              Handler<AsyncResult<SoapFolder>> handler) {
+        SoapRequest createMountpointRequest = SoapRequest.MailSoapRequest(CREATE_MOUNTPOINT_REQUEST, userId);
+        JsonObject content = new JsonObject()
+                .put(MOUNTPOINT, new JsonObject()
+                        .put(VIEW, view)
+                        .put(MOUNTPOINT_OWNER_MAIL, shareUserMail)
+                        .put(MOUNTPOINT_REMOTE_FOLDER_ID, shareFolderId)
+                        .put(FOLDER_NAME, path));
+        createMountpointRequest.setContent(content);
+        createMountpointRequest.start(processFolderHandler(CREATE_MOUNTPOINT_RESPONSE, handler));
     }
 
     public static void getFolderByPath(String userId, String folderPath, String view, int depth,
@@ -79,14 +95,40 @@ public class SoapFolder {
         getFolderRequest.start(processFolderHandler(GET_FOLDER_RESPONSE, handler));
     }
 
-    public static void getOrCreateFolderByPath(String userId, String path, Handler<AsyncResult<SoapFolder>> handler) {
-        SoapFolder.getFolderByPath(userId, path, VIEW_CONTACT, 0, res ->  {
+    public static void getOrCreateFolderByPath(String userId, String path, String view,
+                                               Handler<AsyncResult<SoapFolder>> handler) {
+        getOrCreateByPath(userId, path, "", "",
+                view, "", "", true, handler);
+    }
+
+    public static void getOrCreateMountpointByPath(String userId, String path, String view,
+                                                   String parentFolderid, String name,
+                                                   String shareUserMail, String shareFolderId,
+                                                   Handler<AsyncResult<SoapFolder>> handler) {
+        getOrCreateByPath(userId, path, parentFolderid, name, view, shareUserMail, shareFolderId, false, handler);
+    }
+
+    public static void getOrCreateMountpointByName(String userId, String parentFolderId, String name, String view,
+                                                   String shareUserMail, String shareFolderId,
+                                                   Handler<AsyncResult<SoapFolder>> handler) {
+        getOrCreateByPath(userId, "", parentFolderId, name, view,
+                shareUserMail, shareFolderId, false, handler);
+    }
+
+    private static void getOrCreateByPath(String userId, String path, String parentFolderId, String name, String view,
+                                          String shareUserMail, String shareFolderId,
+                                          boolean isFolder, Handler<AsyncResult<SoapFolder>> handler) {
+        SoapFolder.getFolderByPath(userId, path, view, 0, res ->  {
             if(res.failed()) {
                 try  {
                     JsonObject error = new JsonObject(res.cause().getMessage());
                     String errorCode = error.getString(ERROR_CODE, "");
                     if(ERROR_NOSUCHFOLDER.equals(errorCode)) {
-                        SoapFolder.createFolderByPath(userId, path, VIEW_CONTACT, handler);
+                        if(isFolder) {
+                            SoapFolder.createFolderByPath(userId, path, view, handler);
+                        } else {
+                            SoapFolder.createMountpointByPath(userId, path, view, shareUserMail, shareFolderId, handler);
+                        }
                     } else {
                         handler.handle(res);
                     }
@@ -113,6 +155,7 @@ public class SoapFolder {
 
     private static Handler<AsyncResult<JsonObject>> processFolderHandler(String respName,
                                                                          Handler<AsyncResult<SoapFolder>> handler) {
+        // todo process mountpoints
         return res -> {
             if(res.failed()) {
                 handler.handle(Future.failedFuture(res.cause()));

@@ -50,11 +50,11 @@ class AddressBookZimbraSynchro {
     }
 
     void initSync(Handler<AsyncResult<JsonObject>> handler) {
-        SoapFolder.getOrCreateFolderByPath(userId, rootFolderName, res -> {
+        SoapFolder.getOrCreateFolderByPath(userId, rootFolderName, VIEW_CONTACT, res -> {
            if(res.failed()) {
                handler.handle(Future.failedFuture(res.cause()));
            } else {
-               SoapFolder.getOrCreateFolderByPath(userId, structureRootFolderPath, resSubfolder -> {
+               SoapFolder.getOrCreateFolderByPath(userId, structureRootFolderPath, VIEW_CONTACT, resSubfolder -> {
                    if(resSubfolder.failed()) {
                        handler.handle(Future.failedFuture(resSubfolder.cause()));
                    } else {

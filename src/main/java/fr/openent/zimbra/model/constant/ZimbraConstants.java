@@ -138,6 +138,11 @@ public class ZimbraConstants {
     public static final String FOLDER_MODIFIED_DATE = "md";
     public static final String FOLDER_SIZEITEMS = "s";
 
+    public static final String MOUNTPOINT = "link";
+    public static final String MOUNTPOINT_OWNER_ID = "zid";
+    public static final String MOUNTPOINT_OWNER_MAIL = "owner";
+    public static final String MOUNTPOINT_REMOTE_FOLDER_ID = "rid";
+
     public static final String IMPORT_CONTENT_TYPE = "ct";
     public static final String IMPORT_CT_CSV = "csv";
     public static final String IMPORT_FOLDER_ID = "l";

@@ -19,12 +19,14 @@ import io.vertx.core.logging.LoggerFactory;
 
 import java.util.List;
 
+import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 import static fr.openent.zimbra.service.impl.CommunicationService.HAS_EXTERNAL_ROLE;
 
 public class SynchroAddressBookService {
 
     private SqlSynchroService sqlSynchroService;
     private Neo4jZimbraService neoZimbraService;
+
     private static Logger log = LoggerFactory.getLogger(SynchroAddressBookService.class);
 
     private boolean synchroStarted = false;
@@ -47,6 +49,12 @@ public class SynchroAddressBookService {
         }
     }
 
+    /**
+     * Sync contacts for all structures for a user
+     * @param userId id of user to sync
+     * @param uaiList list of structures' uai
+     * @param handler result handler (no data)
+     */
     public void syncUser(String userId, List<String> uaiList, Handler<AsyncResult<String>> handler) {
 
         Future<String> finalFuture = Future.future();
@@ -61,27 +69,24 @@ public class SynchroAddressBookService {
             asyncContainer.setValue(userHandler);
 
             Future<SoapFolder> folderInitiated = Future.future();
-            SoapFolder.getOrCreateFolderByPath(userId, Zimbra.appConfig.getSharedFolderName(),
+            SoapFolder.getOrCreateFolderByPath(userId, Zimbra.appConfig.getSharedFolderName(), VIEW_CONTACT,
                     folderInitiated.completer());
             return folderInitiated;
         }).compose( soapFolder ->  {
             Future<JsonObject> folderEmptied = Future.future();
             soapFolder.emptyFolder(userId, folderEmptied.completer());
             return folderEmptied;
-        }).compose( v -> {
-            AsyncHelper.processListSynchronously(uaiList, asyncContainer.getValue(), finalFuture.completer());
-        },finalFuture);
+        }).compose( v ->
+                AsyncHelper.processListSynchronously(uaiList, asyncContainer.getValue(),
+                        finalFuture.completer()),finalFuture);
     }
 
     private AsyncHandler<String> getHandlerFromCommunicationRole(String userId, List<String> uaiList,
                                                                  JsonObject neoResult) {
         AsyncHandler<String> handler;
         if (neoResult.getBoolean(HAS_EXTERNAL_ROLE, false)) {
-            handler = (uai, handlerStructure) -> {
-                shareAddressBook(userId, uaiList.get(0), handlerStructure);
-            };
+            handler = (uai, handlerStructure) -> shareAddressBook(userId, uaiList.get(0), handlerStructure);
         } else {
-            // todo si non lancer synchro user sur tous les étabs
             handler = (uai, handlerStructure) -> {
                 AddressBookSynchro absync = new AddressBookSynchroVisibles(uaiList.get(0), userId);
                 absync.load( res -> {
@@ -104,7 +109,26 @@ public class SynchroAddressBookService {
     }
 
     private void shareAddressBook(String userId, String uai, Handler<AsyncResult<String>> handler) {
-        // todo shareAddressBook
+        String adminName = Zimbra.appConfig.getAddressBookAccountName();
+        String rootFolderPath = Zimbra.appConfig.getSharedFolderName();
+
+        SoapFolder.getFolderByPath(adminName, rootFolderPath, VIEW_CONTACT, 0, resFolder -> {
+            if(resFolder.failed()) {
+                handler.handle(Future.failedFuture(resFolder.cause()));
+            } else {
+                String folderId = resFolder.result().getId();
+
+                SoapFolder.getOrCreateMountpointByPath(userId, uai, VIEW_CONTACT, adminName, folderId, resLink -> {
+                    if(resLink.failed()) {
+                        handler.handle(Future.failedFuture(resLink.cause()));
+                    } else {
+                        // fixme weird handler
+                        handler.handle(Future.succeededFuture(""));
+                    }
+                });
+
+            }
+        } );
     }
 
     private void start(Handler<AsyncResult<JsonObject>> handler) {

@@ -71,6 +71,8 @@ public class SoapConstants {
     public static final String GET_FOLDER_RESPONSE = "GetFolderResponse";
     public static final String CREATE_FOLDER_REQUEST = "CreateFolderRequest";
     public static final String CREATE_FOLDER_RESPONSE = "CreateFolderResponse";
+    public static final String CREATE_MOUNTPOINT_REQUEST = "CreateMountpointRequest";
+    public static final String CREATE_MOUNTPOINT_RESPONSE = "CreateMountpointResponse";
     public static final String FOLDER_ACTION_REQUEST = "FolderActionRequest";
     public static final String FOLDER_ACTION_RESPONSE = "FolderActionResponse";
     public static final String IMPORT_CONTACTS_REQUEST = "ImportContactsRequest";
