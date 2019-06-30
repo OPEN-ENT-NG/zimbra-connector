@@ -153,8 +153,8 @@ public class SoapFolder {
         actionRequest.start(handler);
     }
 
-    private static Handler<AsyncResult<JsonObject>> processFolderHandler(String respName,
-                                                                         Handler<AsyncResult<SoapFolder>> handler) {
+    static Handler<AsyncResult<JsonObject>> processFolderHandler(String respName,
+                                                                 Handler<AsyncResult<SoapFolder>> handler) {
         // todo process mountpoints
         return res -> {
             if(res.failed()) {

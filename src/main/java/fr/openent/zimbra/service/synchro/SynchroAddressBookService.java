@@ -6,6 +6,7 @@ import fr.openent.zimbra.helper.AsyncHandler;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.soap.model.SoapAccount;
 import fr.openent.zimbra.model.soap.model.SoapFolder;
+import fr.openent.zimbra.model.soap.model.SoapMountpoint;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchroVisibles;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
@@ -111,6 +112,7 @@ public class SynchroAddressBookService {
     private void shareAddressBook(String userId, String uai, Handler<AsyncResult<String>> handler) {
         String adminName = Zimbra.appConfig.getAddressBookAccountName();
         String rootFolderPath = Zimbra.appConfig.getSharedFolderName();
+        String adminMail = adminName + "@" + Zimbra.appConfig.getZimbraDomain();
 
         SoapFolder.getFolderByPath(adminName, rootFolderPath, VIEW_CONTACT, 0, resFolder -> {
             if(resFolder.failed()) {
@@ -124,8 +126,8 @@ public class SynchroAddressBookService {
                     } else {
                         String rootFolderId = resRootFolder.result().getId();
 
-                        SoapFolder.getOrCreateMountpointByPath(userId, rootFolderPath + "/" + uai, VIEW_CONTACT, uai,
-                                rootFolderId, adminName, folderId, resLink -> {
+                        SoapMountpoint.getOrCreateMountpoint(userId, uai, rootFolderId,  VIEW_CONTACT, adminMail,
+                                folderId, resLink -> {
                                     if (resLink.failed()) {
                                         handler.handle(Future.failedFuture(resLink.cause()));
                                     } else {
