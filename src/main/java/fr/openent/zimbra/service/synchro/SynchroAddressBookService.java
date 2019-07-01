@@ -114,7 +114,7 @@ public class SynchroAddressBookService {
         String rootFolderPath = Zimbra.appConfig.getSharedFolderName();
         String adminMail = adminName + "@" + Zimbra.appConfig.getZimbraDomain();
 
-        SoapFolder.getFolderByPath(adminName, rootFolderPath, VIEW_CONTACT, 0, resFolder -> {
+        SoapFolder.getFolderByPath(adminName, rootFolderPath + "/" + uai, VIEW_CONTACT, 0, resFolder -> {
             if(resFolder.failed()) {
                 handler.handle(Future.failedFuture(resFolder.cause()));
             } else {
