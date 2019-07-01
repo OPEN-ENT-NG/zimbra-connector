@@ -30,6 +30,8 @@ import io.vertx.core.logging.LoggerFactory;
 
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
+import static fr.openent.zimbra.service.data.SoapZimbraService.*;
 
 public class SoapFolder {
 
@@ -111,7 +113,22 @@ public class SoapFolder {
                                 .put(SHARE_GRANTEE_TYPE, GRANTEE_TYPE_USER)
                                 .put(GRANTEE_NAME, grantee)));
         actionRequest.setContent(content);
-        actionRequest.start(handler);
+        actionRequest.start( resRes -> {
+            if(resRes.failed()) {
+                JsonObject error = new JsonObject(resRes.cause().getMessage());
+                String errorCode = error.getString(ERROR_CODE, "");
+                /*if (ERROR_NOSUCHFOLDER.equals(errorCode)) {
+                    if (isFolder) {
+                        SoapFolder.createFolderByPath(userId, path, view, handler);
+                    } else {
+                        SoapFolder.createMountpointByPath(userId, path, view, shareUserMail, shareFolderId, handler);
+                    }
+                } else {
+                    handler.handle(res);
+                }*/
+            }
+            handler.handle(resRes);
+        });
     }
 
     static Handler<AsyncResult<JsonObject>> processFolderHandler(String respName,
