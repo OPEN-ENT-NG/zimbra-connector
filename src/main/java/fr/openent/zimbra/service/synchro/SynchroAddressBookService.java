@@ -142,7 +142,7 @@ public class SynchroAddressBookService {
             String rootFolderId = rootFolderContainer.getValue().getId();
             String sharedFolderId = sharedFolderContainer.getValue().getId();
 
-            Future<SoapFolder> mountpointCreated = Future.future();
+            Future<SoapMountpoint> mountpointCreated = Future.future();
             SoapMountpoint.getOrCreateMountpoint(userId, uai, rootFolderId, VIEW_CONTACT, adminMail,
                     sharedFolderId, mountpointCreated.completer());
             return mountpointCreated;
