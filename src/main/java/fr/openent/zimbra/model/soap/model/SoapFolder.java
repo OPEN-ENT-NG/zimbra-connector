@@ -117,17 +117,12 @@ public class SoapFolder {
             if(resRes.failed()) {
                 JsonObject error = new JsonObject(resRes.cause().getMessage());
                 String errorCode = error.getString(ERROR_CODE, "");
-                /*if (ERROR_NOSUCHFOLDER.equals(errorCode)) {
-                    if (isFolder) {
-                        SoapFolder.createFolderByPath(userId, path, view, handler);
-                    } else {
-                        SoapFolder.createMountpointByPath(userId, path, view, shareUserMail, shareFolderId, handler);
-                    }
+                if (ERROR_GRANT_EXISTS.equals(errorCode)) {
+                    handler.handle(Future.succeededFuture(new JsonObject()));
                 } else {
-                    handler.handle(res);
-                }*/
+                    handler.handle(resRes);
+                }
             }
-            handler.handle(resRes);
         });
     }
 

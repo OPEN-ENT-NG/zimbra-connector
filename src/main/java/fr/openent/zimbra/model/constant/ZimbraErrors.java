@@ -130,4 +130,6 @@ public class ZimbraErrors {
     public static final String ERROR_SENDFAILYRE = "mail.SEND_FAILURE";
     public static final String ERROR_TOOMANYQUERYTERMSEXPANDED = "mail.TOO_MANY_QUERY_TERMS_EXPANDED";
     public static final String ERROR_INVALIDCOMMITID = "mail.INVALID_COMMIT_ID";
+    public static final String ERROR_GRANT_EXISTS = "mail.GRANT_EXISTS";
+
 }
