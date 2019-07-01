@@ -162,17 +162,11 @@ public class ExternalWebservicesController extends BaseController {
                     AddressBookSynchro absync = "true".equals(visibles)
                             ? new AddressBookSynchroVisibles(uai, useridsync)
                             : new AddressBookSynchro(uai);
-                    absync.load( res -> {
-                        if(res.failed()) {
+                    absync.synchronize(useridsync, ressync -> {
+                        if(ressync.failed()) {
                             renderError(request);
                         } else {
-                            absync.sync(useridsync, ressync -> {
-                                if(ressync.failed()) {
-                                    renderError(request);
-                                } else {
-                                    renderJson(request, ressync.result());
-                                }
-                            });
+                            renderJson(request, ressync.result());
                         }
                     });
                     break;

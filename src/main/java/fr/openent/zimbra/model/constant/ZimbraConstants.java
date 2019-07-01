@@ -144,6 +144,8 @@ public class ZimbraConstants {
     public static final String GRANTEE_TYPE_USER = "usr";
     public static final String GRANTEE_NAME = "d";
 
+    public static final String FETCH_IF_EXISTS = "fie";
+
     public static final String MOUNTPOINT = "link";
     public static final String MOUNTPOINT_OWNER_ID = "zid";
     public static final String MOUNTPOINT_OWNER_MAIL = "owner";

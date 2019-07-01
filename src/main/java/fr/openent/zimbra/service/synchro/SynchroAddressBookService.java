@@ -64,10 +64,10 @@ public class SynchroAddressBookService {
 
         neoZimbraService.hasExternalCommunicationRole(userId, roleFetched.completer());
 
-        AsyncContainer<AsyncHandler<String>> asyncContainer = new AsyncContainer<>();
+        AsyncContainer<AsyncHandler<String>> userHandlerContainer = new AsyncContainer<>();
         roleFetched.compose( neoResult -> {
             AsyncHandler<String> userHandler = getHandlerFromCommunicationRole(userId, uaiList, neoResult);
-            asyncContainer.setValue(userHandler);
+            userHandlerContainer.setValue(userHandler);
 
             Future<SoapFolder> folderInitiated = Future.future();
             SoapFolder.getOrCreateFolderByPath(userId, Zimbra.appConfig.getSharedFolderName(), VIEW_CONTACT,
@@ -78,10 +78,19 @@ public class SynchroAddressBookService {
             soapFolder.emptyFolder(userId, folderEmptied.completer());
             return folderEmptied;
         }).compose( v ->
-                AsyncHelper.processListSynchronously(uaiList, asyncContainer.getValue(),
+                AsyncHelper.processListSynchronously(uaiList, userHandlerContainer.getValue(),
                         finalFuture.completer()),finalFuture);
     }
 
+    /**
+     * Get the process for each structures of the user
+     * - If he has external role : get shared folder from admin account
+     * - Else : get all accessible contacts from structure
+     * @param userId user neo4j id
+     * @param uaiList list of structures' uai
+     * @param neoResult hasExternalCommunicationRole result
+     * @return Handler with appropriate process for each structure
+     */
     private AsyncHandler<String> getHandlerFromCommunicationRole(String userId, List<String> uaiList,
                                                                  JsonObject neoResult) {
         AsyncHandler<String> handler;
@@ -90,18 +99,11 @@ public class SynchroAddressBookService {
         } else {
             handler = (uai, handlerStructure) -> {
                 AddressBookSynchro absync = new AddressBookSynchroVisibles(uaiList.get(0), userId);
-                absync.load( res -> {
-                    if(res.failed()) {
-                        handlerStructure.handle(Future.failedFuture(res.cause()));
+                absync.synchronize(userId, ressync -> {
+                    if(ressync.failed()) {
+                        handlerStructure.handle(Future.failedFuture(ressync.cause()));
                     } else {
-                        absync.sync(userId, ressync -> {
-                            if(ressync.failed()) {
-                                handlerStructure.handle(Future.failedFuture(res.cause()));
-                            } else {
-                                // fixme weird handler
-                                handlerStructure.handle(Future.succeededFuture(""));
-                            }
-                        });
+                        handlerStructure.handle(Future.succeededFuture(uai));
                     }
                 });
             };
@@ -126,7 +128,7 @@ public class SynchroAddressBookService {
                     } else {
                         String rootFolderId = resRootFolder.result().getId();
 
-                        resFolder.result().shareReadFolder(adminName, userId, resShare -> {
+                        resFolder.result().shareFolderReadonly(adminName, userId, resShare -> {
                             SoapMountpoint.getOrCreateMountpoint(userId, uai, rootFolderId,  VIEW_CONTACT, adminMail,
                                     folderId, resLink -> {
                                         if (resLink.failed()) {
@@ -184,12 +186,6 @@ public class SynchroAddressBookService {
             handler.handle(Future.succeededFuture(new JsonObject()));
             return;
         }
-        addressBook.load(res -> {
-            if (res.failed()) {
-                handler.handle(Future.failedFuture(res.cause()));
-            } else {
-                addressBook.sync(Zimbra.appConfig.getAddressBookAccountName(), handler);
-            }
-        });
+        addressBook.synchronize(Zimbra.appConfig.getAddressBookAccountName(), handler);
     }
 }

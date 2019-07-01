@@ -44,7 +44,7 @@ public class AddressBookSynchroVisibles extends AddressBookSynchro {
     }
 
     @Override
-    public void load(Handler<AsyncResult<AddressBookSynchro>> handler) {
+    protected void load(Handler<AsyncResult<AddressBookSynchro>> handler) {
         neo4jAddrbookService.getVisibles( userId, uai, res -> {
             if (res.failed()) {
                 handler.handle(Future.failedFuture(res.cause()));

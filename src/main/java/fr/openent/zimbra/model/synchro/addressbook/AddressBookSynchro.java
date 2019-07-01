@@ -52,8 +52,18 @@ public class AddressBookSynchro {
                 Zimbra.appConfig.getSynchroLang());
     }
 
+    public void synchronize(String userId, Handler<AsyncResult<JsonObject>> handler) {
+        load(res -> {
+            if (res.failed()) {
+                handler.handle(Future.failedFuture(res.cause()));
+            } else {
+                sync(userId, handler);
+            }
+        });
+    }
 
-    public void load(Handler<AsyncResult<AddressBookSynchro>> handler) {
+
+    protected void load(Handler<AsyncResult<AddressBookSynchro>> handler) {
         Future<AddressBookSynchro> users = Future.future();
         Future<AddressBookSynchro> groups = Future.future();
         neo4jAddrbookService.getAllUsersFromStructure(uai, res ->  {
@@ -81,7 +91,7 @@ public class AddressBookSynchro {
     }
 
 
-    public void sync(String userId, Handler<AsyncResult<JsonObject>> handler) {
+    private void sync(String userId, Handler<AsyncResult<JsonObject>> handler) {
         if(!loaded) {
             handler.handle(Future.failedFuture("ABSync data not loaded"));
             log.error("Trying to sync AddressBook, but data are not loaded");
