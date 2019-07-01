@@ -451,7 +451,7 @@ public class UserService {
             if(res.failed()) {
                 log.error("zimbra ABsync failed for user " + user.getUserId());
             } else {
-                log.info("zimbra ABSync successful for user " + user.getUserId());
+                log.info("zimbra ABSync successful for user " + user.getUserId() + " " + res.cause());
             }
         });
     }

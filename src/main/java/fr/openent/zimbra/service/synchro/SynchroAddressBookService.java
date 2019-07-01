@@ -116,34 +116,37 @@ public class SynchroAddressBookService {
         String rootFolderPath = Zimbra.appConfig.getSharedFolderName();
         String adminMail = adminName + "@" + Zimbra.appConfig.getZimbraDomain();
 
-        SoapFolder.getFolderByPath(adminName, rootFolderPath + "/" + uai, VIEW_CONTACT, 0, resFolder -> {
-            if(resFolder.failed()) {
-                handler.handle(Future.failedFuture(resFolder.cause()));
-            } else {
-                String folderId = resFolder.result().getId();
+        Future<String> finalFuture = Future.future();
+        finalFuture.setHandler(handler);
+        AsyncContainer<SoapFolder> sharedFolderContainer = new AsyncContainer<>();
+        AsyncContainer<SoapFolder> rootFolderContainer = new AsyncContainer<>();
 
-                SoapFolder.getOrCreateFolderByPath(userId, rootFolderPath, VIEW_CONTACT, resRootFolder -> {
-                    if(resRootFolder.failed()) {
-                        handler.handle(Future.failedFuture(resRootFolder.cause()));
-                    } else {
-                        String rootFolderId = resRootFolder.result().getId();
+        Future<SoapFolder> sharedFolderFetched = Future.future();
+        SoapFolder.getFolderByPath(adminName, rootFolderPath + "/" + uai,
+                VIEW_CONTACT, 0, sharedFolderFetched.completer());
+        sharedFolderFetched.compose(resFolder -> {
+            sharedFolderContainer.setValue(resFolder);
 
-                        resFolder.result().shareFolderReadonly(adminName, userId, resShare -> {
-                            SoapMountpoint.getOrCreateMountpoint(userId, uai, rootFolderId,  VIEW_CONTACT, adminMail,
-                                    folderId, resLink -> {
-                                        if (resLink.failed()) {
-                                            handler.handle(Future.failedFuture(resLink.cause()));
-                                        } else {
-                                            // fixme weird handler
-                                            handler.handle(Future.succeededFuture(""));
-                                        }
-                                    });
-                        });
-                    }
-                });
+            Future<SoapFolder> folderCreated = Future.future();
+            SoapFolder.getOrCreateFolderByPath(userId, rootFolderPath, VIEW_CONTACT, folderCreated.completer());
+            return folderCreated;
+        }).compose(resRootFolder -> {
+            rootFolderContainer.setValue(resRootFolder);
 
-            }
-        } );
+            SoapFolder sharedFolder = sharedFolderContainer.getValue();
+
+            Future<JsonObject> folderShared = Future.future();
+            sharedFolder.shareFolderReadonly(adminName, userId, folderShared.completer());
+            return folderShared;
+        }).compose( resShare -> {
+            String rootFolderId = rootFolderContainer.getValue().getId();
+            String sharedFolderId = sharedFolderContainer.getValue().getId();
+
+            Future<SoapFolder> mountpointCreated = Future.future();
+            SoapMountpoint.getOrCreateMountpoint(userId, uai, rootFolderId, VIEW_CONTACT, adminMail,
+                    sharedFolderId, mountpointCreated.completer());
+            return mountpointCreated;
+        }).compose( res -> finalFuture.complete(uai), finalFuture);
     }
 
     private void start(Handler<AsyncResult<JsonObject>> handler) {
