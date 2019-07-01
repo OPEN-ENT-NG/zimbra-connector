@@ -146,9 +146,23 @@ public class SoapFolder {
         SoapRequest actionRequest = SoapRequest.MailSoapRequest(SoapConstants.FOLDER_ACTION_REQUEST, userId);
         JsonObject content = new JsonObject()
                 .put(ACTION, new JsonObject()
-                    .put(RECURSIVE, ONE_TRUE)
-                    .put(ZIMBRA_ID, id)
-                    .put(OPERATION, OP_EMPTY));
+                        .put(RECURSIVE, ONE_TRUE)
+                        .put(ZIMBRA_ID, id)
+                        .put(OPERATION, OP_EMPTY));
+        actionRequest.setContent(content);
+        actionRequest.start(handler);
+    }
+
+    public void shareReadFolder(String userId, String grantee, Handler<AsyncResult<JsonObject>> handler) {
+        SoapRequest actionRequest = SoapRequest.MailSoapRequest(SoapConstants.FOLDER_ACTION_REQUEST, userId);
+        JsonObject content = new JsonObject()
+                .put(ACTION, new JsonObject()
+                        .put(OPERATION, OP_GRANT)
+                        .put(ZIMBRA_ID, id)
+                        .put(FOLDER_GRANT, new JsonObject()
+                                .put(FOLDER_SHARE_PERM, GRANT_READ)
+                                .put(SHARE_GRANTEE_TYPE, GRANTEE_TYPE_USER)
+                                .put(GRANTEE_NAME, grantee)));
         actionRequest.setContent(content);
         actionRequest.start(handler);
     }

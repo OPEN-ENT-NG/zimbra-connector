@@ -37,6 +37,7 @@ public class SoapConstants {
     public static final String FALSE_VALUE = "FALSE";
     public static final String UUID = "uuid";
     public static final String ZIMBRA_ID = "id";
+    public static final String ZIMBRA_ZID = "zid";
 
     public static final String OP_TRASH = "trash";
     public static final String OP_RENAME = "rename";
@@ -45,7 +46,12 @@ public class SoapConstants {
     public static final String OP_EMPTY = "empty";
     public static final String OP_READ = "read";
     public static final String OP_UNREAD = "!read";
+    public static final String OP_GRANT = "grant";
+    public static final String OP_REVOKE_GRANT = "!grant";
     public static final String OPERATION = "op";
+
+    public static final String GRANT_READ = "r";
+    public static final String GRANT_WRITE = "w";
 
     public static final String NAMESPACE_ZIMBRA = "urn:zimbra";
     public static final String NAMESPACE_ADMIN = "urn:zimbraAdmin";

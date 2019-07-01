@@ -126,15 +126,17 @@ public class SynchroAddressBookService {
                     } else {
                         String rootFolderId = resRootFolder.result().getId();
 
-                        SoapMountpoint.getOrCreateMountpoint(userId, uai, rootFolderId,  VIEW_CONTACT, adminMail,
-                                folderId, resLink -> {
-                                    if (resLink.failed()) {
-                                        handler.handle(Future.failedFuture(resLink.cause()));
-                                    } else {
-                                        // fixme weird handler
-                                        handler.handle(Future.succeededFuture(""));
-                                    }
-                                });
+                        resFolder.result().shareReadFolder(adminName, userId, resShare -> {
+                            SoapMountpoint.getOrCreateMountpoint(userId, uai, rootFolderId,  VIEW_CONTACT, adminMail,
+                                    folderId, resLink -> {
+                                        if (resLink.failed()) {
+                                            handler.handle(Future.failedFuture(resLink.cause()));
+                                        } else {
+                                            // fixme weird handler
+                                            handler.handle(Future.succeededFuture(""));
+                                        }
+                                    });
+                        });
                     }
                 });
 

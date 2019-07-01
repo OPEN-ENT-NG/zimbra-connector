@@ -137,6 +137,12 @@ public class ZimbraConstants {
     public static final String FOLDER_VIEW = "view";
     public static final String FOLDER_MODIFIED_DATE = "md";
     public static final String FOLDER_SIZEITEMS = "s";
+    public static final String FOLDER_SHARE_PERM = "perm";
+    public static final String FOLDER_GRANT = "grant";
+
+    public static final String SHARE_GRANTEE_TYPE = "gt";
+    public static final String GRANTEE_TYPE_USER = "usr";
+    public static final String GRANTEE_NAME = "d";
 
     public static final String MOUNTPOINT = "link";
     public static final String MOUNTPOINT_OWNER_ID = "zid";
