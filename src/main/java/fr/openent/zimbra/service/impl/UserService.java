@@ -449,9 +449,9 @@ public class UserService {
     public void syncAddressBookAsync(UserInfos user) {
         synchroAddressBookService.syncUser(user.getUserId(), user.getUai(), res -> {
             if(res.failed()) {
-                log.error("zimbra ABsync failed for user " + user.getUserId());
+                log.error("zimbra ABsync failed for user " + user.getUserId() + " " + res.cause());
             } else {
-                log.info("zimbra ABSync successful for user " + user.getUserId() + " " + res.cause());
+                log.info("zimbra ABSync successful for user " + user.getUserId());
             }
         });
     }
