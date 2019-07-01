@@ -126,7 +126,7 @@ public class SoapFolder {
         });
     }
 
-    static Handler<AsyncResult<JsonObject>> processFolderHandler(String respName,
+    private static Handler<AsyncResult<JsonObject>> processFolderHandler(String respName,
                                                                  Handler<AsyncResult<SoapFolder>> handler) {
         return res -> {
             if(res.failed()) {
@@ -136,7 +136,7 @@ public class SoapFolder {
                 try {
                     JsonArray folderList = jsonResponse.getJsonObject(BODY)
                             .getJsonObject(respName)
-                            .getJsonArray(FOLDER);
+                            .getJsonArray(FOLDER, new JsonArray());
                     if(folderList.size() != 1) {
                         log.warn("Invalid number of folders : " + jsonResponse.toString());
                     }

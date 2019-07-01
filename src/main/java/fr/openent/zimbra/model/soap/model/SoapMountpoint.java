@@ -21,19 +21,19 @@ public class SoapMountpoint {
     @SuppressWarnings("unused")
     public static void createMountpoint(String userId, String name, String parentFolderId, String view,
                                         String shareUserMail, String shareFolderId,
-                                        Handler<AsyncResult<SoapFolder>> handler) {
+                                        Handler<AsyncResult<SoapMountpoint>> handler) {
         createMountpoint(userId, name, parentFolderId, view, shareUserMail, shareFolderId, false, handler);
     }
 
     public static void getOrCreateMountpoint(String userId, String name, String parentFolderId, String view,
                                              String shareUserMail, String shareFolderId,
-                                             Handler<AsyncResult<SoapFolder>> handler) {
+                                             Handler<AsyncResult<SoapMountpoint>> handler) {
         createMountpoint(userId, name, parentFolderId, view, shareUserMail, shareFolderId, true, handler);
     }
 
-    @SuppressWarnings("unused")
-    static Handler<AsyncResult<JsonObject>> processMountpointHandler(String respName,
-                                                                     Handler<AsyncResult<SoapMountpoint>> handler) {
+    @SuppressWarnings("SameParameterValue")
+    private static Handler<AsyncResult<JsonObject>> processMountpointHandler(String respName,
+                                                                             Handler<AsyncResult<SoapMountpoint>> handler) {
         return res -> {
             if(res.failed()) {
                 handler.handle(Future.failedFuture(res.cause()));
@@ -42,7 +42,7 @@ public class SoapMountpoint {
                 try {
                     JsonArray mountpointList = jsonResponse.getJsonObject(BODY)
                             .getJsonObject(respName)
-                            .getJsonArray(MOUNTPOINT);
+                            .getJsonArray(MOUNTPOINT, new JsonArray());
                     if(mountpointList.size() != 1) {
                         log.warn("Invalid number of mountpoints : " + jsonResponse.toString());
                     }
@@ -58,7 +58,7 @@ public class SoapMountpoint {
 
     private static void createMountpoint(String userId, String name, String parentFolderId, String view,
                                               String shareUserMail, String shareFolderId, boolean getIfExists,
-                                              Handler<AsyncResult<SoapFolder>> handler) {
+                                              Handler<AsyncResult<SoapMountpoint>> handler) {
         SoapRequest createMountpointRequest = SoapRequest.MailSoapRequest(CREATE_MOUNTPOINT_REQUEST, userId);
         JsonObject content = new JsonObject()
                 .put(MOUNTPOINT, new JsonObject()
@@ -69,7 +69,7 @@ public class SoapMountpoint {
                         .put(MOUNTPOINT_REMOTE_FOLDER_ID, shareFolderId)
                         .put(FOLDER_NAME, name));
         createMountpointRequest.setContent(content);
-        createMountpointRequest.start(SoapFolder.processFolderHandler(CREATE_MOUNTPOINT_RESPONSE, handler));
+        createMountpointRequest.start(processMountpointHandler(CREATE_MOUNTPOINT_RESPONSE, handler));
     }
 
     private static SoapMountpoint createFromJson(JsonObject mountpointData) throws IllegalArgumentException {
@@ -77,5 +77,7 @@ public class SoapMountpoint {
         mountpoint.id = mountpointData.getString(ZIMBRA_ID, "");
         return mountpoint;
     }
+
+
 
 }
