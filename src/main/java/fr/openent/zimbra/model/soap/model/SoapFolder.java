@@ -113,15 +113,17 @@ public class SoapFolder {
                                 .put(SHARE_GRANTEE_TYPE, GRANTEE_TYPE_USER)
                                 .put(GRANTEE_NAME, grantee)));
         actionRequest.setContent(content);
-        actionRequest.start( resRes -> {
-            if(resRes.failed()) {
-                JsonObject error = new JsonObject(resRes.cause().getMessage());
+        actionRequest.start( reqRes -> {
+            if(reqRes.failed()) {
+                JsonObject error = new JsonObject(reqRes.cause().getMessage());
                 String errorCode = error.getString(ERROR_CODE, "");
                 if (ERROR_GRANT_EXISTS.equals(errorCode)) {
                     handler.handle(Future.succeededFuture(new JsonObject()));
                 } else {
-                    handler.handle(resRes);
+                    handler.handle(reqRes);
                 }
+            } else  {
+                handler.handle(reqRes);
             }
         });
     }
