@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.model.synchro.addressbook;
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.model.synchro.addressbook.contacts.Contact;
 import fr.openent.zimbra.model.synchro.addressbook.contacts.GroupContact;
 import io.vertx.core.AsyncResult;
@@ -26,6 +27,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.user.UserUtils;
 
 import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
@@ -57,6 +59,7 @@ public class AddressBookSynchroVisibles extends AddressBookSynchro {
 
 
     private void processVisibles(JsonArray visibles, Handler<AsyncResult<AddressBookSynchro>> handler) {
+        UserUtils.translateGroupsNames(visibles, Zimbra.appConfig.getSynchroLang());
         for(Object o : visibles) {
             if(!(o instanceof JsonObject)) continue;
             try{
