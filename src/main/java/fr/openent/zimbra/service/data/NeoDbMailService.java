@@ -171,7 +171,7 @@ public class NeoDbMailService extends DbMailService {
         String query = "MATCH (g:Group) " +
                 "WHERE g.id in {groupids} " +
                 "AND g.emailInternal is null " +
-                "RETURN g.id";
+                "RETURN g.id as id";
         JsonArray idList = new JsonArray();
         groups.forEach( t ->  idList.add(t.getId()) );
         neo.execute(query, new JsonObject().put("groupids", idList),
