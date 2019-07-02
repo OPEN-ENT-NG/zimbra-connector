@@ -161,7 +161,7 @@ public class Neo4jAddrbookService {
         queryGeneric += "WHERE n.id = {userId} ";
         queryGeneric += "AND (NOT(HAS(m.blocked)) OR m.blocked = false) ";
         queryGeneric += "AND (( (length(p) >= 2 OR m.users <> 'INCOMING') AND (length(p) < 3 OR (ipg:Group AND (m:User OR g<-[:DEPENDS]-m) AND length(p) = 3)))) ";
-        queryGeneric += "AND (m:User OR m.nbUsers is not null AND m.nbUsers > 0) ";
+        queryGeneric += "AND (m:User OR exists(m-[:IN]-(:User))) ";
         queryGeneric += "WITH DISTINCT m as visibles ";
         queryGeneric += "MATCH (visibles-[:IN*0..1]-(pgs:ProfileGroup)-[:DEPENDS*1..2]-(s:Structure)) ";
         queryGeneric += "WHERE s.UAI = {uai} ";
