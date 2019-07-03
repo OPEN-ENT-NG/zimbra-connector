@@ -19,6 +19,7 @@ package fr.openent.zimbra.controllers;
 
 
 import fr.openent.zimbra.helper.ServiceManager;
+import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchroVisibles;
 import fr.openent.zimbra.service.impl.CommunicationService;
@@ -159,9 +160,10 @@ public class ExternalWebservicesController extends BaseController {
                     String useridsync = request.params().get("userid");
                     String uai = request.params().get("uai");
                     String visibles = request.params().get("visibles");
+                    Structure structure = new Structure(new JsonObject().put(Structure.UAI, uai));
                     AddressBookSynchro absync = "true".equals(visibles)
-                            ? new AddressBookSynchroVisibles(uai, useridsync)
-                            : new AddressBookSynchro(uai);
+                            ? new AddressBookSynchroVisibles(structure, useridsync)
+                            : new AddressBookSynchro(structure);
                     absync.synchronize(useridsync, ressync -> {
                         if(ressync.failed()) {
                             renderError(request);

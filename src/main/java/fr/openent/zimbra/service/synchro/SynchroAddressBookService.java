@@ -7,6 +7,7 @@ import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.soap.model.SoapAccount;
 import fr.openent.zimbra.model.soap.model.SoapFolder;
 import fr.openent.zimbra.model.soap.model.SoapMountpoint;
+import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchroVisibles;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
@@ -53,20 +54,20 @@ public class SynchroAddressBookService {
     /**
      * Sync contacts for all structures for a user
      * @param userId id of user to sync
-     * @param uaiList list of structures' uai
+     * @param structuresList list of structures
      * @param handler result handler (no data)
      */
-    public void syncUser(String userId, List<String> uaiList, Handler<AsyncResult<String>> handler) {
+    public void syncUser(String userId, List<Structure> structuresList, Handler<AsyncResult<Structure>> handler) {
 
-        Future<String> finalFuture = Future.future();
+        Future<Structure> finalFuture = Future.future();
         finalFuture.setHandler(handler);
         Future<JsonObject> roleFetched = Future.future();
 
         neoZimbraService.hasExternalCommunicationRole(userId, roleFetched.completer());
 
-        AsyncContainer<AsyncHandler<String>> userHandlerContainer = new AsyncContainer<>();
+        AsyncContainer<AsyncHandler<Structure>> userHandlerContainer = new AsyncContainer<>();
         roleFetched.compose( neoResult -> {
-            AsyncHandler<String> userHandler = getHandlerFromCommunicationRole(userId, uaiList, neoResult);
+            AsyncHandler<Structure> userHandler = getHandlerFromCommunicationRole(userId, neoResult);
             userHandlerContainer.setValue(userHandler);
 
             Future<SoapFolder> folderInitiated = Future.future();
@@ -78,7 +79,7 @@ public class SynchroAddressBookService {
             soapFolder.emptyFolder(userId, folderEmptied.completer());
             return folderEmptied;
         }).compose( v ->
-                AsyncHelper.processListSynchronously(uaiList, userHandlerContainer.getValue(),
+                AsyncHelper.processListSynchronously(structuresList, userHandlerContainer.getValue(),
                         finalFuture.completer()),finalFuture);
     }
 
@@ -87,23 +88,21 @@ public class SynchroAddressBookService {
      * - If he has external role : get shared folder from admin account
      * - Else : get all accessible contacts from structure
      * @param userId user neo4j id
-     * @param uaiList list of structures' uai
      * @param neoResult hasExternalCommunicationRole result
      * @return Handler with appropriate process for each structure
      */
-    private AsyncHandler<String> getHandlerFromCommunicationRole(String userId, List<String> uaiList,
-                                                                 JsonObject neoResult) {
-        AsyncHandler<String> handler;
+    private AsyncHandler<Structure> getHandlerFromCommunicationRole(String userId, JsonObject neoResult) {
+        AsyncHandler<Structure> handler;
         if (neoResult.getBoolean(HAS_EXTERNAL_ROLE, false)) {
-            handler = (uai, handlerStructure) -> shareAddressBook(userId, uaiList.get(0), handlerStructure);
+            handler = (structure, handlerStructure) -> shareAddressBook(userId, structure, handlerStructure);
         } else {
-            handler = (uai, handlerStructure) -> {
-                AddressBookSynchro absync = new AddressBookSynchroVisibles(uaiList.get(0), userId);
+            handler = (structure, handlerStructure) -> {
+                AddressBookSynchro absync = new AddressBookSynchroVisibles(structure, userId);
                 absync.synchronize(userId, ressync -> {
                     if(ressync.failed()) {
                         handlerStructure.handle(Future.failedFuture(ressync.cause()));
                     } else {
-                        handlerStructure.handle(Future.succeededFuture(uai));
+                        handlerStructure.handle(Future.succeededFuture(structure));
                     }
                 });
             };
@@ -111,18 +110,18 @@ public class SynchroAddressBookService {
         return handler;
     }
 
-    private void shareAddressBook(String userId, String uai, Handler<AsyncResult<String>> handler) {
+    private void shareAddressBook(String userId, Structure structure, Handler<AsyncResult<Structure>> handler) {
         String adminName = Zimbra.appConfig.getAddressBookAccountName();
         String rootFolderPath = Zimbra.appConfig.getSharedFolderName();
         String adminMail = adminName + "@" + Zimbra.appConfig.getZimbraDomain();
 
-        Future<String> finalFuture = Future.future();
+        Future<Structure> finalFuture = Future.future();
         finalFuture.setHandler(handler);
         AsyncContainer<SoapFolder> sharedFolderContainer = new AsyncContainer<>();
         AsyncContainer<SoapFolder> rootFolderContainer = new AsyncContainer<>();
 
         Future<SoapFolder> sharedFolderFetched = Future.future();
-        SoapFolder.getFolderByPath(adminName, rootFolderPath + "/" + uai,
+        SoapFolder.getFolderByPath(adminName, rootFolderPath + "/" + structure.getUai(),
                 VIEW_CONTACT, 0, sharedFolderFetched.completer());
         sharedFolderFetched.compose(resFolder -> {
             sharedFolderContainer.setValue(resFolder);
@@ -143,10 +142,10 @@ public class SynchroAddressBookService {
             String sharedFolderId = sharedFolderContainer.getValue().getId();
 
             Future<SoapMountpoint> mountpointCreated = Future.future();
-            SoapMountpoint.getOrCreateMountpoint(userId, uai, rootFolderId, VIEW_CONTACT, adminMail,
+            SoapMountpoint.getOrCreateMountpoint(userId, structure.getName(), rootFolderId, VIEW_CONTACT, adminMail,
                     sharedFolderId, mountpointCreated.completer());
             return mountpointCreated;
-        }).compose( res -> finalFuture.complete(uai), finalFuture);
+        }).compose( res -> finalFuture.complete(structure), finalFuture);
     }
 
     private void start(Handler<AsyncResult<JsonObject>> handler) {
@@ -161,9 +160,10 @@ public class SynchroAddressBookService {
                 sqlSynchroService.getDeployedStructures(deployedStructuresFetched.completer());
                 return deployedStructuresFetched;
         }).compose( structureList ->
-            AsyncHelper.processListSynchronously(structureList, (structure, hand) -> {
-                log.info("Synchronizing addressbook for structure "+ structure);
-                synchronizeStructure(structure, v -> hand.handle(Future.succeededFuture(structure)));
+            AsyncHelper.processListSynchronously(structureList, (uai, hand) -> {
+                log.info("Synchronizing addressbook for structure "+ uai);
+                Structure structure = new Structure(new JsonObject().put(Structure.UAI, uai));
+                synchronizeStructure(structure, v -> hand.handle(Future.succeededFuture(uai)));
             },
             finalFuture.completer())
         , finalFuture);
@@ -180,10 +180,10 @@ public class SynchroAddressBookService {
         };
     }
 
-    private void synchronizeStructure(String structureUAI, Handler<AsyncResult<JsonObject>> handler) {
+    private void synchronizeStructure(Structure structure, Handler<AsyncResult<JsonObject>> handler) {
         AddressBookSynchro addressBook;
         try {
-            addressBook = new AddressBookSynchro(structureUAI);
+            addressBook = new AddressBookSynchro(structure);
         } catch (NullPointerException e) {
             log.error("Empty UAI in ABook sync");
             handler.handle(Future.succeededFuture(new JsonObject()));

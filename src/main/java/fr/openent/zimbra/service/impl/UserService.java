@@ -447,12 +447,20 @@ public class UserService {
     }
 
     public void syncAddressBookAsync(UserInfos user) {
-        synchroAddressBookService.syncUser(user.getUserId(), user.getUai(), res -> {
-            if(res.failed()) {
-                log.error("zimbra ABsync failed for user " + user.getUserId() + " " + res.cause());
+        neoService.getUserStructuresFromNeo4j(user.getUserId(), resNeo -> {
+            if(resNeo.failed() || resNeo.result().isEmpty()) {
+                log.error("Unable to get structures for user : " + user.getUserId());
             } else {
-                log.info("zimbra ABSync successful for user " + user.getUserId());
+
+                synchroAddressBookService.syncUser(user.getUserId(), resNeo.result(), res -> {
+                if(res.failed()) {
+                    log.error("zimbra ABsync failed for user " + user.getUserId() + " " + res.cause());
+                } else {
+                    log.info("zimbra ABSync successful for user " + user.getUserId());
+                }
+                });
             }
+
         });
     }
 

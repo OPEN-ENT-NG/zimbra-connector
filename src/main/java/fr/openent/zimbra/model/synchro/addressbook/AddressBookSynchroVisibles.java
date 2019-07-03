@@ -18,6 +18,7 @@
 package fr.openent.zimbra.model.synchro.addressbook;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.model.synchro.addressbook.contacts.Contact;
 import fr.openent.zimbra.model.synchro.addressbook.contacts.GroupContact;
 import io.vertx.core.AsyncResult;
@@ -37,8 +38,8 @@ public class AddressBookSynchroVisibles extends AddressBookSynchro {
 
     private static Logger log = LoggerFactory.getLogger(AddressBookSynchroVisibles.class);
 
-    public AddressBookSynchroVisibles(String uai, String userId) throws NullPointerException {
-        super(uai);
+    public AddressBookSynchroVisibles(Structure structure, String userId) throws NullPointerException {
+        super(structure);
         this.userId = userId;
         if(userId == null || userId.isEmpty()) {
             throw new NullPointerException("AddrBookVisibles : Empty UserId");

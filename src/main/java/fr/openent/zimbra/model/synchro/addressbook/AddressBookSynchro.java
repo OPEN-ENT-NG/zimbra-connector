@@ -3,6 +3,7 @@ package fr.openent.zimbra.model.synchro.addressbook;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.I18nConstants;
+import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.model.synchro.addressbook.contacts.*;
 import fr.openent.zimbra.service.data.Neo4jAddrbookService;
 import fr.wseduc.webutils.I18n;
@@ -30,6 +31,7 @@ import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 public class AddressBookSynchro {
 
     protected String uai;
+    protected String name;
     protected Map<String,AddressBookFolder> folders = new HashMap<>();
 
     Neo4jAddrbookService neo4jAddrbookService;
@@ -39,11 +41,12 @@ public class AddressBookSynchro {
     private static Logger log = LoggerFactory.getLogger(AddressBookSynchro.class);
 
 
-    public AddressBookSynchro(String uai) throws NullPointerException {
-        if(uai == null || uai.isEmpty()) {
-            throw new NullPointerException("AddrBook : Empty UAI");
+    public AddressBookSynchro(Structure structure) throws NullPointerException {
+        if(structure == null || structure.getUai().isEmpty()) {
+            throw new NullPointerException("AddrBook : Empty Structure");
         }
-        this.uai = uai;
+        this.uai = structure.getUai();
+        this.name = structure.getName();
         ServiceManager sm = ServiceManager.getServiceManager();
         this.neo4jAddrbookService = sm.getNeo4jAddrbookService();
         FOLDER_NAME_MEMBERS = I18n.getInstance().translate(
