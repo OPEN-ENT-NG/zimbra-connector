@@ -65,7 +65,7 @@ public class SynchroExportService {
 
         JsonArray fields = new JsonArray().add("externalId").add("lastName").add("firstName").add("login");
         fields.add("email").add("emailAcademy").add("mobile").add("deleteDate").add("functions").add("displayName");
-        fields.add("id").add("blocked");
+        fields.add("id").add("blocked").add("emailInternal");
 
         StringBuilder query = new StringBuilder();
 
