@@ -42,11 +42,15 @@ class AddressBookZimbraSynchro {
     private String rootFolderName;
     private static Logger log = LoggerFactory.getLogger(AddressBookZimbraSynchro.class);
 
-    AddressBookZimbraSynchro(String userId, String uai) {
+    AddressBookZimbraSynchro(String userId, String uai, String name) {
         this.userId = userId;
         this.uai = uai;
         this.rootFolderName = Zimbra.appConfig.getSharedFolderName();
-        this.structureRootFolderPath = rootFolderName + "/" + uai;
+        if(name.isEmpty()) {
+            this.structureRootFolderPath = rootFolderName + "/" + uai;
+        } else  {
+            this.structureRootFolderPath = rootFolderName + "/" + name;
+        }
     }
 
     void initSync(Handler<AsyncResult<JsonObject>> handler) {

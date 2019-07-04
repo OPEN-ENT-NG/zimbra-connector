@@ -100,7 +100,7 @@ public class AddressBookSynchro {
             log.error("Trying to sync AddressBook, but data are not loaded");
             return;
         }
-        AddressBookZimbraSynchro zimbraSynchro = new AddressBookZimbraSynchro(userId, uai);
+        AddressBookZimbraSynchro zimbraSynchro = new AddressBookZimbraSynchro(userId, uai, name);
         zimbraSynchro.initSync(res -> {
             if(res.failed()) {
                 handler.handle(res);
@@ -114,9 +114,9 @@ public class AddressBookSynchro {
     private void processUsers(JsonArray neoData, Handler<AsyncResult<AddressBookSynchro>> handler) {
         for(Object o : neoData) {
             if(!(o instanceof JsonObject)) continue;
-            try{
+            try {
                 processUser((JsonObject)o);
-            }catch (Exception e) {
+            } catch (Exception e) {
                 log.error("ABSync : Unknown Error when processing user : " + o, e);
             }
         }
