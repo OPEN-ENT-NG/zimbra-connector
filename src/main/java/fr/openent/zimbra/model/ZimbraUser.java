@@ -55,6 +55,7 @@ public class ZimbraUser {
     private String zimbraName = "";
     private String zimbraStatus = "";
     private List<String> aliases = new ArrayList<>();
+    private String firstAliasName = "";
 
     private String totalQuota = "";
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
@@ -81,6 +82,9 @@ public class ZimbraUser {
     }
     public List<String> getAliases() {
         return aliases;
+    }
+    public String getFirstAliasName() {
+        return firstAliasName;
     }
     public String getZimbraID() {
         return zimbraID;
@@ -174,6 +178,19 @@ public class ZimbraUser {
                 case SynchroConstants.GROUPID:
                     this.entGroups.add(value);
                     break;
+            }
+        }
+        if(!aliases.isEmpty()) {
+            String aliasMail = aliases.get(0);
+            if(!aliasMail.isEmpty()) {
+                try {
+                    MailAddress aliasAddr = new MailAddress(aliasMail);
+                    if(!aliasAddr.isExternal()) {
+                        firstAliasName = aliasAddr.getLocalPart();
+                    }
+                } catch (IllegalArgumentException e) {
+                    log.error("Invalid alias format : " + aliasMail);
+                }
             }
         }
     }

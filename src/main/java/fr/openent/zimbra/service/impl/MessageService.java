@@ -349,7 +349,8 @@ public class MessageService {
                         if(aliases.isEmpty()) {
                             handler.handle(null);
                         } else {
-                            handler.handle(aliases.getString(0));
+                            // fixme no check for NPE, use firstAliasName
+                            handler.handle(aliases.getString(0).split("@")[0]);
                         }
                     } else {
                         handler.handle(groupService.getGroupId(mail));

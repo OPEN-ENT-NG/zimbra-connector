@@ -108,10 +108,14 @@ public class MailAddress {
         this.localPart = localPart;
     }
 
+    String getLocalPart() {
+        return localPart;
+    }
+
     private void setDomain(String domain) {
         //todo check valid domain
         this.domain = domain;
-        isLocal = Zimbra.domain.equals(domain);
+        isLocal = Zimbra.appConfig.getZimbraDomain().equals(domain);
     }
 
     private void initServices() {
@@ -136,7 +140,8 @@ public class MailAddress {
                             log.warn("More than one alias for address : " + completeCleanAddress);
                         }
                         if(!aliases.isEmpty()) {
-                            this.neoId = aliases.getString(0);
+                            // fixme no check for NPE, use firstAliasName
+                            this.neoId = aliases.getString(0).split("@")[0];
                         }
                     } else {
                         this.neoId = groupService.getGroupId(completeCleanAddress);
