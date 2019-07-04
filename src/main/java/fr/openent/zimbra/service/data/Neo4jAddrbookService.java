@@ -181,7 +181,7 @@ public class Neo4jAddrbookService {
         queryGeneric += " WHEN (visibles:DisciplineGroup) THEN '" + PROFILE_TEACHER + "'";
         queryGeneric += " WHEN (visibles:HTGroup) THEN '" + PROFILE_TEACHER + "'";
         queryGeneric += " ELSE '" + GROUP_OTHER + "'";
-        queryGeneric += " END AS " + GROUP_TYPE;
+        queryGeneric += " END AS " + GROUP_TYPE + ", ";
         queryGeneric += " s.name as " + STRUCTURE_NAME;
 
         JsonObject params = new JsonObject()
@@ -201,7 +201,7 @@ public class Neo4jAddrbookService {
         queryRelative += "profile.name as " + PROFILE + ", ";
         queryRelative += "collect(distinct c.name) as " + CLASSES+ ", ";
         queryRelative += "null AS " + GROUPNAME + ", ";
-        queryRelative += "null AS " + GROUP_TYPE;
+        queryRelative += "null AS " + GROUP_TYPE + ", ";
         queryRelative += " s.name as " + STRUCTURE_NAME;
 
         String query = queryGeneric + " UNION " + queryRelative;
