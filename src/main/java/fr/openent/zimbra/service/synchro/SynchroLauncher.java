@@ -25,6 +25,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import static fr.openent.zimbra.service.synchro.SynchroUserService.EMPTY_BDD;
 
@@ -38,6 +40,7 @@ public class SynchroLauncher {
     private int nbUserSynchronized;
     private int oldNbUserSynced;
 
+    private static Logger log = LoggerFactory.getLogger(SynchroLauncher.class);
 
     public SynchroLauncher(SynchroUserService synchroUserService, SqlSynchroService sqlSynchroService) {
         this.synchroUserService = synchroUserService;
@@ -74,6 +77,7 @@ public class SynchroLauncher {
                 handler.handle(Future.succeededFuture(new JsonObject().put(NB_USER_SYNCED, nbUserSynchronized)));
             } else {
                 nbUserSynchronized++;
+                log.debug(nbUserSynchronized + " users synchronized");
                 Handler<AsyncResult<JsonObject>> syncUserHandler = getSyncHandler(handler);
                 synchroUserService.syncUserFromBase(syncUserHandler);
             }
