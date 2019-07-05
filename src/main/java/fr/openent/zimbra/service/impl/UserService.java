@@ -173,7 +173,7 @@ public class UserService {
      * @param mail mail identifier for Zimbra ccount
      * @param handler Handler result
      */
-    public void getAliases(String mail, Handler<AsyncResult<JsonObject>> handler) {
+    public void getAliases(String mail, Handler<AsyncResult<ZimbraUser>> handler) {
 
         ZimbraUser user;
         try {
@@ -193,10 +193,7 @@ public class UserService {
                    if(aliases.size() > 1) {
                        log.warn("More than one alias for : " + mail);
                    }
-                   JsonObject result = new JsonObject()
-                           .put("name", user.getName())
-                           .put("aliases", new JsonArray(aliases));
-                   handler.handle(Future.succeededFuture(result));
+                   handler.handle(Future.succeededFuture(user));
                }
            } else {
                handler.handle(Future.failedFuture("No Matching Zimbra Account for : " + mail));

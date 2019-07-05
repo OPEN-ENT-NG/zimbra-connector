@@ -53,8 +53,7 @@ public class NotificationService {
                 : "<span translate key=\"timeline.no.subject\"></span>";
         userService.getAliases(zimbraSender, aliasRes -> {
             String userId = aliasRes.succeeded()
-                    // fixme no check for NPE, use firstAliasName
-                    ? aliasRes.result().getJsonArray("aliases").getString(0).split("@")[0]
+                    ? aliasRes.result().getFirstAliasName()
                     : "";
             getUserInfos(userId, user -> {
                 String timelineSender = (user != null && user.getUsername() != null)
