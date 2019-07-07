@@ -84,9 +84,9 @@ public class SynchroAddressBookService {
     }
 
     /**
-     * Get the process for each structures of the user
-     * - If he has external role : get shared folder from admin account
-     * - Else : get all accessible contacts from structure
+     * Get the process for each structures oget shared folder from admin account
+     *      * - Else : get all accessiblef the user
+     * - If he has external role :  contacts from structure
      * @param userId user neo4j id
      * @param neoResult hasExternalCommunicationRole result
      * @return Handler with appropriate process for each structure

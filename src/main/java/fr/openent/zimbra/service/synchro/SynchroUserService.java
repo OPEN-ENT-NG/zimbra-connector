@@ -81,6 +81,7 @@ public class SynchroUserService {
         Future<JsonObject> startFuture = AsyncHelper.getJsonObjectFinalFuture(handler);
         Future<JsonObject> fetchedUser = Future.future();
 
+        log.info("Fetching user to sync");
         sqlSynchroService.fetchUserToSynchronize(fetchedUser.completer());
         fetchedUser.compose(bddRes -> {
             if(bddRes.isEmpty()) {
@@ -89,6 +90,7 @@ public class SynchroUserService {
                 int idRow = bddRes.getInteger(SqlSynchroService.USER_IDROW);
                 String idUser = bddRes.getString(SqlSynchroService.USER_IDUSER);
                 String sync_action = bddRes.getString(SqlSynchroService.USER_SYNCACTION);
+                log.info("Syncing user " + idUser);
                 try {
                     SynchroUser user = new SynchroUser(idUser);
                     user.synchronize(idRow, sync_action, startFuture.completer());
