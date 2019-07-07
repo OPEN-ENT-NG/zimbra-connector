@@ -95,6 +95,7 @@ public class SynchroUserService {
                     SynchroUser user = new SynchroUser(idUser);
                     user.synchronize(idRow, sync_action, startFuture.completer());
                 } catch (IllegalArgumentException e) {
+                    log.info("Filed sync for user " + idUser);
                     startFuture.fail(e);
                 }
             }
