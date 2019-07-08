@@ -63,7 +63,6 @@ public class EntUser {
         initUser(userInfos.getUserId());
     }
 
-    @SuppressWarnings("WeakerAccess")
     public EntUser(String userId) throws IllegalArgumentException {
         initUser(userId);
     }
@@ -76,7 +75,6 @@ public class EntUser {
         this.dbMailService = sm.getDbMailService();
     }
 
-    @SuppressWarnings("WeakerAccess")
     public String getUserId() {
         return userId;
     }
