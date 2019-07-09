@@ -102,7 +102,7 @@ public class Neo4jAddrbookService {
     public void getAllGroupsFromStructure(String uai, Handler<AsyncResult<JsonArray>> handler) {
         String query =
                 "MATCH (g:Group)-[:DEPENDS*]->(s:Structure) " +
-                    "WHERE s.UAI={uai} AND g.nbUsers is not null AND g.nbUsers > 0 " +
+                    "WHERE s.UAI={uai} AND exists(g-[:IN]-(:User)) " +
                 getOptionalMatchesProfile("g", "","p") +
                 "RETURN distinct g.name AS " + GROUPNAME + ", " +
                     "g.emailInternal as " + EMAIL + ", " +
