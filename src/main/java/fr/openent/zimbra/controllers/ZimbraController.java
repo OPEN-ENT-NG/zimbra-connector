@@ -149,7 +149,8 @@ public class ZimbraController extends BaseController {
 		final String parentMessageId = request.params().get("In-Reply-To");
 		String replyType = request.params().get("reply");
 
-		if(replyType != null && !FrontConstants.REPLYTYPE_REPLY.equalsIgnoreCase(replyType)
+		if(replyType != null && !FrontConstants.UNDEFINED.equalsIgnoreCase(replyType)
+				&& !FrontConstants.REPLYTYPE_REPLY.equalsIgnoreCase(replyType)
 				&& !FrontConstants.REPLYTYPE_FORWARD.equalsIgnoreCase(replyType)) {
 			log.warn("CreateDraft - Unknown reply type : " + replyType);
 			replyType = null;
