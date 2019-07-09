@@ -37,6 +37,7 @@ import org.entcore.common.user.UserInfos;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static fr.openent.zimbra.model.constant.ZimbraErrors.ERROR_NOSUCHMSG;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
@@ -614,9 +615,12 @@ public class MessageService {
             }
             execSaveDraft(mailContent, user, res -> {
                 if(res.isLeft()) {
-                    log.error("Error when saving draft. User : " + user.getUserId() +
-                            " messageId : " + messageId +
-                            "error : " + res.left().getValue());
+                    JsonObject callResult = new JsonObject(res.left().getValue());
+                    if(!callResult.getString(SoapZimbraService.ERROR_CODE,"").equals(ERROR_NOSUCHMSG)) {
+                        log.error("Error when saving draft. User : " + user.getUserId() +
+                                " messageId : " + messageId +
+                                "error : " + res.left().getValue());
+                    }
                 }
                 result.handle(res);
             });
