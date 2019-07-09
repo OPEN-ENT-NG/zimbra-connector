@@ -36,18 +36,28 @@ class SynchroLauncher {
     private SynchroUserService synchroUserService;
     private SqlSynchroService sqlSynchroService;
     private int nbUserSynchronized;
+    private int oldNbUserSynced;
 
 
     SynchroLauncher() {
         nbUserSynchronized = 0;
+        oldNbUserSynced = 0;
         ServiceManager serviceManager = ServiceManager.getServiceManager();
         this.synchroUserService = serviceManager.getSynchroUserService();
         this.sqlSynchroService = serviceManager.getSqlSynchroService();
     }
 
+    boolean isAlreadyLaunched() {
+        boolean isLaunched = oldNbUserSynced != nbUserSynchronized;
+        oldNbUserSynced = nbUserSynchronized;
+        return isLaunched;
+    }
+
 
     // Start synchronisation
     void start(Handler<AsyncResult<JsonArray>> handler) {
+        nbUserSynchronized = 0;
+        oldNbUserSynced = 0;
         sqlSynchroService.updateSynchros(SynchroConstants.STATUS_TODO, SynchroConstants.STATUS_INPROGRESS, v -> {
             if(v.failed()) {
                 handler.handle(Future.failedFuture(v.cause()));

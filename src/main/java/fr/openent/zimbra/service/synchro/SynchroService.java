@@ -44,10 +44,13 @@ public class SynchroService {
 
     public SynchroService(SqlSynchroService sqlSynchroService) {
         this.sqlSynchroService = sqlSynchroService;
+        if(synchroLauncher == null) {
+            synchroLauncher = new SynchroLauncher();
+        }
     }
 
     public void startSynchro(Handler<AsyncResult<JsonObject>> handler) {
-        if(synchroLauncher == null) {
+        if(!synchroLauncher.isAlreadyLaunched()) {
             synchroLauncher = new SynchroLauncher();
             synchroLauncher.start( res -> {
                 synchroLauncher = null;
