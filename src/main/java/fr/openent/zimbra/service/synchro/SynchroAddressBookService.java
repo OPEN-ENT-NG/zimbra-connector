@@ -53,6 +53,7 @@ public class SynchroAddressBookService {
 
     /**
      * Sync contacts for all structures for a user
+     * Do not empty user folder if he has external communication role
      * @param userId id of user to sync
      * @param structuresList list of structures
      * @param handler result handler (no data)
@@ -63,11 +64,15 @@ public class SynchroAddressBookService {
         finalFuture.setHandler(handler);
         Future<JsonObject> roleFetched = Future.future();
 
+        AsyncContainer<Boolean> hasRoleContainer = new AsyncContainer<>();
+
         neoZimbraService.hasExternalCommunicationRole(userId, roleFetched.completer());
 
         AsyncContainer<AsyncHandler<Structure>> userHandlerContainer = new AsyncContainer<>();
         roleFetched.compose( neoResult -> {
-            AsyncHandler<Structure> userHandler = getHandlerFromCommunicationRole(userId, neoResult);
+            Boolean hasExternalRole = neoResult.getBoolean(HAS_EXTERNAL_ROLE, false);
+            hasRoleContainer.setValue(hasExternalRole);
+            AsyncHandler<Structure> userHandler = getHandlerFromCommunicationRole(userId, hasExternalRole);
             userHandlerContainer.setValue(userHandler);
 
             Future<SoapFolder> folderInitiated = Future.future();
@@ -76,7 +81,11 @@ public class SynchroAddressBookService {
             return folderInitiated;
         }).compose( soapFolder ->  {
             Future<JsonObject> folderEmptied = Future.future();
-            soapFolder.emptyFolder(userId, folderEmptied.completer());
+            if(hasRoleContainer.getValue()) {
+                folderEmptied.complete(new JsonObject());
+            } else {
+                soapFolder.emptyFolder(userId, folderEmptied.completer());
+            }
             return folderEmptied;
         }).compose( v ->
                 AsyncHelper.processListSynchronously(structuresList, userHandlerContainer.getValue(),
@@ -88,12 +97,12 @@ public class SynchroAddressBookService {
      *      * - Else : get all accessiblef the user
      * - If he has external role :  contacts from structure
      * @param userId user neo4j id
-     * @param neoResult hasExternalCommunicationRole result
+     * @param hasRole hasExternalCommunicationRole result
      * @return Handler with appropriate process for each structure
      */
-    private AsyncHandler<Structure> getHandlerFromCommunicationRole(String userId, JsonObject neoResult) {
+    private AsyncHandler<Structure> getHandlerFromCommunicationRole(String userId, Boolean hasRole) {
         AsyncHandler<Structure> handler;
-        if (neoResult.getBoolean(HAS_EXTERNAL_ROLE, false)) {
+        if (hasRole) {
             handler = (structure, handlerStructure) -> shareAddressBook(userId, structure, handlerStructure);
         } else {
             handler = (structure, handlerStructure) -> {
