@@ -60,6 +60,8 @@ public class ServiceManager {
     private SynchroAddressBookService synchroAddressBookService;
     private Neo4jAddrbookService neo4jAddrbookService;
 
+    private SynchroLauncher synchroLauncher;
+
 
 
     private ServiceManager(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
@@ -86,13 +88,15 @@ public class ServiceManager {
         this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
         this.expertModeService = new ExpertModeService();
 
-        this.synchroService = new SynchroService(sqlSynchroService);
+        this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
+        this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
         this.synchroGroupService = new SynchroGroupService(soapService, synchroUserService);
         this.synchroMailerService = new SynchroMailerService(sqlSynchroService);
         this.neo4jAddrbookService = new Neo4jAddrbookService();
 
         soapService.setServices(userService, synchroUserService);
         synchroUserService.setUserService(userService);
+
     }
 
     public static ServiceManager init(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
@@ -192,5 +196,9 @@ public class ServiceManager {
 
     public Neo4jAddrbookService getNeo4jAddrbookService() {
         return neo4jAddrbookService;
+    }
+
+    public SynchroLauncher getSynchroLauncher() {
+        return synchroLauncher;
     }
 }

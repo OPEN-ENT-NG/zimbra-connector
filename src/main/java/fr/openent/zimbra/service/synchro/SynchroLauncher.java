@@ -28,7 +28,7 @@ import io.vertx.core.json.JsonObject;
 
 import static fr.openent.zimbra.service.synchro.SynchroUserService.EMPTY_BDD;
 
-class SynchroLauncher {
+public class SynchroLauncher {
 
     @SuppressWarnings("WeakerAccess")
     public static final String NB_USER_SYNCED = "nbUserSynced";
@@ -39,12 +39,9 @@ class SynchroLauncher {
     private int oldNbUserSynced;
 
 
-    SynchroLauncher() {
-        nbUserSynchronized = 0;
-        oldNbUserSynced = 0;
-        ServiceManager serviceManager = ServiceManager.getServiceManager();
-        this.synchroUserService = serviceManager.getSynchroUserService();
-        this.sqlSynchroService = serviceManager.getSqlSynchroService();
+    public SynchroLauncher(SynchroUserService synchroUserService, SqlSynchroService sqlSynchroService) {
+        this.synchroUserService = synchroUserService;
+        this.sqlSynchroService = sqlSynchroService;
     }
 
     boolean isAlreadyLaunched() {
