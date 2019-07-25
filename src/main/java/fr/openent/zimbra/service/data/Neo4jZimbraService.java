@@ -160,7 +160,7 @@ public class Neo4jZimbraService {
 	public void getUserStructuresFromNeo4j(String userId, Handler<AsyncResult<List<Structure>>> handler) {
 		String query = "MATCH (u:User)-[:IN]-(:Group)-[:DEPENDS]-(s:Structure) " +
 				"WHERE u.id = {userId} " +
-				"RETURN s.name as " + Structure.NAME + ", " +
+				"RETURN distinct s.name as " + Structure.NAME + ", " +
 				"s.UAI as " + Structure.UAI + ", " +
 				"s.id as " + Structure.ID;
 

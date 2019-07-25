@@ -154,7 +154,9 @@ public class SynchroAddressBookService {
             SoapMountpoint.getOrCreateMountpoint(userId, structure.getName(), rootFolderId, VIEW_CONTACT, adminMail,
                     sharedFolderId, mountpointCreated.completer());
             return mountpointCreated;
-        }).compose( res -> finalFuture.complete(structure), finalFuture);
+        }).compose( res ->
+                synchronizeStructure(structure, resSync ->
+                        finalFuture.complete(structure)), finalFuture);
     }
 
     private void start(Handler<AsyncResult<JsonObject>> handler) {
@@ -190,6 +192,7 @@ public class SynchroAddressBookService {
     }
 
     private void synchronizeStructure(Structure structure, Handler<AsyncResult<JsonObject>> handler) {
+        log.info("Trying to sync struct " + structure.getUai());
         AddressBookSynchro addressBook;
         try {
             addressBook = new AddressBookSynchro(structure);
@@ -198,6 +201,18 @@ public class SynchroAddressBookService {
             handler.handle(Future.succeededFuture(new JsonObject()));
             return;
         }
-        addressBook.synchronize(Zimbra.appConfig.getAddressBookAccountName(), handler);
+        sqlSynchroService.updateStructureForAbSync(structure.getUai(), res -> {
+            if(res.failed()) {
+                handler.handle(res);
+            } else {
+                if(res.result().isEmpty()) {
+                    log.info("Giving up sync struct " + structure.getUai());
+                    handler.handle(Future.succeededFuture(new JsonObject()));
+                } else {
+                    log.info("Sycing struct " + structure.getUai());
+                    addressBook.synchronize(Zimbra.appConfig.getAddressBookAccountName(), handler);
+                }
+            }
+        });
     }
 }
