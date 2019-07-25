@@ -19,14 +19,19 @@ package fr.openent.zimbra.service.data;
 
 
 import fr.openent.zimbra.helper.AsyncHelper;
+import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.service.impl.CommunicationService;
 import fr.openent.zimbra.service.impl.ZimbraAdminService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import org.entcore.common.neo4j.Neo4j;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.entcore.common.neo4j.Neo4jResult.validResultHandler;
 import static org.entcore.common.neo4j.Neo4jResult.validUniqueResultHandler;
@@ -42,6 +47,10 @@ public class Neo4jZimbraService {
 	public static final String GROUP_NAME = "groupName";
 	public static final String GROUP_DISPLAYNAME = "groupDisplayName";
 	public static final String GROUP_ID = "groupId";
+
+	public static final String STRUCTURE_NAME = "structureName";
+	public static final String STRUCTURE_UAI = "structureUai";
+
 
 	public Neo4jZimbraService(){
 		this.neo = Neo4j.getInstance();
@@ -146,6 +155,31 @@ public class Neo4jZimbraService {
 		JsonObject params = new JsonObject().put("id", id);
 
 		neo.execute(query, params, validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
+	}
+
+	public void getUserStructuresFromNeo4j(String userId, Handler<AsyncResult<List<Structure>>> handler) {
+		String query = "MATCH (u:User)-[:IN]-(:Group)-[:DEPENDS]-(s:Structure) " +
+				"WHERE u.id = {userId} " +
+				"RETURN distinct s.name as " + Structure.NAME + ", " +
+				"s.UAI as " + Structure.UAI + ", " +
+				"s.id as " + Structure.ID;
+
+		neo.execute(query, new JsonObject().put("userId", userId),
+				validResultHandler( res -> {
+					if(res.isLeft()) {
+						handler.handle(Future.failedFuture(res.left().getValue()
+						));
+					} else {
+						JsonArray structureArray = res.right().getValue();
+						List<Structure> structureList = new ArrayList<>();
+						structureArray.forEach( o -> {
+							JsonObject structJson = (JsonObject)o;
+							Structure struct = new Structure(structJson);
+							structureList.add(struct);
+						});
+						handler.handle(Future.succeededFuture(structureList));
+					}
+				}));
 	}
 
 }

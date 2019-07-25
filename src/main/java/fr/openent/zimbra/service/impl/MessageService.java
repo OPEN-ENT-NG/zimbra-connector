@@ -19,6 +19,7 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.SoapConstants.*;
 
 public class MessageService {
 
@@ -81,7 +83,7 @@ public class MessageService {
                             .getJsonObject("GetFolderResponse")
                             .getJsonArray("folder").getJsonObject(0);
 
-                    String folderPath = folder.getString(GETFOLDER_FOLDERPATH);
+                    String folderPath = folder.getString(FOLDER_ABSPATH);
 
                     String query = pathToQuery(folderPath);
                     if(unread) {
@@ -341,14 +343,11 @@ public class MessageService {
                 log.debug("no user in database for address : " + mail);
                 userService.getAliases(mail, zimbraResponse -> {
                     if(zimbraResponse.succeeded()) {
-                        JsonArray aliases = zimbraResponse.result().getJsonArray("aliases");
-                        if(aliases.size() > 1) {
-                            log.warn("More than one alias for address : " + mail);
-                        }
-                        if(aliases.isEmpty()) {
+                        ZimbraUser user = zimbraResponse.result();
+                        if(user.getFirstAliasName().isEmpty()) {
                             handler.handle(null);
                         } else {
-                            handler.handle(aliases.getString(0));
+                            handler.handle(user.getFirstAliasName());
                         }
                     } else {
                         handler.handle(groupService.getGroupId(mail));

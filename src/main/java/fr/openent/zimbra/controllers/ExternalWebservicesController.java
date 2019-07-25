@@ -19,6 +19,9 @@ package fr.openent.zimbra.controllers;
 
 
 import fr.openent.zimbra.helper.ServiceManager;
+import fr.openent.zimbra.model.synchro.Structure;
+import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
+import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchroVisibles;
 import fr.openent.zimbra.service.impl.CommunicationService;
 import fr.openent.zimbra.service.impl.NotificationService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
@@ -151,12 +154,27 @@ public class ExternalWebservicesController extends BaseController {
                     eb.send("fr.openent.zimbra",
                             new JsonObject().put("action", "getMailUser")
                             .put("idList", new JsonArray().add(userid)),
-                            res -> {
-                                renderJson(request, (JsonObject)res.result().body());
-                            });
+                            res -> renderJson(request, (JsonObject)res.result().body()));
                     return;
+                case "syncuserab":
+                    String useridsync = request.params().get("userid");
+                    String uai = request.params().get("uai");
+                    String visibles = request.params().get("visibles");
+                    Structure structure = new Structure(new JsonObject().put(Structure.UAI, uai));
+                    AddressBookSynchro absync = "true".equals(visibles)
+                            ? new AddressBookSynchroVisibles(structure, useridsync)
+                            : new AddressBookSynchro(structure);
+                    absync.synchronize(useridsync, ressync -> {
+                        if(ressync.failed()) {
+                            renderError(request);
+                        } else {
+                            renderJson(request, ressync.result());
+                        }
+                    });
+                    break;
+                default:
+                    badRequest(request);
             }
-            badRequest(request);
         }
 
     }

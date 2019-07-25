@@ -21,10 +21,7 @@ import fr.openent.zimbra.model.synchro.SynchroInfos;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.service.synchro.SynchroExportService;
-import fr.openent.zimbra.service.synchro.SynchroMailerService;
-import fr.openent.zimbra.service.synchro.SynchroService;
-import fr.openent.zimbra.service.synchro.SynchroUserService;
+import fr.openent.zimbra.service.synchro.*;
 import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
@@ -55,6 +52,7 @@ public class SynchroController extends BaseController {
     private SynchroUserService synchroUserService;
     private SynchroService synchroService;
     private SynchroMailerService synchroMailerService;
+    private SynchroAddressBookService synchroAddressBookService;
 
 
 
@@ -71,6 +69,7 @@ public class SynchroController extends BaseController {
         this.synchroUserService = serviceManager.getSynchroUserService();
         this.synchroService = serviceManager.getSynchroService();
         this.synchroMailerService = serviceManager.getSynchroMailerService();
+        this.synchroAddressBookService = serviceManager.getSynchroAddressBookService();
     }
 
     /**
@@ -121,6 +120,14 @@ public class SynchroController extends BaseController {
     @SecuredAction("synchro.test.triggeruser")
     public void triggerUserSynchro(final HttpServerRequest request) {
         synchroService.startSynchro(AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
+    }
+
+
+
+    @Get("/synchro/test/triggrerca")
+    @SecuredAction("synchro.test.triggerca")
+    public void triggerAddressBookSynchro(final HttpServerRequest request) {
+        synchroAddressBookService.startSynchro(AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
     }
 
     @Get("/synchro/test/triggrermail")

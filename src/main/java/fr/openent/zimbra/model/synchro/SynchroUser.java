@@ -40,6 +40,7 @@ import java.util.List;
 import static fr.openent.zimbra.model.constant.SynchroConstants.*;
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
 
 
 public class SynchroUser extends EntUser {
@@ -89,6 +90,7 @@ public class SynchroUser extends EntUser {
     }
 
     private void getZimbraId(Handler<AsyncResult<String>> handler) {
+        // todo return ZimbraUser
         if(ACTION_CREATION.equals(sync_action)) {
             handler.handle(Future.succeededFuture(""));
         } else {
@@ -119,11 +121,8 @@ public class SynchroUser extends EntUser {
         }
         switch(sync_action) {
             case ACTION_CREATION:
-                createUserIfNotExists(handler);
-                syncGroups();
-                break;
             case ACTION_MODIFICATION:
-                updateUser(zimbraId, handler);
+                createUserIfNotExists(handler);
                 syncGroups();
                 break;
             case ACTION_DELETION:
@@ -166,11 +165,14 @@ public class SynchroUser extends EntUser {
                 handler.handle(Future.failedFuture(userResponse.cause()));
             } else {
                 if(user.existsInZimbra()) {
+                    log.info("Updating user " + getUserId());
                     updateUser(user.getZimbraID(), handler);
                 } else {
+                    log.info("Creating user " + getUserId());
                     createUser(0, handler);
                 }
             }
+            dbMailService.updateUserAsync(user);
         });
     }
 

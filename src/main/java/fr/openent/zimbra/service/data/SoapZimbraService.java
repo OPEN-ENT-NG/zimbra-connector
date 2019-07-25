@@ -31,6 +31,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -41,8 +42,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
 
-@SuppressWarnings("WeakerAccess")
 public class SoapZimbraService {
 
     private static final Long LIFETIME_OFFSET = (long)3600000; // 1h
@@ -163,7 +164,14 @@ public class SoapZimbraService {
                                                              final Handler<Either<String,JsonObject>> handler) {
         return response ->
             response.bodyHandler( body -> {
-                JsonObject result = body.toJsonObject();
+                JsonObject result;
+                try {
+                    result = body.toJsonObject();
+                } catch (DecodeException e) {
+                    log.error("Can't process Zimbra response + " + response.statusMessage());
+                    handler.handle(new Either.Left<>(response.statusMessage()));
+                    return;
+                }
                 if(response.statusCode() == 200) {
                     handler.handle(new Either.Right<>(result));
                 } else {

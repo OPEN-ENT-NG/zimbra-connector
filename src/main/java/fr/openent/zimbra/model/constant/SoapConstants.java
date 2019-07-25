@@ -28,9 +28,30 @@ public class SoapConstants {
     public static final String ATTR_VALUE = "_content";
     public static final String ATTR_LIST = "a";
     public static final String ACCOUNT = "account";
+    public static final String ACTION = "action";
+    public static final String RECURSIVE = "recursive";
+    public static final Integer ZERO_FALSE = 0;
+    public static final Integer ONE_TRUE = 1;
     public static final String EMPTY_VALUE = "";
     public static final String TRUE_VALUE = "TRUE";
     public static final String FALSE_VALUE = "FALSE";
+    public static final String UUID = "uuid";
+    public static final String ZIMBRA_ID = "id";
+    public static final String ZIMBRA_ZID = "zid";
+
+    public static final String OP_TRASH = "trash";
+    public static final String OP_RENAME = "rename";
+    public static final String OP_MOVE = "move";
+    public static final String OP_DELETE = "delete";
+    public static final String OP_EMPTY = "empty";
+    public static final String OP_READ = "read";
+    public static final String OP_UNREAD = "!read";
+    public static final String OP_GRANT = "grant";
+    public static final String OP_REVOKE_GRANT = "!grant";
+    public static final String OPERATION = "op";
+
+    public static final String GRANT_READ = "r";
+    public static final String GRANT_WRITE = "w";
 
     public static final String NAMESPACE_ZIMBRA = "urn:zimbra";
     public static final String NAMESPACE_ADMIN = "urn:zimbraAdmin";
@@ -52,4 +73,14 @@ public class SoapConstants {
     // Accounts Requests
     public static final String GET_ACCOUNT_INFO_REQUEST = "GetAccountInfoRequest";
     public static final String GET_ACCOUNT_INFO_RESPONSE = "GetAccountInfoResponse";
+    public static final String GET_FOLDER_REQUEST = "GetFolderRequest";
+    public static final String GET_FOLDER_RESPONSE = "GetFolderResponse";
+    public static final String CREATE_FOLDER_REQUEST = "CreateFolderRequest";
+    public static final String CREATE_FOLDER_RESPONSE = "CreateFolderResponse";
+    public static final String CREATE_MOUNTPOINT_REQUEST = "CreateMountpointRequest";
+    public static final String CREATE_MOUNTPOINT_RESPONSE = "CreateMountpointResponse";
+    public static final String FOLDER_ACTION_REQUEST = "FolderActionRequest";
+    public static final String FOLDER_ACTION_RESPONSE = "FolderActionResponse";
+    public static final String IMPORT_CONTACTS_REQUEST = "ImportContactsRequest";
+    public static final String IMPORT_CONTACTS_RESPONSE = "ImportContactsResponse";
 }

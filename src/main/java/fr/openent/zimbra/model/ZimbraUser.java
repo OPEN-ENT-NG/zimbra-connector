@@ -21,6 +21,7 @@ package fr.openent.zimbra.model;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.SynchroConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.model.constant.ZimbraErrors;
 import fr.openent.zimbra.model.soap.SoapError;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
@@ -54,6 +55,7 @@ public class ZimbraUser {
     private String zimbraName = "";
     private String zimbraStatus = "";
     private List<String> aliases = new ArrayList<>();
+    private String firstAliasName = "";
 
     private String totalQuota = "";
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
@@ -81,6 +83,9 @@ public class ZimbraUser {
     public List<String> getAliases() {
         return aliases;
     }
+    public String getFirstAliasName() {
+        return firstAliasName;
+    }
     public String getZimbraID() {
         return zimbraID;
     }
@@ -97,7 +102,7 @@ public class ZimbraUser {
                 String errorStr = result.cause().getMessage();
                 try {
                     SoapError error = new SoapError(errorStr);
-                    if(ZimbraConstants.ERROR_NOSUCHACCOUNT.equals(error.getCode())) {
+                    if(ZimbraErrors.ERROR_NOSUCHACCOUNT.equals(error.getCode())) {
                         this.accountExists = false;
                         handler.handle(Future.succeededFuture(ZimbraUser.this));
                     } else {
@@ -173,6 +178,19 @@ public class ZimbraUser {
                 case SynchroConstants.GROUPID:
                     this.entGroups.add(value);
                     break;
+            }
+        }
+        if(!aliases.isEmpty()) {
+            String aliasMail = aliases.get(0);
+            if(!aliasMail.isEmpty()) {
+                try {
+                    MailAddress aliasAddr = new MailAddress(aliasMail);
+                    if(!aliasAddr.isExternal()) {
+                        firstAliasName = aliasAddr.getLocalPart();
+                    }
+                } catch (IllegalArgumentException e) {
+                    log.error("Invalid alias format : " + aliasMail);
+                }
             }
         }
     }

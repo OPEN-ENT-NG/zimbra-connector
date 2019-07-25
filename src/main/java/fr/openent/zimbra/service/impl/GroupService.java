@@ -21,6 +21,7 @@ package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.model.constant.ZimbraErrors;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.data.SqlDbMailService;
@@ -63,7 +64,7 @@ public class GroupService {
                 getGroupAccount(groupAddress, response -> {
                     if(response.isLeft()) {
                         JsonObject callResult = new JsonObject(response.left().getValue());
-                        if(ZimbraConstants.ERROR_NOSUCHDLIST
+                        if(ZimbraErrors.ERROR_NOSUCHDLIST
                                 .equals(callResult.getString(SoapZimbraService.ERROR_CODE, ""))) {
                             synchroGroupService.exportGroup(groupId, resultSync -> {
                                 if (resultSync.isLeft()) {

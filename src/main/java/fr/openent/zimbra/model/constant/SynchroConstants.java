@@ -46,4 +46,14 @@ public class SynchroConstants {
     public static final String STATUS_DONE = "DONE";
     public static final String STATUS_MAILLING_DONE = "MAILLING_DONE";
     public static final String STATUS_ERROR = "ERROR";
+
+
+    public static final String ABOOK_ROOT_FOLDER = "/Contacts";
+    public static final String ABOOK_PERSONEL = "Personel";
+    public static final String ABOOK_TEACHER = "Teacher";
+    public static final String ABOOK_STUDENT = "Student";
+    public static final String ABOOK_RELATIVE = "Relative";
+    public static final String ABOOK_GUEST = "Guest";
+
+    public static final String ABOOK_CSV_COLUMNS = "\"company\",\"department\",\"email\",\"firstName\",\"fullName\",\"jobTitle\",\"lastName\"\n";
 }

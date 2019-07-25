@@ -24,6 +24,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import java.util.List;
+
 @SuppressWarnings("unused")
 public class AsyncHelper {
     public static Handler<AsyncResult<JsonObject>> getJsonObjectAsyncHandler(Handler<Either<String, JsonObject>> handler) {
@@ -93,5 +95,25 @@ public class AsyncHelper {
                 handler.handle(Future.succeededFuture(res.right().getValue()));
             }
         };
+    }
+
+    public static <T> void processListSynchronously(List<T> origList, AsyncHandler<T> strHandler,
+                                         Handler<AsyncResult<T>> finalHandler) {
+        if(origList.isEmpty()) {
+            finalHandler.handle(Future.failedFuture("Empty list"));
+            return;
+        }
+        Future<T> init = Future.future();
+        strHandler.handle(origList.get(0), init.completer());
+        Future<T> current = init;
+        for(T obj : origList.subList(1, origList.size())) {
+            current = current.compose(v -> {
+                Future<T> next = Future.future();
+                strHandler.handle(obj, next.completer());
+                return next;
+            });
+
+        }
+        current.setHandler(finalHandler);
     }
 }

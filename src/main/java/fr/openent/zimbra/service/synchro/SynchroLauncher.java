@@ -25,10 +25,12 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import static fr.openent.zimbra.service.synchro.SynchroUserService.EMPTY_BDD;
 
-class SynchroLauncher {
+public class SynchroLauncher {
 
     @SuppressWarnings("WeakerAccess")
     public static final String NB_USER_SYNCED = "nbUserSynced";
@@ -36,18 +38,26 @@ class SynchroLauncher {
     private SynchroUserService synchroUserService;
     private SqlSynchroService sqlSynchroService;
     private int nbUserSynchronized;
+    private int oldNbUserSynced;
 
+    private static Logger log = LoggerFactory.getLogger(SynchroLauncher.class);
 
-    SynchroLauncher() {
-        nbUserSynchronized = 0;
-        ServiceManager serviceManager = ServiceManager.getServiceManager();
-        this.synchroUserService = serviceManager.getSynchroUserService();
-        this.sqlSynchroService = serviceManager.getSqlSynchroService();
+    public SynchroLauncher(SynchroUserService synchroUserService, SqlSynchroService sqlSynchroService) {
+        this.synchroUserService = synchroUserService;
+        this.sqlSynchroService = sqlSynchroService;
+    }
+
+    boolean isAlreadyLaunched() {
+        boolean isLaunched = oldNbUserSynced != nbUserSynchronized;
+        oldNbUserSynced = nbUserSynchronized;
+        return isLaunched;
     }
 
 
     // Start synchronisation
     void start(Handler<AsyncResult<JsonArray>> handler) {
+        nbUserSynchronized = 0;
+        oldNbUserSynced = 0;
         sqlSynchroService.updateSynchros(SynchroConstants.STATUS_TODO, SynchroConstants.STATUS_INPROGRESS, v -> {
             if(v.failed()) {
                 handler.handle(Future.failedFuture(v.cause()));
@@ -67,6 +77,7 @@ class SynchroLauncher {
                 handler.handle(Future.succeededFuture(new JsonObject().put(NB_USER_SYNCED, nbUserSynchronized)));
             } else {
                 nbUserSynchronized++;
+                log.debug(nbUserSynchronized + " users synchronized");
                 Handler<AsyncResult<JsonObject>> syncUserHandler = getSyncHandler(handler);
                 synchroUserService.syncUserFromBase(syncUserHandler);
             }

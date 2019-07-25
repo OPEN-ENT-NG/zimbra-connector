@@ -15,25 +15,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-package fr.openent.zimbra.security;
+package fr.openent.zimbra.helper;
 
-import org.entcore.common.user.UserInfos;
+public class AsyncContainer <T> {
 
-import java.util.List;
+    private T value;
 
-final class WorkflowActionUtils {
-
-    private WorkflowActionUtils() {
-        throw new IllegalAccessError("Utility class");
+    public void setValue(T val) {
+        this.value = val;
     }
 
-    static boolean hasRight (UserInfos user, String action) {
-        List<UserInfos.Action> actions = user.getAuthorizedActions();
-        for (UserInfos.Action userAction : actions) {
-            if (action.equals(userAction.getDisplayName())) {
-                return true;
-            }
-        }
-        return false;
+    public T getValue() {
+        return value;
     }
 }

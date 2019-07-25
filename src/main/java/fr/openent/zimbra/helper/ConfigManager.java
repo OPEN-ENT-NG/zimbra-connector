@@ -43,6 +43,8 @@ public class ConfigManager {
     private final Integer maxRecipients;
     private final int devLevel;
     private final JsonObject mailConfig;
+    private final String sharedFolderName;
+    private String addressBookAccountName;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -59,6 +61,8 @@ public class ConfigManager {
         this.mailerCron = config.getString("zimbra-mailer-cron", "");
         this.maxRecipients = config.getInteger("max-recipients", 50);
         this.mailConfig = config.getJsonObject("mail-config", new JsonObject());
+        this.sharedFolderName = config.getString("shared-folder-name", "-- Carnets Adresses ENT --");
+        this.addressBookAccountName  = config.getString("address-book-account", "");
 
         String devLevelStr = config.getString("dev-level", "");
         if(NOSYNC.equals(devLevelStr)) {
@@ -70,7 +74,8 @@ public class ConfigManager {
         }
 
         if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
-                || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty() || zimbraDomain.isEmpty()) {
+                || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty() || zimbraDomain.isEmpty()
+                || addressBookAccountName.isEmpty() ) {
             log.fatal("Zimbra : Missing configuration in conf.properties");
         }
     }
@@ -91,5 +96,7 @@ public class ConfigManager {
     public String getMailerCron() { return mailerCron;}
     public Integer getMaxRecipients() { return maxRecipients;}
     public JsonObject getMailConfig() { return mailConfig;}
+    public String getSharedFolderName() { return sharedFolderName;}
+    public String getAddressBookAccountName() { return addressBookAccountName;}
 
 }

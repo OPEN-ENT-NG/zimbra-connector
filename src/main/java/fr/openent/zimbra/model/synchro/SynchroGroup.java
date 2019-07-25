@@ -24,6 +24,7 @@ import fr.openent.zimbra.model.Group;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.model.constant.ZimbraErrors;
 import fr.openent.zimbra.model.soap.SoapError;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.service.DbMailService;
@@ -93,7 +94,7 @@ class SynchroGroup extends Group {
                 String errorStr = result.cause().getMessage();
                 try {
                     SoapError error = new SoapError(errorStr);
-                    if(ZimbraConstants.ERROR_NOSUCHDLIST.equals(error.getCode())) {
+                    if(ZimbraErrors.ERROR_NOSUCHDLIST.equals(error.getCode())) {
                         handler.handle(Future.succeededFuture(EMPTY_VALUE));
                     } else {
                         handler.handle(Future.failedFuture(errorStr));

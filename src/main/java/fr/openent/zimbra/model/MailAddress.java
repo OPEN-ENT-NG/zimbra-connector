@@ -108,10 +108,14 @@ public class MailAddress {
         this.localPart = localPart;
     }
 
+    String getLocalPart() {
+        return localPart;
+    }
+
     private void setDomain(String domain) {
         //todo check valid domain
         this.domain = domain;
-        isLocal = Zimbra.domain.equals(domain);
+        isLocal = Zimbra.appConfig.getZimbraDomain().equals(domain);
     }
 
     private void initServices() {
@@ -131,12 +135,9 @@ public class MailAddress {
                 log.debug("no user in database for address : " + completeCleanAddress);
                 userService.getAliases(completeCleanAddress, zimbraResponse -> {
                     if(zimbraResponse.succeeded()) {
-                        JsonArray aliases = zimbraResponse.result().getJsonArray("aliases");
-                        if(aliases.size() > 1) {
-                            log.warn("More than one alias for address : " + completeCleanAddress);
-                        }
-                        if(!aliases.isEmpty()) {
-                            this.neoId = aliases.getString(0);
+                        ZimbraUser user = zimbraResponse.result();
+                        if(!user.getFirstAliasName().isEmpty()) {
+                            this.neoId = user.getFirstAliasName();
                         }
                     } else {
                         this.neoId = groupService.getGroupId(completeCleanAddress);

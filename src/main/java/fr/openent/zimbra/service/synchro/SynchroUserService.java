@@ -39,11 +39,12 @@ import io.vertx.core.logging.LoggerFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
 import static fr.openent.zimbra.service.data.SoapZimbraService.ERROR_CODE;
 
 public class SynchroUserService {
 
-    public static final String EMPTY_BDD = "empty_bdd";
+    static final String EMPTY_BDD = "empty_bdd";
 
     private UserService userService;
     private DbMailService dbMailService;
@@ -76,10 +77,11 @@ public class SynchroUserService {
      * Get the first user to synchronize from bdd (if any) and synchronize its information in Zimbra
      * @param handler synchronization result
      */
-    public void syncUserFromBase(Handler<AsyncResult<JsonObject>> handler) {
+    void syncUserFromBase(Handler<AsyncResult<JsonObject>> handler) {
         Future<JsonObject> startFuture = AsyncHelper.getJsonObjectFinalFuture(handler);
         Future<JsonObject> fetchedUser = Future.future();
 
+        log.info("Fetching user to sync");
         sqlSynchroService.fetchUserToSynchronize(fetchedUser.completer());
         fetchedUser.compose(bddRes -> {
             if(bddRes.isEmpty()) {
@@ -88,10 +90,12 @@ public class SynchroUserService {
                 int idRow = bddRes.getInteger(SqlSynchroService.USER_IDROW);
                 String idUser = bddRes.getString(SqlSynchroService.USER_IDUSER);
                 String sync_action = bddRes.getString(SqlSynchroService.USER_SYNCACTION);
+                log.info("Syncing user " + idUser);
                 try {
                     SynchroUser user = new SynchroUser(idUser);
                     user.synchronize(idRow, sync_action, startFuture.completer());
                 } catch (IllegalArgumentException e) {
+                    log.info("Filed sync for user " + idUser);
                     startFuture.fail(e);
                 }
             }

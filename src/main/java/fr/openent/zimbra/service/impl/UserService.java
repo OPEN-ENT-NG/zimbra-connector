@@ -22,6 +22,7 @@ import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
+import fr.openent.zimbra.model.constant.ZimbraErrors;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
@@ -29,6 +30,7 @@ import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.data.SqlDbMailService;
+import fr.openent.zimbra.service.synchro.SynchroAddressBookService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
@@ -54,15 +56,18 @@ public class UserService {
     private SynchroUserService synchroUserService;
     private Neo4jZimbraService neoService;
     private GroupService groupService;
+    private SynchroAddressBookService synchroAddressBookService;
+
     private static Logger log = LoggerFactory.getLogger(UserService.class);
 
     public UserService(SoapZimbraService soapService, SynchroUserService synchroUserService,
-                       DbMailService dbMailService) {
+                       DbMailService dbMailService, SynchroAddressBookService synchroAddressBookService) {
         this.soapService = soapService;
         this.synchroUserService = synchroUserService;
         this.dbMailService = dbMailService;
         this.neoService = new Neo4jZimbraService();
         this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
+        this.synchroAddressBookService = synchroAddressBookService;
     }
 
     /**
@@ -168,7 +173,7 @@ public class UserService {
      * @param mail mail identifier for Zimbra ccount
      * @param handler Handler result
      */
-    public void getAliases(String mail, Handler<AsyncResult<JsonObject>> handler) {
+    public void getAliases(String mail, Handler<AsyncResult<ZimbraUser>> handler) {
 
         ZimbraUser user;
         try {
@@ -188,38 +193,12 @@ public class UserService {
                    if(aliases.size() > 1) {
                        log.warn("More than one alias for : " + mail);
                    }
-                   JsonObject result = new JsonObject()
-                           .put("name", user.getName())
-                           .put("aliases", new JsonArray(aliases));
-                   handler.handle(Future.succeededFuture(result));
+                   handler.handle(Future.succeededFuture(user));
                }
            } else {
                handler.handle(Future.failedFuture("No Matching Zimbra Account for : " + mail));
            }
         });
-    }
-
-    /**
-     * Process response from Zimbra API to get alias details of specified user
-     * In case of success, return a Json Object :
-     * {
-     * 	    "name" : "user mail address"
-     * 	    "aliases" :
-     * 	    [
-     * 	        "alias"
-     * 	    ]
-     * }
-     * @param jsonResponse Zimbra API Response
-     * @param handler Handler result
-     */
-    private void processGetAliases(JsonObject jsonResponse,
-                                 Handler<Either<String,JsonObject>> handler) {
-
-        if(jsonResponse.containsKey(UserInfoService.ALIAS)) {
-            handler.handle(new Either.Right<>(jsonResponse.getJsonObject(UserInfoService.ALIAS)));
-        } else {
-            handler.handle(new Either.Left<>("Could not get Quota from GetInfoRequest"));
-        }
     }
 
     /**
@@ -267,6 +246,7 @@ public class UserService {
             return;
         }
         String account = userId + "@" + Zimbra.domain;
+        //fixme does not work, response data not processed
         getUserAccount(account, handler);
     }
 
@@ -337,7 +317,7 @@ public class UserService {
                 getUserAccount(account, response -> {
                     if(response.failed()) {
                         JsonObject callResult = new JsonObject(response.cause().getMessage());
-                        if(ZimbraConstants.ERROR_NOSUCHACCOUNT
+                        if(ZimbraErrors.ERROR_NOSUCHACCOUNT
                                 .equals(callResult.getString(SoapZimbraService.ERROR_CODE, ""))) {
                             synchroUserService.exportUser(userId, resultSync -> {
                                 if (resultSync.failed()) {
@@ -383,7 +363,7 @@ public class UserService {
             handler.handle(new JsonObject());
             return;
         }
-        List<String> idStrList = new ArrayList<>();
+        List<String> idStrList;
         List<String> emailList = new ArrayList<>();
         try {
             idStrList = JsonHelper.getStringList(idList);
@@ -460,6 +440,24 @@ public class UserService {
                         }
                 }
             }
+        });
+    }
+
+    public void syncAddressBookAsync(UserInfos user) {
+        neoService.getUserStructuresFromNeo4j(user.getUserId(), resNeo -> {
+            if(resNeo.failed() || resNeo.result().isEmpty()) {
+                log.error("Unable to get structures for user : " + user.getUserId());
+            } else {
+
+                synchroAddressBookService.syncUser(user.getUserId(), resNeo.result(), res -> {
+                if(res.failed()) {
+                    log.error("zimbra ABsync failed for user " + user.getUserId() + " " + res.cause());
+                } else {
+                    log.info("zimbra ABSync successful for user " + user.getUserId());
+                }
+                });
+            }
+
         });
     }
 

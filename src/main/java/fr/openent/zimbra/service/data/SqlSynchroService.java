@@ -38,6 +38,7 @@ public class SqlSynchroService {
     private static final String UAI = "uai";
     private static final String IS_DEPLOYED = "is_deployed";
     private static final String DATE_MODIFIED = "date_modified";
+    private static final String AB_SYNC_DATE = "ab_sync_date";
 
     public static final String SYNCHRO_ID = "id";
     public static final String SYNCHRO_MAILLINGLIST = "maillinglist";
@@ -111,6 +112,19 @@ public class SqlSynchroService {
                 .append(IS_DEPLOYED + " = true");
 
         sql.prepared(query.toString(), new JsonArray(newStructures),
+                SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
+    }
+
+
+    public void updateStructureForAbSync(String structureUAI, Handler<AsyncResult<JsonObject>> handler) {
+        String query = "UPDATE " + deployedStructuresTable;
+        query += " SET " + AB_SYNC_DATE + " = now() ";
+        query += "WHERE " + UAI + " = ? ";
+        query += "AND " + AB_SYNC_DATE + " IS NULL ";
+        query += "OR " + AB_SYNC_DATE + " < (now() - '1 day'::interval) ";
+        query += "RETURNING " + deployedStructuresTable + "." + UAI;
+
+        sql.prepared(query, new JsonArray().add(structureUAI),
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
     }
 
@@ -251,7 +265,6 @@ public class SqlSynchroService {
                 + String.format(" ON %s.%s=%s.%s", synchroLogsTable, LOGS_ID, userSynchroTable, USER_LOGID)
                 + String.format(" WHERE %s.%s=?",
                                 synchroTable, SYNCHRO_ID)
-                //+ String.format(" AND %s.%s IS NOT NULL", userSynchroTable, USER_LOGID)
                 + String.format(" GROUP BY %s.%s", synchroTable, SYNCHRO_ID);
         params.add(synchroId);
         sql.prepared(query, params,

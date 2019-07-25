@@ -15,25 +15,32 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-package fr.openent.zimbra.security;
+package fr.openent.zimbra.model.synchro.addressbook.contacts;
 
-import org.entcore.common.user.UserInfos;
+import fr.openent.zimbra.Zimbra;
+import fr.wseduc.webutils.I18n;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
-import java.util.List;
+import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
-final class WorkflowActionUtils {
+public class Teacher extends Contact{
 
-    private WorkflowActionUtils() {
-        throw new IllegalAccessError("Utility class");
+    public Teacher(JsonObject json, String uai) {
+        super(json, uai);
+        String profileName = I18n.getInstance().translate(
+                "Teacher",
+                "default-domain",
+                Zimbra.appConfig.getSynchroLang());
+        JsonArray neoSubjects = json.getJsonArray(SUBJECTS, new JsonArray());
+        String concatSubjects = concatField(neoSubjects);
+        if(!concatSubjects.isEmpty()) {
+            functions = profileName + " " + concatSubjects;
+        }
     }
 
-    static boolean hasRight (UserInfos user, String action) {
-        List<UserInfos.Action> actions = user.getAuthorizedActions();
-        for (UserInfos.Action userAction : actions) {
-            if (action.equals(userAction.getDisplayName())) {
-                return true;
-            }
-        }
-        return false;
+    @Override
+    public String getProfile() {
+        return PROFILE_TEACHER;
     }
 }

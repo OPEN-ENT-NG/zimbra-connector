@@ -15,25 +15,27 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-package fr.openent.zimbra.security;
+package fr.openent.zimbra.model.synchro.addressbook.contacts;
 
-import org.entcore.common.user.UserInfos;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
-import java.util.List;
+import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
-final class WorkflowActionUtils {
+public class Relative extends Contact{
 
-    private WorkflowActionUtils() {
-        throw new IllegalAccessError("Utility class");
+    public Relative(JsonObject json, String uai) {
+        super(json, uai);
+        JsonArray neoClasses = json.getJsonArray(CLASSES, new JsonArray());
+        String concatClasses = concatField(neoClasses);
+        if(!concatClasses.isEmpty()) {
+            classes = concatClasses;
+            displayName = displayName + " (" + concatClasses + ")";
+        }
     }
 
-    static boolean hasRight (UserInfos user, String action) {
-        List<UserInfos.Action> actions = user.getAuthorizedActions();
-        for (UserInfos.Action userAction : actions) {
-            if (action.equals(userAction.getDisplayName())) {
-                return true;
-            }
-        }
-        return false;
+    @Override
+    public String getProfile() {
+        return PROFILE_RELATIVE;
     }
 }

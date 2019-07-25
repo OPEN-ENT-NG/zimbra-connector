@@ -47,7 +47,7 @@ public class ZimbraAdminController extends BaseController {
     @SecuredAction(value = "", type = ActionType.RESOURCE)
     public void listGroupsWithRoles(final HttpServerRequest request) {
         String structureId = request.params().get("structureId");
-        ZimbraAdminService.listGroupsWithRole(structureId, true, r -> {
+        ZimbraAdminService.listGroupsWithRole(structureId, r -> {
             if (r.isRight()) {
                 JsonArray res = r.right().getValue();
                 UserUtils.translateGroupsNames(res, I18n.acceptLanguage(request));

@@ -20,10 +20,7 @@ package fr.openent.zimbra.helper;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.*;
 import fr.openent.zimbra.service.impl.*;
-import fr.openent.zimbra.service.synchro.SynchroGroupService;
-import fr.openent.zimbra.service.synchro.SynchroMailerService;
-import fr.openent.zimbra.service.synchro.SynchroService;
-import fr.openent.zimbra.service.synchro.SynchroUserService;
+import fr.openent.zimbra.service.synchro.*;
 import fr.wseduc.webutils.email.EmailSender;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
@@ -60,6 +57,10 @@ public class ServiceManager {
     private SqlSynchroService sqlSynchroService;
     private SynchroGroupService synchroGroupService;
     private SynchroMailerService synchroMailerService;
+    private SynchroAddressBookService synchroAddressBookService;
+    private Neo4jAddrbookService neo4jAddrbookService;
+
+    private SynchroLauncher synchroLauncher;
 
 
 
@@ -74,8 +75,9 @@ public class ServiceManager {
         this.sqlSynchroService = new SqlSynchroService(config.getString("db-schema", "zimbra"));
         this.soapService = new SoapZimbraService(vertx);
         this.neoService = new Neo4jZimbraService();
+        this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
         this.synchroUserService = new SynchroUserService(dbMailService, sqlSynchroService);
-        this.userService = new UserService(soapService, synchroUserService, dbMailService);
+        this.userService = new UserService(soapService, synchroUserService, dbMailService, synchroAddressBookService);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
         this.messageService = new MessageService(soapService, folderService,
@@ -86,12 +88,15 @@ public class ServiceManager {
         this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
         this.expertModeService = new ExpertModeService();
 
-        this.synchroService = new SynchroService(sqlSynchroService);
+        this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
+        this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
         this.synchroGroupService = new SynchroGroupService(soapService, synchroUserService);
         this.synchroMailerService = new SynchroMailerService(sqlSynchroService);
+        this.neo4jAddrbookService = new Neo4jAddrbookService();
 
         soapService.setServices(userService, synchroUserService);
         synchroUserService.setUserService(userService);
+
     }
 
     public static ServiceManager init(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
@@ -183,5 +188,17 @@ public class ServiceManager {
 
     public SynchroMailerService getSynchroMailerService() {
         return synchroMailerService;
+    }
+
+    public SynchroAddressBookService getSynchroAddressBookService() {
+        return synchroAddressBookService;
+    }
+
+    public Neo4jAddrbookService getNeo4jAddrbookService() {
+        return neo4jAddrbookService;
+    }
+
+    public SynchroLauncher getSynchroLauncher() {
+        return synchroLauncher;
     }
 }

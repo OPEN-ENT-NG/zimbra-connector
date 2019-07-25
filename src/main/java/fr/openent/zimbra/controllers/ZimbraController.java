@@ -112,6 +112,7 @@ public class ZimbraController extends BaseController {
 				try {
 					String location = expertModeService.getPreauthUrl(user);
 					redirect(request, appConfig.getZimbraUri(), location);
+					userService.syncAddressBookAsync(user);
 				} catch (IOException e) {
 					renderError(request);
 				}

@@ -22,9 +22,11 @@
         "zimbra-synchro-lang" : "$zimbraLang",
         "zimbra-admin-uri" : "$zimbraAdminUri",
         "admin-account" : "$zimbraAdminAccount",
+        "address-book-account" : "$zimbraAddressBookAccount",
         "admin-password" : "$zimbraAdminPassword",
         "zimbra-synchro-cron" : "$zimbraSynchroCron",
         "mail-config" : {"imaps":{"server":"mx.monlycee.net","port":993,"ssl":"SSL/TLS","auth":"Mot de passe normal"},"smtps":{"server":"mx.monlycee.net","port":587,"ssl":"STARTTLS","auth":"Mot de passe normal"}},
+        "shared-folder-name" : "-- Carnets Adresses ENT --",
         "entcore.port" : 8009
       }
     }

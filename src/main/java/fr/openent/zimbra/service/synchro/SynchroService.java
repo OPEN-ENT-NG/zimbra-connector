@@ -38,19 +38,18 @@ public class SynchroService {
 
     private SqlSynchroService sqlSynchroService;
 
-    private static SynchroLauncher synchroLauncher = null;
+    private SynchroLauncher synchroLauncher;
     private static Logger log = LoggerFactory.getLogger(SynchroService.class);
 
 
-    public SynchroService(SqlSynchroService sqlSynchroService) {
+    public SynchroService(SqlSynchroService sqlSynchroService, SynchroLauncher synchroLauncher) {
         this.sqlSynchroService = sqlSynchroService;
+        this.synchroLauncher = synchroLauncher;
     }
 
     public void startSynchro(Handler<AsyncResult<JsonObject>> handler) {
-        if(synchroLauncher == null) {
-            synchroLauncher = new SynchroLauncher();
+        if(!synchroLauncher.isAlreadyLaunched()) {
             synchroLauncher.start( res -> {
-                synchroLauncher = null;
                 if(res.succeeded()) {
                         handler.handle(Future.succeededFuture(new JsonObject()));
                 } else {
