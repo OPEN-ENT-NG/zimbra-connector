@@ -36,6 +36,8 @@ import org.entcore.common.user.UserInfos;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static fr.openent.zimbra.model.constant.ZimbraErrors.ERROR_NOSUCHMSG;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
@@ -50,9 +52,11 @@ public class MessageService {
     private UserService userService;
     private GroupService groupService;
     private static Logger log = LoggerFactory.getLogger(MessageService.class);
+    private JsonObject config;
 
-    public MessageService(SoapZimbraService soapService, FolderService folderService,
+    public MessageService(JsonObject config, SoapZimbraService soapService, FolderService folderService,
                           DbMailService dbMailService, UserService userService, SynchroUserService synchroUserService) {
+        this.config = config;
         this.soapService = soapService;
         this.folderService = folderService;
         this.dbMailService = dbMailService;
@@ -653,6 +657,17 @@ public class MessageService {
         soapService.callUserSoapAPI(saveDraftRequest, user, handler);
     }
 
+    private String replaceLink(String content) {
+        Pattern pattern = Pattern.compile("(?<=\\<a href=\")(\\/[^\"]*)");
+        Matcher matcher = pattern.matcher(content);
+        while (matcher.find()) {
+            String url = matcher.group(1);
+            content = content.replaceAll(url, config.getString("host") + url);
+        }
+
+        return content;
+    }
+
     /**
      * Transform a front message in Zimbra format.
      * Get mail addresses instead of user ids
@@ -664,7 +679,7 @@ public class MessageService {
         JsonArray toFront = frontMessage.getJsonArray("to");
         JsonArray ccFront = frontMessage.getJsonArray("cc");
         JsonArray bccFront = frontMessage.getJsonArray("bcc");
-        String bodyFront = frontMessage.getString("body");
+        String bodyFront = replaceLink(frontMessage.getString("body"));
         String subjectFront = frontMessage.getString("subject");
         JsonArray attsFront = frontMessage.getJsonArray("attachments");
         JsonArray mailContacts = new JsonArray();

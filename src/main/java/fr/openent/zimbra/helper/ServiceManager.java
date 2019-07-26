@@ -80,7 +80,7 @@ public class ServiceManager {
         this.userService = new UserService(soapService, synchroUserService, dbMailService, synchroAddressBookService);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
-        this.messageService = new MessageService(soapService, folderService,
+        this.messageService = new MessageService(config, soapService, folderService,
                 dbMailService, userService, synchroUserService);
         this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
         this.notificationService = new NotificationService(userService, pathPrefix, timelineHelper);
