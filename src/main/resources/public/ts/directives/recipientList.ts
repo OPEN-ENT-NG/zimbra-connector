@@ -163,11 +163,12 @@ export const recipientList = ng.directive("recipientList", () => {
                 scope.ngModel.push(item);
                 return true;
             };
-            scope.addExternalItem = ( event)=>{
+            scope.addExternalItem = (event: KeyboardEvent)=>{
                 let keyCode = event.which || event.keyCode;
+                let { shiftKey } = event;
                 let key = event.key;
                 let myUser =new User(scope.searchText, scope.searchText);
-                if((keyCode === 13 || key == ";" ) && myUser.isAMail() && scope.searchText &&
+                if((keyCode === 13 || (key == ";" && !shiftKey) ) && myUser.isAMail() && scope.searchText &&
                 model.me.hasWorkflow('fr.openent.zimbra.controllers.ZimbraController|zimbraOutside')){
                     scope.clearSearch();
                     scope.$apply();
