@@ -34,6 +34,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.user.UserInfos;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -660,9 +661,12 @@ public class MessageService {
     private String replaceLink(String content) {
         Pattern pattern = Pattern.compile("(?<=\\<a href=\")(\\/[^\"]*)");
         Matcher matcher = pattern.matcher(content);
+        List<String> modifiedUrls = new ArrayList<>();
         while (matcher.find()) {
             String url = matcher.group(1);
+            if (modifiedUrls.contains(url)) continue;
             content = content.replaceAll(url, config.getString("host") + url);
+            modifiedUrls.add(url);
         }
 
         return content;
