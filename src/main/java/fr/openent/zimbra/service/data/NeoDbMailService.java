@@ -57,15 +57,19 @@ public class NeoDbMailService extends DbMailService {
     public void getNeoIdFromMail(String mail, Handler<Either<String, JsonArray>> handler) {
         String id = getUserNameFromMail(mail);
 
-        String queryUser = "MATCH (u:User) " +
-                "WHERE u.emailInternal = {mail} OR u.id = {idmail} " +
+        String queryUserEmail = "MATCH (u:User) " +
+                "WHERE u.emailInternal = {mail} " +
+                "RETURN u.id as " + NEO4J_UID + ", 'user' as type";
+
+        String queryUserId = "MATCH (u:User) " +
+                "WHERE u.id = {idmail} " +
                 "RETURN u.id as " + NEO4J_UID + ", 'user' as type";
 
         String queryGroup = "MATCH (g:Group) " +
                 "WHERE g.id = {idmail} " +
                 "RETURN g.id as " + NEO4J_UID + ", 'group' as type";
 
-        String query = queryUser + " UNION " + queryGroup;
+        String query = queryUserEmail + " UNION " + queryUserId + " UNION " + queryGroup;
 
         neo.execute(query, new JsonObject().put("mail", mail).put("idmail", id), validUniqueResultToJArrayHandler(handler));
     }
