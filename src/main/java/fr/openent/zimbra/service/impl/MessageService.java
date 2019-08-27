@@ -53,11 +53,9 @@ public class MessageService {
     private UserService userService;
     private GroupService groupService;
     private static Logger log = LoggerFactory.getLogger(MessageService.class);
-    private JsonObject config;
 
-    public MessageService(JsonObject config, SoapZimbraService soapService, FolderService folderService,
+    public MessageService(SoapZimbraService soapService, FolderService folderService,
                           DbMailService dbMailService, UserService userService, SynchroUserService synchroUserService) {
-        this.config = config;
         this.soapService = soapService;
         this.folderService = folderService;
         this.dbMailService = dbMailService;
@@ -659,13 +657,13 @@ public class MessageService {
     }
 
     private String replaceLink(String content) {
-        Pattern pattern = Pattern.compile("(?<=\\<a href=\")(\\/[^\"]*)");
+        Pattern pattern = Pattern.compile("(?<=<a href=\")(/[^\"]*)");
         Matcher matcher = pattern.matcher(content);
         List<String> modifiedUrls = new ArrayList<>();
         while (matcher.find()) {
             String url = matcher.group(1);
             if (modifiedUrls.contains(url)) continue;
-            content = content.replaceAll(url, config.getString("host") + url);
+            content = content.replaceAll(url, Zimbra.appConfig.getHost() + url);
             modifiedUrls.add(url);
         }
 

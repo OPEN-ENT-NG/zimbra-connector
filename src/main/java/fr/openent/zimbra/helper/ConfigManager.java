@@ -30,6 +30,7 @@ public class ConfigManager {
     private static final String NOSYNC = "no-sync";
     private static final String NOUPDATE = "no-update";
 
+    private final String host;
     private final String zimbraUri;
     private final String zimbraAdminUri;
     private final String zimbraAdminAccount;
@@ -50,6 +51,7 @@ public class ConfigManager {
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
     public ConfigManager(JsonObject config) {
+        this.host = config.getString("host", "");
         this.zimbraUri = config.getString("zimbra-uri", "");
         this.zimbraAdminUri = config.getString("zimbra-admin-uri", "");
         this.zimbraAdminAccount = config.getString("admin-account","");
@@ -75,7 +77,7 @@ public class ConfigManager {
             devLevel = DEFAULT_ACTION;
         }
 
-        if(zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
+        if(host.isEmpty() || zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
                 || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty() || zimbraDomain.isEmpty()
                 || addressBookAccountName.isEmpty() ) {
             log.fatal("Zimbra : Missing configuration in conf.properties");
@@ -86,6 +88,7 @@ public class ConfigManager {
         return actionLevel <= devLevel;
     }
 
+    public String getHost() { return host;}
     public String getZimbraUri() { return zimbraUri;}
     public String getZimbraAdminUri() { return zimbraAdminUri;}
     public String getZimbraAdminAccount() { return zimbraAdminAccount;}
