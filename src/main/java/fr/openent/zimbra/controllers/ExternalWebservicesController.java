@@ -42,6 +42,7 @@ import org.vertx.java.core.http.RouteMatcher;
 import java.util.Map;
 
 import static org.entcore.common.http.response.DefaultResponseHandler.defaultResponseHandler;
+import static org.entcore.common.user.UserUtils.getUserInfos;
 
 public class ExternalWebservicesController extends BaseController {
 
@@ -82,6 +83,27 @@ public class ExternalWebservicesController extends BaseController {
                 badRequest(request);
             } else {
                 synchroUserService.removeUserFromBase(userId, userMail, defaultResponseHandler(request));
+            }
+        });
+    }
+
+    /**
+     * Oauth connection
+     * Secured action validate expert access to Zimbra for connected user
+     * Trigger on-connection processes
+     * @param request http request
+     */
+    @Get("/oauth/validate")
+    @SecuredAction("zimbra.expert.validateoauth")
+    public void oauthConnection(final HttpServerRequest request) {
+        //todo oauthConnection : trigger on-connection processes
+        log.info("call to oauthConnection");
+        getUserInfos(eb, request, user -> {
+            if (user != null) {
+
+                renderJson(request, new JsonObject());
+            } else {
+                unauthorized(request);
             }
         });
     }
