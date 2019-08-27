@@ -70,7 +70,7 @@ public class SynchroService {
         sqlSynchroService.getDeployedStructures(fetchedInfos.completer());
         fetchedInfos.compose(databaseList -> {
             compareLists(updatedList, databaseList);
-            if(updatedList.isEmpty() && databaseList.isEmpty()) {
+            if(updatedList.isEmpty()) {
                 log.info("No changes in deployed structures");
                 startFuture.complete(new JsonObject());
             } else {

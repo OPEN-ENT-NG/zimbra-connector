@@ -123,7 +123,7 @@ public class SynchroUser extends EntUser {
             case ACTION_CREATION:
             case ACTION_MODIFICATION:
                 createUserIfNotExists(handler);
-                syncGroups();
+                syncGroupsAsync();
                 break;
             case ACTION_DELETION:
                 deleteUser(zimbraId, handler);
@@ -134,27 +134,32 @@ public class SynchroUser extends EntUser {
         }
     }
 
-    private void syncGroups() {
-        dbMailService.checkGroupsExistence(getGroups(), sqlResult -> {
-            if(sqlResult.failed()) {
-                log.error("Error when getting unsynced groups : " + sqlResult.cause().getMessage());
-            } else {
-                try {
-                    List<String> unsyncedGroupIds = JsonHelper.extractValueFromJsonObjects(sqlResult.result(), "id");
-                    for(String groupId : unsyncedGroupIds) {
-                        SynchroGroup group = new SynchroGroup(groupId);
-                        group.synchronize( v -> {
-                            if(v.failed()) {
-                                log.error("Group synchronisation failed for group : " + groupId
-                                        + ", Error : " + v);
-                            }
-                        });
+    private void syncGroupsAsync() {
+        try {
+            dbMailService.checkGroupsExistence(getGroups(), sqlResult -> {
+                if(sqlResult.failed()) {
+                    log.error("Error when getting unsynced groups : " + sqlResult.cause().getMessage());
+                } else {
+                    try {
+                        List<String> unsyncedGroupIds = JsonHelper.extractValueFromJsonObjects(sqlResult.result(), "id");
+                        for(String groupId : unsyncedGroupIds) {
+                            SynchroGroup group = new SynchroGroup(groupId);
+                            group.synchronize(v -> {
+                                if(v.failed()) {
+                                    log.error("Group synchronisation failed for group : " + groupId
+                                            + ", Error : " + v);
+                                }
+                            });
+                        }
+                    } catch (IllegalArgumentException e) {
+                        log.error("Error when trying to process sql groups result : " + sqlResult.result().toString());
                     }
-                } catch (IllegalArgumentException e) {
-                    log.error("Error when trying to process sql groups result : " + sqlResult.result().toString());
                 }
-            }
-        });
+            });
+        } catch (Exception e) {
+            //No Exception may be thrown in the main thread
+            log.error("Error in syncGroupsAsync : " + e);
+        }
     }
 
 
@@ -167,13 +172,38 @@ public class SynchroUser extends EntUser {
                 if(user.existsInZimbra()) {
                     log.info("Updating user " + getUserId());
                     updateUser(user.getZimbraID(), handler);
+                    dbMailService.updateUserAsync(user);
                 } else {
                     log.info("Creating user " + getUserId());
-                    createUser(0, handler);
+                    createUser(0, createRes -> {
+                        if(createRes.succeeded()) {
+                            postCreateUserAsync(user);
+                        }
+                        handler.handle(createRes);
+                    });
                 }
             }
-            dbMailService.updateUserAsync(user);
         });
+    }
+
+    private void postCreateUserAsync(ZimbraUser user) {
+        try {
+            // Fetch updated information from user after creation
+            user.checkIfExists(userResponse -> {
+                if (userResponse.succeeded()) {
+                    if (user.existsInZimbra()) {
+                        dbMailService.updateUserAsync(user);
+                    } else {
+                        log.error("Error does not exists after creation " + user.getAddressStr());
+                    }
+                } else {
+                    log.warn("Unexpected error when updating user post creation " + userResponse.cause());
+                }
+            });
+        } catch (Exception e) {
+            //No Exception may be thrown in the main thread
+            log.error("Error in postCreateUserAsync : " + e);
+        }
     }
 
     private void createUser(int increment, Handler<AsyncResult<JsonObject>> handler) {

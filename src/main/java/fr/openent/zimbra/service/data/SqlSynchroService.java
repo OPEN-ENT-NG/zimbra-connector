@@ -18,6 +18,7 @@
 package fr.openent.zimbra.service.data;
 
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.constant.SynchroConstants;
@@ -58,6 +59,8 @@ public class SqlSynchroService {
     private static final String LOGS_ID = "id";
     private static final String LOGS_CONTENT = "content";
 
+    private final int INSERT_PAGINATION;
+
 
     private final Sql sql;
 
@@ -74,6 +77,7 @@ public class SqlSynchroService {
         this.synchroTable = schema + ".synchro";
         this.userSynchroTable = schema + ".synchro_user";
         this.synchroLogsTable = schema + ".synchro_logs";
+        INSERT_PAGINATION = Zimbra.appConfig.getSqlInsertPaginationSize();
     }
 
     public void getDeployedStructures(Handler<AsyncResult<List<String>>> handler) {
@@ -96,8 +100,9 @@ public class SqlSynchroService {
     }
 
     //todo delete old structures
-    public void updateDeployedStructures(List<String> newStructures, List<String> toDeleteStructures,
-                                  Handler<AsyncResult<JsonObject>> handler) {
+    public void updateDeployedStructures(List<String> newStructures,
+                                         @SuppressWarnings("unused") List<String> toDeleteStructures,
+                                         Handler<AsyncResult<JsonObject>> handler) {
         StringBuilder query = new StringBuilder("INSERT INTO " + deployedStructuresTable)
                 .append(String.format("(%s,%s,%s) ", UAI, DATE_MODIFIED, IS_DEPLOYED))
                 .append("VALUES ");
@@ -155,22 +160,39 @@ public class SqlSynchroService {
      * @param handler result
      */
     public void addUsersToSynchronize(int idSynchro, List<String> users, String modification,
-                               Handler<AsyncResult<JsonObject>> handler) {
-        if(users.isEmpty()) {
+                                       Handler<AsyncResult<JsonObject>> handler) {
+        addUsersToSynchronize(idSynchro, users, modification, 0, handler);
+    }
+
+    private void addUsersToSynchronize(int idSynchro, List<String> users, String modification,
+                                      int start, Handler<AsyncResult<JsonObject>> handler) {
+        if(users.isEmpty() || start >= users.size()) {
             handler.handle(Future.succeededFuture(new JsonObject()));
             return;
         }
+
         StringBuilder query = new StringBuilder("INSERT INTO " + userSynchroTable)
                 .append(String.format("(%s,%s,%s,%s,%s) ",
                         USER_SYNCID, USER_IDUSER, USER_SYNCTYPE, USER_SYNCACTION, USER_STATUS));
         String delimiter = "VALUES";
-        for(int i = 0 ; i < users.size() ; i++) {
+        int i;
+        for( i = 0 ; i < users.size() && i < INSERT_PAGINATION ; i++) {
             query.append(String.format("%s(%d,?,'%s','%s','%s')",
                     delimiter, idSynchro, SynchroConstants.SYNC_DAILY, modification, SynchroConstants.STATUS_TODO));
             delimiter = ",";
         }
-        sql.prepared(query.toString(), new JsonArray(users),
-                SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
+        List<String> extract = users.subList(start, start + i);
+        sql.prepared(query.toString(), new JsonArray(extract),
+                SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(
+                        res -> {
+                            if(res.failed()) {
+                                handler.handle(res);
+                            } else {
+                                addUsersToSynchronize(idSynchro, users, modification,
+                                        start + INSERT_PAGINATION, handler);
+                            }
+                        }
+                )));
     }
 
 

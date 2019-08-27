@@ -116,13 +116,18 @@ public class SqlDbMailService extends DbMailService {
     }
 
     public void updateUserAsync(ZimbraUser user) {
-        List<ZimbraUser> userList = new ArrayList<>();
-        userList.add(user);
-        updateUsers(userList, sqlResponse -> {
-            if(sqlResponse.isLeft()) {
-                log.error("Error when updating Zimbra users : " + sqlResponse.left().getValue());
-            }
-        });
+        try {
+            List<ZimbraUser> userList = new ArrayList<>();
+            userList.add(user);
+            updateUsers(userList, sqlResponse -> {
+                if(sqlResponse.isLeft()) {
+                    log.error("Error when updating Zimbra users : " + sqlResponse.left().getValue());
+                }
+            });
+        } catch (Exception e) {
+            //No Exception may be thrown in the main thread
+            log.error("Error in updateUserAsync : " + e);
+        }
     }
 
     /**

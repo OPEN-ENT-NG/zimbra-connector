@@ -87,7 +87,11 @@ public class Group {
                 throw new IllegalArgumentException("JsonArray is not a Group list");
             }
             JsonObject groupJson = (JsonObject)o;
-            resultList.add(new Group(groupJson));
+            try {
+                resultList.add(new Group(groupJson));
+            } catch (IllegalArgumentException e) {
+                log.warn("[ZIMBRASYNC] Error when processing groups" + e.getMessage());
+            }
         }
         return resultList;
     }

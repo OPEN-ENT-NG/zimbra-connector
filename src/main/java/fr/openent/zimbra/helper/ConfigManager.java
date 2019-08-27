@@ -45,6 +45,7 @@ public class ConfigManager {
     private final JsonObject mailConfig;
     private final String sharedFolderName;
     private String addressBookAccountName;
+    private Integer sqlInsertPaginationSize;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -63,6 +64,7 @@ public class ConfigManager {
         this.mailConfig = config.getJsonObject("mail-config", new JsonObject());
         this.sharedFolderName = config.getString("shared-folder-name", "-- Carnets Adresses ENT --");
         this.addressBookAccountName  = config.getString("address-book-account", "");
+        this.sqlInsertPaginationSize = config.getInteger("sql-insert-pagination-size", 5000);
 
         String devLevelStr = config.getString("dev-level", "");
         if(NOSYNC.equals(devLevelStr)) {
@@ -98,5 +100,6 @@ public class ConfigManager {
     public JsonObject getMailConfig() { return mailConfig;}
     public String getSharedFolderName() { return sharedFolderName;}
     public String getAddressBookAccountName() { return addressBookAccountName;}
+    public Integer getSqlInsertPaginationSize() { return sqlInsertPaginationSize;}
 
 }

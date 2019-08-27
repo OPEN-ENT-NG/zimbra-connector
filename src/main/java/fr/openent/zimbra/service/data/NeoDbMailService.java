@@ -114,13 +114,18 @@ public class NeoDbMailService extends DbMailService {
 
     @Override
     public void updateUserAsync(ZimbraUser user) {
-        List<ZimbraUser> userList = new ArrayList<>();
-        userList.add(user);
-        updateUsers(userList, neoResponse -> {
-            if(neoResponse.failed()) {
-                log.error("Error when updating Zimbra users : " + neoResponse.cause().getMessage());
-            }
-        });
+        try {
+            List<ZimbraUser> userList = new ArrayList<>();
+            userList.add(user);
+            updateUsers(userList, neoResponse -> {
+                if (neoResponse.failed()) {
+                    log.error("Error when updating Zimbra users : " + neoResponse.cause().getMessage());
+                }
+            });
+        } catch (Exception e) {
+            //No Exception may be thrown in the main thread
+            log.error("Error in updateUserAsync : " + e);
+        }
     }
 
     private void updateUsers(List<ZimbraUser> users, Handler<AsyncResult<JsonObject>> handler) {

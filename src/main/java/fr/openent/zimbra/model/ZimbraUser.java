@@ -89,6 +89,7 @@ public class ZimbraUser {
     public String getZimbraID() {
         return zimbraID;
     }
+    public String getAddressStr() { return address.toString(); }
 
 
 
