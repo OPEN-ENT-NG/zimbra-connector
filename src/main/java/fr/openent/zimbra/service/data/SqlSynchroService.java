@@ -176,7 +176,7 @@ public class SqlSynchroService {
                         USER_SYNCID, USER_IDUSER, USER_SYNCTYPE, USER_SYNCACTION, USER_STATUS));
         String delimiter = "VALUES";
         int i;
-        for( i = 0 ; i < users.size() && i < INSERT_PAGINATION ; i++) {
+        for( i = 0 ; (start + i) < users.size() && i < INSERT_PAGINATION ; i++) {
             query.append(String.format("%s(%d,?,'%s','%s','%s')",
                     delimiter, idSynchro, SynchroConstants.SYNC_DAILY, modification, SynchroConstants.STATUS_TODO));
             delimiter = ",";
