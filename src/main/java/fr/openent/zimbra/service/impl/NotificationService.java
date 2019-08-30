@@ -17,10 +17,12 @@
 
 package fr.openent.zimbra.service.impl;
 
-import fr.openent.zimbra.service.data.SoapZimbraService;
+import fr.openent.zimbra.model.MailAddress;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.neo4j.Neo4j;
 import org.entcore.common.notification.TimelineHelper;
 import org.entcore.common.user.UserInfos;
@@ -35,26 +37,29 @@ public class NotificationService {
     private Neo4j neo;
     private String pathPrefix;
     private TimelineHelper timelineHelper;
-    private UserService userService;
 
+    private static Logger log = LoggerFactory.getLogger(NotificationService.class);
 
-    public NotificationService(UserService userService,
-                               String pathPrefix, TimelineHelper timelineHelper) {
+    public NotificationService(String pathPrefix, TimelineHelper timelineHelper) {
         this.neo = Neo4j.getInstance();
         this.pathPrefix = pathPrefix;
         this.timelineHelper = timelineHelper;
-        this.userService = userService;
     }
 
     public void sendNewMailNotification(String zimbraSender, String zimbraRecipient, String messageId, String subject,
                                         Handler<Either<String,JsonObject>> handler) {
+        MailAddress sender;
+        try {
+            sender = MailAddress.createFromRawAddress(zimbraSender);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid Zimbra email : " + zimbraSender + " " + e.getMessage());
+            handler.handle(new Either.Left<>("Invalid email"));
+            return;
+        }
         String timelineSubject = (subject != null && !subject.isEmpty())
                 ? subject
                 : "<span translate key=\"timeline.no.subject\"></span>";
-        userService.getAliases(zimbraSender, aliasRes -> {
-            String userId = aliasRes.succeeded()
-                    ? aliasRes.result().getFirstAliasName()
-                    : "";
+        sender.fetchNeoId(userId ->
             getUserInfos(userId, user -> {
                 String timelineSender = (user != null && user.getUsername() != null)
                         ? user.getUsername()
@@ -76,8 +81,8 @@ public class NotificationService {
                 timelineHelper.notifyTimeline(null, "messagerie.send-message",
                         user, recipients, messageId, params);
                 handler.handle(new Either.Right<>(new JsonObject()));
-            });
-        });
+            })
+        );
     }
 
     private void getUserInfos(String userId, Handler<UserInfos> handler)  {

@@ -83,7 +83,7 @@ public class ServiceManager {
         this.messageService = new MessageService(soapService, folderService,
                 dbMailService, userService, synchroUserService);
         this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
-        this.notificationService = new NotificationService(userService, pathPrefix, timelineHelper);
+        this.notificationService = new NotificationService(pathPrefix, timelineHelper);
         this.communicationService = new CommunicationService();
         this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
         this.expertModeService = new ExpertModeService();
