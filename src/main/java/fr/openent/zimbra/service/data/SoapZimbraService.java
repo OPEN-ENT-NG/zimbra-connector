@@ -311,7 +311,7 @@ public class SoapZimbraService {
         try {
             switch(callResult.getString(ERROR_CODE, "")) {
                 case ERROR_AUTHFAILED:
-                    userService.getUserAccount(userId, event -> {
+                    userService.getUserAccount(userAddress, event -> {
                         if(event.failed()) {
                             JsonObject newCallResult = new JsonObject(event.cause().getMessage());
                             if(ERROR_NOSUCHACCOUNT.equals(newCallResult.getString(ERROR_CODE, ""))) {
