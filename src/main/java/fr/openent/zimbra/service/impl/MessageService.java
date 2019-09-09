@@ -342,6 +342,16 @@ public class MessageService {
      * @param handler result handler
      */
     private void translateMail(String mail, Handler<String> handler) {
+        try {
+            String domain = mail.split("@")[1];
+            if(!Zimbra.domain.equals(domain)) {
+                handler.handle(null);
+                return;
+            }
+        } catch (Exception e) {
+            handler.handle(null);
+            return;
+        }
         dbMailService.getNeoIdFromMail(mail, sqlResponse -> {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
                 log.debug("no user in database for address : " + mail);

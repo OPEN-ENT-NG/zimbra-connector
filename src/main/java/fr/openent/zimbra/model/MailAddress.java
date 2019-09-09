@@ -130,6 +130,11 @@ public class MailAddress {
             handler.handle(neoId);
             return;
         }
+        if(!isLocal) {
+            handler.handle(completeCleanAddress);
+            return;
+        }
+
         dbMailService.getNeoIdFromMail(completeCleanAddress, sqlResponse -> {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
                 log.debug("no user in database for address : " + completeCleanAddress);
