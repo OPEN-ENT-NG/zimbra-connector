@@ -81,7 +81,7 @@ public class ZimbraController extends BaseController {
 			Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
 		super.init(vertx, config, rm, securedActions);
 
-		ServiceManager serviceManager = ServiceManager.init(vertx, config, eb, pathPrefix);
+		ServiceManager serviceManager = ServiceManager.init(vertx, eb, pathPrefix);
 
 		this.appConfig = Zimbra.appConfig;
 		this.searchService = serviceManager.getSearchService();
@@ -505,7 +505,7 @@ public class ZimbraController extends BaseController {
 		}
 		UserUtils.getUserInfos(eb, request, user -> {
 				if (user != null) {
-					messageService.toggleUnreadMessages(ids, Boolean.valueOf(unread), user, defaultResponseHandler(request));
+					messageService.toggleUnreadMessages(ids, Boolean.parseBoolean(unread), user, defaultResponseHandler(request));
 				} else {
 					unauthorized(request);
 				}

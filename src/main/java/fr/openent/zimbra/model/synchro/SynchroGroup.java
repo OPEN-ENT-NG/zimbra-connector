@@ -82,7 +82,7 @@ class SynchroGroup extends Group {
     private void init() {
         ddlAddress = new MailAddress(getId(), Zimbra.domain);
         ServiceManager sm = ServiceManager.getServiceManager();
-        dbMailService = sm.getDbMailService();
+        dbMailService = sm.getDbMailServiceSync();
     }
 
 

@@ -17,7 +17,9 @@
 
 package fr.openent.zimbra.helper;
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.service.DbMailService;
+import fr.openent.zimbra.service.DbMailServiceFactory;
 import fr.openent.zimbra.service.data.*;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.synchro.*;
@@ -33,9 +35,9 @@ public class ServiceManager {
 
     private static ServiceManager serviceManager = null;
 
-
     private TimelineHelper timelineHelper;
     private EmailSender emailSender;
+    private Vertx vertx;
 
     private SoapZimbraService soapService;
     private UserService userService;
@@ -43,7 +45,8 @@ public class ServiceManager {
     private AttachmentService attachmentService;
     private MessageService messageService;
     private SignatureService signatureService;
-    private DbMailService dbMailService;
+    private DbMailService dbMailServiceSync;
+    private DbMailService dbMailServiceApp;
     private SearchService searchService;
     private NotificationService notificationService;
     private CommunicationService communicationService;
@@ -53,6 +56,7 @@ public class ServiceManager {
 
 
     private SynchroUserService synchroUserService;
+    private SynchroUserService synchroUserServiceApp;
     private SynchroService synchroService;
     private SqlSynchroService sqlSynchroService;
     private SynchroGroupService synchroGroupService;
@@ -64,28 +68,32 @@ public class ServiceManager {
 
 
 
-    private ServiceManager(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
+    private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix) {
 
-        timelineHelper = new TimelineHelper(vertx, eb, config);
-        EmailFactory emailFactory = new EmailFactory(vertx, config);
+        this.vertx = vertx;
+        ConfigManager appConfig = Zimbra.appConfig;
+        JsonObject rawConfig = appConfig.getRawConfig();
+
+        timelineHelper = new TimelineHelper(vertx, eb, rawConfig);
+        EmailFactory emailFactory = new EmailFactory(vertx, rawConfig);
         emailSender = emailFactory.getSender();
 
-        this.dbMailService = new NeoDbMailService(vertx);
+        initDbMailService(appConfig);
         this.searchService = new SearchService(vertx);
-        this.sqlSynchroService = new SqlSynchroService(config.getString("db-schema", "zimbra"));
+        this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
         this.soapService = new SoapZimbraService(vertx);
         this.neoService = new Neo4jZimbraService();
         this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
-        this.synchroUserService = new SynchroUserService(dbMailService, sqlSynchroService);
-        this.userService = new UserService(soapService, synchroUserService, dbMailService, synchroAddressBookService);
+        this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
+        this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp, synchroAddressBookService);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
         this.messageService = new MessageService(soapService, folderService,
-                dbMailService, userService, synchroUserService);
-        this.attachmentService = new AttachmentService(soapService, messageService, vertx, config);
+                dbMailServiceApp, userService, synchroUserService);
+        this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig);
         this.notificationService = new NotificationService(pathPrefix, timelineHelper);
         this.communicationService = new CommunicationService();
-        this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
+        this.groupService = new GroupService(soapService, dbMailServiceApp, synchroUserService);
         this.expertModeService = new ExpertModeService();
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
@@ -99,9 +107,18 @@ public class ServiceManager {
 
     }
 
-    public static ServiceManager init(Vertx vertx, JsonObject config, EventBus eb, String pathPrefix) {
+    private void initDbMailService(ConfigManager appConfig) {
+        this.dbMailServiceApp = DbMailServiceFactory.getDbMailService(vertx, appConfig.getAppSynchroType());
+        if(appConfig.getSyncSynchroType().equals(appConfig.getAppSynchroType())) {
+            this.dbMailServiceSync = this.dbMailServiceApp;
+        } else {
+            this.dbMailServiceSync = DbMailServiceFactory.getDbMailService(vertx, appConfig.getSyncSynchroType());
+        }
+    }
+
+    public static ServiceManager init(Vertx vertx, EventBus eb, String pathPrefix) {
         if(serviceManager == null) {
-            serviceManager = new ServiceManager(vertx, config, eb, pathPrefix);
+            serviceManager = new ServiceManager(vertx, eb, pathPrefix);
         }
         return serviceManager;
     }
@@ -122,8 +139,12 @@ public class ServiceManager {
         return soapService;
     }
 
-    public DbMailService getDbMailService() {
-        return dbMailService;
+    public DbMailService getDbMailServiceSync() {
+        return dbMailServiceSync;
+    }
+
+    public DbMailService getDbMailServiceApp() {
+        return dbMailServiceApp;
     }
 
     public SearchService getSearchService() {

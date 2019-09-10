@@ -72,7 +72,7 @@ public class EntUser {
         userZimbraAddress = MailAddress.createFromLocalpartAndDomain(userId, Zimbra.domain);
         ServiceManager sm = ServiceManager.getServiceManager();
         this.neoService = sm.getNeoService();
-        this.dbMailService = sm.getDbMailService();
+        this.dbMailService = sm.getDbMailServiceApp();
     }
 
     public String getUserId() {

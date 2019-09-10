@@ -29,17 +29,27 @@ public class ConfigManager {
 
     private static final String NOSYNC = "no-sync";
     private static final String NOUPDATE = "no-update";
+    public static final String SYNC_NEO = "neo4j";
+    public static final String SYNC_SQL = "postgres";
+
+    private final JsonObject rawConfig;
 
     private final String host;
+    private final String dbSchema;
     private final String zimbraUri;
     private final String zimbraAdminUri;
     private final String zimbraAdminAccount;
     private final String zimbraAdminPassword;
     private final String preauthKey;
     private final String zimbraDomain;
+
     private final String synchroLang;
     private final String synchroCronDate;
     private final String synchroFromMail;
+
+    private final String appSynchroType;
+    private final String syncSynchroType;
+
     private final String mailerCron;
     private final Integer maxRecipients;
     private final int devLevel;
@@ -51,7 +61,9 @@ public class ConfigManager {
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
     public ConfigManager(JsonObject config) {
+        this.rawConfig = config;
         this.host = config.getString("host", "");
+        this.dbSchema = config.getString("db-schema", "zimbra");
         this.zimbraUri = config.getString("zimbra-uri", "");
         this.zimbraAdminUri = config.getString("zimbra-admin-uri", "");
         this.zimbraAdminAccount = config.getString("admin-account","");
@@ -61,6 +73,8 @@ public class ConfigManager {
         this.synchroLang = config.getString("zimbra-synchro-lang", "fr");
         this.synchroCronDate = config.getString("zimbra-synchro-cron", "");
         this.synchroFromMail = config.getString("zimbra-synchro-frommail", "zimbra-sync@cgi.com");
+        String appSynchroType = config.getString("app-synctype", SYNC_NEO);
+        String syncSynchroType = config.getString("sync-synctype", SYNC_NEO);
         this.mailerCron = config.getString("zimbra-mailer-cron", "");
         this.maxRecipients = config.getInteger("max-recipients", 50);
         this.mailConfig = config.getJsonObject("mail-config", new JsonObject());
@@ -77,6 +91,17 @@ public class ConfigManager {
             devLevel = DEFAULT_ACTION;
         }
 
+        if(!appSynchroType.equals(SYNC_NEO) && !appSynchroType.equals(SYNC_SQL)) {
+            this.appSynchroType = SYNC_NEO;
+        } else {
+            this.appSynchroType = appSynchroType;
+        }
+        if(!syncSynchroType.equals(SYNC_NEO) && !syncSynchroType.equals(SYNC_SQL)) {
+            this.syncSynchroType = SYNC_NEO;
+        } else {
+            this.syncSynchroType = syncSynchroType;
+        }
+
         if(host.isEmpty() || zimbraUri.isEmpty() || zimbraAdminAccount.isEmpty() || zimbraAdminUri.isEmpty()
                 || zimbraAdminPassword.isEmpty() || preauthKey.isEmpty() || zimbraDomain.isEmpty()
                 || addressBookAccountName.isEmpty() ) {
@@ -88,13 +113,17 @@ public class ConfigManager {
         return actionLevel <= devLevel;
     }
 
+    JsonObject getRawConfig() { return rawConfig;}
     public String getHost() { return host;}
+    public String getDbSchema() { return dbSchema;}
     public String getZimbraUri() { return zimbraUri;}
     public String getZimbraAdminUri() { return zimbraAdminUri;}
     public String getZimbraAdminAccount() { return zimbraAdminAccount;}
     public String getZimbraAdminPassword() { return zimbraAdminPassword;}
     public String getPreauthKey() { return preauthKey;}
     public String getZimbraDomain() { return zimbraDomain;}
+    public String getAppSynchroType() { return appSynchroType;}
+    public String getSyncSynchroType() { return syncSynchroType;}
     public String getSynchroLang() { return synchroLang;}
     public String getSynchroCronDate() { return synchroCronDate;}
     public String getSynchroFromMail() { return synchroFromMail;}

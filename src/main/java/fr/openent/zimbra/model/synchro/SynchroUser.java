@@ -54,6 +54,7 @@ public class SynchroUser extends EntUser {
 
     public SynchroUser(String userid) throws IllegalArgumentException {
         super(userid);
+        this.dbMailService = ServiceManager.getServiceManager().getDbMailServiceSync();
     }
 
     public void synchronize(String sync_action, Handler<AsyncResult<JsonObject>> handler) {

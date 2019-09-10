@@ -120,7 +120,7 @@ public class MailAddress {
 
     private void initServices() {
         ServiceManager serviceManager = ServiceManager.getServiceManager();
-        dbMailService = serviceManager.getDbMailService();
+        dbMailService = serviceManager.getDbMailServiceApp();
         userService = serviceManager.getUserService();
         groupService = serviceManager.getGroupService();
     }

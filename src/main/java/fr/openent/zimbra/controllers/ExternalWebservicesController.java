@@ -57,7 +57,7 @@ public class ExternalWebservicesController extends BaseController {
                      Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
         super.init(vertx, config, rm, securedActions);
 
-        ServiceManager serviceManager = ServiceManager.init(vertx, config, eb, pathPrefix);
+        ServiceManager serviceManager = ServiceManager.init(vertx, eb, pathPrefix);
         synchroUserService = serviceManager.getSynchroUserService();
         notificationService = serviceManager.getNotificationService();
         communicationService = serviceManager.getCommunicationService();

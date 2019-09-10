@@ -23,7 +23,6 @@ import fr.openent.zimbra.model.constant.SynchroConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
 import fr.openent.zimbra.model.constant.ZimbraErrors;
 import fr.openent.zimbra.model.soap.SoapError;
-import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.impl.UserService;
 import io.vertx.core.AsyncResult;
@@ -45,7 +44,6 @@ import static fr.openent.zimbra.model.constant.SoapConstants.*;
 public class ZimbraUser {
 
     private UserService userService;
-    private DbMailService dbMailService;
     private Neo4jZimbraService neo4jService;
 
     private boolean accountExists = false;
@@ -73,7 +71,6 @@ public class ZimbraUser {
     private void init() {
         ServiceManager sm = ServiceManager.getServiceManager();
         this.userService = sm.getUserService();
-        this.dbMailService = sm.getDbMailService();
         this.neo4jService = sm.getNeoService();
     }
 
@@ -149,7 +146,8 @@ public class ZimbraUser {
             throw new InvalidPropertiesFormatException(message);
         }
 
-        dbMailService.updateUserAsync(this);
+        // todo add user to sync database
+        //dbMailService.updateUserAsync(this);
     }
 
     // Can throw Exception when parsing getAccountResponse

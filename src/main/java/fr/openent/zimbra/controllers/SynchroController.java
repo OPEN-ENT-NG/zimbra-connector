@@ -49,7 +49,6 @@ import static fr.openent.zimbra.model.constant.BusConstants.*;
 public class SynchroController extends BaseController {
 
     private SynchroExportService synchroExportService;
-    private SynchroUserService synchroUserService;
     private SynchroService synchroService;
     private SynchroMailerService synchroMailerService;
     private SynchroAddressBookService synchroAddressBookService;
@@ -63,10 +62,9 @@ public class SynchroController extends BaseController {
                      Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
         super.init(vertx, config, rm, securedActions);
 
-        ServiceManager serviceManager = ServiceManager.init(vertx, config, eb, pathPrefix);
+        ServiceManager serviceManager = ServiceManager.init(vertx, eb, pathPrefix);
 
         this.synchroExportService = new SynchroExportService();
-        this.synchroUserService = serviceManager.getSynchroUserService();
         this.synchroService = serviceManager.getSynchroService();
         this.synchroMailerService = serviceManager.getSynchroMailerService();
         this.synchroAddressBookService = serviceManager.getSynchroAddressBookService();

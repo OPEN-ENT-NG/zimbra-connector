@@ -61,7 +61,7 @@ public class SqlDbMailService extends DbMailService {
         String query = "SELECT " + NEO4J_UID + ", 'user' as type FROM "
                 + userTable + " WHERE " + ZIMBRA_NAME + " = ? "
                 + "UNION ALL "
-                + "SELECT " + NEO4J_UID + " 'group' as type FROM "
+                + "SELECT " + NEO4J_UID + ", 'group' as type FROM "
                 + groupTable + " WHERE " + ZIMBRA_NAME + " = ? ";
         JsonArray values = new JsonArray().add(mail).add(mail);
 
