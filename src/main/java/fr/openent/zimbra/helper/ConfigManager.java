@@ -21,6 +21,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
+@SuppressWarnings("WeakerAccess")
 public class ConfigManager {
 
     private static final int DEFAULT_ACTION = 0;

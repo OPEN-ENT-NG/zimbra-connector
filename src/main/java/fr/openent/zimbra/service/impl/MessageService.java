@@ -35,7 +35,9 @@ import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.user.UserInfos;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -141,7 +143,8 @@ public class MessageService {
         }
 
         JsonArray frontMessages = new JsonArray();
-        processSearchResult(zimbraMessages, frontMessages, result);
+        Map<String,String> addressMap = new HashMap<>();
+        processSearchResult(zimbraMessages, frontMessages, addressMap, result);
     }
 
     /**
@@ -167,9 +170,10 @@ public class MessageService {
      * }
      * @param zimbraMessages array of unprocessed messages from zimbra
      * @param frontMessages array of processed messages
+     * @param addressMap mapping of user email addresses and neo ids
      * @param result final handler
      */
-    private void processSearchResult(JsonArray zimbraMessages, JsonArray frontMessages,
+    private void processSearchResult(JsonArray zimbraMessages, JsonArray frontMessages, Map<String,String> addressMap,
                                      Handler<Either<String, JsonArray>> result) {
         if(zimbraMessages.isEmpty()) {
             result.handle(new Either.Right<>(frontMessages));
@@ -180,16 +184,16 @@ public class MessageService {
             zimbraMsg = zimbraMessages.getJsonObject(0);
         } catch (ClassCastException e) {
             zimbraMessages.remove(0);
-            processSearchResult(zimbraMessages, frontMessages, result);
+            processSearchResult(zimbraMessages, frontMessages, addressMap, result);
             return;
         }
         final JsonObject frontMsg = new JsonObject();
 
 
-        transformMessageZimbraToFront(zimbraMsg, frontMsg, response -> {
+        transformMessageZimbraToFront(zimbraMsg, frontMsg, addressMap, response -> {
             zimbraMessages.remove(0);
             frontMessages.add(response);
-            processSearchResult(zimbraMessages, frontMessages, result);
+            processSearchResult(zimbraMessages, frontMessages, addressMap, result);
         });
     }
 
@@ -200,7 +204,7 @@ public class MessageService {
      * @param result handler result
      */
     private void transformMessageZimbraToFront(JsonObject msgZimbra, JsonObject msgFront,
-                                               Handler<JsonObject> result) {
+                                               Map<String,String> addressMap, Handler<JsonObject> result) {
         msgFront.put("id", msgZimbra.getString(MSG_ID));
         msgFront.put("date", msgZimbra.getLong(MSG_DATE));
         msgFront.put("subject", msgZimbra.getString(MSG_SUBJECT));
@@ -243,7 +247,7 @@ public class MessageService {
             AttachmentService.processAttachments(msgFront, attachments);
         }
 
-        translateMaillistToUidlist(msgFront, zimbraMails, result);
+        translateMaillistToUidlist(msgFront, zimbraMails, addressMap, result);
     }
 
     /**
@@ -283,7 +287,7 @@ public class MessageService {
      * @param zimbraMails JsonObject containing mail addresses
      * @param handler result handler
      */
-    private void translateMaillistToUidlist(JsonObject frontMsg, JsonArray zimbraMails,
+    private void translateMaillistToUidlist(JsonObject frontMsg, JsonArray zimbraMails, Map<String,String> addressMap,
                                             Handler<JsonObject> handler) {
         if(zimbraMails == null || zimbraMails.isEmpty()) {
             handler.handle(frontMsg);
@@ -297,19 +301,20 @@ public class MessageService {
             && !(type.equals(ADDR_TYPE_TO))
             && !(type.equals(ADDR_TYPE_BCC))) {
             zimbraMails.remove(0);
-            translateMaillistToUidlist(frontMsg, zimbraMails, handler);
+            translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, handler);
             return;
         }
 
         String zimbraMail = zimbraUser.getString(MSG_EMAIL_ADDR, "");
         if(zimbraMail.isEmpty()) {
             zimbraMails.remove(0);
-            translateMaillistToUidlist(frontMsg, zimbraMails, handler);
+            translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, handler);
         } else {
-            translateMail(zimbraMail, userUuid -> {
+            Handler<String> translatedUuidHandler = userUuid -> {
                 if (userUuid == null) {
                     userUuid = zimbraMail;
                 }
+                addressMap.put(zimbraMail,userUuid);
                 switch (type) {
                     case ADDR_TYPE_FROM:
                         frontMsg.put("from", userUuid);
@@ -329,8 +334,14 @@ public class MessageService {
                                 .add(userUuid)
                                 .add(zimbraUser.getString(MSG_EMAIL_COMMENT, zimbraMail))));
                 zimbraMails.remove(0);
-                translateMaillistToUidlist(frontMsg, zimbraMails, handler);
-            });
+                translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, handler);
+            };
+
+            if(addressMap.containsKey(zimbraMail)) {
+                translatedUuidHandler.handle(addressMap.get(zimbraMail));
+            } else {
+                translateMail(zimbraMail,translatedUuidHandler);
+            }
         }
     }
 
@@ -465,7 +476,9 @@ public class MessageService {
         }
         JsonObject msgZimbra = listMessages.getJsonObject(0);
 
-        transformMessageZimbraToFront(msgZimbra, msgFront, result -> handler.handle(new Either.Right<>(msgFront)) );
+        Map<String,String> addressMap = new HashMap<>();
+        transformMessageZimbraToFront(msgZimbra, msgFront, addressMap,
+                result -> handler.handle(new Either.Right<>(msgFront)) );
     }
 
     /**
