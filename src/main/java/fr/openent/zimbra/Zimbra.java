@@ -20,6 +20,7 @@ package fr.openent.zimbra;
 import fr.openent.zimbra.controllers.ExternalWebservicesController;
 import fr.openent.zimbra.controllers.SynchroController;
 import fr.openent.zimbra.controllers.ZimbraAdminController;
+import fr.openent.zimbra.filters.RequestErrorFilter;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.BusConstants;
 import fr.openent.zimbra.service.synchro.SynchroTask;
@@ -28,7 +29,6 @@ import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.BaseServer;
 import fr.openent.zimbra.controllers.ZimbraController;
 import fr.wseduc.cron.CronTrigger;
-
 import java.text.ParseException;
 
 
@@ -54,6 +54,7 @@ public class Zimbra extends BaseServer {
 		addController(new SynchroController());
 		addController(new ExternalWebservicesController());
 		addController(new ZimbraAdminController());
+		addFilter(new RequestErrorFilter());
 
 		try {
 			SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);

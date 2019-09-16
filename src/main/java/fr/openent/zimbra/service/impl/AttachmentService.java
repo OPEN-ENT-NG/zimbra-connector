@@ -111,6 +111,10 @@ public class AttachmentService {
                 });
             });
 
+            zimbraRequest.exceptionHandler( err -> {
+                log.error("Error when getting attachment : ", err);
+            });
+
             zimbraRequest.setChunked(true)
                     .putHeader("Cookie","ZM_AUTH_TOKEN=" + authToken);
             zimbraRequest.end();
@@ -167,6 +171,9 @@ public class AttachmentService {
                 } else {
                     handler.handle(new Either.Left<>(response.statusMessage()));
                 }
+            });
+            requestZimbra.exceptionHandler( err -> {
+               log.error("Error when uploading attachment : ", err);
             });
             requestZimbra.setChunked(true)
                     .putHeader("Content-Disposition", cdHeader)

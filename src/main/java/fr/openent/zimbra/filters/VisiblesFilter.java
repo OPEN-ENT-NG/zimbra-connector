@@ -35,6 +35,7 @@ import fr.wseduc.webutils.http.Binding;
 import fr.wseduc.webutils.request.RequestUtils;
 
 
+@SuppressWarnings("unused")
 public class VisiblesFilter implements ResourcesProvider{
 
     private Neo4j neo;

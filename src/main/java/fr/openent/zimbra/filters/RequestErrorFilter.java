@@ -17,28 +17,28 @@
 
 package fr.openent.zimbra.filters;
 
-import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.helper.ConfigManager;
-import fr.wseduc.webutils.http.Binding;
+import fr.wseduc.webutils.request.filter.Filter;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.entcore.common.http.filter.ResourcesProvider;
-import org.entcore.common.user.UserInfos;
 
-public class DevLevelFilter implements ResourcesProvider {
+import java.util.Set;
 
-    private static final Logger log = LoggerFactory.getLogger(DevLevelFilter.class);
+public class RequestErrorFilter implements Filter {
 
+    private static final Logger log = LoggerFactory.getLogger(RequestErrorFilter.class);
 
     @Override
-    public void authorize(HttpServerRequest httpServerRequest, Binding binding, UserInfos userInfos, Handler<Boolean> handler) {
-        if(Zimbra.appConfig.isActionBlocked(ConfigManager.UPDATE_ACTION)) {
-            handler.handle(false);
-            log.error("action blocked : " + binding.getUriPattern());
-        } else {
-            handler.handle(true);
-        }
+    public void canAccess(HttpServerRequest request, Handler<Boolean> handler) {
+        request.exceptionHandler( err -> {
+            log.error("Error on " + request.method().name() + " : " + err.getMessage(), err);
+        });
+        handler.handle(true);
+    }
+
+    @Override
+    public void deny(HttpServerRequest httpServerRequest) {
+
     }
 }

@@ -20,10 +20,12 @@ package fr.openent.zimbra.helper;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.ProxyOptions;
 
 public class HttpClientHelper {
-
+    private static final Logger log = LoggerFactory.getLogger(HttpClientHelper.class);
     /**
      * Create default HttpClient
      * @return new HttpClient
@@ -38,6 +40,7 @@ public class HttpClientHelper {
                     .setPassword(System.getProperty("httpclient.proxyPassword"));
             options.setProxyOptions(proxyOptions);
         }
+        log.info("maxpoolsize : " + options.getMaxPoolSize());
         return vertx.createHttpClient(options);
     }
 
