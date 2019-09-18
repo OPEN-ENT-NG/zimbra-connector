@@ -78,9 +78,9 @@ public class ServiceManager {
         EmailFactory emailFactory = new EmailFactory(vertx, rawConfig);
         emailSender = emailFactory.getSender();
 
+        this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
         initDbMailService(appConfig);
         this.searchService = new SearchService(vertx);
-        this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
         this.soapService = new SoapZimbraService(vertx);
         this.neoService = new Neo4jZimbraService();
         this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
@@ -108,11 +108,12 @@ public class ServiceManager {
     }
 
     private void initDbMailService(ConfigManager appConfig) {
-        this.dbMailServiceApp = DbMailServiceFactory.getDbMailService(vertx, appConfig.getAppSynchroType());
+        DbMailServiceFactory dbFactory = new DbMailServiceFactory(vertx, sqlSynchroService);
+        this.dbMailServiceApp = dbFactory.getDbMailService(appConfig.getAppSynchroType());
         if(appConfig.getSyncSynchroType().equals(appConfig.getAppSynchroType())) {
             this.dbMailServiceSync = this.dbMailServiceApp;
         } else {
-            this.dbMailServiceSync = DbMailServiceFactory.getDbMailService(vertx, appConfig.getSyncSynchroType());
+            this.dbMailServiceSync = dbFactory.getDbMailService(appConfig.getAppSynchroType());
         }
     }
 

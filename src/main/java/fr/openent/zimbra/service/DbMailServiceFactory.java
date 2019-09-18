@@ -21,17 +21,26 @@ import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.service.data.NeoDbMailService;
 import fr.openent.zimbra.service.data.SqlDbMailService;
+import fr.openent.zimbra.service.data.SqlSynchroService;
 import io.vertx.core.Vertx;
 
 public class DbMailServiceFactory {
 
-    public static DbMailService getDbMailService(Vertx vertx, String serviceName) {
+    private Vertx vertx;
+    private SqlSynchroService sqlSynchroService;
+
+    public DbMailServiceFactory(Vertx vertx, SqlSynchroService sqlSynchroService) {
+        this.vertx = vertx;
+        this.sqlSynchroService = sqlSynchroService;
+    }
+
+    public DbMailService getDbMailService(String serviceName) {
         switch (serviceName) {
             case ConfigManager.SYNC_SQL:
                 return new SqlDbMailService(Zimbra.appConfig.getDbSchema());
             case ConfigManager.SYNC_NEO:
             default:
-                return new NeoDbMailService(vertx);
+                return new NeoDbMailService(vertx, sqlSynchroService);
         }
     }
 }

@@ -150,7 +150,7 @@ public class UserService {
         UserInfoService.processAliases(getInfoResp, frontData);
         UserInfoService.processSignaturePref(getInfoResp, frontData);
 
-        /*
+
         // todo update users only if needed
         dbMailService.updateUsers(new JsonArray().add(frontData.getJsonObject(UserInfoService.ALIAS)),
                                 sqlResponse -> {
@@ -158,7 +158,7 @@ public class UserService {
                 log.error("Error when updating Zimbra users : " + sqlResponse.left().getValue());
             }
         });
-        */
+
 
         handler.handle(new Either.Right<>(frontData));
     }
@@ -271,7 +271,6 @@ public class UserService {
 
         UserInfoService.processAccountInfo(getInfoResp, frontData);
 
-        /*
         // todo update users only if needed
         dbMailService.updateUsers(new JsonArray().add(frontData.getJsonObject(UserInfoService.ALIAS)),
                 sqlResponse -> {
@@ -279,7 +278,7 @@ public class UserService {
                         log.error("Error when updating Zimbra users : " + sqlResponse.left().getValue());
                     }
                 });
-         */
+
 
         handler.handle(frontData);
     }

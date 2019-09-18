@@ -36,6 +36,7 @@ public class SynchroConstants {
     public static final String ACCT_STATUS_ACTIVE = "active";
 
     public static final String SYNC_DAILY = "DAILY";
+    public static final String SYNC_APP = "APP";
 
     public static final String ACTION_CREATION = "CREATE";
     public static final String ACTION_MODIFICATION = "MODIFY";

@@ -171,16 +171,28 @@ public class SqlSynchroService {
             return;
         }
 
-        StringBuilder query = new StringBuilder("INSERT INTO " + userSynchroTable)
-                .append(String.format("(%s,%s,%s,%s,%s) ",
-                        USER_SYNCID, USER_IDUSER, USER_SYNCTYPE, USER_SYNCACTION, USER_STATUS));
-        String delimiter = "VALUES";
+        String statusCondition = String.format("%s='%s'", USER_STATUS, SynchroConstants.STATUS_TODO);
+
+        StringBuilder query = new StringBuilder("WITH new_values (new_user_id) AS ( ");
+
+        String delimiter = "VALUES ";
         int i;
         for( i = 0 ; (start + i) < users.size() && i < INSERT_PAGINATION ; i++) {
-            query.append(String.format("%s(%d,?,'%s','%s','%s')",
-                    delimiter, idSynchro, SynchroConstants.SYNC_DAILY, modification, SynchroConstants.STATUS_TODO));
+            query.append(String.format("%s(?)",delimiter));
             delimiter = ",";
         }
+        query.append(") INSERT INTO ")
+                .append(userSynchroTable)
+                .append(String.format("(%s,%s,%s,%s,%s) ",
+                        USER_SYNCID, USER_IDUSER, USER_SYNCTYPE, USER_SYNCACTION, USER_STATUS))
+                .append(String.format("SELECT null,new_user_id,'%s','%s','%s'",
+                        SynchroConstants.SYNC_DAILY, modification, SynchroConstants.STATUS_TODO))
+                .append("FROM new_values ")
+                .append("WHERE NOT EXISTS ( SELECT 1 FROM ")
+                .append(userSynchroTable)
+                .append(String.format(" WHERE %s=new_user_id", USER_IDUSER))
+                .append(String.format(" AND %s", statusCondition))
+                .append(")");
         List<String> extract = users.subList(start, start + i);
         sql.prepared(query.toString(), new JsonArray(extract),
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(

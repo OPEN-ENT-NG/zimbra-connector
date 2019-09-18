@@ -20,6 +20,7 @@ package fr.openent.zimbra.service.data;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.Group;
 import fr.openent.zimbra.model.ZimbraUser;
+import fr.openent.zimbra.model.constant.SynchroConstants;
 import fr.openent.zimbra.service.DbMailService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.*;
@@ -42,15 +43,18 @@ public class NeoDbMailService extends DbMailService {
     private Neo4j neo;
     private EventBus eb;
 
+    private SqlSynchroService sqlSynchroService;
+
     @SuppressWarnings("FieldCanBeLocal")
     private static String FEEDER_BUSURL = "entcore.feeder";
 
 
     private static Logger log = LoggerFactory.getLogger(NeoDbMailService.class);
 
-    public NeoDbMailService(Vertx vertx) {
+    public NeoDbMailService(Vertx vertx, SqlSynchroService sqlSynchroService) {
         this.eb = vertx.eventBus();
         this.neo = Neo4j.getInstance();
+        this.sqlSynchroService = sqlSynchroService;
     }
 
     @Override
@@ -136,11 +140,27 @@ public class NeoDbMailService extends DbMailService {
                     .put("aliases", new JsonArray(user.getAliases()));
             jsonUsers.add(jsonUser);
         }
-        updateUsers(jsonUsers, AsyncHelper.getJsonObjectEitherHandler(handler));
+        updateUsersByFeeder(jsonUsers, AsyncHelper.getJsonObjectEitherHandler(handler));
     }
 
-    @Override
     public void updateUsers(JsonArray users, Handler<Either<String, JsonObject>> handler) {
+        List<String> userIds = new ArrayList<>();
+        for(Object obj : users) {
+            if(!(obj instanceof JsonObject)) continue;
+            JsonObject user = (JsonObject)obj;
+            String userId = getUserNameFromMail(user.getJsonArray("aliases", new JsonArray()).getString(0));
+            if(userId.isEmpty()) {
+                log.error("Trying to update user with invalid id : " + userId);
+            } else {
+                userIds.add(userId);
+            }
+        }
+        sqlSynchroService.addUsersToSynchronize(0, userIds, SynchroConstants.ACTION_MODIFICATION, res -> {
+            handler.handle(AsyncHelper.jsonObjectAsyncToJsonObjectEither(res));
+        });
+    }
+
+    private void updateUsersByFeeder(JsonArray users, Handler<Either<String, JsonObject>> handler) {
 
         List<Future> futureList = new ArrayList<>();
 

@@ -113,6 +113,7 @@ public class AttachmentService {
 
             zimbraRequest.exceptionHandler( err -> {
                 log.error("Error when getting attachment : ", err);
+                handler.handle(new Either.Left<>("Error when transferring attachement"));
             });
 
             zimbraRequest.setChunked(true)
@@ -174,6 +175,7 @@ public class AttachmentService {
             });
             requestZimbra.exceptionHandler( err -> {
                log.error("Error when uploading attachment : ", err);
+               handler.handle(new Either.Left<>("Error when uploading attachment"));
             });
             requestZimbra.setChunked(true)
                     .putHeader("Content-Disposition", cdHeader)

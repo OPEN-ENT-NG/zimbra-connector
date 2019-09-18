@@ -219,6 +219,11 @@ public class SoapZimbraService {
 
         JsonObject jsonRequest = prepareJsonRequest(params);
 
+        request.exceptionHandler( err -> {
+           log.error("Error on request : " + finalUrl + " body : " + jsonRequest.encode(), err);
+           handler.handle(new Either.Left<>("Error on request : " + err.getMessage()));
+        });
+
         request.write(jsonRequest.encode());
         request.end();
     }
