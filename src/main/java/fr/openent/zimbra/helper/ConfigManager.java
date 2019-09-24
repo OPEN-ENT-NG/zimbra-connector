@@ -29,6 +29,11 @@ public class ConfigManager {
 
     private static final String NOSYNC = "no-sync";
     private static final String NOUPDATE = "no-update";
+    public static final String SYNC_NEO = "neo4j";
+    public static final String SYNC_SQL = "postgres";
+
+
+    private final int httpClientMaxPoolSize;
 
     private final String zimbraUri;
     private final String zimbraAdminUri;
@@ -36,9 +41,11 @@ public class ConfigManager {
     private final String zimbraAdminPassword;
     private final String preauthKey;
     private final String zimbraDomain;
+
     private final String synchroLang;
     private final String synchroCronDate;
     private final String synchroFromMail;
+
     private final String mailerCron;
     private final Integer maxRecipients;
     private final int devLevel;
@@ -47,6 +54,7 @@ public class ConfigManager {
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
     public ConfigManager(JsonObject config) {
+        this.httpClientMaxPoolSize = config.getInteger("http-client-max-pool-size", 0);
         this.zimbraUri = config.getString("zimbra-uri", "");
         this.zimbraAdminUri = config.getString("zimbra-admin-uri", "");
         this.zimbraAdminAccount = config.getString("admin-account","");
@@ -80,6 +88,7 @@ public class ConfigManager {
     }
 
     public String getZimbraUri() { return zimbraUri;}
+    public int getHttpClientMaxPoolSize() { return httpClientMaxPoolSize;}
     public String getZimbraAdminUri() { return zimbraAdminUri;}
     public String getZimbraAdminAccount() { return zimbraAdminAccount;}
     public String getZimbraAdminPassword() { return zimbraAdminPassword;}
