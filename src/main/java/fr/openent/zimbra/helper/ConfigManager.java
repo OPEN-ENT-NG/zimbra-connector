@@ -35,6 +35,8 @@ public class ConfigManager {
 
     private final JsonObject rawConfig;
 
+    private final int httpClientMaxPoolSize;
+
     private final String host;
     private final String dbSchema;
     private final String zimbraUri;
@@ -63,6 +65,7 @@ public class ConfigManager {
 
     public ConfigManager(JsonObject config) {
         this.rawConfig = config;
+        this.httpClientMaxPoolSize = config.getInteger("http-client-max-pool-size", 0);
         this.host = config.getString("host", "");
         this.dbSchema = config.getString("db-schema", "zimbra");
         this.zimbraUri = config.getString("zimbra-uri", "");
@@ -115,6 +118,7 @@ public class ConfigManager {
     }
 
     JsonObject getRawConfig() { return rawConfig;}
+    public int getHttpClientMaxPoolSize() { return httpClientMaxPoolSize;}
     public String getHost() { return host;}
     public String getDbSchema() { return dbSchema;}
     public String getZimbraUri() { return zimbraUri;}

@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.helper;
 
+import fr.openent.zimbra.Zimbra;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
@@ -39,8 +40,11 @@ public class HttpClientHelper {
                     .setUsername(System.getProperty("httpclient.proxyUsername"))
                     .setPassword(System.getProperty("httpclient.proxyPassword"));
             options.setProxyOptions(proxyOptions);
+            int maxPoolSize = Zimbra.appConfig.getHttpClientMaxPoolSize();
+            if(maxPoolSize > 0) {
+                options.setMaxPoolSize(maxPoolSize);
+            }
         }
-        log.info("maxpoolsize : " + options.getMaxPoolSize());
         return vertx.createHttpClient(options);
     }
 
