@@ -38,10 +38,10 @@ public class HttpClientHelper {
                     .setUsername(System.getProperty("httpclient.proxyUsername"))
                     .setPassword(System.getProperty("httpclient.proxyPassword"));
             options.setProxyOptions(proxyOptions);
-            int maxPoolSize = Zimbra.appConfig.getHttpClientMaxPoolSize();
-            if(maxPoolSize > 0) {
-                options.setMaxPoolSize(maxPoolSize);
-            }
+        }
+        int maxPoolSize = Zimbra.appConfig.getHttpClientMaxPoolSize();
+        if(maxPoolSize > 0) {
+            options.setMaxPoolSize(maxPoolSize);
         }
         return vertx.createHttpClient(options);
     }
