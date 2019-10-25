@@ -372,7 +372,7 @@ export class Mail implements Selectable {
 
             if (parseInt(result.sent) > 0) {
                 this.state = "SENT";
-                notify.info("mail.sent");
+                notify.success("mail.sent");
             }
 
             return {
