@@ -54,9 +54,9 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
         route({
             readMail: async function(params) {
-                $scope.preference = await new Preference();
-                Zimbra.instance.folders.openFolder("inbox");
+                await initPreference();
                 await Zimbra.instance.sync();
+                Zimbra.instance.folders.openFolder("inbox");
                 await Zimbra.instance.folders.draft.countTotal();
                 $scope.constructNewItem();
                 template.open("page", "folders");
@@ -66,7 +66,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 $scope.$apply();
             },
             writeMail: async function(params) {
-                $scope.preference = await new Preference();
+                await initPreference();
                 await Zimbra.instance.sync();
                 Zimbra.instance.folders.openFolder("inbox");
                 let user = new User(params.userId);
@@ -92,7 +92,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 $scope.$apply();
             },
             inbox: async () => {
-                $scope.preference = await new Preference();
+                await initPreference();
                 await Zimbra.instance.sync();
                 template.open("page", "folders");
                 $scope.openFolder("inbox");
@@ -117,6 +117,16 @@ export let zimbraController = ng.controller("ZimbraController", [
         template.open("toaster", "folders-templates/toaster");
         $scope.formatFileType = Document.role;
         $scope.sending = false;
+
+        const initPreference = async ():Promise<void> => {
+            $scope.preference = await new Preference();
+            if(window.innerWidth <= SCREENS.FAT_MOBILE){
+                console.log("phone view");
+                await $scope.preference.switchViewMode("LIST");
+                $scope.preference.viewMode = ViewMode.LIST;
+                $scope.closeRightSide();
+            }
+        }
 
         $scope.addUser = user => {
             if (!$scope.state.newItem.to) {
@@ -246,8 +256,8 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.refreshSelectionState =  function(mail) {
             if (!mail.selected) $scope.state.selectAll = false;
             if($('plus#mailOptions').children('div.opener').hasClass('minus')){
-               $scope.stopPropagation= true;
-               $('plus#mailOptions').trigger('click');
+                $scope.stopPropagation= true;
+                $('plus#mailOptions').trigger('click');
             }
 
         };
@@ -976,8 +986,8 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
         $scope.showConfirm = () => {
             if($scope.getFolder() === 'trash'){
-            $scope.displayLightBox.folder = true;
-            template.open('folder-lightbox','folders-templates/lightboxs/confirm-delete-mail');
+                $scope.displayLightBox.folder = true;
+                template.open('folder-lightbox','folders-templates/lightboxs/confirm-delete-mail');
             }else{
                 $scope.removeSelection();
             }
