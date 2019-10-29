@@ -121,10 +121,8 @@ export let zimbraController = ng.controller("ZimbraController", [
         const initPreference = async ():Promise<void> => {
             $scope.preference = await new Preference();
             if(window.innerWidth <= SCREENS.FAT_MOBILE){
-                console.log("phone view");
                 await $scope.preference.switchViewMode("LIST");
                 $scope.preference.viewMode = ViewMode.LIST;
-                $scope.closeRightSide();
             }
         }
 
