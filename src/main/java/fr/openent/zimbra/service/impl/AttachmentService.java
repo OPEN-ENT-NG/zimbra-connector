@@ -319,7 +319,7 @@ public class AttachmentService {
                     String replaceRegex = "<img$1 src=\"" + attchUrl;
                     String body = msgFront.getString("body", "").replaceAll(regex, replaceRegex);
                     msgFront.put("body", body);
-                } else if(zimbraAtt.getBoolean(MSG_MPART_ISBODY, false)){
+                } else if(zimbraAtt.getBoolean(MSG_MPART_ISBODY, false) && TYPE_IMAGE_JPEG.equals(zimbraAtt.getString(MULTIPART_CONTENT_TYPE))){
                     // Image is the whole body
                     String body = "<img src=\"" + attchUrl + "\"/>";
                     msgFront.put("body", body);

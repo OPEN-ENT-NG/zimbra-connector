@@ -57,6 +57,7 @@ public class ZimbraConstants {
     public static final String MULTIPART_FILENAME = "filename";
     public static final String MULTIPART_MSG_ID = "mid";
     public static final String MULTIPART_SIZE = "s";
+    public static final String TYPE_IMAGE_JPEG = "image/jpeg";
 
     public static final String MULTIPART_INLINE = "inline";
     public static final String MULTIPART_ATTACHMENT = "attachment";
