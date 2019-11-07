@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.data;
 
+import fr.openent.zimbra.helper.AsyncHelper;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Server;
 import fr.wseduc.webutils.Utils;
@@ -31,7 +32,6 @@ import org.entcore.common.neo4j.Neo4j;
 import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.validation.StringValidation;
-import fr.openent.zimbra.helper.FutureHelper;
 
 import static org.entcore.common.neo4j.Neo4jResult.validResultHandler;
 
@@ -57,17 +57,18 @@ public class SearchService {
     private void callFindVisibles(UserInfos user, final String acceptLanguage, final Handler<Either<String, JsonObject>> result,
                                   final JsonObject visible, String wordSearched) {
 
-        Future<JsonArray> findVisiblesGroupFuture = Future.future();
-        Future<JsonArray> findVisiblesUsersFuture = Future.future();
+        Future<JsonArray> findVisiblesGroupFuture = Future.future(), findVisiblesUsersFuture = Future.future();
 
-        CompositeFuture.all( findVisiblesGroupFuture, findVisiblesUsersFuture ).setHandler(asyncEvent -> {
-            if (asyncEvent.failed()) {
+        findVisiblesGroup(user.getUserId(),  wordSearched,  AsyncHelper.getJsonArrayEitherHandler(findVisiblesGroupFuture));
+        findVisiblesUsers(user.getUserId(),  wordSearched, AsyncHelper.getJsonArrayEitherHandler(findVisiblesUsersFuture));
+
+        CompositeFuture.all( findVisiblesGroupFuture, findVisiblesUsersFuture ).setHandler(responseFutures -> {
+            if (responseFutures.failed()) {
                 result.handle(new Either.Left<>("Error neo4j when you get visible users and groups : "));
                 return;
             }
 
-            JsonArray groups = findVisiblesGroupFuture.result();
-            JsonArray users = findVisiblesUsersFuture.result();
+            JsonArray groups = findVisiblesGroupFuture.result(), users = findVisiblesUsersFuture.result();
 
             if (acceptLanguage != null) {
                 UserUtils.translateGroupsNames(groups, acceptLanguage);
@@ -77,9 +78,6 @@ public class SearchService {
 
             result.handle(new Either.Right<>(visible));
         });
-
-        findVisiblesGroup(user.getUserId(),  wordSearched,  FutureHelper.handlerJsonArray(findVisiblesGroupFuture));
-        findVisiblesUsers(user.getUserId(),  wordSearched, FutureHelper.handlerJsonArray(findVisiblesUsersFuture));
 
     }
 
