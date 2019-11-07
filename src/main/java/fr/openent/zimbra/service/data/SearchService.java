@@ -20,21 +20,28 @@ package fr.openent.zimbra.service.data;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Server;
 import fr.wseduc.webutils.Utils;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.entcore.common.neo4j.Neo4j;
 import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.validation.StringValidation;
+import fr.openent.zimbra.helper.FutureHelper;
+
+import static org.entcore.common.neo4j.Neo4jResult.validResultHandler;
 
 public class SearchService {
 
     private final EventBus eb;
-
+    private static Neo4j neo;
     public SearchService(Vertx vertx) {
         this.eb = Server.getEventBus(vertx);
+        this.neo = Neo4j.getInstance();
     }
 
     public void findVisibleRecipients(final UserInfos user, final String acceptLanguage, final String search,
@@ -43,49 +50,84 @@ public class SearchService {
             return;
 
         final JsonObject visible = new JsonObject();
-
-        final JsonObject params = new JsonObject();
-
-        final String preFilter;
-        if (Utils.isNotEmpty(search)) {
-            preFilter = "AND (m:Group OR m.displayNameSearchField CONTAINS {search}) ";
-            params.put("search", StringValidation.removeAccents(search.trim()).toLowerCase());
-        } else {
-            preFilter = null;
-        }
-
-
-        String customReturn =
-                "RETURN DISTINCT visibles.id as id, visibles.name as name, " +
-                        "visibles.displayName as displayName, visibles.groupDisplayName as groupDisplayName, " +
-                        "visibles.profiles[0] as profile, visibles.structureName as structureName ";
-        callFindVisibles(user, acceptLanguage, result, visible, params, preFilter, customReturn);
+        String wordSearched = Utils.isNotEmpty(search)? StringValidation.removeAccents(search.trim()).toLowerCase() : "";
+        callFindVisibles(user, acceptLanguage, result, visible, wordSearched);
     }
 
     private void callFindVisibles(UserInfos user, final String acceptLanguage, final Handler<Either<String, JsonObject>> result,
-                                  final JsonObject visible, JsonObject params, String preFilter, String customReturn) {
-        UserUtils.findVisibles(eb, user.getUserId(), customReturn, params, true, true, false,
-                acceptLanguage, preFilter, visibles -> {
+                                  final JsonObject visible, String wordSearched) {
 
-                    JsonArray users = new fr.wseduc.webutils.collections.JsonArray();
-                    JsonArray groups = new fr.wseduc.webutils.collections.JsonArray();
-                    visible.put("groups", groups).put("users", users);
-                    for (Object o: visibles) {
-                        if (!(o instanceof JsonObject)) continue;
-                        JsonObject j = (JsonObject) o;
-                        if (j.getString("name") != null) {
-                            j.remove("displayName");
-                            UserUtils.groupDisplayName(j, acceptLanguage);
-                            groups.add(j);
-                        } else {
-                            j.remove("name");
-                            users.add(j);
-                        }
-                    }
-                    result.handle(new Either.Right<>(visible));
-                });
+        Future<JsonArray> findVisiblesGroupFuture = Future.future();
+        Future<JsonArray> findVisiblesUsersFuture = Future.future();
+
+        CompositeFuture.all( findVisiblesGroupFuture, findVisiblesUsersFuture ).setHandler(asyncEvent -> {
+            if (asyncEvent.failed()) {
+                result.handle(new Either.Left<>("Error neo4j when you get visible users and groups : "));
+                return;
+            }
+
+            JsonArray groups = findVisiblesGroupFuture.result();
+            JsonArray users = findVisiblesUsersFuture.result();
+
+            if (acceptLanguage != null) {
+                UserUtils.translateGroupsNames(groups, acceptLanguage);
+                UserUtils.translateGroupsNames(users, acceptLanguage);
+            }
+            visible.put("groups", groups).put("users", users);
+
+            result.handle(new Either.Right<>(visible));
+        });
+
+        findVisiblesGroup(user.getUserId(),  wordSearched,  FutureHelper.handlerJsonArray(findVisiblesGroupFuture));
+        findVisiblesUsers(user.getUserId(),  wordSearched, FutureHelper.handlerJsonArray(findVisiblesUsersFuture));
+
     }
 
+    private static void findVisiblesGroup(String userId, String wordSearched,  final Handler<Either<String, JsonArray>> responseGroups) {
+
+        JsonObject params = new JsonObject()
+                .put("userId",userId)
+                .put("search", wordSearched);
+
+        String queryNeo = "" +
+                "MATCH p=(n:User)-[:COMMUNIQUE*0..2]->ipg-[:COMMUNIQUE*0..1]->g<-[:DEPENDS*0..1]-m " +
+                "WHERE n.id = {userId} " +
+                "AND m.name IS NOT NULL " +
+                "AND (NOT(HAS(m.blocked)) OR m.blocked = false) " +
+                "AND (m:Group OR m.displayNameSearchField CONTAINS {search}) " +
+                "AND (( (length(p) >= 2 OR m.users <> 'INCOMING') " +
+                "AND (length(p) < 3 " +
+                "OR (ipg:Group AND (m:User OR g<-[:DEPENDS]-m) AND length(p) = 3)))) " +
+                "RETURN DISTINCT " +
+                "m.id as id, " +
+                "m.name as name, " +
+                "m.structureName as structureName ";
+
+        neo.execute(queryNeo, params, validResultHandler(responseGroups));
+    }
+
+    private static void findVisiblesUsers(String userId, String wordSearched,  final Handler<Either<String, JsonArray>> responseUsers) {
+
+        JsonObject params = new JsonObject()
+                .put("userId",userId)
+                .put("search", wordSearched);
+
+        String queryNeo = "" +
+                "MATCH p=(n:User)-[:COMMUNIQUE*0..2]->ipg-[:COMMUNIQUE*0..1]->g<-[:DEPENDS*0..1]-m " +
+                "WHERE n.id = {userId} " +
+                "AND m.displayName IS NOT NULL " +
+                "AND (NOT(HAS(m.blocked)) OR m.blocked = false) " +
+                "AND (m:Group OR m.displayNameSearchField CONTAINS {search}) " +
+                "AND (( (length(p) >= 2 OR m.users <> 'INCOMING') " +
+                "AND (length(p) < 3 " +
+                "OR (ipg:Group AND (m:User OR g<-[:DEPENDS]-m) AND length(p) = 3)))) " +
+                "RETURN DISTINCT " +
+                "m.id as id, " +
+                "m.displayName as displayName, " +
+                "m.profiles[0] as profile ";
+
+        neo.execute(queryNeo, params, validResultHandler(responseUsers));
+    }
 
     private boolean validationParamsError(UserInfos user,
                                           Handler<Either<String, JsonObject>> result, String ... params) {

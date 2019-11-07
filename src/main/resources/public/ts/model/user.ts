@@ -119,7 +119,7 @@ export class Users {
     }
 
     async findUser(search, include, exclude): Promise<User[]> {
-        const startText = search.substr(0, 3);
+        const startText = search.substr(0, 10);
         if (!this.searchCachedMap[startText]) {
             this.searchCachedMap[startText] = [];
             this.searchCachedMap[startText] = await this.sync(startText);
