@@ -466,8 +466,7 @@ export class Mail implements Selectable {
         await Zimbra.instance.folders.draft.mails.refresh();
     }
 
-    postAttachments($scope) {
-        const promises: Promise<any>[] = [];
+    async postAttachments($scope) {
         for (let i = 0; i < this.newAttachments.length; i++) {
             const targetAttachment = this.newAttachments[i];
             const attachmentObj = new Attachment(targetAttachment);
@@ -516,11 +515,8 @@ export class Mail implements Selectable {
                     );
                     notify.error(e.response.data.error);
                 });
-
-            promises.push(promise);
+           await Promise.resolve(promise);
         }
-
-        return Promise.all(promises);
     }
 
     async deleteAttachment(attachment) {
