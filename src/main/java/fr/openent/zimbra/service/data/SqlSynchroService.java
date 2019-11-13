@@ -166,6 +166,7 @@ public class SqlSynchroService {
 
     private void addUsersToSynchronize(int idSynchro, List<String> users, String modification,
                                       int start, Handler<AsyncResult<JsonObject>> handler) {
+        log.info("addUsersToSynchronize : " + start + "/" + INSERT_PAGINATION);
         if(users.isEmpty() || start >= users.size()) {
             handler.handle(Future.succeededFuture(new JsonObject()));
             return;

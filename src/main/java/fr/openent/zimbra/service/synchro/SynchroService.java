@@ -116,11 +116,13 @@ public class SynchroService {
         Future<JsonObject> startFuture = Future.future();
         startFuture.setHandler(handler);
 
+        log.info("addUsersToDatabase");
+
         Future<JsonObject> syncInitialized = Future.future();
         sqlSynchroService.initializeSynchro(synchroInfos.getMaillinglistRaw(), syncInitialized.completer());
         syncInitialized.compose(initResult -> {
             synchroInfos.setId(initResult.getInteger(SqlSynchroService.SYNCHRO_ID));
-
+            log.info("synchro initialized");
             Future<JsonObject> createdAdded = Future.future();
             sqlSynchroService.addUsersToSynchronize(synchroInfos.getId(), synchroInfos.getUsersCreated(),
                     SynchroConstants.ACTION_CREATION, createdAdded.completer());
