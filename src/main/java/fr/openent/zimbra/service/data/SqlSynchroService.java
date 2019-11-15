@@ -185,8 +185,8 @@ public class SqlSynchroService {
                 .append(userSynchroTable)
                 .append(String.format("(%s,%s,%s,%s,%s) ",
                         USER_SYNCID, USER_IDUSER, USER_SYNCTYPE, USER_SYNCACTION, USER_STATUS))
-                .append(String.format("SELECT null,new_user_id,'%s','%s','%s'",
-                        SynchroConstants.SYNC_DAILY, modification, SynchroConstants.STATUS_TODO))
+                .append(String.format("SELECT %d,new_user_id,'%s','%s','%s'",
+                        idSynchro, SynchroConstants.SYNC_DAILY, modification, SynchroConstants.STATUS_TODO))
                 .append("FROM new_values ")
                 .append("WHERE NOT EXISTS ( SELECT 1 FROM ")
                 .append(userSynchroTable)
