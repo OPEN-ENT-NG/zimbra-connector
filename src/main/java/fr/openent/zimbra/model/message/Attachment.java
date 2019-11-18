@@ -19,7 +19,7 @@ class Attachment {
     Attachment(String messageId, JsonObject part) {
         this.messageId = messageId;
         this.id = part.getString(MULTIPART_PART_ID, "");
-        this.isInline = MULTIPART_INLINE.equals(part.getString(MULTIPART_CONTENT_DISPLAY));
+        this.isInline = MULTIPART_CD_INLINE.equals(part.getString(MULTIPART_CONTENT_DISPLAY));
         this.inlineId= part.getString(MULTIPART_CONTENT_INLINE, "");
         this.filename = part.getString(MULTIPART_FILENAME, this.id);
         this.contentType = part.getString(MULTIPART_CONTENT_TYPE, "");

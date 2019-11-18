@@ -51,6 +51,7 @@ public class ZimbraConstants {
 
     public static final String MULTIPART_CONTENT_DISPLAY = "cd";
     public static final String MULTIPART_CD_ATTACHMENT = "attachment";
+    public static final String MULTIPART_CD_INLINE = "inline";
     public static final String MULTIPART_MSG_ATTACHED = "message/rfc822";
     public static final String MULTIPART_CONTENT_TYPE = "ct";
     public static final String MULTIPART_CT_ALTERNATIVE = "multipart/alternative";
@@ -64,8 +65,6 @@ public class ZimbraConstants {
     public static final String MULTIPART_SIZE = "s";
     public static final String MULTIPART_CONTENT = "content";
 
-    public static final String MULTIPART_INLINE = "inline";
-    public static final String MULTIPART_ATTACHMENT = "attachment";
 
     public static final String MSG_NEW_ATTACHMENTS = "attach";
     public static final String MSG_NEW_UPLOAD_ID = "aid";

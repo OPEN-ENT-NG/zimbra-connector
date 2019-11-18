@@ -58,14 +58,18 @@ public class Multipart {
     }
 
     private void processPart(JsonObject mpart) {
+        String mpartContentDisplay = mpart.getString(MULTIPART_CONTENT_DISPLAY, "");
         if(mpart.getBoolean(MSG_MPART_ISBODY, false)) {
             processBody(mpart);
-        } else if (MULTIPART_CD_ATTACHMENT.equals(mpart.getString(MULTIPART_CONTENT_DISPLAY, ""))){
+        } else if (MULTIPART_CD_ATTACHMENT.equals(mpartContentDisplay)){
             this.addAttachment(mpart);
         } else if (mpart.containsKey(MSG_MULTIPART)) {
             JsonArray innerMultiparts = mpart.getJsonArray(MSG_MULTIPART);
             String contentType = mpart.getString(MULTIPART_CONTENT_TYPE, "");
             processParts(innerMultiparts, MULTIPART_CT_ALTERNATIVE.equals(contentType));
+        } else {
+            // If we can't recognize the type, add the part as attachment so it's not lost
+            this.addAttachment(mpart);
         }
     }
 
