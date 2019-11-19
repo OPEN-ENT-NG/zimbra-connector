@@ -16,7 +16,6 @@
  */
 
 package fr.openent.zimbra.service.impl;
-import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.HttpClientHelper;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
@@ -288,44 +287,6 @@ public class AttachmentService {
                 });
             }
         });
-    }
-
-    /**
-     * Add attachments into a front message
-     * Inline images are replaced inside the body
-     * @param msgFront Front Message to modify
-     * @param attachments Array of attachment infos
-     */
-    static void processAttachments(JsonObject msgFront, JsonArray attachments) {
-        for(Object o : attachments) {
-            if(!(o instanceof JsonObject)) continue;
-            JsonObject zimbraAtt = (JsonObject)o;
-            JsonObject frontAtt = new JsonObject();
-            if(MULTIPART_ATTACHMENT.equals(zimbraAtt.getString(MULTIPART_CONTENT_DISPLAY))) {
-                frontAtt.put("id", zimbraAtt.getString(MULTIPART_PART_ID));
-                frontAtt.put("filename", zimbraAtt.getString(MULTIPART_FILENAME,
-                        zimbraAtt.getString(MULTIPART_PART_ID)));
-                frontAtt.put("contentType", zimbraAtt.getString(MULTIPART_CONTENT_TYPE));
-                frontAtt.put("size", zimbraAtt.getLong(MULTIPART_SIZE));
-                msgFront.put("attachments", msgFront.getJsonArray("attachments", new JsonArray()).add(frontAtt));
-            } else if(MULTIPART_INLINE.equals(zimbraAtt.getString(MULTIPART_CONTENT_DISPLAY))) {
-                String msgId = msgFront.getString("id");
-                String partId = zimbraAtt.getString(MULTIPART_PART_ID);
-                String attchUrl = Zimbra.URL + "/message/" + msgId + "/attachment/" + partId;
-                if(zimbraAtt.containsKey(MULTIPART_CONTENT_INLINE)) {
-                    String cid = zimbraAtt.getString(MULTIPART_CONTENT_INLINE);
-
-                    String regex = "<img([^>]*)\\ssrc=\"cid:" + cid.substring(1, cid.length() - 1);
-                    String replaceRegex = "<img$1 src=\"" + attchUrl;
-                    String body = msgFront.getString("body", "").replaceAll(regex, replaceRegex);
-                    msgFront.put("body", body);
-                } else if(zimbraAtt.getBoolean(MSG_MPART_ISBODY, false)){
-                    // Image is the whole body
-                    String body = "<img src=\"" + attchUrl + "\"/>";
-                    msgFront.put("body", body);
-                }
-            }
-        }
     }
 
 }
