@@ -130,8 +130,8 @@ public class SynchroAddressBookService {
         AsyncContainer<SoapFolder> rootFolderContainer = new AsyncContainer<>();
 
         Future<SoapFolder> sharedFolderFetched = Future.future();
-        SoapFolder.getFolderByPath(adminName, rootFolderPath + "/" + structure.getUai(),
-                VIEW_CONTACT, 0, sharedFolderFetched.completer());
+        SoapFolder.getOrCreateFolderByPath(adminName, rootFolderPath + "/" + structure.getUai(),
+                VIEW_CONTACT, sharedFolderFetched.completer());
         sharedFolderFetched.compose(resFolder -> {
             sharedFolderContainer.setValue(resFolder);
 
@@ -210,7 +210,7 @@ public class SynchroAddressBookService {
                     handler.handle(Future.succeededFuture(new JsonObject()));
                 } else {
                     log.info("Sycing struct " + structure.getUai());
-                    addressBook.synchronize(Zimbra.appConfig.getAddressBookAccountName(), handler);
+                    addressBook.synchronize(Zimbra.appConfig.getAddressBookAccountName(), true, handler);
                 }
             }
         });
