@@ -82,6 +82,7 @@ public class Multipart {
             String content = mpart.getString(MULTIPART_CONTENT, "");
             if (MULTIPART_CT_TEXTPLAIN.equals(contentType)) {
                 content = escapeHtml4(content);
+                content = content.replace("\n","<br/>");
             }
             this.body += content;
         } else {
