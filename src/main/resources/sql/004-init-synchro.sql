@@ -1,0 +1,1 @@
+INSERT INTO zimbra.synchro (id, maillinglist, infos, status, id_logs) values (0, '', '', 'MAILLING_DONE', null) on conflict do nothing
