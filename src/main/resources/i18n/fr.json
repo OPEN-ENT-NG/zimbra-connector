@@ -188,7 +188,7 @@
     "folder.Teacher": "Enseignants",
     "folder.OtherGroups": "Autres Groupes",
     "Teacher": "Enseignant",
-    "zimbra.message.error.attachment": "Une erreur est survenue lors de l'ajout de la pièce jointe, vérifier la taille de votre mail",
-    "zimbra.message.error.mail.size": "La taille de vos pièces jointes est trop importante, vérifier la taille"
+    "zimbra.message.error.attachment": "Une erreur est survenue lors de l'ajout de la pièce jointe, vérifiez la taille de votre mail",
+    "zimbra.message.error.mail.size": "La taille de vos pièces jointes est trop importante, vérifiez la taille de votre mail"
 
 }
