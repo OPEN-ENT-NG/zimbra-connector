@@ -34,6 +34,8 @@ import { Mix, Eventer, Selection, Selectable } from "entcore-toolkit";
 
 import http from "axios";
 
+import { MAIL, SERVICE } from "./constantes";
+
 export class Attachment {
     file: File;
     progress: {
@@ -315,25 +317,29 @@ export class Mail implements Selectable {
     }
 
     async saveAsDraft(): Promise<any> {
-        var that = this;
-        this.rewriteBody();
-        var data: any = { subject: this.subject, body: this.body };
-        data.to = _.pluck(this.to, "id");
-        data.cc = _.pluck(this.cc, "id");
-        data.bcc = _.pluck(this.bcc, "id");
-        data.attachments = this.attachments;
+        try{
+            var that = this;
+            this.rewriteBody();
+            var data: any = { subject: this.subject, body: this.body };
+            data.to = _.pluck(this.to, "id");
+            data.cc = _.pluck(this.cc, "id");
+            data.bcc = _.pluck(this.bcc, "id");
+            data.attachments = this.attachments;
 
-        var path = "/zimbra/draft";
-        if (this.id) {
-            const response = await http.put(path + "/" + this.id, data);
-            Mix.extend(this, response.data);
-        } else {
-            if (this.parentConversation) {
-                path += "?In-Reply-To=" + this.parentConversation.id;
-                path += "&reply=" + this.replyType;
+            var path = "/zimbra/draft";
+            if (this.id) {
+                const response = await http.put(path + "/" + this.id, data);
+                Mix.extend(this, response.data);
+            } else {
+                if (this.parentConversation) {
+                    path += "?In-Reply-To=" + this.parentConversation.id;
+                    path += "&reply=" + this.replyType;
+                }
+                let response = await http.post(path, data);
+                Mix.extend(this, response.data);
             }
-            let response = await http.post(path, data);
-            Mix.extend(this, response.data);
+        } catch (e) {
+            sendNotificationErrorZimbra(e.response.data.error);
         }
     }
 
@@ -380,9 +386,7 @@ export class Mail implements Selectable {
                 undelivered: result.undelivered
             };
         } catch (e) {
-            let jsonError = JSON.parse(e.response.data.error);
-
-            notify.error(lang.translate(jsonError? jsonError.code : e.response.data.error));
+            sendNotificationErrorZimbra(e.response.data.error);
             return {
                 undelivered: true
             };
@@ -513,7 +517,7 @@ export class Mail implements Selectable {
                         this.loadingAttachments.indexOf(attachmentObj),
                         1
                     );
-                    notify.error(e.response.data.error);
+                    sendNotificationErrorZimbra(e.response.data.error);
                 });
            await Promise.resolve(promise);
         }
@@ -781,3 +785,22 @@ http.get("/zimbra/public/template/mail-content/reply.html").then(response => {
 });
 
 export const format = mailFormat;
+
+export const sendNotificationErrorZimbra = (errorReturnByZimbra:string):void => {
+    try{
+        console.error("Zimbra returning : ", errorReturnByZimbra);
+        switch (JSON.parse(errorReturnByZimbra).code) {
+            case SERVICE.INVALID_REQUEST:
+                notify.error(lang.translate("zimbra.message.error.attachment"));
+                break;
+            case MAIL.MESSAGE_TOO_BIG:
+                notify.info(lang.translate("zimbra.message.error.mail.size"));
+                break;
+            default:
+                notify.error(JSON.parse(errorReturnByZimbra));
+        }
+    } catch (error) {
+        console.error("Error in processing notification error : ", error);
+        notify.error(error);
+    }
+};
