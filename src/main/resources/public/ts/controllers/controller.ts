@@ -16,7 +16,8 @@
  */
 
 import {$, _, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
-import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra} from "../model";
+import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, REGEXLIB} from "../model";
+
 
 import {Mix} from "entcore-toolkit";
 import {Preference} from "../model/preferences";
@@ -415,9 +416,10 @@ export let zimbraController = ng.controller("ZimbraController", [
             let noA = $scope.state.newItem.to ? $scope.state.newItem.to.length===0 : !$scope.state.newItem.to;
             let noCC = $scope.state.newItem.cc  ? $scope.state.newItem.cc.length===0 : !$scope.state.newItem.cc;
             let noBCC = $scope.state.newItem.bcc ? $scope.state.newItem.bcc.length ===0 : !$scope.state.newItem.bcc;
-            return  (  noA && noCC && noBCC)
+            return  ( noA && noCC && noBCC )
                 || ($scope.state.newItem.loadingAttachments && $scope.state.newItem.loadingAttachments.length > 0)
-                || $scope.sending;
+                || $scope.sending
+                || $scope.isContainIframe;
         };
         $scope.reply = async (outbox?: boolean) => {
             template.open("right-side", "mail-actions/write-mail");
@@ -491,13 +493,18 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
         };
 
+        $scope.isContainIframe = false;
         $scope.saveDraftAuto = async () => {
+            $scope.isContainIframe = $scope.state.newItem.body.search(REGEXLIB.iframeSearch) !== -1;
             if (!$scope.draftSavingFlag) {
                 $scope.draftSavingFlag = true;
                 var temp = $scope.state.newItem;
                 setTimeout(async function() {
                     if (!$scope.sending && temp.state != "SENT") {
                         $scope.saveDraft(temp);
+                    }
+                    if($scope.isContainIframe){
+                        notify.info(lang.translate("zimbra.message.info.iframe"));
                     }
                     $scope.draftSavingFlag = false;
                 }, 5000);
