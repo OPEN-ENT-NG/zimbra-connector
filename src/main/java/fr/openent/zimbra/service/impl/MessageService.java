@@ -23,6 +23,7 @@ import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.model.message.Multipart;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
@@ -42,8 +43,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static fr.openent.zimbra.model.constant.FrontConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraErrors.ERROR_NOSUCHMSG;
-import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
 
@@ -242,9 +243,7 @@ public class MessageService {
 
         if(msgZimbra.containsKey(MSG_MULTIPART)) {
             JsonArray multiparts = msgZimbra.getJsonArray(MSG_MULTIPART);
-            JsonArray attachments = new JsonArray();
-            processMessageMultipart(msgFront, multiparts, attachments);
-            AttachmentService.processAttachments(msgFront, attachments);
+            processMessageMultipart(msgFront, multiparts);
         }
 
         translateMaillistToUidlist(msgFront, zimbraMails, addressMap, result);
@@ -255,28 +254,11 @@ public class MessageService {
      * Process recursively every multipart
      * @param msgFront Front JsonObject
      * @param multiparts Array of multipart structure
-     * @param attachments final array of attachments
      */
-    private void processMessageMultipart(JsonObject msgFront, JsonArray multiparts, JsonArray attachments) {
-        for(Object obj : multiparts) {
-            if(!(obj instanceof JsonObject)) continue;
-            JsonObject mpart = (JsonObject)obj;
-            if(mpart.getBoolean(MSG_MPART_ISBODY, false)) {
-                String contentType = mpart.getString(MULTIPART_CONTENT_TYPE, "");
-                String content = mpart.getString("content", "");
-                if (MULTIPART_CT_TEXTPLAIN.equals(contentType)) {
-                    content = escapeHtml4(content);
-                }
-                msgFront.put("body", content);
-            }
-            if(mpart.containsKey(MULTIPART_CONTENT_DISPLAY)) {
-                attachments.add(mpart);
-            }
-            if(mpart.containsKey(MSG_MULTIPART)) {
-                JsonArray innerMultiparts = mpart.getJsonArray(MSG_MULTIPART);
-                processMessageMultipart(msgFront, innerMultiparts, attachments);
-            }
-        }
+    private void processMessageMultipart(JsonObject msgFront, JsonArray multiparts) {
+        Multipart mparts = new Multipart(msgFront.getString(MESSAGE_ID), multiparts);
+        msgFront.put(MESSAGE_BODY, mparts.getBody());
+        msgFront.put(MESSAGE_ATTACHMENTS, mparts.getAttachmentsJson());
     }
 
 
@@ -788,10 +770,8 @@ public class MessageService {
                 .getJsonObject("SaveDraftResponse")
                 .getJsonArray(MSG).getJsonObject(0);
         JsonArray multiparts = msgDraftedContent.getJsonArray(MSG_MULTIPART, new JsonArray());
-        JsonArray allAttachments = new JsonArray();
-        processMessageMultipart(new JsonObject(), multiparts, allAttachments);
         JsonObject resultJson = new JsonObject();
-        AttachmentService.processAttachments(resultJson, allAttachments);
+        processMessageMultipart(resultJson, multiparts);
         handler.handle(new Either.Right<>(resultJson));
     }
 

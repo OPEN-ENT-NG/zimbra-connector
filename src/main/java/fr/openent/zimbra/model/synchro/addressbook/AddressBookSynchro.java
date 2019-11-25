@@ -32,6 +32,7 @@ public class AddressBookSynchro {
 
     protected String uai;
     protected String name;
+    private boolean adminSync = false;
     protected Map<String,AddressBookFolder> folders = new HashMap<>();
 
     Neo4jAddrbookService neo4jAddrbookService;
@@ -63,6 +64,11 @@ public class AddressBookSynchro {
                 sync(userId, handler);
             }
         });
+    }
+
+    public void synchronize(String userId, boolean adminSync, Handler<AsyncResult<JsonObject>> handler) {
+        this.adminSync = adminSync;
+        synchronize(userId, handler);
     }
 
 
@@ -100,7 +106,7 @@ public class AddressBookSynchro {
             log.error("Trying to sync AddressBook, but data are not loaded");
             return;
         }
-        AddressBookZimbraSynchro zimbraSynchro = new AddressBookZimbraSynchro(userId, uai, name);
+        AddressBookZimbraSynchro zimbraSynchro = new AddressBookZimbraSynchro(userId, uai, adminSync ? "" : name);
         zimbraSynchro.initSync(res -> {
             if(res.failed()) {
                 handler.handle(res);

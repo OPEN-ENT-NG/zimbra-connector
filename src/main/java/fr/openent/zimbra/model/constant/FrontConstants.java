@@ -33,4 +33,12 @@ public class FrontConstants {
     public static final String MAILCONFIG_IMAP = "imaps";
     public static final String MAILCONFIG_SMTP = "smtps";
     public static final String MAILCONFIG_LOGIN = "login";
+
+    public static final String MESSAGE_ID = "id";
+    public static final String MESSAGE_BODY = "body";
+    public static final String MESSAGE_ATTACHMENTS = "attachments";
+    public static final String MESSAGE_ATT_ID = "id";
+    public static final String MESSAGE_ATT_FILENAME = "filename";
+    public static final String MESSAGE_ATT_CONTENTTYPE = "contentType";
+    public static final String MESSAGE_ATT_SIZE = "size";
 }

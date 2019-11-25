@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.model.constant;
 
+@SuppressWarnings("unused")
 public class ZimbraConstants {
     public static final String FOLDER_INBOX = "/Inbox";
     public static final String FOLDER_OUTBOX = "/Sent";
@@ -49,17 +50,21 @@ public class ZimbraConstants {
     public static final String MSG_CON_TRASH = "t";
 
     public static final String MULTIPART_CONTENT_DISPLAY = "cd";
+    public static final String MULTIPART_CD_ATTACHMENT = "attachment";
+    public static final String MULTIPART_CD_INLINE = "inline";
     public static final String MULTIPART_MSG_ATTACHED = "message/rfc822";
     public static final String MULTIPART_CONTENT_TYPE = "ct";
+    public static final String MULTIPART_CT_ALTERNATIVE = "multipart/alternative";
     public static final String MULTIPART_CT_TEXTPLAIN = "text/plain";
+    public static final String MULTIPART_CT_IMAGE = "image/";
+    public static final String MULTIPART_CT_TEXT = "text/";
     public static final String MULTIPART_CONTENT_INLINE = "ci";
     public static final String MULTIPART_PART_ID = "part";
     public static final String MULTIPART_FILENAME = "filename";
     public static final String MULTIPART_MSG_ID = "mid";
     public static final String MULTIPART_SIZE = "s";
+    public static final String MULTIPART_CONTENT = "content";
 
-    public static final String MULTIPART_INLINE = "inline";
-    public static final String MULTIPART_ATTACHMENT = "attachment";
 
     public static final String MSG_NEW_ATTACHMENTS = "attach";
     public static final String MSG_NEW_UPLOAD_ID = "aid";
