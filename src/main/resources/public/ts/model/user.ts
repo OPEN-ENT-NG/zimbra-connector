@@ -29,6 +29,7 @@ export class User implements Selectable {
     selected: boolean;
     isGroup: boolean;
     email: string;
+    result: boolean;
 
     constructor(id?: string, displayName?: string) {
         this.displayName = displayName;
@@ -85,6 +86,11 @@ export class User implements Selectable {
         return this.id.length < 36;
     }
 
+    checkIfGroup(){
+        if (!this.id) return false;
+        return this.result == true;
+    }
+
     isAMail() {
         if (!this.id) return false;
         return this.id.includes("@");
@@ -93,6 +99,11 @@ export class User implements Selectable {
     cleanMail() {
         this.id = this.id.replace(";","");
         this.displayName = this.displayName.replace(";","");
+    }
+
+    async getUserType(id) {
+        let {data} = await http.get("/zimbra/userType/" + id);
+        return data;
     }
 }
 

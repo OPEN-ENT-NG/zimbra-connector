@@ -1006,4 +1006,11 @@ public class ZimbraController extends BaseController {
 					AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
 		});
 	}
+
+	@Get("/userType/:id")
+	@ResourceFilter(DevLevelFilter.class)
+	public void checkUserType(HttpServerRequest request) {
+		String idToCheck = request.params().get("id");
+		userService.neoRequestUserType(idToCheck, defaultResponseHandler(request));
+	}
 }
