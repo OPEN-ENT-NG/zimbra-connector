@@ -69,26 +69,39 @@ export let zimbraController = ng.controller("ZimbraController", [
                 await initPreference();
                 await Zimbra.instance.sync();
                 Zimbra.instance.folders.openFolder("inbox");
-                let user = new User(params.userId);
-                await user.findData();
+                $scope.constructNewItem();
+                switch (params.who) {
+                    case 'User':
+                        const userId:string = params.idUndefined
+                        let user = new User(userId);
+                        await user.findData();
+                        if(_.isString(userId)){
+                            let user = new User(userId);
+                            await user.findData();
+                            $scope.addUser(user);
+                        }else if(userId !== undefined) {
+                            for(let i = 0; i < userId.length; i++){
+                                let user = new User(userId[i]);
+                                await user.findData();
+                                $scope.addUser(user);
+                            }
+                        }
+                        break;
+                    case 'Group':
+                        const groupId:string = params.idUndefined;
+                        fetch(`/directory/group/${groupId}`).then(data => console.log(data.json()))
+                        console.log(groupId);
+                        break;
+                    case 'Favorite':
+                        const favoriteId:string = params.idUndefined;
+                        fetch(`/directory/sharebookmark/${favoriteId}`).then(data => console.log(data.json()))
+
+                        break;
+                }
                 template.open("page", "folders");
                 template.open("right-side","right-side");
                 template.open("header","header-lists");
                 template.open("right-side", "mail-actions/write-mail");
-
-                $scope.constructNewItem();
-                if(_.isString(params.userId)){
-                    let user = new User(params.userId);
-                    await user.findData();
-                    $scope.addUser(user);
-                }else if(params.userId !== undefined) {
-                    for(let i = 0; i < params.userId.length; i++){
-                        let user = new User(params.userId[i]);
-                        await user.findData();
-                        $scope.addUser(user);
-                    }
-                }
-
                 $scope.$apply();
             },
             inbox: async () => {

@@ -36,7 +36,7 @@ routes.define(function($routeProvider) {
             .when("/read-mail/:mailId", {
                 action: "readMail"
             })
-            .when("/write-mail/:userId/User", {
+            .when("/write-mail/:idUndefined/:who", {
                 action: "writeMail"
             })
             .when("/write-mail", {
