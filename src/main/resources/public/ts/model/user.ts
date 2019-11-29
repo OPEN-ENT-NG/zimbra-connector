@@ -101,8 +101,8 @@ export class User implements Selectable {
         this.displayName = this.displayName.replace(";","");
     }
 
-    async getUserType(id) {
-        let {data} = await http.get("/zimbra/userType/" + id);
+    async checkIfIdGroup(id) {
+        let {data} = await http.get("/zimbra/idToCheck/" + id);
         return data;
     }
 }

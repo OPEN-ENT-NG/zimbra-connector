@@ -969,7 +969,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.displayUser = async (user) =>  {
             $scope.user = new User();
             let id = user.id;
-            let data = await $scope.user.getUserType(id);
+            let data = await $scope.user.checkIfIdGroup(id);
             if (data.result == true) {
                 $scope.userInfo = user;
                 $scope.userInfo['result'] = data.result;

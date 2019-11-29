@@ -471,8 +471,8 @@ public class UserService {
         }
     }
 
-    public void neoRequestUserType(String idToCheck, Handler<Either<String, JsonObject>> handler) {
-        neoService.getTypeUserFromNeo4j(idToCheck, event -> {
+    public void requestIfIdGroup(String idToCheck, Handler<Either<String, JsonObject>> handler) {
+        neoService.checkIfIdGroupFromNeo4j(idToCheck, event -> {
             if (event.isRight()) {
                 JsonObject response = new JsonObject().put("result", event.right().getValue().getBoolean("result"));
                 handler.handle(new Either.Right<>(response));

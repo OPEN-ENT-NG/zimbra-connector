@@ -1007,10 +1007,10 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
-	@Get("/userType/:id")
+	@Get("/idToCheck/:id")
 	@ResourceFilter(DevLevelFilter.class)
-	public void checkUserType(HttpServerRequest request) {
+	public void checkIfIdGroup(HttpServerRequest request) {
 		String idToCheck = request.params().get("id");
-		userService.neoRequestUserType(idToCheck, defaultResponseHandler(request));
+		userService.requestIfIdGroup(idToCheck, defaultResponseHandler(request));
 	}
 }
