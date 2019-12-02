@@ -16,7 +16,7 @@
  */
 
 import {$, _, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
-import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra} from "../model";
+import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, Group, Users, RECEIVER_TYPE} from "../model";
 
 import {Mix} from "entcore-toolkit";
 import {Preference} from "../model/preferences";
@@ -71,32 +71,21 @@ export let zimbraController = ng.controller("ZimbraController", [
                 Zimbra.instance.folders.openFolder("inbox");
                 $scope.constructNewItem();
                 switch (params.who) {
-                    case 'User':
-                        const userId:string = params.idUndefined
-                        let user = new User(userId);
-                        await user.findData();
-                        if(_.isString(userId)){
-                            let user = new User(userId);
-                            await user.findData();
-                            $scope.addUser(user);
-                        }else if(userId !== undefined) {
-                            for(let i = 0; i < userId.length; i++){
-                                let user = new User(userId[i]);
-                                await user.findData();
-                                $scope.addUser(user);
-                            }
-                        }
+                    case RECEIVER_TYPE.USER:
+                        await initUserTo(params.idUndefined);
+                        if(!$scope.state.newItem.to) notify.error(lang.translate("zimbra.message.error.get.user"));
                         break;
-                    case 'Group':
-                        const groupId:string = params.idUndefined;
-                        fetch(`/directory/group/${groupId}`).then(data => console.log(data.json()))
-                        console.log(groupId);
+                    case RECEIVER_TYPE.GROUP:
+                        await initGroupTo(params.idUndefined);
+                        if(!$scope.state.newItem.to) notify.error(lang.translate("zimbra.message.error.get.group"));
                         break;
-                    case 'Favorite':
-                        const favoriteId:string = params.idUndefined;
-                        fetch(`/directory/sharebookmark/${favoriteId}`).then(data => console.log(data.json()))
-
+                    case RECEIVER_TYPE.FAVORITE:
+                        await initFavoriteTo(params.idUndefined);
+                        if(!$scope.state.newItem.to) notify.error(lang.translate("zimbra.message.error.get.favorite"));
                         break;
+                    default:
+                        notify.error(lang.translate("zimbra.message.error.get.default"));
+                        break
                 }
                 template.open("page", "folders");
                 template.open("right-side","right-side");
@@ -137,7 +126,42 @@ export let zimbraController = ng.controller("ZimbraController", [
                 await $scope.preference.switchViewMode("LIST");
                 $scope.preference.viewMode = ViewMode.LIST;
             }
-        }
+        };
+
+        const initUserTo = async (userId:string):Promise<void> => {
+            const user = new User(userId);
+            await user.findData();
+            if(_.isString(userId)){
+                if(user.displayName){
+                    $scope.addUser(user);
+                }
+            }else if(userId !== undefined) {
+                for(let i = 0; i < userId.length; i++){
+                    let user = new User(userId[i]);
+                    await user.findData();
+                    $scope.addUser(user);
+                }
+            }
+        };
+
+        const initGroupTo = async (idGroup:string):Promise<void> => {
+            const group = new Group();
+            await group.getGroup(idGroup);
+            if(group.id){
+                group.isGroup = true;
+                $scope.addUser(group);
+            };
+        };
+
+        const initFavoriteTo = async (idGroupFavorite:string):Promise<void> => {
+            const users = new Users();
+            const favoriteUsers:Array<User> = await users.getUsersByFavoriteId(idGroupFavorite);
+            if(favoriteUsers){
+                favoriteUsers.forEach( (userInFavorite:User):void => {
+                    $scope.addUser(userInFavorite);
+                });
+            }
+        };
 
         $scope.addUser = user => {
             if (!$scope.state.newItem.to) {
