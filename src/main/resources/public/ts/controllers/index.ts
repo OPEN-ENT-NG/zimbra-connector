@@ -17,4 +17,4 @@
 
 export * from "./controller";
 export * from "./printController";
-export * from "./preferenceController"
+export * from "./preferenceController";
