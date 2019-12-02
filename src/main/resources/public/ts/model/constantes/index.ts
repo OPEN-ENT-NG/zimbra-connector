@@ -18,3 +18,4 @@
 export * from "./display";
 export * from "./codeZimbra";
 export * from "./mail";
+export * from "./regex";
