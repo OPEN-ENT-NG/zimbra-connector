@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { idiom as lang, _, model } from "entcore";
+import {idiom as lang, _, model, notify} from "entcore";
 
 import { Mix, Selection, Selectable, Eventer } from "entcore-toolkit";
 
@@ -175,5 +175,18 @@ export class Users {
         return _.reject(found, function(element) {
             return _.findWhere(exclude, { id: element.id });
         });
+    }
+
+    async getUsersByFavoriteId(favoriteId:String):Promise<Array<User>>{
+        try{
+            let usersArray:Array<User> = [];
+            const {data} = await http.get(`/directory/sharebookmark/${favoriteId}`);
+            data.users.forEach( (user:User):void => {
+                usersArray.push(Mix.castAs(User, user));
+            });
+            return usersArray;
+        } catch (error) {
+           return [];
+        }
     }
 }

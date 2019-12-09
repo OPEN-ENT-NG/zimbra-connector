@@ -190,5 +190,10 @@
     "Teacher": "Enseignant",
     "zimbra.message.error.attachment": "Une erreur est survenue lors de l'ajout de la pièce jointe, vérifiez la taille de votre mail",
     "zimbra.message.error.mail.size": "La taille de vos pièces jointes est trop importante, vérifiez la taille de votre mail",
-    "zimbra.message.info.iframe": "Le mail contient un code HTML qui n'est pas interprété, vous ne pourrez pas l'envoyer (iframe)"
+    "zimbra.message.info.iframe": "Le mail contient un code HTML qui n'est pas interprété, vous ne pourrez pas l'envoyer (iframe)",
+    "zimbra.message.error.mail.size": "La taille de vos pièces jointes est trop importante, vérifiez la taille de votre mail",
+    "zimbra.message.error.get.favorite": "Une erreur est survenue lors de la récupération du groupe favori",
+    "zimbra.message.error.get.user": "Une erreur est survenue lors de la récupération de utilisateur",
+    "zimbra.message.error.get.group": "Une erreur est survenue lors de la récupération du groupe",
+    "zimbra.message.error.get.default": "Une erreur est survenue lors de la récupération"
 }
