@@ -16,7 +16,7 @@
  */
 
 import {$, _, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
-import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, REGEXLIB, RECEIVER_TYPE} from "../model";
+import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, REGEXLIB, RECEIVER_TYPE, Group, Users} from "../model";
 
 import {Mix} from "entcore-toolkit";
 import {Preference} from "../model/preferences";
