@@ -972,11 +972,21 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.getFolder=()=>{
             return (Zimbra.instance.currentFolder as SystemFolder).folderName;
         };
-        $scope.displayUser = (user) =>  {
-            $scope.userInfo = user;
+
+        $scope.displayUser = async (user) =>  {
+            $scope.user = new User();
+            let id = user.id;
+            let data = await $scope.user.checkIfIdGroup(id);
+            if (data.result == true) {
+                $scope.userInfo = user;
+                $scope.userInfo['result'] = data.result;
+            } else {
+                $scope.userInfo = user;
+            }
             $scope.displayLightBox.readMail = true;
             template.open("readmail-lightbox", "mail-actions/user-info");
         };
+
         $scope.selectedMail = (mail) => {
             return $scope.state.current
                 ? mail.id === $scope.state.current.id && $scope.showRightSide()

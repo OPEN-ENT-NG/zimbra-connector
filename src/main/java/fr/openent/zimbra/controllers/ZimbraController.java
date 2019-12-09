@@ -1006,4 +1006,11 @@ public class ZimbraController extends BaseController {
 					AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
 		});
 	}
+
+	@Get("/idToCheck/:id")
+	@ResourceFilter(DevLevelFilter.class)
+	public void checkIfIdGroup(HttpServerRequest request) {
+		String idToCheck = request.params().get("id");
+		userService.requestIfIdGroup(idToCheck, defaultResponseHandler(request));
+	}
 }

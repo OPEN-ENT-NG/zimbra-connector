@@ -471,4 +471,14 @@ public class UserService {
         }
     }
 
+    public void requestIfIdGroup(String idToCheck, Handler<Either<String, JsonObject>> handler) {
+        neoService.checkIfIdGroupFromNeo4j(idToCheck, event -> {
+            if (event.isRight()) {
+                JsonObject response = new JsonObject().put("result", event.right().getValue().getBoolean("result"));
+                handler.handle(new Either.Right<>(response));
+            } else {
+                handler.handle(new Either.Left<>("Failed to check the type in Neo4j"));
+            }
+        });
+    }
 }

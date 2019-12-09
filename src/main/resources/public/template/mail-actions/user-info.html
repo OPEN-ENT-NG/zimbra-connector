@@ -16,7 +16,7 @@
   -->
 
 <h2><i18n>user.profile</i18n></h2><br />
-<div ng-if="!userInfo.isMe() && !userInfo.isAMail() && !userInfo.isAGroup()">
+<div ng-if="!userInfo.isMe() && !userInfo.isAMail() && !userInfo.checkIfGroup()">
 	<strong>Type<span> : </span></strong><i18n>internal</i18n><br /><br />
 	<strong><span translate key="name"></span><span> : </span></strong>
 	[[userInfo.displayName]]
@@ -38,7 +38,7 @@
 	<strong><span translate key="email"></span>
 	<span> : </span></strong>[[userInfo.id]]<br /><br />
 </span>
-<span ng-if="!userInfo.isAMail() && userInfo.isAGroup()">
+<span ng-if="!userInfo.isAMail() && userInfo.checkIfGroup()">
 	<strong>Type<span> : </span></strong><i18n>internal</i18n><br /><br />
 	<strong><span translate key="name"></span><span> : </span></strong>
 	[[userInfo.displayName]]<br /><br />
