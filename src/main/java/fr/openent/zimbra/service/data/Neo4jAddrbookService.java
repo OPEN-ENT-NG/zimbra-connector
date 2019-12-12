@@ -164,8 +164,8 @@ public class Neo4jAddrbookService {
         queryGeneric += "AND (( (length(p) >= 2 OR m.users <> 'INCOMING') AND (length(p) < 3 OR (ipg:Group AND (m:User OR g<-[:DEPENDS]-m) AND length(p) = 3)))) ";
         queryGeneric += "AND (m:User OR exists(m-[:IN]-(:User))) ";
         queryGeneric += "WITH DISTINCT m as visibles ";
-        queryGeneric += "MATCH (visibles-[:IN*0..1]-(pgs:ProfileGroup)-[:DEPENDS*1..2]-(s:Structure)) ";
-        queryGeneric += "WHERE s.UAI = {uai} ";
+        queryGeneric += "MATCH (visibles-[:IN*0..1]-(pgs:Group)-[:DEPENDS*1..2]-(s:Structure)) ";
+        queryGeneric += "WHERE s.UAI = {uai} AND (visibles:Group OR pgs:ProfileGroup) ";
         queryGeneric += "OPTIONAL MATCH pgs-[:DEPENDS*0..1]->(pg:ProfileGroup)-[:HAS_PROFILE]->(profile:Profile) ";
         queryGeneric += getOptionalMatchesUser("visibles", "c", "fg", "subj");
         queryGeneric += "RETURN distinct visibles.lastName as " + LASTNAME + ", ";
