@@ -18,6 +18,7 @@
 package fr.openent.zimbra.controllers;
 
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
@@ -198,6 +199,11 @@ public class ExternalWebservicesController extends BaseController {
                     badRequest(request);
             }
         }
+    }
 
+    @Get("config")
+    @SecuredAction("zimbra.manage.config")
+    public void getConfig(HttpServerRequest request) {
+        renderJson(request, Zimbra.appConfig.getPublicConfig());
     }
 }

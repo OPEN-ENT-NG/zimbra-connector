@@ -20,6 +20,7 @@ package fr.openent.zimbra.helper;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.commons.lang3.StringUtils;
 
 @SuppressWarnings("WeakerAccess")
 public class ConfigManager {
@@ -34,6 +35,7 @@ public class ConfigManager {
     public static final String SYNC_SQL = "postgres";
 
     private final JsonObject rawConfig;
+    private final JsonObject publicConfig;
 
     private final int httpClientMaxPoolSize;
 
@@ -65,6 +67,8 @@ public class ConfigManager {
 
     public ConfigManager(JsonObject config) {
         this.rawConfig = config;
+        this.publicConfig = rawConfig.copy();
+        initPublicConfig();
         this.httpClientMaxPoolSize = config.getInteger("http-client-max-pool-size", 0);
         this.host = config.getString("host", "");
         this.dbSchema = config.getString("db-schema", "zimbra");
@@ -111,6 +115,8 @@ public class ConfigManager {
                 || addressBookAccountName.isEmpty() ) {
             log.fatal("Zimbra : Missing configuration in conf.properties");
         }
+
+        initPublicConfig();
     }
 
     public boolean isActionBlocked(int actionLevel) {
@@ -118,6 +124,7 @@ public class ConfigManager {
     }
 
     JsonObject getRawConfig() { return rawConfig;}
+    public JsonObject getPublicConfig() { return publicConfig;}
     public int getHttpClientMaxPoolSize() { return httpClientMaxPoolSize;}
     public String getHost() { return host;}
     public String getDbSchema() { return dbSchema;}
@@ -138,5 +145,20 @@ public class ConfigManager {
     public String getSharedFolderName() { return sharedFolderName;}
     public String getAddressBookAccountName() { return addressBookAccountName;}
     public Integer getSqlInsertPaginationSize() { return sqlInsertPaginationSize;}
+
+    private void initPublicConfig() {
+        publicConfig.put("admin-password", hidePasswd(rawConfig.getString("admin-password","")));
+        publicConfig.put("preauth-key", hidePasswd(rawConfig.getString("preauth-key","")));
+    }
+
+    private String hidePasswd(String passwd) {
+        String newpwd;
+        if(passwd.length() < 8) {
+            newpwd = StringUtils.repeat("*", passwd.length());
+        } else {
+            newpwd = passwd.substring(0, 3) + StringUtils.repeat("*", passwd.length() - 3);
+        }
+        return newpwd;
+    }
 
 }
