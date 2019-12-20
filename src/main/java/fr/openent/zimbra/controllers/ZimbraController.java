@@ -40,6 +40,8 @@ import fr.wseduc.webutils.request.RequestUtils;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.events.EventStore;
+import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.utils.Config;
@@ -73,6 +75,9 @@ public class ZimbraController extends BaseController {
 	private SearchService searchService;
 	private ExpertModeService expertModeService;
 
+	private EventStore eventStore;
+	private enum ZimbraEvent { ACCESS }
+
 
 	private static final Logger log = LoggerFactory.getLogger(ZimbraController.class);
 
@@ -80,6 +85,8 @@ public class ZimbraController extends BaseController {
 	public void init(Vertx vertx, JsonObject config, RouteMatcher rm,
 			Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
 		super.init(vertx, config, rm, securedActions);
+
+		eventStore = EventStoreFactory.getFactory().getEventStore(Zimbra.class.getSimpleName());
 
 		ServiceManager serviceManager = ServiceManager.init(vertx, eb, pathPrefix);
 
@@ -98,6 +105,7 @@ public class ZimbraController extends BaseController {
 	@SecuredAction("zimbra.view")
 	public void view(HttpServerRequest request) {
 		renderView(request);
+		eventStore.createAndStoreEvent(ZimbraEvent.ACCESS.name(), request);
 	}
 
 	/**
@@ -113,6 +121,7 @@ public class ZimbraController extends BaseController {
 					String location = expertModeService.getPreauthUrl(user);
 					redirect(request, appConfig.getZimbraUri(), location);
 					userService.syncAddressBookAsync(user);
+					eventStore.createAndStoreEvent(ZimbraEvent.ACCESS.name(), request);
 				} catch (IOException e) {
 					renderError(request);
 				}
