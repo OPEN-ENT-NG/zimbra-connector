@@ -41,4 +41,5 @@ public class FrontConstants {
     public static final String MESSAGE_ATT_FILENAME = "filename";
     public static final String MESSAGE_ATT_CONTENTTYPE = "contentType";
     public static final String MESSAGE_ATT_SIZE = "size";
+    public static final String MESSAGE_UNREAD = "unread";
 }

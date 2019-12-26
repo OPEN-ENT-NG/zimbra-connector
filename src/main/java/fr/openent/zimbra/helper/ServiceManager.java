@@ -53,6 +53,7 @@ public class ServiceManager {
     private GroupService groupService;
     private Neo4jZimbraService neoService;
     private ExpertModeService expertModeService;
+    private TempThreadService threadService;
 
 
     private SynchroUserService synchroUserService;
@@ -63,6 +64,7 @@ public class ServiceManager {
     private SynchroMailerService synchroMailerService;
     private SynchroAddressBookService synchroAddressBookService;
     private Neo4jAddrbookService neo4jAddrbookService;
+
 
     private SynchroLauncher synchroLauncher;
 
@@ -95,6 +97,7 @@ public class ServiceManager {
         this.communicationService = new CommunicationService();
         this.groupService = new GroupService(soapService, dbMailServiceApp, synchroUserService);
         this.expertModeService = new ExpertModeService();
+        this.threadService = new TempThreadService(messageService);
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
@@ -190,6 +193,10 @@ public class ServiceManager {
 
     public ExpertModeService getExpertModeService() {
         return expertModeService;
+    }
+
+    public TempThreadService getThreadService() {
+        return threadService;
     }
 
     public SynchroUserService getSynchroUserService() {
