@@ -424,7 +424,7 @@ public class MessageService {
      *     "cc" : [
      *      "user_id_cc",
      *     ],
-     *     "display_names" : [
+     *     "displayNames" : [
      *      "user_id",
      *      "user_display_name",
      *     ],

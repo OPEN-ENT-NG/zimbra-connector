@@ -74,6 +74,7 @@ public class ZimbraController extends BaseController {
 	private SignatureService signatureService;
 	private SearchService searchService;
 	private ExpertModeService expertModeService;
+	private TempThreadService threadService;
 
 	private EventStore eventStore;
 	private enum ZimbraEvent { ACCESS }
@@ -98,7 +99,7 @@ public class ZimbraController extends BaseController {
 		this.messageService = serviceManager.getMessageService();
 		this.attachmentService = serviceManager.getAttachmentService();
 		this.expertModeService = serviceManager.getExpertModeService();
-
+		this.threadService = serviceManager.getThreadService();
 	}
 
 	@Get("zimbra")
@@ -1021,5 +1022,114 @@ public class ZimbraController extends BaseController {
 	public void checkIfIdGroup(HttpServerRequest request) {
 		String idToCheck = request.params().get("id");
 		userService.requestIfIdGroup(idToCheck, defaultResponseHandler(request));
+	}
+
+
+	/////////////////	 THREADS
+	@Get("/threads/list")
+	@SecuredAction(value = "zimbra.list", type = ActionType.AUTHENTICATED)
+	public void listThreads(HttpServerRequest request) {
+		final String pageStr = Utils.getOrElse(request.params().get("page"), "0", false);
+
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				int page;
+				try {
+					page = Integer.parseInt(pageStr);
+				} catch (NumberFormatException e) { page = 0; }
+				threadService.listThreads(user, page, arrayResponseHandler(request));
+			} else {
+				unauthorized(request);
+			}
+		});
+	}
+
+	@Post("/threads/toggleUnread")
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
+	public void toggleUnreadThread(final HttpServerRequest request) {
+		final List<String> ids = request.params().getAll("id");
+		final String unread = request.params().get("unread");
+
+		if (ids == null || ids.isEmpty() || unread == null || (!unread.equals("true") && !unread.equals("false"))) {
+			badRequest(request);
+			return;
+		}
+		UserUtils.getUserInfos(eb, request, user -> {
+			if (user != null) {
+				threadService.toggleUnreadThreads(ids, Boolean.parseBoolean(unread), user, defaultResponseHandler(request));
+			} else {
+				unauthorized(request);
+			}
+		});
+	}
+
+	@Put("/thread/trash")
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
+	public void trashThread(final HttpServerRequest request) {
+		final List<String> messageIds = request.params().getAll("id");
+		if(messageIds == null || messageIds.size() == 0){
+			badRequest(request);
+			return;
+		}
+		UserUtils.getUserInfos(eb, request, user -> {
+			if(user == null){
+				unauthorized(request);
+				return;
+			}
+			threadService.trashTreads(messageIds, user, defaultResponseHandler(request));
+		});
+	}
+
+	@Get("/threads/messages/:threadId")
+	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
+	public void getThreadMessages(final HttpServerRequest request) {
+		final String id = request.params().get("threadId");
+		if (id == null || id.trim().isEmpty()) {
+			badRequest(request);
+			return;
+		}
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				threadService.getMessages(id, user, defaultResponseHandler(request));
+			} else {
+				unauthorized(request);
+			}
+		});
+	}
+
+	@Get("/threads/previous-messages/:oldestMessageId")
+	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
+	public void getPreviousThreadMessages(final HttpServerRequest request) {
+		final String id = request.params().get("oldestMessageId");
+		if (id == null || id.trim().isEmpty()) {
+			badRequest(request);
+			return;
+		}
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				threadService.getMessages(id, user, defaultResponseHandler(request));
+			} else {
+				unauthorized(request);
+			}
+		});
+	}
+
+	@Get("/threads/new-messages/:newestMessageId")
+	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
+	public void getNewThreadMessages(final HttpServerRequest request) {
+		final String id = request.params().get("newestMessageId");
+		if (id == null || id.trim().isEmpty()) {
+			badRequest(request);
+			return;
+		}
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				threadService.getMessages(id, user, defaultResponseHandler(request));
+			} else {
+				unauthorized(request);
+			}
+		});
 	}
 }
