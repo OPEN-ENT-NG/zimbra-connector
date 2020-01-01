@@ -87,7 +87,10 @@ public class ServiceManager {
         this.neoService = new Neo4jZimbraService();
         this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
         this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
-        this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp, synchroAddressBookService);
+        SqlAddressBookService sqlAddressBookService = new SqlAddressBookService(appConfig.getDbSchema());
+        AddressBookService addressBookService = new AddressBookService(sqlAddressBookService);
+        this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
+                synchroAddressBookService, addressBookService);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
         this.messageService = new MessageService(soapService, folderService,

@@ -30,6 +30,7 @@ import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.data.SqlDbMailService;
+import fr.openent.zimbra.service.synchro.AddressBookService;
 import fr.openent.zimbra.service.synchro.SynchroAddressBookService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
@@ -57,17 +58,20 @@ public class UserService {
     private Neo4jZimbraService neoService;
     private GroupService groupService;
     private SynchroAddressBookService synchroAddressBookService;
+    private AddressBookService addressBookService;
 
     private static Logger log = LoggerFactory.getLogger(UserService.class);
 
     public UserService(SoapZimbraService soapService, SynchroUserService synchroUserService,
-                       DbMailService dbMailService, SynchroAddressBookService synchroAddressBookService) {
+                        DbMailService dbMailService, SynchroAddressBookService synchroAddressBookService,
+                        AddressBookService addressBookService) {
         this.soapService = soapService;
         this.synchroUserService = synchroUserService;
         this.dbMailService = dbMailService;
         this.neoService = new Neo4jZimbraService();
         this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
         this.synchroAddressBookService = synchroAddressBookService;
+        this.addressBookService = addressBookService;
     }
 
     /**
@@ -449,26 +453,30 @@ public class UserService {
     }
 
     public void syncAddressBookAsync(UserInfos user) {
-        try {
-            neoService.getUserStructuresFromNeo4j(user.getUserId(), resNeo -> {
-                if(resNeo.failed() || resNeo.result().isEmpty()) {
-                    log.error("Unable to get structures for user : " + user.getUserId());
-                } else {
-
-                    synchroAddressBookService.syncUser(user.getUserId(), resNeo.result(), res -> {
-                        if(res.failed()) {
-                            log.error("zimbra ABsync failed for user " + user.getUserId() + " " + res.cause());
+        addressBookService.isUserReadyToSync(user, isready ->  {
+            if(isready) {
+                try {
+                    neoService.getUserStructuresFromNeo4j(user.getUserId(), resNeo -> {
+                        if(resNeo.failed() || resNeo.result().isEmpty()) {
+                            log.error("Unable to get structures for user : " + user.getUserId());
                         } else {
-                            log.info("zimbra ABSync successful for user " + user.getUserId());
+
+                            synchroAddressBookService.syncUser(user.getUserId(), resNeo.result(), res -> {
+                                if(res.failed()) {
+                                    log.error("zimbra ABsync failed for user " + user.getUserId() + " " + res.cause());
+                                } else {
+                                    addressBookService.markUserAsSynced(user);
+                                    log.info("zimbra ABSync successful for user " + user.getUserId());
+                                }
+                            });
                         }
                     });
+                } catch (Exception e) {
+                    //No Exception may be thrown in the main thread
+                    log.error("Error in syncAddressBookAsync : " + e);
                 }
-
-            });
-        } catch (Exception e) {
-        //No Exception may be thrown in the main thread
-        log.error("Error in syncAddressBookAsync : " + e);
-        }
+            }
+        });
     }
 
     public void requestIfIdGroup(String idToCheck, Handler<Either<String, JsonObject>> handler) {
