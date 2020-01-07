@@ -167,6 +167,9 @@ export const recipientList = ng.directive("recipientList", () => {
                 let keyCode = event.which || event.keyCode;
                 let { shiftKey } = event;
                 let key = event.key;
+                if(key == ";"){
+                        key = scope.searchText.substr(-1);
+                }
                 let myUser =new User(scope.searchText, scope.searchText);
                 if((keyCode === 13 || (key == ";" && !shiftKey) ) && myUser.isAMail() && scope.searchText &&
                 model.me.hasWorkflow('fr.openent.zimbra.controllers.ZimbraController|zimbraOutside')){
