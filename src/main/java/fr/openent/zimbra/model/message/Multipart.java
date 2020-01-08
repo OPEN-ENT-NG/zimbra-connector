@@ -1,5 +1,6 @@
 package fr.openent.zimbra.model.message;
 
+import fr.openent.zimbra.Zimbra;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -17,9 +18,19 @@ public class Multipart {
     private String messageId;
     private List<Attachment> attachments;
 
+    private boolean fromConv = false;
+
     private static Logger log = LoggerFactory.getLogger(Multipart.class);
 
     public Multipart(String messageId, JsonArray zimbraMultiparts) {
+        init(messageId, zimbraMultiparts);
+    }
+    public Multipart(String messageId, JsonArray zimbraMultiparts, boolean fromConv) {
+        this.fromConv = fromConv;
+        init(messageId, zimbraMultiparts);
+    }
+
+    private void init(String messageId, JsonArray zimbraMultiparts) {
         this.body = "";
         this.messageId = messageId;
         this.attachments = new ArrayList<>();
@@ -42,6 +53,9 @@ public class Multipart {
     }
 
     private void processParts(JsonArray zimbraMultiparts, boolean isAlternative) {
+        if(zimbraMultiparts == null) {
+            return;
+        }
         JsonObject lastPart = new JsonObject();
         for(Object obj : zimbraMultiparts) {
             if(!(obj instanceof JsonObject)) continue;
@@ -49,7 +63,14 @@ public class Multipart {
             if(!isAlternative) {
                 processPart(mpart);
             } else {
-                lastPart = mpart;
+                if(fromConv && Zimbra.appConfig.getInvertAltPartInConvMsg()) {
+                    if(lastPart.isEmpty()) {
+                        lastPart = mpart;
+                    }
+                } else {
+                    lastPart = mpart;
+                }
+
             }
         }
         if(isAlternative) {

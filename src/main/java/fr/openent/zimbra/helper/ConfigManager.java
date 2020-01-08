@@ -38,6 +38,7 @@ public class ConfigManager {
     private final JsonObject publicConfig;
 
     private final int httpClientMaxPoolSize;
+    private final int mailListLimit;
 
     private final String host;
     private final String dbSchema;
@@ -64,6 +65,9 @@ public class ConfigManager {
     private final Integer addressBookSynchroTtl;
     private Integer sqlInsertPaginationSize;
 
+    // Bug in Zimbra : when getting messages in conversations, alternative parts are inverted
+    private boolean invertAltPartInConvMsg;
+
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
     public ConfigManager(JsonObject config) {
@@ -71,6 +75,7 @@ public class ConfigManager {
         this.publicConfig = rawConfig.copy();
         initPublicConfig();
         this.httpClientMaxPoolSize = config.getInteger("http-client-max-pool-size", 0);
+        this.mailListLimit = config.getInteger("mail-list-limit", 10);
         this.host = config.getString("host", "");
         this.dbSchema = config.getString("db-schema", "zimbra");
         this.zimbraUri = config.getString("zimbra-uri", "");
@@ -91,6 +96,7 @@ public class ConfigManager {
         this.addressBookAccountName  = config.getString("address-book-account", "");
         this.addressBookSynchroTtl = config.getInteger("abook-sync-ttl-minutes", 1440); // default 24h
         this.sqlInsertPaginationSize = config.getInteger("sql-insert-pagination-size", 5000);
+        this.invertAltPartInConvMsg = config.getBoolean("invert-alt-part-in-conv-msg", false);
 
         String devLevelStr = config.getString("dev-level", "");
         if(NOSYNC.equals(devLevelStr)) {
@@ -128,6 +134,7 @@ public class ConfigManager {
     JsonObject getRawConfig() { return rawConfig;}
     public JsonObject getPublicConfig() { return publicConfig;}
     public int getHttpClientMaxPoolSize() { return httpClientMaxPoolSize;}
+    public int getMailListLimit() { return mailListLimit;}
     public String getHost() { return host;}
     public String getDbSchema() { return dbSchema;}
     public String getZimbraUri() { return zimbraUri;}
@@ -148,6 +155,7 @@ public class ConfigManager {
     public String getAddressBookAccountName() { return addressBookAccountName;}
     public Integer getAddressBookSynchroTtl() { return addressBookSynchroTtl;}
     public Integer getSqlInsertPaginationSize() { return sqlInsertPaginationSize;}
+    public boolean getInvertAltPartInConvMsg() { return invertAltPartInConvMsg;}
 
     private void initPublicConfig() {
         publicConfig.put("admin-password", hidePasswd(rawConfig.getString("admin-password","")));

@@ -22,6 +22,8 @@ import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.DbMailServiceFactory;
 import fr.openent.zimbra.service.data.*;
 import fr.openent.zimbra.service.impl.*;
+import fr.openent.zimbra.service.messages.ConversationService;
+import fr.openent.zimbra.service.messages.MobileThreadService;
 import fr.openent.zimbra.service.synchro.*;
 import fr.wseduc.webutils.email.EmailSender;
 import io.vertx.core.Vertx;
@@ -53,7 +55,10 @@ public class ServiceManager {
     private GroupService groupService;
     private Neo4jZimbraService neoService;
     private ExpertModeService expertModeService;
+    private ConversationService conversationService;
     private TempThreadService threadService;
+    private MobileThreadService mobileThreadService;
+    private RecipientService recipientService;
 
 
     private SynchroUserService synchroUserService;
@@ -100,7 +105,10 @@ public class ServiceManager {
         this.communicationService = new CommunicationService();
         this.groupService = new GroupService(soapService, dbMailServiceApp, synchroUserService);
         this.expertModeService = new ExpertModeService();
+        this.conversationService = new ConversationService();
         this.threadService = new TempThreadService(messageService);
+        this.recipientService = new RecipientService(messageService);
+        this.mobileThreadService = new MobileThreadService(recipientService);
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
@@ -198,8 +206,20 @@ public class ServiceManager {
         return expertModeService;
     }
 
+    public ConversationService getConversationService() {
+        return conversationService;
+    }
+
     public TempThreadService getThreadService() {
         return threadService;
+    }
+
+    public MobileThreadService getMobileThreadService() {
+        return mobileThreadService;
+    }
+
+    public RecipientService getRecipientService() {
+        return recipientService;
     }
 
     public SynchroUserService getSynchroUserService() {

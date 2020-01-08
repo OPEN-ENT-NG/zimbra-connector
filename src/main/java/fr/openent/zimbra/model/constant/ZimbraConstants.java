@@ -19,6 +19,7 @@ package fr.openent.zimbra.model.constant;
 
 @SuppressWarnings("unused")
 public class ZimbraConstants {
+    public static final String FOLDER_ROOT = "/";
     public static final String FOLDER_INBOX = "/Inbox";
     public static final String FOLDER_OUTBOX = "/Sent";
     public static final String FOLDER_DRAFT = "/Drafts";
@@ -38,13 +39,17 @@ public class ZimbraConstants {
     public static final String MSG_REPLYTYPE = "rt";
     public static final String MSG_RT_REPLY = "r";
     public static final String MSG_RT_FORWARD = "w";
+    public static final String MSG_REPLIEDTO_ID = "irt";
     public static final String MSG_DRAFT_ID = "did";
-    public static final String MSG_CONVERSATION_ID = "id";
+    public static final String MSG_EMAILID = "mid";
+    public static final String MSG_CONVERSATION_ID = "cid";
     public static final String MSG_SUBJECT = "su";
     public static final String MSG_DATE = "d";
     public static final String MSG_LOCATION = "l";
     public static final String MSG_MULTIPART = "mp";
     public static final String MSG_MPART_ISBODY = "body";
+    public static final String MSG_HTML = "html";
+    public static final String MSG_NEUTER_IMAGES = "neuter";
 
     public static final String MSG_CONSTRAINTS = "tcon";
     public static final String MSG_CON_TRASH = "t";
@@ -145,6 +150,19 @@ public class ZimbraConstants {
     public static final String FOLDER_SHARE_PERM = "perm";
     public static final String FOLDER_GRANT = "grant";
 
+    public static final String CONVERSATION = "c";
+    public static final String CONVERSATION_ID = "id";
+    public static final String CONVERSATION_CID = "cid";
+    public static final String CONVERSATION_SUBJECT = "su";
+    public static final String CONVERSATION_NBMSG = "n";
+    public static final String CONVERSATION_NBUNREAD = "u";
+    public static final String CONVERSATION_NBTOTAL = "total";
+    public static final String CONVERSATION_FLAGS = "f";
+    public static final String CONVERSATION_DATE = "d";
+
+    public static final String CONVERSATION_EXPAND_MESSAGES = "fetch";
+    public static final String CONV_EXPAND_ALL = "all";
+
     public static final String SHARE_GRANTEE_TYPE = "gt";
     public static final String GRANTEE_TYPE_USER = "usr";
     public static final String GRANTEE_NAME = "d";
@@ -177,4 +195,25 @@ public class ZimbraConstants {
 
     public static final String ACCT_STATUS_LOCKED = "locked";
     public static final String ACCT_STATUS_ACTIVE = "active";
+
+    public static final String SEARCH_QUERY = "query";
+    public static final String SEARCH_LIMIT = "limit";
+    public static final String SEARCH_OFFSET = "offset";
+    public static final String SEARCH_TYPES = "types";
+    // Only ONE of message, conversation may be set. If both are set, the first is used
+    public static final String SEARCH_TYPE_CONVERSATION = "conversation";
+    public static final String SEARCH_TYPE_MESSAGE = "message";
+    public static final String SEARCH_TYPE_CONTACT = "contact";
+    public static final String SEARCH_TYPE_APPOINTMENT = "appointment";
+    public static final String SEARCH_TYPE_TASK = "task";
+    public static final String SEARCH_TYPE_WIKI = "wiki";
+    public static final String SEARCH_TYPE_DOCUMENT = "document";
+    public static final String SEARCH_RECIPIENTS_TO_RETURN = "recip";
+    public static final String SEARCH_RECIP_FROM = "0";
+    public static final String SEARCH_RECIP_TO = "1";
+    public static final String SEARCH_RECIP_ALL = "2";
+    public static final String SEARCH_FULL_CONVERSATION = "fullConversation";
+    public static final String SEARCH_NEST_RESULT = "nest";
+
+    public static final String SEARCH_QUERY_ALL = "*";
 }

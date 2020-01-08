@@ -32,6 +32,7 @@ import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
+import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
@@ -74,7 +75,6 @@ public class ZimbraController extends BaseController {
 	private SignatureService signatureService;
 	private SearchService searchService;
 	private ExpertModeService expertModeService;
-	private TempThreadService threadService;
 
 	private EventStore eventStore;
 	private enum ZimbraEvent { ACCESS }
@@ -99,7 +99,6 @@ public class ZimbraController extends BaseController {
 		this.messageService = serviceManager.getMessageService();
 		this.attachmentService = serviceManager.getAttachmentService();
 		this.expertModeService = serviceManager.getExpertModeService();
-		this.threadService = serviceManager.getThreadService();
 	}
 
 	@Get("zimbra")
@@ -226,10 +225,11 @@ public class ZimbraController extends BaseController {
 	@ResourceFilter(DevLevelFilter.class)
 	public void send(final HttpServerRequest request) {
         final String messageId = request.params().get("id");
+		final String parentMessageId = request.params().get("In-Reply-To");
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
 					bodyToJson(request, message ->
-						messageService.sendMessage(messageId, message, user, defaultResponseHandler(request))
+						messageService.sendMessage(messageId, message, user, parentMessageId, defaultResponseHandler(request))
 					);
 				} else {
 					unauthorized(request);
@@ -268,9 +268,9 @@ public class ZimbraController extends BaseController {
 				try {
 					page = Integer.parseInt(pageStr);
 				} catch (NumberFormatException e) { page = 0; }
-				Boolean b = false;
+				boolean b = false;
 				if (unread != null && !unread.isEmpty()) {
-					b = Boolean.valueOf(unread);
+					b = Boolean.parseBoolean(unread);
 				}
 				messageService.listMessages(folder, b, user, page, search, arrayResponseHandler(request));
 			} else {
@@ -1026,110 +1026,41 @@ public class ZimbraController extends BaseController {
 
 
 	/////////////////	 THREADS
-	@Get("/threads/list")
-	@SecuredAction(value = "zimbra.list", type = ActionType.AUTHENTICATED)
-	public void listThreads(HttpServerRequest request) {
-		final String pageStr = Utils.getOrElse(request.params().get("page"), "0", false);
 
-		getUserInfos(eb, request, user -> {
-			if (user != null) {
-				int page;
-				try {
-					page = Integer.parseInt(pageStr);
-				} catch (NumberFormatException e) { page = 0; }
-				threadService.listThreads(user, page, arrayResponseHandler(request));
-			} else {
-				unauthorized(request);
-			}
-		});
-	}
 
-	@Post("/threads/toggleUnread")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
-	@ResourceFilter(DevLevelFilter.class)
-	public void toggleUnreadThread(final HttpServerRequest request) {
-		final List<String> ids = request.params().getAll("id");
-		final String unread = request.params().get("unread");
-
-		if (ids == null || ids.isEmpty() || unread == null || (!unread.equals("true") && !unread.equals("false"))) {
-			badRequest(request);
-			return;
-		}
-		UserUtils.getUserInfos(eb, request, user -> {
-			if (user != null) {
-				threadService.toggleUnreadThreads(ids, Boolean.parseBoolean(unread), user, defaultResponseHandler(request));
-			} else {
-				unauthorized(request);
-			}
-		});
-	}
-
-	@Put("/thread/trash")
-	@SecuredAction(value = "", type = ActionType.RESOURCE)
-	@ResourceFilter(DevLevelFilter.class)
-	public void trashThread(final HttpServerRequest request) {
-		final List<String> messageIds = request.params().getAll("id");
-		if(messageIds == null || messageIds.size() == 0){
-			badRequest(request);
-			return;
-		}
-		UserUtils.getUserInfos(eb, request, user -> {
-			if(user == null){
-				unauthorized(request);
-				return;
-			}
-			threadService.trashTreads(messageIds, user, defaultResponseHandler(request));
-		});
-	}
-
-	@Get("/threads/messages/:threadId")
-	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
-	public void getThreadMessages(final HttpServerRequest request) {
-		final String id = request.params().get("threadId");
-		if (id == null || id.trim().isEmpty()) {
-			badRequest(request);
-			return;
-		}
-		getUserInfos(eb, request, user -> {
-			if (user != null) {
-				threadService.getMessages(id, user, defaultResponseHandler(request));
-			} else {
-				unauthorized(request);
-			}
-		});
-	}
-
-	@Get("/threads/previous-messages/:oldestMessageId")
+	@Get("/thread/previous-messages/:oldestMessageId")
 	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
 	public void getPreviousThreadMessages(final HttpServerRequest request) {
-		final String id = request.params().get("oldestMessageId");
+		arrayResponseHandler(request).handle(new Either.Right<>(new JsonArray()));
+		/*final String id = request.params().get("oldestMessageId");
 		if (id == null || id.trim().isEmpty()) {
 			badRequest(request);
 			return;
 		}
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
-				threadService.getMessages(id, user, defaultResponseHandler(request));
+				threadService.getMessages(id, user, arrayResponseHandler(request));
 			} else {
 				unauthorized(request);
 			}
-		});
+		});*/
 	}
 
-	@Get("/threads/new-messages/:newestMessageId")
+	@Get("/thread/new-messages/:newestMessageId")
 	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
 	public void getNewThreadMessages(final HttpServerRequest request) {
-		final String id = request.params().get("newestMessageId");
+		arrayResponseHandler(request).handle(new Either.Right<>(new JsonArray()));
+		/*final String id = request.params().get("newestMessageId");
 		if (id == null || id.trim().isEmpty()) {
 			badRequest(request);
 			return;
 		}
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
-				threadService.getMessages(id, user, defaultResponseHandler(request));
+				threadService.getMessages(id, user, arrayResponseHandler(request));
 			} else {
 				unauthorized(request);
 			}
-		});
+		});*/
 	}
 }

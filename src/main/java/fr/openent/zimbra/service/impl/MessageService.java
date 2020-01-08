@@ -24,10 +24,14 @@ import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.message.Multipart;
+import fr.openent.zimbra.model.message.Recipient;
+import fr.openent.zimbra.model.soap.SoapMessageHelper;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -99,12 +103,13 @@ public class MessageService {
                     if(searchText != null && ! searchText.isEmpty()) {
                         query += " *" + searchText +"*";
                     }
+                    int pageSize = Zimbra.appConfig.getMailListLimit();
                     JsonObject searchReq = new JsonObject()
                             .put("query", query)
                             .put("types", "message")
                             .put("recip", "2")
-                            .put("limit", Zimbra.MAIL_LIST_LIMIT)
-                            .put("offset", page * Zimbra.MAIL_LIST_LIMIT)
+                            .put("limit", pageSize)
+                            .put("offset", page * pageSize)
                             .put("_jsns", SoapConstants.NAMESPACE_MAIL);
 
                     JsonObject searchRequest = new JsonObject()
@@ -229,7 +234,7 @@ public class MessageService {
 
         msgFront.put("state", state);
         msgFront.put("unread", flags.contains(MSG_FLAG_UNREAD));
-        msgFront.put("response", flags.contains(MSG_FLAG_REPLIED));//TODO QMER : verify sendmsgresponse : modified f : r ?
+        msgFront.put("response", flags.contains(MSG_FLAG_REPLIED));
         msgFront.put("hasAttachment", flags.contains(MSG_FLAG_HASATTACHMENT));
         msgFront.put("systemFolder",folder);
         msgFront.put("to", new JsonArray());
@@ -325,6 +330,18 @@ public class MessageService {
                 translateMail(zimbraMail,translatedUuidHandler);
             }
         }
+    }
+
+    public void translateMailFuture(String mail, Handler<AsyncResult<Recipient>> handler) {
+        translateMail(mail, res -> {
+            Recipient recipient;
+            if(res == null) {
+                recipient = new Recipient(mail, mail);
+            } else {
+                recipient = new Recipient(mail, res);
+            }
+            handler.handle(Future.succeededFuture(recipient));
+        });
     }
 
     /**
@@ -511,7 +528,7 @@ public class MessageService {
      * @param user User infos
      * @param result result handler
      */
-    public void sendMessage(String messageId, JsonObject frontMessage, UserInfos user,
+    public void sendMessage(String messageId, JsonObject frontMessage, UserInfos user, String parentMessageId,
                             Handler<Either<String, JsonObject>> result) {
 
         Integer maxRecipients = Zimbra.appConfig.getMaxRecipients();
@@ -519,35 +536,57 @@ public class MessageService {
         JsonArray listRecipientsTo = frontMessage.getJsonArray(FrontConstants.MAIL_TO, new JsonArray());
         JsonArray listRecipientsCC = frontMessage.getJsonArray(FrontConstants.MAIL_CC, new JsonArray());
 
-        Integer totalRecipients = listRecipientsTo.size() + listRecipientsCC.size();
+        int totalRecipients = listRecipientsTo.size() + listRecipientsCC.size();
 
         if (totalRecipients > maxRecipients) {
             result.handle(new Either.Left<>(I18nConstants.ERROR_MAXRECIPIENTS));
             return;
         }
 
-        transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
+        getMessageMidFromId(user, parentMessageId, parentMessageMailId ->
+                transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
             if(messageId != null && !messageId.isEmpty()) {
                 mailContent.put(MSG_ID, messageId);
                 mailContent.put(MSG_DRAFT_ID, messageId);
             }
+            if(parentMessageMailId != null && !parentMessageMailId.isEmpty()) {
+                mailContent.put(MSG_REPLYTYPE, MSG_RT_REPLY);
+                mailContent.put(MSG_REPLIEDTO_ID, parentMessageMailId);
+            }
+            mailContent.getJsonArray(MSG_EMAILS, new JsonArray())
+                    .add(new JsonObject()
+                            .put(MSG_EMAIL_ADDR, "")
+                            .put(MSG_EMAIL_TYPE, ADDR_TYPE_FROM)
+                            .put(MSG_EMAIL_COMMENT, user.getUsername()));
             JsonObject sendMsgRequest = new JsonObject()
                     .put("name", "SendMsgRequest")
                     .put("content", new JsonObject()
                             .put("_jsns", SoapConstants.NAMESPACE_MAIL)
-                            .put(MSG, mailContent));
+                            .put(MSG, mailContent)
+                            .put("fetchSavedMsg", ONE_TRUE));
 
             soapService.callUserSoapAPI(sendMsgRequest, user, response -> {
-                 if (response.isLeft()) {
-                     result.handle(response);
-                 } else {
-                     JsonObject rightResponse = new JsonObject()
-                             .put("sent", 1);
-                     result.handle(new Either.Right<>(rightResponse));
-                 }
+                if (response.isLeft()) {
+                    result.handle(response);
+                } else {
+                    String id = "";
+                    String threadid = "";
+                    try {
+                        JsonObject responseObj = response.right().getValue().getJsonObject("Body").getJsonObject("SendMsgResponse")
+                                .getJsonArray(MSG).getJsonObject(0);
+                        id = responseObj.getString(MSG_ID, "");
+                        threadid = responseObj.getString(MSG_CONVERSATION_ID, "");
+                    } catch (Exception e) {
+                        log.debug("unfidable id ", e);
+                    }
+                    JsonObject rightResponse = new JsonObject()
+                            .put("sent", 1)
+                            .put("id", id)
+                            .put("thread_id", threadid);
+                    result.handle(new Either.Right<>(rightResponse));
+                }
             });
-        });
-
+        }));
     }
 
     /**
@@ -561,7 +600,7 @@ public class MessageService {
                                     JsonObject correspondance, String type) {
         for(Object o : originList) {
             String elemId = (String)o;
-            if(correspondance.containsKey(elemId)) {
+            if( elemId != null && correspondance.containsKey(elemId)) {
                 JsonObject elemInfos = correspondance.getJsonObject(elemId);
                 JsonObject recipient = new JsonObject()
                         .put(MSG_EMAIL_TYPE, type)
@@ -571,7 +610,7 @@ public class MessageService {
                 }
                 recipientList.add(recipient);
             } else {
-                log.error("No Zimbra correspondance for ID : " + elemId);
+                if(elemId != null) log.error("No Zimbra correspondance for ID : " + elemId);
             }
         }
     }
@@ -683,12 +722,13 @@ public class MessageService {
      * @param handler result handler
      */
     void transformMessageFrontToZimbra(JsonObject frontMessage, String messageId, Handler<JsonObject> handler) {
-        JsonArray toFront = frontMessage.getJsonArray("to");
-        JsonArray ccFront = frontMessage.getJsonArray("cc");
-        JsonArray bccFront = frontMessage.getJsonArray("bcc");
-        String bodyFront = replaceLink(frontMessage.getString("body"));
-        String subjectFront = frontMessage.getString("subject");
-        JsonArray attsFront = frontMessage.getJsonArray("attachments");
+        JsonArray toFront = frontMessage.getJsonArray("to", new JsonArray());
+        JsonArray ccFront = frontMessage.getJsonArray("cc", new JsonArray());
+        JsonArray bccFront = frontMessage.getJsonArray("bcc", new JsonArray());
+        String bodyFront = replaceLink(frontMessage.getString("body", ""))
+                .replace("\n", "<br/>");
+        String subjectFront = frontMessage.getString("subject", "");
+        JsonArray attsFront = frontMessage.getJsonArray("attachments", new JsonArray());
         JsonArray mailContacts = new JsonArray();
         userService.getMailAddresses(toFront, toResult -> {
             addRecipientToList(mailContacts, toFront, toResult, ADDR_TYPE_TO);
@@ -955,5 +995,19 @@ public class MessageService {
                 result.handle(new Either.Right<>(new JsonObject()));
             }
         });
+    }
+
+    private void getMessageMidFromId(UserInfos user, String messageId, Handler<String> handler) {
+        if(messageId == null || messageId.isEmpty()) {
+            handler.handle(null);
+        } else {
+            SoapMessageHelper.getMessageById(user.getUserId(), messageId, result -> {
+                if(result.succeeded() && !result.result().getMailId().isEmpty()) {
+                    handler.handle(result.result().getMailId());
+                } else {
+                    handler.handle(null);
+                }
+            });
+        }
     }
 }
