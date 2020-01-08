@@ -50,14 +50,14 @@ public class TempThreadService {
         messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_TRASH, user, result);
     }
 
-    public void getMessages(String threadId, UserInfos user, Handler<Either<String,JsonObject>> handler) {
+    public void getMessages(String threadId, UserInfos user, Handler<Either<String,JsonArray>> handler) {
         messageService.getMessage(threadId, user, res -> {
             if(res.isLeft()) {
-                handler.handle(res);
+                handler.handle(new Either.Left<>(res.left().getValue()));
             } else {
                 JsonObject message = res.right().getValue();
                 message.put("thread_id", message.getString("id"));
-                handler.handle(new Either.Right<>(message));
+                handler.handle(new Either.Right<>(new JsonArray().add(message)));
             }
         });
     }

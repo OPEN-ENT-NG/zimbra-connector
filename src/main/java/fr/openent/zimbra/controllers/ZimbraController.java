@@ -1092,7 +1092,7 @@ public class ZimbraController extends BaseController {
 		}
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
-				threadService.getMessages(id, user, defaultResponseHandler(request));
+				threadService.getMessages(id, user, arrayResponseHandler(request));
 			} else {
 				unauthorized(request);
 			}
@@ -1109,7 +1109,7 @@ public class ZimbraController extends BaseController {
 		}
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
-				threadService.getMessages(id, user, defaultResponseHandler(request));
+				threadService.getMessages(id, user, arrayResponseHandler(request));
 			} else {
 				unauthorized(request);
 			}
@@ -1126,7 +1126,7 @@ public class ZimbraController extends BaseController {
 		}
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
-				threadService.getMessages(id, user, defaultResponseHandler(request));
+				threadService.getMessages(id, user, arrayResponseHandler(request));
 			} else {
 				unauthorized(request);
 			}
