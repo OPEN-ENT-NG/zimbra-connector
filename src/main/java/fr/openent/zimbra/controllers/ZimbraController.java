@@ -1082,7 +1082,7 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
-	@Get("/threads/messages/:threadId")
+	@Get("/thread/messages/:threadId")
 	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
 	public void getThreadMessages(final HttpServerRequest request) {
 		final String id = request.params().get("threadId");
@@ -1099,7 +1099,7 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
-	@Get("/threads/previous-messages/:oldestMessageId")
+	@Get("/thread/previous-messages/:oldestMessageId")
 	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
 	public void getPreviousThreadMessages(final HttpServerRequest request) {
 		final String id = request.params().get("oldestMessageId");
@@ -1116,7 +1116,7 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
-	@Get("/threads/new-messages/:newestMessageId")
+	@Get("/thread/new-messages/:newestMessageId")
 	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
 	public void getNewThreadMessages(final HttpServerRequest request) {
 		final String id = request.params().get("newestMessageId");
