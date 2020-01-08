@@ -1044,7 +1044,7 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
-	@Post("/threads/toggleUnread")
+	@Post("/thread/toggleUnread")
 	@SecuredAction(value = "", type = ActionType.RESOURCE)
 	@ResourceFilter(DevLevelFilter.class)
 	public void toggleUnreadThread(final HttpServerRequest request) {
@@ -1068,8 +1068,8 @@ public class ZimbraController extends BaseController {
 	@SecuredAction(value = "", type = ActionType.RESOURCE)
 	@ResourceFilter(DevLevelFilter.class)
 	public void trashThread(final HttpServerRequest request) {
-		final List<String> messageIds = request.params().getAll("id");
-		if(messageIds == null || messageIds.size() == 0){
+		final List<String> threadIds = request.params().getAll("id");
+		if(threadIds == null || threadIds.size() == 0){
 			badRequest(request);
 			return;
 		}
@@ -1078,7 +1078,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
-			threadService.trashTreads(messageIds, user, defaultResponseHandler(request));
+			threadService.trashTreads(threadIds, user, defaultResponseHandler(request));
 		});
 	}
 
