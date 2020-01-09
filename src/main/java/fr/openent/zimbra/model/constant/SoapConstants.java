@@ -83,4 +83,6 @@ public class SoapConstants {
     public static final String FOLDER_ACTION_RESPONSE = "FolderActionResponse";
     public static final String IMPORT_CONTACTS_REQUEST = "ImportContactsRequest";
     public static final String IMPORT_CONTACTS_RESPONSE = "ImportContactsResponse";
+    public static final String GET_CONVERSATION_REQUEST = "GetConvRequest";
+    public static final String GET_CONVERSATION_RESPONSE = "GetConvResponse";
 }

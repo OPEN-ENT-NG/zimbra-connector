@@ -145,6 +145,13 @@ public class ZimbraConstants {
     public static final String FOLDER_SHARE_PERM = "perm";
     public static final String FOLDER_GRANT = "grant";
 
+    public static final String CONVERSATION = "c";
+    public static final String CONVERSATION_ID = "id";
+    public static final String CONVERSATION_SUBJECT = "su";
+    public static final String CONVERSATION_NBMSG = "n";
+    public static final String CONVERSATION_NBMSTOTAL = "total";
+    public static final String CONVERSATION_FLAGS = "f";
+
     public static final String SHARE_GRANTEE_TYPE = "gt";
     public static final String GRANTEE_TYPE_USER = "usr";
     public static final String GRANTEE_NAME = "d";
