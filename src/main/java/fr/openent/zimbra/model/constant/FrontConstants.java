@@ -23,25 +23,43 @@ public class FrontConstants {
     public static final String FOLDER_DRAFT = "DRAFT";
     public static final String FOLDER_TRASH = "TRASH";
 
+    public static final String STATE_DRAFT = "DRAFT";
+    public static final String STATE_SENT = "SENT";
+
     public static final String REPLYTYPE_REPLY = "r";
     public static final String REPLYTYPE_FORWARD = "f";
     public static final String UNDEFINED = "undefined";
 
+    public static final String MAIL_FROM = "from";
     public static final String MAIL_TO = "to";
     public static final String MAIL_CC = "cc";
     public static final String MAIL_BCC = "bcc";
     public static final String MAIL_BCC_MOBILEAPP = "cci";
+    public static final String MAIL_DISPLAYNAMES = "displayNames";
 
     public static final String MAILCONFIG_IMAP = "imaps";
     public static final String MAILCONFIG_SMTP = "smtps";
     public static final String MAILCONFIG_LOGIN = "login";
 
     public static final String MESSAGE_ID = "id";
+    public static final String MESSAGE_DATE = "date";
+    public static final String MESSAGE_SUBJECT = "subject";
+    public static final String MESSAGE_FOLDER_ID = "parent_id";
+    public static final String MESSAGE_THREAD_ID = "thread_id";
     public static final String MESSAGE_BODY = "body";
+    public static final String MESSAGE_STATE = "state";
+    public static final String MESSAGE_UNREAD = "unread";
+    public static final String MESSAGE_RESPONSE = "response";
+    public static final String MESSAGE_HAS_ATTACHMENTS = "hasAttachment";
+    public static final String MESSAGE_SYSTEM_FOLDER = "systemFolder";
     public static final String MESSAGE_ATTACHMENTS = "attachments";
     public static final String MESSAGE_ATT_ID = "id";
     public static final String MESSAGE_ATT_FILENAME = "filename";
     public static final String MESSAGE_ATT_CONTENTTYPE = "contentType";
     public static final String MESSAGE_ATT_SIZE = "size";
-    public static final String MESSAGE_UNREAD = "unread";
+
+    public static final String THREAD_ID = "id";
+    public static final String THREAD_DATE = "date";
+    public static final String THREAD_NB_UNREAD = "unread";
+    public static final String THREAD_SUBJECT = "subject";
 }

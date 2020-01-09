@@ -81,12 +81,25 @@ public class SoapFolder {
 
     public static void getFolderByPath(String userId, String folderPath, String view, int depth,
                                        Handler<AsyncResult<SoapFolder>> handler) {
+        JsonObject reqContent = new JsonObject()
+                                    .put(FOLDER_PATH, folderPath);
+        getFolder(userId, view, depth, reqContent, handler);
+    }
+
+    public static void getFolderById(String userId, String folderId, String view, int depth,
+                                     Handler<AsyncResult<SoapFolder>> handler) {
+        JsonObject reqContent = new JsonObject()
+                                    .put(FOLDER_PARENTID, folderId);
+        getFolder(userId, view, depth, reqContent, handler);
+    }
+
+    private static void getFolder(String userId, String view, int depth, JsonObject folderReqContent,
+                                  Handler<AsyncResult<SoapFolder>> handler) {
         SoapRequest getFolderRequest = SoapRequest.MailSoapRequest(SoapConstants.GET_FOLDER_REQUEST, userId);
         JsonObject content = new JsonObject()
                 .put(VIEW, view)
                 .put(FOLDER_DEPTH, depth)
-                .put(FOLDER, new JsonObject()
-                        .put(FOLDER_PATH, folderPath));
+                .put(FOLDER, folderReqContent);
         getFolderRequest.setContent(content);
         getFolderRequest.start(processFolderHandler(GET_FOLDER_RESPONSE, handler));
     }

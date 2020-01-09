@@ -24,10 +24,13 @@ import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.message.Multipart;
+import fr.openent.zimbra.model.message.Recipient;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -99,12 +102,13 @@ public class MessageService {
                     if(searchText != null && ! searchText.isEmpty()) {
                         query += " *" + searchText +"*";
                     }
+                    int pageSize = Zimbra.appConfig.getMailListLimit();
                     JsonObject searchReq = new JsonObject()
                             .put("query", query)
                             .put("types", "message")
                             .put("recip", "2")
-                            .put("limit", Zimbra.MAIL_LIST_LIMIT)
-                            .put("offset", page * Zimbra.MAIL_LIST_LIMIT)
+                            .put("limit", pageSize)
+                            .put("offset", page * pageSize)
                             .put("_jsns", SoapConstants.NAMESPACE_MAIL);
 
                     JsonObject searchRequest = new JsonObject()
@@ -229,7 +233,7 @@ public class MessageService {
 
         msgFront.put("state", state);
         msgFront.put("unread", flags.contains(MSG_FLAG_UNREAD));
-        msgFront.put("response", flags.contains(MSG_FLAG_REPLIED));//TODO QMER : verify sendmsgresponse : modified f : r ?
+        msgFront.put("response", flags.contains(MSG_FLAG_REPLIED));
         msgFront.put("hasAttachment", flags.contains(MSG_FLAG_HASATTACHMENT));
         msgFront.put("systemFolder",folder);
         msgFront.put("to", new JsonArray());
@@ -325,6 +329,18 @@ public class MessageService {
                 translateMail(zimbraMail,translatedUuidHandler);
             }
         }
+    }
+
+    public void translateMailFuture(String mail, Handler<AsyncResult<Recipient>> handler) {
+        translateMail(mail, res -> {
+            Recipient recipient;
+            if(res == null) {
+                recipient = new Recipient(mail, mail);
+            } else {
+                recipient = new Recipient(mail, res);
+            }
+            handler.handle(Future.succeededFuture(recipient));
+        });
     }
 
     /**
@@ -519,7 +535,7 @@ public class MessageService {
         JsonArray listRecipientsTo = frontMessage.getJsonArray(FrontConstants.MAIL_TO, new JsonArray());
         JsonArray listRecipientsCC = frontMessage.getJsonArray(FrontConstants.MAIL_CC, new JsonArray());
 
-        Integer totalRecipients = listRecipientsTo.size() + listRecipientsCC.size();
+        int totalRecipients = listRecipientsTo.size() + listRecipientsCC.size();
 
         if (totalRecipients > maxRecipients) {
             result.handle(new Either.Left<>(I18nConstants.ERROR_MAXRECIPIENTS));
