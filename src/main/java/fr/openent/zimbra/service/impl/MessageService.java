@@ -24,10 +24,13 @@ import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.message.Multipart;
+import fr.openent.zimbra.model.message.Recipient;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -325,6 +328,17 @@ public class MessageService {
                 translateMail(zimbraMail,translatedUuidHandler);
             }
         }
+    }
+
+    public void translateMailFuture(String mail, Handler<AsyncResult<Recipient>> handler) {
+        translateMail(mail, res -> {
+            if(res == null) {
+                handler.handle(Future.failedFuture("no matching user"));
+            } else {
+                Recipient recipient = new Recipient(mail, res);
+                handler.handle(Future.succeededFuture(recipient));
+            }
+        });
     }
 
     /**

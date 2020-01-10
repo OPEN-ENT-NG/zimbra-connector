@@ -38,6 +38,16 @@ public class AsyncHelper {
         };
     }
 
+    public static Handler<AsyncResult<JsonArray>> getJsonArrayAsyncHandler(Handler<Either<String, JsonArray>> handler) {
+        return res -> {
+            if(res.failed()) {
+                handler.handle(new Either.Left<>(res.cause().getMessage()));
+            } else {
+                handler.handle(new Either.Right<>(res.result()));
+            }
+        };
+    }
+
     @SuppressWarnings("Duplicates")
     public static Handler<Either<String, JsonObject>> getJsonObjectEitherHandler(Handler<AsyncResult<JsonObject>> handler) {
         return res -> {

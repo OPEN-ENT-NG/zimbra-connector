@@ -5,8 +5,7 @@ import fr.openent.zimbra.helper.ZimbraFlags;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
@@ -15,15 +14,18 @@ public class Conversation {
     private String          id;
     private String          subject;
     private Integer         nbMsg;
-    private Integer         nbMsgTotal;
+    private Integer         nbUnread;
+    private Integer         nbTotal;
     private Boolean         isRead;
+    private Long            date;
     private String          zimbraFlags;
     private List<Message>   messageList = new ArrayList<>();
+    private List<ZimbraEmail>   emailsList = new ArrayList<>();
 
     public String getId() { return id; }
     public String getSubject() { return subject; }
     public Integer getNbMsg() { return nbMsg; }
-    public Integer getNbMsgTotal() { return nbMsgTotal; }
+    public Integer getNbUnread() { return nbUnread; }
     public Boolean getRead() { return isRead; }
     public String getZimbraFlags() { return zimbraFlags; }
     public List<Message> getMessageList() { return messageList; }
@@ -36,18 +38,44 @@ public class Conversation {
         conversation.id = zimbraData.getString(CONVERSATION_ID, "");
         conversation.subject = zimbraData.getString(CONVERSATION_SUBJECT, "");
         conversation.nbMsg = zimbraData.getInteger(CONVERSATION_NBMSG, 0);
-        conversation.nbMsgTotal = zimbraData.getInteger(CONVERSATION_NBMSTOTAL, 0);
+        conversation.nbUnread = zimbraData.getInteger(CONVERSATION_NBUNREAD, 0);
+        conversation.nbTotal = zimbraData.getInteger(CONVERSATION_NBTOTAL, 0);
+        conversation.date = zimbraData.getLong(CONVERSATION_DATE, 0L);
         conversation.zimbraFlags = zimbraData.getString(CONVERSATION_FLAGS, "");
         conversation.isRead = ZimbraFlags.isRead(conversation.zimbraFlags);
         conversation.generateMessageListFromZimbra(zimbraData.getJsonArray(MSG, new JsonArray()));
+        conversation.generateEmailListFromZimbra(zimbraData.getJsonArray(MSG_EMAILS, new JsonArray()));
         return conversation;
+    }
+
+    public Set<String> getAllAddresses() {
+        Set<String> resultSet = new HashSet<>();
+        emailsList.forEach( email -> {
+            resultSet.add(email.getAddress());
+        });
+        return resultSet;
+    }
+
+    public void applyEntUsersMapping(Map<String, Recipient> mapFromEmail) {
+
     }
 
     private void generateMessageListFromZimbra(JsonArray zimbraMessageList) {
         zimbraMessageList.forEach( item -> {
             if(item instanceof JsonObject) {
-                JsonObject message = (JsonObject)item;
-                messageList.add(Message.fromZimbra(message));
+                JsonObject messageJson = (JsonObject)item;
+                Message message = Message.fromZimbra(messageJson);
+                message.setConversationId(id);
+                messageList.add(message);
+            }
+        });
+    }
+
+    private void generateEmailListFromZimbra(JsonArray zimbraEmailList) {
+        zimbraEmailList.forEach( item -> {
+            if(item instanceof JsonObject) {
+                JsonObject emailObject = (JsonObject)item;
+                emailsList.add(ZimbraEmail.fromZimbra(emailObject));
             }
         });
     }

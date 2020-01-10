@@ -7,4 +7,16 @@ public class ZimbraFlags {
     public static Boolean isRead(String flags) {
         return !flags.contains(MSG_FLAG_UNREAD);
     }
+
+    public static Boolean isDraft(String flags) {
+        return flags.contains(MSG_FLAG_DRAFT);
+    }
+
+    public static Boolean isSentByMe(String flags) {
+        return flags.contains(MSG_FLAG_SENTBYME);
+    }
+
+    public static Boolean hasAttachment(String flags) {
+        return flags.contains(MSG_FLAG_HASATTACHMENT);
+    }
 }

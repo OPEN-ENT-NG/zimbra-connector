@@ -27,6 +27,7 @@ import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.service.impl.*;
 
+import fr.openent.zimbra.service.messages.MobileThreadService;
 import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
@@ -1079,23 +1080,6 @@ public class ZimbraController extends BaseController {
 				return;
 			}
 			threadService.trashTreads(threadIds, user, defaultResponseHandler(request));
-		});
-	}
-
-	@Get("/thread/messages/:threadId")
-	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
-	public void getThreadMessages(final HttpServerRequest request) {
-		final String id = request.params().get("threadId");
-		if (id == null || id.trim().isEmpty()) {
-			badRequest(request);
-			return;
-		}
-		getUserInfos(eb, request, user -> {
-			if (user != null) {
-				threadService.getMessages(id, user, arrayResponseHandler(request));
-			} else {
-				unauthorized(request);
-			}
 		});
 	}
 

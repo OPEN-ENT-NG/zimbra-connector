@@ -24,7 +24,12 @@ public class SoapConversationHelper {
                 .put(CONVERSATION, new JsonObject()
                         .put(CONVERSATION_ID, conversationId));
         getConvRequest.setContent(content);
-        getConvRequest.start(processConversationHandler(GET_CONVERSATION_RESPONSE, resultHandler));
+        try {
+            getConvRequest.start(processConversationHandler(GET_CONVERSATION_RESPONSE, resultHandler));
+        } catch (Exception e) {
+            log.error("Exception in getConversationRequest ", e);
+            resultHandler.handle(Future.failedFuture(e));
+        }
     }
 
     @SuppressWarnings("SameParameterValue")

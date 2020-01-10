@@ -39,7 +39,7 @@ public class ZimbraConstants {
     public static final String MSG_RT_REPLY = "r";
     public static final String MSG_RT_FORWARD = "w";
     public static final String MSG_DRAFT_ID = "did";
-    public static final String MSG_CONVERSATION_ID = "id";
+    public static final String MSG_CONVERSATION_ID = "cid";
     public static final String MSG_SUBJECT = "su";
     public static final String MSG_DATE = "d";
     public static final String MSG_LOCATION = "l";
@@ -149,8 +149,10 @@ public class ZimbraConstants {
     public static final String CONVERSATION_ID = "id";
     public static final String CONVERSATION_SUBJECT = "su";
     public static final String CONVERSATION_NBMSG = "n";
-    public static final String CONVERSATION_NBMSTOTAL = "total";
+    public static final String CONVERSATION_NBUNREAD = "u";
+    public static final String CONVERSATION_NBTOTAL = "total";
     public static final String CONVERSATION_FLAGS = "f";
+    public static final String CONVERSATION_DATE = "d";
 
     public static final String SHARE_GRANTEE_TYPE = "gt";
     public static final String GRANTEE_TYPE_USER = "usr";
