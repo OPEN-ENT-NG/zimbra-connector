@@ -1,6 +1,5 @@
 package fr.openent.zimbra.controllers;
 
-import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.service.messages.MobileThreadService;

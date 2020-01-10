@@ -6,7 +6,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
@@ -26,6 +28,8 @@ public class Message {
     private Boolean     isReplied;
     private Multipart   multipart;
     private List<ZimbraEmail> emailAdresses = new ArrayList<>();
+    private Map<String, Recipient> userMapping = new HashMap<>();
+
 
     private boolean     zimbraEmails = false;
     private boolean     frontEmails = false;
@@ -43,7 +47,79 @@ public class Message {
         this.conversationId = conversationId;
     }
 
+    public void setUserMapping(Map<String, Recipient> userMapping) {
+        this.userMapping = userMapping;
+    }
+
     private Message() {}
+
+    public JsonObject getJsonObject() {
+        JsonObject result = new JsonObject();
+        result.put(FrontConstants.MESSAGE_ID, id);
+        result.put(FrontConstants.MESSAGE_DATE, date);
+        result.put(FrontConstants.MESSAGE_SUBJECT, subject);
+        result.put(FrontConstants.MESSAGE_FOLDER_ID, zimbraFolder);
+        result.put(FrontConstants.MESSAGE_THREAD_ID, conversationId);
+        result.put(FrontConstants.MESSAGE_STATE, getFrontState());
+        result.put(FrontConstants.MESSAGE_UNREAD, !isRead);
+        result.put(FrontConstants.MESSAGE_RESPONSE, isReplied);
+        result.put(FrontConstants.MESSAGE_HAS_ATTACHMENTS, hasAttachment);
+        result.put(FrontConstants.MESSAGE_SYSTEM_FOLDER, frontFolder);
+        result.put(FrontConstants.MAIL_TO, getUsers(ADDR_TYPE_TO));
+        result.put(FrontConstants.MAIL_CC, getUsers(ADDR_TYPE_CC));
+        result.put(FrontConstants.MAIL_BCC, getUsers(ADDR_TYPE_BCC));
+        result.put(FrontConstants.MAIL_BCC_MOBILEAPP, getUsers(ADDR_TYPE_BCC));
+        result.put(FrontConstants.MAIL_DISPLAYNAMES, getDisplayNames());
+        result.put(FrontConstants.MESSAGE_ATTACHMENTS, multipart.getAttachmentsJson());
+        return result;
+    }
+
+    public static Message fromZimbra(JsonObject zimbraData) throws IllegalArgumentException {
+        Message message = new Message();
+        message.id = zimbraData.getString(MSG_ID, "");
+        message.subject = zimbraData.getString(MSG_SUBJECT, "");
+        message.zimbraFolder = zimbraData.getString(MSG_LOCATION, "");
+        message.conversationId = zimbraData.getString(MSG_CONVERSATION_ID, "");
+        message.zimbraFlags = zimbraData.getString(MSG_FLAGS, "");
+        message.setFrontFolder();
+        message.isRead = ZimbraFlags.isRead(message.zimbraFlags);
+        message.hasAttachment = ZimbraFlags.hasAttachment(message.zimbraFlags);
+        message.multipart = new Multipart(message.id, zimbraData.getJsonArray(MSG_MULTIPART));
+        message.body = message.multipart.getBody();
+        message.loadEmailAdresses(zimbraData.getJsonArray(MSG_EMAILS, new JsonArray()));
+        message.zimbraEmails = true;
+        return message;
+    }
+
+    private JsonArray getUsers(String zimbraType) {
+        JsonArray users = new JsonArray();
+        emailAdresses.forEach( email -> {
+            if(zimbraType.equals(email.getAddrType())) {
+                String emailAddr = email.getAddress();
+                if(userMapping.containsKey(emailAddr)) {
+                    users.add(userMapping.get(emailAddr).getUserId());
+                }
+            }
+        });
+        return users;
+    }
+
+    private JsonArray getDisplayNames() {
+        JsonArray displayNames = new JsonArray();
+        emailAdresses.forEach( email -> {
+            String address = email.getAddress();
+            JsonArray name = new JsonArray();
+            if(userMapping.containsKey(address)) {
+                name.add(userMapping.get(address).getUserId());
+            } else {
+                name.add(address);
+            }
+            String userName = email.getComment().isEmpty() ? address : email.getComment();
+            name.add(userName);
+            displayNames.add(name);
+        });
+        return displayNames;
+    }
 
     private void setFrontFolder() {
         if(ZimbraFlags.isDraft(zimbraFlags)){
@@ -62,22 +138,5 @@ public class Message {
                 emailAdresses.add(ZimbraEmail.fromZimbra(emailObject));
             }
         });
-    }
-
-    public static Message fromZimbra(JsonObject zimbraData) throws IllegalArgumentException {
-        Message message = new Message();
-        message.id = zimbraData.getString(MSG_ID, "");
-        message.subject = zimbraData.getString(MSG_SUBJECT, "");
-        message.zimbraFolder = zimbraData.getString(MSG_LOCATION, "");
-        message.conversationId = zimbraData.getString(MSG_CONVERSATION_ID, "");
-        message.zimbraFlags = zimbraData.getString(MSG_FLAGS, "");
-        message.setFrontFolder();
-        message.isRead = ZimbraFlags.isRead(message.zimbraFlags);
-        message.hasAttachment = ZimbraFlags.hasAttachment(message.zimbraFlags);
-        message.multipart = new Multipart(message.id, zimbraData.getJsonArray(MSG_MULTIPART));
-        message.body = message.multipart.getBody();
-        message.loadEmailAdresses(zimbraData.getJsonArray(MSG_EMAILS, new JsonArray()));
-        message.zimbraEmails = true;
-        return message;
     }
 }

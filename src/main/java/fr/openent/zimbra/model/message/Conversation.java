@@ -21,6 +21,8 @@ public class Conversation {
     private String          zimbraFlags;
     private List<Message>   messageList = new ArrayList<>();
     private List<ZimbraEmail>   emailsList = new ArrayList<>();
+    @SuppressWarnings("FieldCanBeLocal")
+    private Map<String, Recipient> userMapping = new HashMap<>();
 
     public String getId() { return id; }
     public String getSubject() { return subject; }
@@ -50,14 +52,19 @@ public class Conversation {
 
     public Set<String> getAllAddresses() {
         Set<String> resultSet = new HashSet<>();
-        emailsList.forEach( email -> {
-            resultSet.add(email.getAddress());
-        });
+        emailsList.forEach( email -> resultSet.add(email.getAddress()));
         return resultSet;
     }
 
-    public void applyEntUsersMapping(Map<String, Recipient> mapFromEmail) {
+    public void setUserMapping(Map<String, Recipient> mapFromEmail) {
+        userMapping = mapFromEmail;
+        messageList.forEach( message -> message.setUserMapping(mapFromEmail));
+    }
 
+    public JsonArray getAllMessagesJson() {
+        JsonArray result = new JsonArray();
+        messageList.forEach( message -> result.add(message.getJsonObject()));
+        return new JsonArray();
     }
 
     private void generateMessageListFromZimbra(JsonArray zimbraMessageList) {

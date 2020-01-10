@@ -2,7 +2,6 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.helper.AsyncContainer;
 import fr.openent.zimbra.model.message.Recipient;
-import fr.openent.zimbra.service.messages.MobileThreadService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;

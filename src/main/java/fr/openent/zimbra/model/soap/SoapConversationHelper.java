@@ -2,7 +2,6 @@ package fr.openent.zimbra.model.soap;
 
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.message.Conversation;
-import fr.openent.zimbra.model.soap.model.SoapFolder;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;

@@ -107,8 +107,8 @@ public class ServiceManager {
         this.expertModeService = new ExpertModeService();
         this.conversationService = new ConversationService();
         this.threadService = new TempThreadService(messageService);
-        this.mobileThreadService = new MobileThreadService();
         this.recipientService = new RecipientService(messageService);
+        this.mobileThreadService = new MobileThreadService(recipientService);
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);

@@ -533,7 +533,7 @@ public class MessageService {
         JsonArray listRecipientsTo = frontMessage.getJsonArray(FrontConstants.MAIL_TO, new JsonArray());
         JsonArray listRecipientsCC = frontMessage.getJsonArray(FrontConstants.MAIL_CC, new JsonArray());
 
-        Integer totalRecipients = listRecipientsTo.size() + listRecipientsCC.size();
+        int totalRecipients = listRecipientsTo.size() + listRecipientsCC.size();
 
         if (totalRecipients > maxRecipients) {
             result.handle(new Either.Left<>(I18nConstants.ERROR_MAXRECIPIENTS));

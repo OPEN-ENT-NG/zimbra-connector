@@ -35,13 +35,13 @@ public class MobileThreadService {
                 if(zimbraResult.failed()) {
                     handler.handle(Future.failedFuture(zimbraResult.cause()));
                 } else {
-                    processZimbraConversation(zimbraResult.result(), handler);
+                    getMessagesFromConversation(zimbraResult.result(), handler);
                 }
             });
         }
     }
 
-    private void processZimbraConversation(Conversation conversation, Handler<AsyncResult<JsonArray>> finalHandler) {
+    private void getMessagesFromConversation(Conversation conversation, Handler<AsyncResult<JsonArray>> finalHandler) {
         JsonArray results = new JsonArray();
         Set<String> addresses = conversation.getAllAddresses();
         recipientService.getUseridsFromEmails(addresses, result -> {
@@ -49,8 +49,9 @@ public class MobileThreadService {
                 finalHandler.handle(Future.failedFuture(result.cause()));
             } else {
                 Map<String, Recipient> allusers = result.result();
-                // todo for each message apply user map
-                // todo get message Json form
+                conversation.setUserMapping(allusers);
+                JsonArray data = conversation.getAllMessagesJson();
+                finalHandler.handle(Future.succeededFuture(data));
             }
         });
     }
