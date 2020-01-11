@@ -1,5 +1,6 @@
 package fr.openent.zimbra.model.message;
 
+import fr.openent.zimbra.helper.RecipientHelper;
 import fr.openent.zimbra.helper.ZimbraFlags;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import io.vertx.core.json.JsonArray;
@@ -92,33 +93,11 @@ public class Message {
     }
 
     private JsonArray getUsers(String zimbraType) {
-        JsonArray users = new JsonArray();
-        emailAdresses.forEach( email -> {
-            if(zimbraType.equals(email.getAddrType())) {
-                String emailAddr = email.getAddress();
-                if(userMapping.containsKey(emailAddr)) {
-                    users.add(userMapping.get(emailAddr).getUserId());
-                }
-            }
-        });
-        return users;
+        return RecipientHelper.getUsersJson(emailAdresses, userMapping, zimbraType);
     }
 
     private JsonArray getDisplayNames() {
-        JsonArray displayNames = new JsonArray();
-        emailAdresses.forEach( email -> {
-            String address = email.getAddress();
-            JsonArray name = new JsonArray();
-            if(userMapping.containsKey(address)) {
-                name.add(userMapping.get(address).getUserId());
-            } else {
-                name.add(address);
-            }
-            String userName = email.getComment().isEmpty() ? address : email.getComment();
-            name.add(userName);
-            displayNames.add(name);
-        });
-        return displayNames;
+        return RecipientHelper.getDisplayNamesJson(emailAdresses, userMapping);
     }
 
     private void setFrontFolder() {

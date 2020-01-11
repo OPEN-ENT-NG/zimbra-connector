@@ -19,6 +19,7 @@ package fr.openent.zimbra.model.constant;
 
 @SuppressWarnings("unused")
 public class ZimbraConstants {
+    public static final String FOLDER_ROOT = "/";
     public static final String FOLDER_INBOX = "/Inbox";
     public static final String FOLDER_OUTBOX = "/Sent";
     public static final String FOLDER_DRAFT = "/Drafts";
@@ -186,4 +187,21 @@ public class ZimbraConstants {
 
     public static final String ACCT_STATUS_LOCKED = "locked";
     public static final String ACCT_STATUS_ACTIVE = "active";
+
+    public static final String SEARCH_QUERY = "query";
+    public static final String SEARCH_LIMIT = "limit";
+    public static final String SEARCH_OFFSET = "offset";
+    public static final String SEARCH_TYPES = "types";
+    // Only ONE of message, conversation may be set. If both are set, the first is used
+    public static final String SEARCH_TYPE_CONVERSATION = "conversation";
+    public static final String SEARCH_TYPE_MESSAGE = "message";
+    public static final String SEARCH_TYPE_CONTACT = "contact";
+    public static final String SEARCH_TYPE_APPOINTMENT = "appointment";
+    public static final String SEARCH_TYPE_TASK = "task";
+    public static final String SEARCH_TYPE_WIKI = "wiki";
+    public static final String SEARCH_TYPE_DOCUMENT = "document";
+    public static final String SEARCH_RECIPIENTS_TO_RETURN = "recip";
+    public static final String SEARCH_RECIP_FROM = "0";
+    public static final String SEARCH_RECIP_TO = "1";
+    public static final String SEARCH_RECIP_ALL = "2";
 }

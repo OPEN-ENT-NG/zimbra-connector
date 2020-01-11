@@ -1,7 +1,9 @@
 package fr.openent.zimbra.model.message;
 
 
+import fr.openent.zimbra.helper.RecipientHelper;
 import fr.openent.zimbra.helper.ZimbraFlags;
+import fr.openent.zimbra.model.constant.FrontConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -67,6 +69,20 @@ public class Conversation {
         return new JsonArray();
     }
 
+    public JsonObject getJsonObject() {
+        JsonObject result = new JsonObject();
+        result.put(FrontConstants.THREAD_ID, id);
+        result.put(FrontConstants.THREAD_DATE, date);
+        result.put(FrontConstants.THREAD_SUBJECT, subject);
+        result.put(FrontConstants.THREAD_NB_UNREAD, nbUnread);
+        result.put(FrontConstants.MAIL_TO, getUsers(ADDR_TYPE_TO));
+        result.put(FrontConstants.MAIL_CC, getUsers(ADDR_TYPE_CC));
+        result.put(FrontConstants.MAIL_BCC, getUsers(ADDR_TYPE_BCC));
+        result.put(FrontConstants.MAIL_BCC_MOBILEAPP, getUsers(ADDR_TYPE_BCC));
+        result.put(FrontConstants.MAIL_DISPLAYNAMES, getDisplayNames());
+        return result;
+    }
+
     private void generateMessageListFromZimbra(JsonArray zimbraMessageList) {
         zimbraMessageList.forEach( item -> {
             if(item instanceof JsonObject) {
@@ -86,4 +102,13 @@ public class Conversation {
             }
         });
     }
+
+    private JsonArray getUsers(String zimbraType) {
+        return RecipientHelper.getUsersJson(emailsList, userMapping, zimbraType);
+    }
+
+    private JsonArray getDisplayNames() {
+        return RecipientHelper.getDisplayNamesJson(emailsList, userMapping);
+    }
+
 }

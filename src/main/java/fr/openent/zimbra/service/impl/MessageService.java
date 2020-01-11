@@ -102,12 +102,13 @@ public class MessageService {
                     if(searchText != null && ! searchText.isEmpty()) {
                         query += " *" + searchText +"*";
                     }
+                    int pageSize = Zimbra.appConfig.getMailListLimit();
                     JsonObject searchReq = new JsonObject()
                             .put("query", query)
                             .put("types", "message")
                             .put("recip", "2")
-                            .put("limit", Zimbra.MAIL_LIST_LIMIT)
-                            .put("offset", page * Zimbra.MAIL_LIST_LIMIT)
+                            .put("limit", pageSize)
+                            .put("offset", page * pageSize)
                             .put("_jsns", SoapConstants.NAMESPACE_MAIL);
 
                     JsonObject searchRequest = new JsonObject()
@@ -232,7 +233,7 @@ public class MessageService {
 
         msgFront.put("state", state);
         msgFront.put("unread", flags.contains(MSG_FLAG_UNREAD));
-        msgFront.put("response", flags.contains(MSG_FLAG_REPLIED));//TODO QMER : verify sendmsgresponse : modified f : r ?
+        msgFront.put("response", flags.contains(MSG_FLAG_REPLIED));
         msgFront.put("hasAttachment", flags.contains(MSG_FLAG_HASATTACHMENT));
         msgFront.put("systemFolder",folder);
         msgFront.put("to", new JsonArray());

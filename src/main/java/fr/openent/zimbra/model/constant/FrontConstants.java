@@ -56,4 +56,9 @@ public class FrontConstants {
     public static final String MESSAGE_ATT_FILENAME = "filename";
     public static final String MESSAGE_ATT_CONTENTTYPE = "contentType";
     public static final String MESSAGE_ATT_SIZE = "size";
+
+    public static final String THREAD_ID = "id";
+    public static final String THREAD_DATE = "date";
+    public static final String THREAD_NB_UNREAD = "unread";
+    public static final String THREAD_SUBJECT = "subject";
 }
