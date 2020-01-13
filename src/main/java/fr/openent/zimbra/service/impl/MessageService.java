@@ -527,7 +527,7 @@ public class MessageService {
      * @param user User infos
      * @param result result handler
      */
-    public void sendMessage(String messageId, JsonObject frontMessage, UserInfos user,
+    public void sendMessage(String messageId, JsonObject frontMessage, UserInfos user, String parentMessageId,
                             Handler<Either<String, JsonObject>> result) {
 
         Integer maxRecipients = Zimbra.appConfig.getMaxRecipients();
@@ -547,6 +547,15 @@ public class MessageService {
                 mailContent.put(MSG_ID, messageId);
                 mailContent.put(MSG_DRAFT_ID, messageId);
             }
+            if(parentMessageId != null && !parentMessageId.isEmpty()) {
+                mailContent.put(MSG_REPLYTYPE, MSG_RT_REPLY);
+                mailContent.put(MSG_REPLIEDTO_ID, parentMessageId);
+            }
+            mailContent.getJsonArray(MSG_EMAILS, new JsonArray())
+                        .add(new JsonObject()
+                            .put(MSG_EMAIL_ADDR, "")
+                            .put(MSG_EMAIL_TYPE, ADDR_TYPE_FROM)
+                            .put(MSG_EMAIL_COMMENT, user.getUsername()));
             JsonObject sendMsgRequest = new JsonObject()
                     .put("name", "SendMsgRequest")
                     .put("content", new JsonObject()

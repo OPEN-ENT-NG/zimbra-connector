@@ -225,10 +225,11 @@ public class ZimbraController extends BaseController {
 	@ResourceFilter(DevLevelFilter.class)
 	public void send(final HttpServerRequest request) {
         final String messageId = request.params().get("id");
+		final String parentMessageId = request.params().get("In-Reply-To");
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
 					bodyToJson(request, message ->
-						messageService.sendMessage(messageId, message, user, defaultResponseHandler(request))
+						messageService.sendMessage(messageId, message, user, parentMessageId, defaultResponseHandler(request))
 					);
 				} else {
 					unauthorized(request);
