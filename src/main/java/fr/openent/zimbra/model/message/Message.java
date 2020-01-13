@@ -57,6 +57,7 @@ public class Message {
     public JsonObject getJsonObject() {
         JsonObject result = new JsonObject();
         result.put(FrontConstants.MESSAGE_ID, id);
+        result.put(FrontConstants.MESSAGE_BODY, body);
         result.put(FrontConstants.MESSAGE_DATE, date);
         result.put(FrontConstants.MESSAGE_SUBJECT, subject);
         result.put(FrontConstants.MESSAGE_FOLDER_ID, zimbraFolder);
@@ -66,6 +67,8 @@ public class Message {
         result.put(FrontConstants.MESSAGE_RESPONSE, isReplied);
         result.put(FrontConstants.MESSAGE_HAS_ATTACHMENTS, hasAttachment);
         result.put(FrontConstants.MESSAGE_SYSTEM_FOLDER, frontFolder);
+        JsonArray allFrom = getUsers(ADDR_TYPE_FROM);
+        result.put(FrontConstants.MAIL_FROM, allFrom.isEmpty() ? "" : allFrom.getString(0));
         result.put(FrontConstants.MAIL_TO, getUsers(ADDR_TYPE_TO));
         result.put(FrontConstants.MAIL_CC, getUsers(ADDR_TYPE_CC));
         result.put(FrontConstants.MAIL_BCC, getUsers(ADDR_TYPE_BCC));
@@ -76,19 +79,25 @@ public class Message {
     }
 
     public static Message fromZimbra(JsonObject zimbraData) throws IllegalArgumentException {
+        return fromZimbra(zimbraData, false);
+    }
+
+    public static Message fromZimbra(JsonObject zimbraData, boolean fromConv) throws IllegalArgumentException {
         Message message = new Message();
         message.id = zimbraData.getString(MSG_ID, "");
         message.subject = zimbraData.getString(MSG_SUBJECT, "");
         message.zimbraFolder = zimbraData.getString(MSG_LOCATION, "");
         message.conversationId = zimbraData.getString(MSG_CONVERSATION_ID, "");
         message.zimbraFlags = zimbraData.getString(MSG_FLAGS, "");
+        message.date = zimbraData.getLong(MSG_DATE, 0L);
         message.setFrontFolder();
         message.isRead = ZimbraFlags.isRead(message.zimbraFlags);
         message.hasAttachment = ZimbraFlags.hasAttachment(message.zimbraFlags);
-        message.multipart = new Multipart(message.id, zimbraData.getJsonArray(MSG_MULTIPART));
+        message.multipart = new Multipart(message.id, zimbraData.getJsonArray(MSG_MULTIPART), fromConv);
         message.body = message.multipart.getBody();
         message.loadEmailAdresses(zimbraData.getJsonArray(MSG_EMAILS, new JsonArray()));
         message.zimbraEmails = true;
+        message.isReplied = ZimbraFlags.isReplied(message.zimbraFlags);
         return message;
     }
 

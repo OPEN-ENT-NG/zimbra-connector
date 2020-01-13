@@ -333,12 +333,13 @@ public class MessageService {
 
     public void translateMailFuture(String mail, Handler<AsyncResult<Recipient>> handler) {
         translateMail(mail, res -> {
+            Recipient recipient;
             if(res == null) {
-                handler.handle(Future.failedFuture("no matching user"));
+                recipient = new Recipient(mail, mail);
             } else {
-                Recipient recipient = new Recipient(mail, res);
-                handler.handle(Future.succeededFuture(recipient));
+                recipient = new Recipient(mail, res);
             }
+            handler.handle(Future.succeededFuture(recipient));
         });
     }
 

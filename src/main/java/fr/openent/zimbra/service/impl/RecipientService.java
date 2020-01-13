@@ -37,27 +37,29 @@ public class RecipientService {
                 toSearch.add(emailResolved);
             }
         });
-        CompositeFuture.all(toSearch).setHandler( compo -> {
-            AsyncContainer<Boolean> atLeastOne = new AsyncContainer<>();
-            atLeastOne.setValue(false);
-            toSearch.forEach( future -> {
-                if(future.succeeded()) {
-                    try {
-                        Recipient futureRes = (Recipient) future.result();
-                        zimbraMap.put(futureRes.getEmailAddress(), futureRes);
-                        resultMap.put(futureRes.getEmailAddress(), futureRes);
-                        atLeastOne.setValue(true);
-                    } catch (Exception e) {
-                        log.error("Error when translating recipient", e);
+        if(toSearch.isEmpty()) {
+            handler.handle(Future.succeededFuture(resultMap));
+        } else {
+            CompositeFuture.join(toSearch).setHandler(compo -> {
+                AsyncContainer<Boolean> atLeastOne = new AsyncContainer<>();
+                atLeastOne.setValue(false);
+                toSearch.forEach(future -> {
+                    if (future.succeeded()) {
+                        try {
+                            Recipient futureRes = (Recipient) future.result();
+                            zimbraMap.put(futureRes.getEmailAddress(), futureRes);
+                            resultMap.put(futureRes.getEmailAddress(), futureRes);
+                            atLeastOne.setValue(true);
+                        } catch (Exception e) {
+                            log.error("Error when translating recipient", e);
+                        }
                     }
+                });
+                if (atLeastOne.getValue()) {
+                    handler.handle(Future.succeededFuture(resultMap));
                 }
             });
-            if(atLeastOne.getValue()) {
-                handler.handle(Future.succeededFuture(resultMap));
-            } else {
-                handler.handle(Future.failedFuture(compo.cause()));
-            }
-        });
+        }
     }
 
 }

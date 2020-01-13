@@ -65,6 +65,9 @@ public class ConfigManager {
     private final Integer addressBookSynchroTtl;
     private Integer sqlInsertPaginationSize;
 
+    // Bug in Zimbra : when getting messages in conversations, alternative parts are inverted
+    private boolean invertAltPartInConvMsg;
+
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
     public ConfigManager(JsonObject config) {
@@ -93,6 +96,7 @@ public class ConfigManager {
         this.addressBookAccountName  = config.getString("address-book-account", "");
         this.addressBookSynchroTtl = config.getInteger("abook-sync-ttl-minutes", 1440); // default 24h
         this.sqlInsertPaginationSize = config.getInteger("sql-insert-pagination-size", 5000);
+        this.invertAltPartInConvMsg = config.getBoolean("invert-alt-part-in-conv-msg", true);
 
         String devLevelStr = config.getString("dev-level", "");
         if(NOSYNC.equals(devLevelStr)) {
@@ -151,6 +155,7 @@ public class ConfigManager {
     public String getAddressBookAccountName() { return addressBookAccountName;}
     public Integer getAddressBookSynchroTtl() { return addressBookSynchroTtl;}
     public Integer getSqlInsertPaginationSize() { return sqlInsertPaginationSize;}
+    public boolean getInvertAltPartInConvMsg() { return invertAltPartInConvMsg;}
 
     private void initPublicConfig() {
         publicConfig.put("admin-password", hidePasswd(rawConfig.getString("admin-password","")));

@@ -30,6 +30,7 @@ public class FrontConstants {
     public static final String REPLYTYPE_FORWARD = "f";
     public static final String UNDEFINED = "undefined";
 
+    public static final String MAIL_FROM = "from";
     public static final String MAIL_TO = "to";
     public static final String MAIL_CC = "cc";
     public static final String MAIL_BCC = "bcc";

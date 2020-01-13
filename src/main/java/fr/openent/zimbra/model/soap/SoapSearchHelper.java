@@ -22,7 +22,7 @@ public class SoapSearchHelper {
     private static Logger log = LoggerFactory.getLogger(SoapSearchHelper.class);
 
     public static void searchAllConv(String userId, int page, Handler<AsyncResult<List<Conversation>>> handler) {
-        String searchQuery = generateSearchQuery(FOLDER_ROOT, false, null);
+        String searchQuery = generateSearchQuery(FOLDER_INBOX, false, null);
         search(userId, searchQuery, page, SEARCH_TYPE_CONVERSATION, SEARCH_RECIP_ALL, searchResult -> {
             if(searchResult.failed()) {
                 handler.handle(Future.failedFuture(searchResult.cause()));

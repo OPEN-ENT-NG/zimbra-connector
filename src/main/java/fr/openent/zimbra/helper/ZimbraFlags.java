@@ -19,4 +19,8 @@ public class ZimbraFlags {
     public static Boolean hasAttachment(String flags) {
         return flags.contains(MSG_FLAG_HASATTACHMENT);
     }
+
+    public static Boolean isReplied(String flags) {
+        return flags.contains(MSG_FLAG_REPLIED);
+    }
 }

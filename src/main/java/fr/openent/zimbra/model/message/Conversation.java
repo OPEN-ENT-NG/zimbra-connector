@@ -66,7 +66,7 @@ public class Conversation {
     public JsonArray getAllMessagesJson() {
         JsonArray result = new JsonArray();
         messageList.forEach( message -> result.add(message.getJsonObject()));
-        return new JsonArray();
+        return result;
     }
 
     public JsonObject getJsonObject() {
@@ -87,7 +87,7 @@ public class Conversation {
         zimbraMessageList.forEach( item -> {
             if(item instanceof JsonObject) {
                 JsonObject messageJson = (JsonObject)item;
-                Message message = Message.fromZimbra(messageJson);
+                Message message = Message.fromZimbra(messageJson, true);
                 message.setConversationId(id);
                 messageList.add(message);
             }

@@ -24,7 +24,8 @@ public class SoapConversationHelper {
         SoapRequest getConvRequest = SoapRequest.MailSoapRequest(SoapConstants.GET_CONVERSATION_REQUEST, userId);
         JsonObject content = new JsonObject()
                 .put(CONVERSATION, new JsonObject()
-                        .put(CONVERSATION_ID, conversationId));
+                        .put(CONVERSATION_ID, conversationId)
+                        .put(CONVERSATION_EXPAND_MESSAGES, CONV_EXPAND_ALL));
         getConvRequest.setContent(content);
         try {
             getConvRequest.start(processConversationHandler(GET_CONVERSATION_RESPONSE, resultHandler));
@@ -74,7 +75,7 @@ public class SoapConversationHelper {
                 try {
                     JsonObject conversationObject = jsonResponse.getJsonObject(BODY)
                             .getJsonObject(respName)
-                            .getJsonObject(CONVERSATION, new JsonObject());
+                            .getJsonArray(CONVERSATION).getJsonObject(0);
                     Conversation conversation = Conversation.fromZimbra(conversationObject);
                     handler.handle(Future.succeededFuture(conversation));
                 } catch (Exception e) {

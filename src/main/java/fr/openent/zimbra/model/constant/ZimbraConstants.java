@@ -155,6 +155,9 @@ public class ZimbraConstants {
     public static final String CONVERSATION_FLAGS = "f";
     public static final String CONVERSATION_DATE = "d";
 
+    public static final String CONVERSATION_EXPAND_MESSAGES = "fetch";
+    public static final String CONV_EXPAND_ALL = "all";
+
     public static final String SHARE_GRANTEE_TYPE = "gt";
     public static final String GRANTEE_TYPE_USER = "usr";
     public static final String GRANTEE_NAME = "d";

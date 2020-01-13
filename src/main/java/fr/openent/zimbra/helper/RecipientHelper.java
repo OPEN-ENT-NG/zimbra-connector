@@ -4,8 +4,7 @@ import fr.openent.zimbra.model.message.Recipient;
 import fr.openent.zimbra.model.message.ZimbraEmail;
 import io.vertx.core.json.JsonArray;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class RecipientHelper {
 
@@ -25,17 +24,21 @@ public class RecipientHelper {
 
     public static JsonArray getDisplayNamesJson(List<ZimbraEmail> emailsList, Map<String, Recipient> userMapping) {
         JsonArray displayNames = new JsonArray();
+        Set<String> processedAddress = new HashSet<>();
         emailsList.forEach( email -> {
             String address = email.getAddress();
-            JsonArray name = new JsonArray();
-            if(userMapping.containsKey(address)) {
-                name.add(userMapping.get(address).getUserId());
-            } else {
-                name.add(address);
+            if(!processedAddress.contains(address)) {
+                JsonArray name = new JsonArray();
+                if (userMapping.containsKey(address)) {
+                    name.add(userMapping.get(address).getUserId());
+                } else {
+                    name.add(address);
+                }
+                String userName = email.getComment().isEmpty() ? address : email.getComment();
+                name.add(userName);
+                displayNames.add(name);
+                processedAddress.add(address);
             }
-            String userName = email.getComment().isEmpty() ? address : email.getComment();
-            name.add(userName);
-            displayNames.add(name);
         });
         return displayNames;
     }
