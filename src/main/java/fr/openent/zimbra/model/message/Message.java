@@ -89,7 +89,7 @@ public class Message {
         message.zimbraFolder = zimbraData.getString(MSG_LOCATION, "");
         message.conversationId = zimbraData.getString(MSG_CONVERSATION_ID, "");
         message.zimbraFlags = zimbraData.getString(MSG_FLAGS, "");
-        message.date = zimbraData.getLong(MSG_DATE, 0L);
+        message.date = Long.parseLong(zimbraData.getValue(MSG_DATE, 0L).toString());
         message.setFrontFolder();
         message.isRead = ZimbraFlags.isRead(message.zimbraFlags);
         message.hasAttachment = ZimbraFlags.hasAttachment(message.zimbraFlags);

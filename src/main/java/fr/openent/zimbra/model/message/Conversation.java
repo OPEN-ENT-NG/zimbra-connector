@@ -44,7 +44,7 @@ public class Conversation {
         conversation.nbMsg = zimbraData.getInteger(CONVERSATION_NBMSG, 0);
         conversation.nbUnread = zimbraData.getInteger(CONVERSATION_NBUNREAD, 0);
         conversation.nbTotal = zimbraData.getInteger(CONVERSATION_NBTOTAL, 0);
-        conversation.date = zimbraData.getLong(CONVERSATION_DATE, 0L);
+        conversation.date = Long.parseLong(zimbraData.getValue(CONVERSATION_DATE, 0L).toString());
         conversation.zimbraFlags = zimbraData.getString(CONVERSATION_FLAGS, "");
         conversation.isRead = ZimbraFlags.isRead(conversation.zimbraFlags);
         conversation.generateMessageListFromZimbra(zimbraData.getJsonArray(MSG, new JsonArray()));
