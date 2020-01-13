@@ -89,5 +89,5 @@ public class SoapConstants {
     public static final String GET_CONVERSATION_RESPONSE = "GetConvResponse";
     public static final String SEARCH_REQUEST = "SearchRequest";
     public static final String SEARCH_RESPONSE = "SearchResponse";
-    public static final String CONVERSATION_ACTION_REQUEST = "ConvAction";
+    public static final String CONVERSATION_ACTION_REQUEST = "ConvActionRequest";
 }

@@ -2,6 +2,7 @@ package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.filters.DevLevelFilter;
 import fr.openent.zimbra.helper.AsyncHelper;
+import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.service.messages.MobileThreadService;
 import fr.wseduc.rs.Get;
@@ -10,9 +11,11 @@ import fr.wseduc.rs.Put;
 import fr.wseduc.security.ActionType;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
+import fr.wseduc.webutils.request.RequestUtils;
 import fr.wseduc.webutils.security.SecuredAction;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.user.UserUtils;
@@ -78,17 +81,23 @@ public class ZimbraMobileController extends BaseController {
     @fr.wseduc.security.SecuredAction(value = "", type = ActionType.RESOURCE)
     @ResourceFilter(DevLevelFilter.class)
     public void toggleUnreadThread(final HttpServerRequest request) {
-        final List<String> ids = request.params().getAll("id");
-        final String unread = request.params().get("unread");
 
-        if (ids == null || ids.isEmpty() || unread == null || (!unread.equals("true") && !unread.equals("false"))) {
-            badRequest(request);
-            return;
-        }
         UserUtils.getUserInfos(eb, request, user -> {
             if (user != null) {
-                mobileThreadService.toggleUnreadThreads(ids, Boolean.parseBoolean(unread), user,
-                        AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
+                RequestUtils.bodyToJson(request, body -> {
+                    try {
+                        List<String> ids = JsonHelper.getStringList(body.getJsonArray("id", new JsonArray()));
+                        boolean unread = body.getBoolean("unread");
+                        if (ids.isEmpty()) {
+                            badRequest(request);
+                            return;
+                        }
+                        mobileThreadService.toggleUnreadThreads(ids, unread, user,
+                                AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
+                    } catch (Exception e) {
+                        badRequest(request);
+                    }
+                });
             } else {
                 unauthorized(request);
             }
@@ -100,18 +109,24 @@ public class ZimbraMobileController extends BaseController {
     @fr.wseduc.security.SecuredAction(value = "", type = ActionType.RESOURCE)
     @ResourceFilter(DevLevelFilter.class)
     public void trashThread(final HttpServerRequest request) {
-        final List<String> threadIds = request.params().getAll("id");
-        if(threadIds == null || threadIds.size() == 0){
-            badRequest(request);
-            return;
-        }
         UserUtils.getUserInfos(eb, request, user -> {
-            if(user == null){
+            if (user != null) {
+                RequestUtils.bodyToJson(request, body -> {
+                    try {
+                        List<String> threadIds = JsonHelper.getStringList(body.getJsonArray("id", new JsonArray()));
+                        if (threadIds.isEmpty()) {
+                            badRequest(request);
+                            return;
+                        }
+                        mobileThreadService.trashThreads(threadIds, user,
+                                AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
+                    } catch (Exception e) {
+                        badRequest(request);
+                    }
+                });
+            } else {
                 unauthorized(request);
-                return;
             }
-            mobileThreadService.trashThreads(threadIds, user,
-                    AsyncHelper.getJsonObjectAsyncHandler(defaultResponseHandler(request)));
         });
     }
 }
