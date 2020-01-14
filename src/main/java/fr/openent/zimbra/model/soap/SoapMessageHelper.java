@@ -10,8 +10,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-import static fr.openent.zimbra.model.constant.SoapConstants.BODY;
-import static fr.openent.zimbra.model.constant.SoapConstants.GET_CONVERSATION_RESPONSE;
+import static fr.openent.zimbra.model.constant.SoapConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
 public class SoapMessageHelper {
@@ -26,7 +25,7 @@ public class SoapMessageHelper {
                         .put(MSG_ID, messageId));
         getMsgRequest.setContent(content);
         try {
-            getMsgRequest.start(processMessageHandler(GET_CONVERSATION_RESPONSE, resultHandler));
+            getMsgRequest.start(processMessageHandler(GET_MESSAGE_RESPONSE, resultHandler));
         } catch (Exception e) {
             log.error("Exception in getConversationRequest ", e);
             resultHandler.handle(Future.failedFuture(e));
