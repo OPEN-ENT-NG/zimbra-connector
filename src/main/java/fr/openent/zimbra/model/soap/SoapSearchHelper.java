@@ -23,7 +23,7 @@ public class SoapSearchHelper {
 
     public static void searchAllMailedConv(String userId, int page, Handler<AsyncResult<List<Conversation>>> handler) {
         String query =  excludeFolder(SEARCH_QUERY_ALL, FOLDER_DRAFT);
-        search(userId, SEARCH_QUERY_ALL, page, SEARCH_TYPE_CONVERSATION, SEARCH_RECIP_ALL, searchResult -> {
+        search(userId, query, page, SEARCH_TYPE_CONVERSATION, SEARCH_RECIP_ALL, searchResult -> {
             if(searchResult.failed()) {
                 handler.handle(Future.failedFuture(searchResult.cause()));
             } else {
@@ -54,7 +54,7 @@ public class SoapSearchHelper {
 
     @SuppressWarnings("SameParameterValue")
     private static String excludeFolder(String query, String folderPath) {
-        return query + " not in:\"" + folderPath + "\"";
+        return query + " NOT in:\"" + folderPath + "\"";
     }
 
     @SuppressWarnings("SameParameterValue")

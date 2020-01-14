@@ -78,6 +78,8 @@ public class Conversation {
         result.put(FrontConstants.MAIL_TO, getUsers(ADDR_TYPE_TO));
         result.put(FrontConstants.MAIL_CC, getUsers(ADDR_TYPE_CC));
         result.put(FrontConstants.MAIL_BCC, getUsers(ADDR_TYPE_BCC));
+        JsonArray allFrom = getUsers(ADDR_TYPE_FROM);
+        result.put(FrontConstants.MAIL_FROM, allFrom.isEmpty() ? "" : allFrom.getString(0));
         result.put(FrontConstants.MAIL_BCC_MOBILEAPP, getUsers(ADDR_TYPE_BCC));
         result.put(FrontConstants.MAIL_DISPLAYNAMES, getDisplayNames());
         return result;
