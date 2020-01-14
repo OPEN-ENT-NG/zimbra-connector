@@ -568,8 +568,16 @@ public class MessageService {
                 if (response.isLeft()) {
                     result.handle(response);
                 } else {
+                    String id = "";
+                    try {
+                        id = response.right().getValue().getJsonObject("Body").getJsonObject("SendMsgResponse")
+                                .getJsonArray(MSG).getJsonObject(0).getString("id");
+                    } catch (Exception e) {
+                        log.debug("unfidable id ", e);
+                    }
                     JsonObject rightResponse = new JsonObject()
-                            .put("sent", 1);
+                            .put("sent", 1)
+                            .put("id", id);
                     result.handle(new Either.Right<>(rightResponse));
                 }
             });
