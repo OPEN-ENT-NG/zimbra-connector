@@ -25,6 +25,7 @@ import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.message.Multipart;
 import fr.openent.zimbra.model.message.Recipient;
+import fr.openent.zimbra.model.soap.SoapMessageHelper;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
@@ -542,17 +543,18 @@ public class MessageService {
             return;
         }
 
-        transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
+        getMessageMidFromId(user, parentMessageId, parentMessageMailId ->
+                transformMessageFrontToZimbra(frontMessage, messageId, mailContent -> {
             if(messageId != null && !messageId.isEmpty()) {
                 mailContent.put(MSG_ID, messageId);
                 mailContent.put(MSG_DRAFT_ID, messageId);
             }
-            if(parentMessageId != null && !parentMessageId.isEmpty()) {
+            if(parentMessageMailId != null && !parentMessageMailId.isEmpty()) {
                 mailContent.put(MSG_REPLYTYPE, MSG_RT_REPLY);
                 mailContent.put(MSG_REPLIEDTO_ID, parentMessageId);
             }
             mailContent.getJsonArray(MSG_EMAILS, new JsonArray())
-                        .add(new JsonObject()
+                    .add(new JsonObject()
                             .put(MSG_EMAIL_ADDR, "")
                             .put(MSG_EMAIL_TYPE, ADDR_TYPE_FROM)
                             .put(MSG_EMAIL_COMMENT, user.getUsername()));
@@ -563,16 +565,15 @@ public class MessageService {
                             .put(MSG, mailContent));
 
             soapService.callUserSoapAPI(sendMsgRequest, user, response -> {
-                 if (response.isLeft()) {
-                     result.handle(response);
-                 } else {
-                     JsonObject rightResponse = new JsonObject()
-                             .put("sent", 1);
-                     result.handle(new Either.Right<>(rightResponse));
-                 }
+                if (response.isLeft()) {
+                    result.handle(response);
+                } else {
+                    JsonObject rightResponse = new JsonObject()
+                            .put("sent", 1);
+                    result.handle(new Either.Right<>(rightResponse));
+                }
             });
-        });
-
+        }));
     }
 
     /**
@@ -980,5 +981,19 @@ public class MessageService {
                 result.handle(new Either.Right<>(new JsonObject()));
             }
         });
+    }
+
+    private void getMessageMidFromId(UserInfos user, String messageId, Handler<String> handler) {
+        if(messageId == null || messageId.isEmpty()) {
+            handler.handle(null);
+        } else {
+            SoapMessageHelper.getMessageById(user.getUserId(), messageId, result -> {
+                if(result.succeeded() && !result.result().getMailId().isEmpty()) {
+                    handler.handle(result.result().getMailId());
+                } else {
+                    handler.handle(null);
+                }
+            });
+        }
     }
 }

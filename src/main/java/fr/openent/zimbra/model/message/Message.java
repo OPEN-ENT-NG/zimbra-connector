@@ -22,6 +22,7 @@ public class Message {
     private String      frontFolder;
     private String      conversationId;
     private String      zimbraFlags;
+    private String      mailId;
     private Long        date;
     private Boolean     hasAttachment;
     private Boolean     isRead;
@@ -39,6 +40,7 @@ public class Message {
     public Long getDate() { return date; }
     public String getSubject() { return subject; }
     public String getConversationId() { return conversationId; }
+    public String getMailId() { return mailId; }
 
     public String getFrontState() {
         return zimbraFlags.contains(MSG_FLAG_DRAFT)? FrontConstants.STATE_DRAFT : FrontConstants.STATE_SENT;
@@ -85,6 +87,7 @@ public class Message {
     public static Message fromZimbra(JsonObject zimbraData, boolean fromConv) throws IllegalArgumentException {
         Message message = new Message();
         message.id = zimbraData.getString(MSG_ID, "");
+        message.mailId = zimbraData.getString(MSG_EMAILID, "");
         message.subject = zimbraData.getString(MSG_SUBJECT, "");
         message.zimbraFolder = zimbraData.getString(MSG_LOCATION, "");
         message.conversationId = zimbraData.getString(MSG_CONVERSATION_ID, "");

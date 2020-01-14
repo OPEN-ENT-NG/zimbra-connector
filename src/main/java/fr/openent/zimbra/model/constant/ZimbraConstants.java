@@ -41,6 +41,7 @@ public class ZimbraConstants {
     public static final String MSG_RT_FORWARD = "w";
     public static final String MSG_REPLIEDTO_ID = "irt";
     public static final String MSG_DRAFT_ID = "did";
+    public static final String MSG_EMAILID = "mid";
     public static final String MSG_CONVERSATION_ID = "cid";
     public static final String MSG_SUBJECT = "su";
     public static final String MSG_DATE = "d";

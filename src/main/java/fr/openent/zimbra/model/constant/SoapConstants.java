@@ -90,4 +90,5 @@ public class SoapConstants {
     public static final String SEARCH_REQUEST = "SearchRequest";
     public static final String SEARCH_RESPONSE = "SearchResponse";
     public static final String CONVERSATION_ACTION_REQUEST = "ConvActionRequest";
+    public static final String GET_MESSAGE_REQUEST = "GetMsgRequest";
 }
