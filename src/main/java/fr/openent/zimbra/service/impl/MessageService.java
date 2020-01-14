@@ -699,12 +699,12 @@ public class MessageService {
      * @param handler result handler
      */
     void transformMessageFrontToZimbra(JsonObject frontMessage, String messageId, Handler<JsonObject> handler) {
-        JsonArray toFront = frontMessage.getJsonArray("to");
-        JsonArray ccFront = frontMessage.getJsonArray("cc");
-        JsonArray bccFront = frontMessage.getJsonArray("bcc");
-        String bodyFront = replaceLink(frontMessage.getString("body"));
-        String subjectFront = frontMessage.getString("subject");
-        JsonArray attsFront = frontMessage.getJsonArray("attachments");
+        JsonArray toFront = frontMessage.getJsonArray("to", new JsonArray());
+        JsonArray ccFront = frontMessage.getJsonArray("cc", new JsonArray());
+        JsonArray bccFront = frontMessage.getJsonArray("bcc", new JsonArray());
+        String bodyFront = replaceLink(frontMessage.getString("body", ""));
+        String subjectFront = frontMessage.getString("subject", "");
+        JsonArray attsFront = frontMessage.getJsonArray("attachments", new JsonArray());
         JsonArray mailContacts = new JsonArray();
         userService.getMailAddresses(toFront, toResult -> {
             addRecipientToList(mailContacts, toFront, toResult, ADDR_TYPE_TO);

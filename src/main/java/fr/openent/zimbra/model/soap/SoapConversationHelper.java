@@ -35,9 +35,9 @@ public class SoapConversationHelper {
         }
     }
 
-    public static void toggleReadConversations(List<String> conversationIdList, boolean read, String userId,
+    public static void toggleReadConversations(List<String> conversationIdList, boolean unread, String userId,
                                                Handler<AsyncResult<Void>> handler) {
-        String operation = read ? OP_READ : OP_UNREAD;
+        String operation = unread ? OP_UNREAD : OP_READ;
         conversationAction(conversationIdList, userId, operation, handler);
     }
 

@@ -90,14 +90,14 @@ public class MobileThreadService {
         }
     }
 
-    public void toggleUnreadThreads(List<String> threadIds, boolean read, UserInfos user,
+    public void toggleUnreadThreads(List<String> threadIds, boolean unread, UserInfos user,
                                     Handler<AsyncResult<JsonObject>> handler) {
         String userId = user.getUserId();
         if(userId == null || userId.isEmpty()) {
             log.error("Empty user id");
             handler.handle(Future.failedFuture("Empty user"));
         } else {
-            SoapConversationHelper.toggleReadConversations(threadIds, read, userId, res -> {
+            SoapConversationHelper.toggleReadConversations(threadIds, unread, userId, res -> {
                 if(res.failed()) {
                     handler.handle(Future.failedFuture(res.cause()));
                 } else {
