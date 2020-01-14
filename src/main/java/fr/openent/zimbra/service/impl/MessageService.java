@@ -587,7 +587,7 @@ public class MessageService {
                                     JsonObject correspondance, String type) {
         for(Object o : originList) {
             String elemId = (String)o;
-            if(correspondance.containsKey(elemId)) {
+            if( elemId != null && correspondance.containsKey(elemId)) {
                 JsonObject elemInfos = correspondance.getJsonObject(elemId);
                 JsonObject recipient = new JsonObject()
                         .put(MSG_EMAIL_TYPE, type)
@@ -597,7 +597,7 @@ public class MessageService {
                 }
                 recipientList.add(recipient);
             } else {
-                log.error("No Zimbra correspondance for ID : " + elemId);
+                if(elemId != null) log.error("No Zimbra correspondance for ID : " + elemId);
             }
         }
     }

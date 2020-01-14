@@ -209,4 +209,6 @@ public class ZimbraConstants {
     public static final String SEARCH_RECIP_FROM = "0";
     public static final String SEARCH_RECIP_TO = "1";
     public static final String SEARCH_RECIP_ALL = "2";
+
+    public static final String SEARCH_QUERY_ALL = "*";
 }

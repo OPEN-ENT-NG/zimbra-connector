@@ -22,7 +22,7 @@ public class SoapSearchHelper {
     private static Logger log = LoggerFactory.getLogger(SoapSearchHelper.class);
 
     public static void searchAllConv(String userId, int page, Handler<AsyncResult<List<Conversation>>> handler) {
-        String searchQuery = generateSearchQuery(FOLDER_INBOX, false, null);
+        String searchQuery = generateSearchQuery(SEARCH_QUERY_ALL, false, null);
         search(userId, searchQuery, page, SEARCH_TYPE_CONVERSATION, SEARCH_RECIP_ALL, searchResult -> {
             if(searchResult.failed()) {
                 handler.handle(Future.failedFuture(searchResult.cause()));
@@ -58,7 +58,7 @@ public class SoapSearchHelper {
         SoapRequest searchRequest = SoapRequest.MailSoapRequest(SoapConstants.SEARCH_REQUEST, userId);
         int pageSize = Zimbra.appConfig.getMailListLimit();
         JsonObject content = new JsonObject()
-                .put(SEARCH_QUERY,searchQuery)
+                .put(SEARCH_QUERY, searchQuery)
                 .put(SEARCH_TYPES, types)
                 .put(SEARCH_RECIPIENTS_TO_RETURN, recipientsToReturn)
                 .put(SEARCH_LIMIT, pageSize)
