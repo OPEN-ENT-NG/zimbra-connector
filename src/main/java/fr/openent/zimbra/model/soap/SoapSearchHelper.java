@@ -21,7 +21,8 @@ public class SoapSearchHelper {
 
     private static Logger log = LoggerFactory.getLogger(SoapSearchHelper.class);
 
-    public static void searchAllConv(String userId, int page, Handler<AsyncResult<List<Conversation>>> handler) {
+    public static void searchAllMailedConv(String userId, int page, Handler<AsyncResult<List<Conversation>>> handler) {
+        String query =  excludeFolder(SEARCH_QUERY_ALL, FOLDER_DRAFT);
         search(userId, SEARCH_QUERY_ALL, page, SEARCH_TYPE_CONVERSATION, SEARCH_RECIP_ALL, searchResult -> {
             if(searchResult.failed()) {
                 handler.handle(Future.failedFuture(searchResult.cause()));
@@ -49,6 +50,11 @@ public class SoapSearchHelper {
             searchQuery += " *" + searchText +"*";
         }
         return searchQuery;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static String excludeFolder(String query, String folderPath) {
+        return query + " not in:\"" + folderPath + "\"";
     }
 
     @SuppressWarnings("SameParameterValue")

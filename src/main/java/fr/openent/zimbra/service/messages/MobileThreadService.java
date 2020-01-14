@@ -67,7 +67,7 @@ public class MobileThreadService {
             log.error("Empty user id");
             handler.handle(Future.failedFuture("Empty user"));
         } else {
-            SoapSearchHelper.searchAllConv(userId, page, searchResult -> {
+            SoapSearchHelper.searchAllMailedConv(userId, page, searchResult -> {
                 if(searchResult.failed()) {
                     handler.handle(Future.failedFuture(searchResult.cause()));
                 } else {
