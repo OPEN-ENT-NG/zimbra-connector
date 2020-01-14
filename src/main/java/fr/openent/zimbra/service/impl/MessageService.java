@@ -551,7 +551,7 @@ public class MessageService {
             }
             if(parentMessageMailId != null && !parentMessageMailId.isEmpty()) {
                 mailContent.put(MSG_REPLYTYPE, MSG_RT_REPLY);
-                mailContent.put(MSG_REPLIEDTO_ID, parentMessageId);
+                mailContent.put(MSG_REPLIEDTO_ID, parentMessageMailId);
             }
             mailContent.getJsonArray(MSG_EMAILS, new JsonArray())
                     .add(new JsonObject()
