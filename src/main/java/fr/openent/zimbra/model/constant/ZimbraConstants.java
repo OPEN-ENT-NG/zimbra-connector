@@ -48,6 +48,8 @@ public class ZimbraConstants {
     public static final String MSG_LOCATION = "l";
     public static final String MSG_MULTIPART = "mp";
     public static final String MSG_MPART_ISBODY = "body";
+    public static final String MSG_HTML = "html";
+    public static final String MSG_NEUTER_IMAGES = "neuter";
 
     public static final String MSG_CONSTRAINTS = "tcon";
     public static final String MSG_CON_TRASH = "t";
@@ -150,6 +152,7 @@ public class ZimbraConstants {
 
     public static final String CONVERSATION = "c";
     public static final String CONVERSATION_ID = "id";
+    public static final String CONVERSATION_CID = "cid";
     public static final String CONVERSATION_SUBJECT = "su";
     public static final String CONVERSATION_NBMSG = "n";
     public static final String CONVERSATION_NBUNREAD = "u";
@@ -209,6 +212,8 @@ public class ZimbraConstants {
     public static final String SEARCH_RECIP_FROM = "0";
     public static final String SEARCH_RECIP_TO = "1";
     public static final String SEARCH_RECIP_ALL = "2";
+    public static final String SEARCH_FULL_CONVERSATION = "fullConversation";
+    public static final String SEARCH_NEST_RESULT = "nest";
 
     public static final String SEARCH_QUERY_ALL = "*";
 }

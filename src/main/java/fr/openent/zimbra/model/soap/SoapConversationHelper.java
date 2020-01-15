@@ -21,14 +21,18 @@ public class SoapConversationHelper {
 
     public static void getConversationById(String userId, String conversationId,
                                            Handler<AsyncResult<Conversation>> resultHandler) {
-        SoapRequest getConvRequest = SoapRequest.MailSoapRequest(SoapConstants.GET_CONVERSATION_REQUEST, userId);
+        SoapRequest getConvRequest = SoapRequest.MailSoapRequest(SoapConstants.SEARCH_CONV_REQUEST, userId);
         JsonObject content = new JsonObject()
-                .put(CONVERSATION, new JsonObject()
-                        .put(CONVERSATION_ID, conversationId)
-                        .put(CONVERSATION_EXPAND_MESSAGES, CONV_EXPAND_ALL));
+                        .put(CONVERSATION_CID, conversationId)
+                        .put(CONVERSATION_EXPAND_MESSAGES, CONV_EXPAND_ALL)
+                        .put(MSG_HTML, ONE_TRUE)
+                        .put(MSG_NEUTER_IMAGES, ZERO_FALSE)
+                        .put(SEARCH_RECIPIENTS_TO_RETURN, SEARCH_RECIP_ALL)
+                        .put(SEARCH_FULL_CONVERSATION, ONE_TRUE)
+                        .put(SEARCH_NEST_RESULT, ONE_TRUE);
         getConvRequest.setContent(content);
         try {
-            getConvRequest.start(processConversationHandler(GET_CONVERSATION_RESPONSE, resultHandler));
+            getConvRequest.start(processConversationHandler(SEARCH_CONV_RESPONSE, resultHandler));
         } catch (Exception e) {
             log.error("Exception in getConversationRequest ", e);
             resultHandler.handle(Future.failedFuture(e));
