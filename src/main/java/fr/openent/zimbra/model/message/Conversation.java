@@ -55,6 +55,7 @@ public class Conversation {
     public Set<String> getAllAddresses() {
         Set<String> resultSet = new HashSet<>();
         emailsList.forEach( email -> resultSet.add(email.getAddress()));
+        messageList.forEach( message -> resultSet.addAll(message.getAllAddresses()));
         return resultSet;
     }
 

@@ -47,7 +47,6 @@ public class MobileThreadService {
     }
 
     private void getMessagesFromConversation(Conversation conversation, Handler<AsyncResult<JsonArray>> finalHandler) {
-        JsonArray results = new JsonArray();
         Set<String> addresses = conversation.getAllAddresses();
         recipientService.getUseridsFromEmails(addresses, result -> {
             if(result.failed()) {

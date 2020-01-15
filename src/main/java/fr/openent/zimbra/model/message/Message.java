@@ -6,10 +6,7 @@ import fr.openent.zimbra.model.constant.FrontConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
@@ -52,6 +49,12 @@ public class Message {
 
     public void setUserMapping(Map<String, Recipient> userMapping) {
         this.userMapping = userMapping;
+    }
+
+    public Set<String> getAllAddresses() {
+        Set<String> result = new HashSet<>();
+        emailAdresses.forEach( email -> result.add(email.getAddress()));
+        return result;
     }
 
     private Message() {}
