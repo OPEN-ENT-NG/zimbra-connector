@@ -562,22 +562,27 @@ public class MessageService {
                     .put("name", "SendMsgRequest")
                     .put("content", new JsonObject()
                             .put("_jsns", SoapConstants.NAMESPACE_MAIL)
-                            .put(MSG, mailContent));
+                            .put(MSG, mailContent)
+                            .put("fetchSavedMsg", ONE_TRUE));
 
             soapService.callUserSoapAPI(sendMsgRequest, user, response -> {
                 if (response.isLeft()) {
                     result.handle(response);
                 } else {
                     String id = "";
+                    String threadid = "";
                     try {
-                        id = response.right().getValue().getJsonObject("Body").getJsonObject("SendMsgResponse")
-                                .getJsonArray(MSG).getJsonObject(0).getString("id");
+                        JsonObject responseObj = response.right().getValue().getJsonObject("Body").getJsonObject("SendMsgResponse")
+                                .getJsonArray(MSG).getJsonObject(0);
+                        id = responseObj.getString(MSG_ID, "");
+                        threadid = responseObj.getString(MSG_CONVERSATION_ID, "");
                     } catch (Exception e) {
                         log.debug("unfidable id ", e);
                     }
                     JsonObject rightResponse = new JsonObject()
                             .put("sent", 1)
-                            .put("id", id);
+                            .put("id", id)
+                            .put("thread_id", threadid);
                     result.handle(new Either.Right<>(rightResponse));
                 }
             });
