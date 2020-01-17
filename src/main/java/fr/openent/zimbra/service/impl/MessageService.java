@@ -725,7 +725,8 @@ public class MessageService {
         JsonArray toFront = frontMessage.getJsonArray("to", new JsonArray());
         JsonArray ccFront = frontMessage.getJsonArray("cc", new JsonArray());
         JsonArray bccFront = frontMessage.getJsonArray("bcc", new JsonArray());
-        String bodyFront = replaceLink(frontMessage.getString("body", ""));
+        String bodyFront = replaceLink(frontMessage.getString("body", ""))
+                .replace("\n", "<br/>");
         String subjectFront = frontMessage.getString("subject", "");
         JsonArray attsFront = frontMessage.getJsonArray("attachments", new JsonArray());
         JsonArray mailContacts = new JsonArray();
