@@ -9,6 +9,7 @@ import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
 import fr.wseduc.security.ActionType;
+import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.request.RequestUtils;
@@ -128,5 +129,30 @@ public class ZimbraMobileController extends BaseController {
                 unauthorized(request);
             }
         });
+    }
+
+    @Get("/thread/get-page/:threadId")
+    @fr.wseduc.security.SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
+    public void getThreadPageMessages(final HttpServerRequest request) {
+        final String threadId = request.params().get("threadId");
+        final String pageStr = Utils.getOrElse(request.params().get("page"), "0", false);
+
+        if (threadId == null || threadId.trim().isEmpty()) {
+            badRequest(request);
+            return;
+        }
+
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+                int page;
+                try {
+                    page = Integer.parseInt(pageStr);
+                } catch (NumberFormatException e) { page = 0; }
+                mobileThreadService.getMessages(threadId, user,
+                        AsyncHelper.getJsonArrayAsyncHandler(arrayResponseHandler(request)));
+			} else {
+				unauthorized(request);
+			}
+		});
     }
 }

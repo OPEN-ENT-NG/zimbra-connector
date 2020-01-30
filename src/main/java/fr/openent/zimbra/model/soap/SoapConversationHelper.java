@@ -1,5 +1,6 @@
 package fr.openent.zimbra.model.soap;
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.StringHelper;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.message.Conversation;
@@ -19,9 +20,10 @@ public class SoapConversationHelper {
 
     private static Logger log = LoggerFactory.getLogger(SoapConversationHelper.class);
 
-    public static void getConversationById(String userId, String conversationId,
+    public static void getConversationById(String userId, String conversationId, int page,
                                            Handler<AsyncResult<Conversation>> resultHandler) {
         SoapRequest getConvRequest = SoapRequest.MailSoapRequest(SoapConstants.SEARCH_CONV_REQUEST, userId);
+        int pageSize = Zimbra.appConfig.getMailListLimit();
         JsonObject content = new JsonObject()
                         .put(CONVERSATION_CID, conversationId)
                         .put(CONVERSATION_EXPAND_MESSAGES, CONV_EXPAND_ALL)
@@ -29,6 +31,8 @@ public class SoapConversationHelper {
                         .put(MSG_NEUTER_IMAGES, ZERO_FALSE)
                         .put(SEARCH_RECIPIENTS_TO_RETURN, SEARCH_RECIP_ALL)
                         .put(SEARCH_FULL_CONVERSATION, ONE_TRUE)
+                        .put(SEARCH_LIMIT, pageSize)
+                        .put(SEARCH_OFFSET, page * pageSize)
                         .put(SEARCH_NEST_RESULT, ONE_TRUE);
         getConvRequest.setContent(content);
         try {

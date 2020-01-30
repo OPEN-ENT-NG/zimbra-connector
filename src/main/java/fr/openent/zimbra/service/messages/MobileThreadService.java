@@ -31,12 +31,17 @@ public class MobileThreadService {
 
     // Get all messages content from a thread in json format
     public void getMessages(String threadId, UserInfos user, Handler<AsyncResult<JsonArray>> handler) {
+        getMessages(threadId, user, 0, handler);
+    }
+
+
+    public void getMessages(String threadId, UserInfos user, int page, Handler<AsyncResult<JsonArray>> handler) {
         String userId = user.getUserId();
         if(userId == null || userId.isEmpty()) {
             log.error("Empty user id");
             handler.handle(Future.failedFuture("Empty user"));
         } else {
-            SoapConversationHelper.getConversationById(userId, threadId, zimbraResult -> {
+            SoapConversationHelper.getConversationById(userId, threadId, page, zimbraResult -> {
                 if(zimbraResult.failed()) {
                     handler.handle(Future.failedFuture(zimbraResult.cause()));
                 } else {
