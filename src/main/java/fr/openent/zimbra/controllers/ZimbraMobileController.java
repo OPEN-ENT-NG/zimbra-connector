@@ -148,7 +148,7 @@ public class ZimbraMobileController extends BaseController {
                 try {
                     page = Integer.parseInt(pageStr);
                 } catch (NumberFormatException e) { page = 0; }
-                mobileThreadService.getMessages(threadId, user,
+                mobileThreadService.getMessages(threadId, user, page,
                         AsyncHelper.getJsonArrayAsyncHandler(arrayResponseHandler(request)));
 			} else {
 				unauthorized(request);
