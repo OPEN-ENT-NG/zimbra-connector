@@ -87,7 +87,8 @@ public class SoapConversationHelper {
                     Conversation conversation = Conversation.fromZimbra(conversationObject);
                     handler.handle(Future.succeededFuture(conversation));
                 } catch (Exception e) {
-                    handler.handle(Future.failedFuture(e));
+                    // todo how to handle error ?
+                    handler.handle(Future.succeededFuture(null));
                 }
             }
         };
