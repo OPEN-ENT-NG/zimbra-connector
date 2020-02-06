@@ -26,14 +26,15 @@ public class SoapConversationHelper {
         int pageSize = Zimbra.appConfig.getMailListLimit();
         JsonObject content = new JsonObject()
                         .put(CONVERSATION_CID, conversationId)
-                        .put(CONVERSATION_EXPAND_MESSAGES, CONV_EXPAND_ALL)
+                        .put(CONVERSATION_EXPAND_MESSAGES, "u!")
                         .put(MSG_HTML, ONE_TRUE)
                         .put(MSG_NEUTER_IMAGES, ZERO_FALSE)
                         .put(SEARCH_RECIPIENTS_TO_RETURN, SEARCH_RECIP_ALL)
                         .put(SEARCH_FULL_CONVERSATION, ONE_TRUE)
                         .put(SEARCH_LIMIT, pageSize)
                         .put(SEARCH_OFFSET, page * pageSize)
-                        .put(SEARCH_NEST_RESULT, ONE_TRUE);
+                        .put(SEARCH_NEST_RESULT, ONE_TRUE)
+                ;
         getConvRequest.setContent(content);
         try {
             getConvRequest.start(processConversationHandler(SEARCH_CONV_RESPONSE, resultHandler));

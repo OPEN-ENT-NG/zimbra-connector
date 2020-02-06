@@ -3,6 +3,7 @@ package fr.openent.zimbra.model.message;
 import fr.openent.zimbra.helper.RecipientHelper;
 import fr.openent.zimbra.helper.ZimbraFlags;
 import fr.openent.zimbra.model.constant.FrontConstants;
+import fr.openent.zimbra.model.constant.ZimbraConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -24,6 +25,7 @@ public class Message {
     private Boolean     hasAttachment;
     private Boolean     isRead;
     private Boolean     isDraft;
+    private Boolean     isTrashed;
     private Boolean     isReplied;
     private Multipart   multipart;
     private List<ZimbraEmail> emailAdresses = new ArrayList<>();
@@ -80,6 +82,8 @@ public class Message {
         result.put(FrontConstants.MAIL_BCC_MOBILEAPP, getUsers(ADDR_TYPE_BCC));
         result.put(FrontConstants.MAIL_DISPLAYNAMES, getDisplayNames());
         result.put(FrontConstants.MESSAGE_ATTACHMENTS, multipart.getAttachmentsJson());
+        result.put(FrontConstants.MESSAGE_IS_DRAFT, isDraft);
+        result.put(FrontConstants.MESSAGE_IS_TRASHED, isTrashed);
         return result;
     }
 
@@ -104,6 +108,8 @@ public class Message {
         message.loadEmailAdresses(zimbraData.getJsonArray(MSG_EMAILS, new JsonArray()));
         message.zimbraEmails = true;
         message.isReplied = ZimbraFlags.isReplied(message.zimbraFlags);
+        message.isDraft = ZimbraFlags.isDraft(message.zimbraFlags);
+        message.isTrashed = message.zimbraFolder.equals(FOLDER_TRASH_ID);
         return message;
     }
 

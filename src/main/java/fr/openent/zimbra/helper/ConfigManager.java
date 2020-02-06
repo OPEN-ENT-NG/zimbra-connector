@@ -96,7 +96,7 @@ public class ConfigManager {
         this.addressBookAccountName  = config.getString("address-book-account", "");
         this.addressBookSynchroTtl = config.getInteger("abook-sync-ttl-minutes", 1440); // default 24h
         this.sqlInsertPaginationSize = config.getInteger("sql-insert-pagination-size", 5000);
-        this.invertAltPartInConvMsg = config.getBoolean("invert-alt-part-in-conv-msg", true);
+        this.invertAltPartInConvMsg = config.getBoolean("invert-alt-part-in-conv-msg", false);
 
         String devLevelStr = config.getString("dev-level", "");
         if(NOSYNC.equals(devLevelStr)) {
