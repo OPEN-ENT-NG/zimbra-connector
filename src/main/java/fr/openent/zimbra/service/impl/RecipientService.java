@@ -16,7 +16,6 @@ public class RecipientService {
     private MessageService messageService;
 
     private Map<String, Recipient> zimbraMap = new HashMap<>();
-    private Map<String, Recipient> entMap = new HashMap<>();
 
     private static Logger log = LoggerFactory.getLogger(RecipientService.class);
 

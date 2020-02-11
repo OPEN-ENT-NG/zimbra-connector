@@ -3,7 +3,6 @@ package fr.openent.zimbra.model.message;
 import fr.openent.zimbra.helper.RecipientHelper;
 import fr.openent.zimbra.helper.ZimbraFlags;
 import fr.openent.zimbra.model.constant.FrontConstants;
-import fr.openent.zimbra.model.constant.ZimbraConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -31,14 +30,9 @@ public class Message {
     private List<ZimbraEmail> emailAdresses = new ArrayList<>();
     private Map<String, Recipient> userMapping = new HashMap<>();
 
-
-    private boolean     zimbraEmails = false;
-    private boolean     frontEmails = false;
-
     public String getId() { return id; }
     public Long getDate() { return date; }
     public String getSubject() { return subject; }
-    public String getConversationId() { return conversationId; }
     public String getMailId() { return mailId; }
 
     public String getFrontState() {
@@ -106,7 +100,6 @@ public class Message {
         message.multipart = new Multipart(message.id, zimbraData.getJsonArray(MSG_MULTIPART), fromConv);
         message.body = message.multipart.getBody();
         message.loadEmailAdresses(zimbraData.getJsonArray(MSG_EMAILS, new JsonArray()));
-        message.zimbraEmails = true;
         message.isReplied = ZimbraFlags.isReplied(message.zimbraFlags);
         message.isDraft = ZimbraFlags.isDraft(message.zimbraFlags);
         message.isTrashed = message.zimbraFolder.equals(FOLDER_TRASH_ID);

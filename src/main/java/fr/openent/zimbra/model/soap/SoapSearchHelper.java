@@ -41,18 +41,6 @@ public class SoapSearchHelper {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private static String generateSearchQuery(String folderPath, boolean unread, String searchText) {
-        String searchQuery = "in:\"" + folderPath + "\"";
-        if(unread) {
-            searchQuery += " is:unread";
-        }
-        if(searchText != null && ! searchText.isEmpty()) {
-            searchQuery += " *" + searchText +"*";
-        }
-        return searchQuery;
-    }
-
-    @SuppressWarnings("SameParameterValue")
     private static String excludeFolder(String query, String folderPath) {
         return query + " NOT in:\"" + folderPath + "\"";
     }

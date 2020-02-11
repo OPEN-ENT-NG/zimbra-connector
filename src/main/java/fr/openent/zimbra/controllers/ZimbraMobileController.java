@@ -9,7 +9,6 @@ import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
 import fr.wseduc.security.ActionType;
-import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.request.RequestUtils;
@@ -41,6 +40,14 @@ public class ZimbraMobileController extends BaseController {
         this.mobileThreadService = serviceManager.getMobileThreadService();
     }
 
+    /**
+     * Get all messages from a thread
+     * @param request http request
+     *                  threadId (URL param) : Id of the thread to fetch
+     *        Response : array of messages
+     *        Error 400 : threadId is empty
+     *        Error 401 : User not logged in
+     */
     @Get("/thread/messages/:threadId")
     @fr.wseduc.security.SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
     public void getThreadMessages(final HttpServerRequest request) {
@@ -59,6 +66,13 @@ public class ZimbraMobileController extends BaseController {
         });
     }
 
+    /**
+     * Get paginated list of threads for connected user
+     * @param request http request
+     *                  page (Optional GET param) : Page number, default to 0
+     *        Response : array of threads
+     *        Error 401 : User not logged in
+     */
     @Get("/threads/list")
     @fr.wseduc.security.SecuredAction(value = "zimbra.list", type = ActionType.AUTHENTICATED)
     public void listThreads(HttpServerRequest request) {
@@ -78,6 +92,17 @@ public class ZimbraMobileController extends BaseController {
         });
     }
 
+    /**
+     * Toggle threads read or unread
+     * @param request http request
+     *                Body :
+     *                {
+     *                  "id" : list of thread ids to change,
+     *                  "unread" : if true, set threads as unread, else as read
+     *                }
+     *        Error 400 : Malformed body
+     *        Error 401 : User not logged in
+     */
     @Post("/thread/toggleUnread")
     @fr.wseduc.security.SecuredAction(value = "", type = ActionType.RESOURCE)
     @ResourceFilter(DevLevelFilter.class)
@@ -105,7 +130,16 @@ public class ZimbraMobileController extends BaseController {
         });
     }
 
-
+    /**
+     * Move threads to trash
+     * @param request http request
+     *                Body :
+     *                {
+     *                  "id" : list of thread ids to change
+     *                }
+     *        Error 400 : Malformed body
+     *        Error 401 : User not logged in
+     */
     @Put("/thread/trash")
     @fr.wseduc.security.SecuredAction(value = "", type = ActionType.RESOURCE)
     @ResourceFilter(DevLevelFilter.class)
@@ -131,6 +165,15 @@ public class ZimbraMobileController extends BaseController {
         });
     }
 
+    /**
+     * Get paginated list of messages for a thread
+     * @param request http request
+     *                  threadId (GET param) : Thread id to fetch
+     *                  page (Optional GET param) : Page number, default to 0
+     *        Response : array of messages
+     *        Error 400 : empty thread id
+     *        Error 401 : User not logged in
+     */
     @Get("/thread/get-page/:threadId")
     @fr.wseduc.security.SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
     public void getThreadPageMessages(final HttpServerRequest request) {

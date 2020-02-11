@@ -11,6 +11,7 @@ import java.util.*;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
+@SuppressWarnings("unused")
 public class Conversation {
 
     private String          id;
