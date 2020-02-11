@@ -32,7 +32,6 @@ import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
-import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
@@ -1024,43 +1023,4 @@ public class ZimbraController extends BaseController {
 		userService.requestIfIdGroup(idToCheck, defaultResponseHandler(request));
 	}
 
-
-	/////////////////	 THREADS
-
-
-	@Get("/thread/previous-messages/:oldestMessageId")
-	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
-	public void getPreviousThreadMessages(final HttpServerRequest request) {
-		arrayResponseHandler(request).handle(new Either.Right<>(new JsonArray()));
-		/*final String id = request.params().get("oldestMessageId");
-		if (id == null || id.trim().isEmpty()) {
-			badRequest(request);
-			return;
-		}
-		getUserInfos(eb, request, user -> {
-			if (user != null) {
-				threadService.getMessages(id, user, arrayResponseHandler(request));
-			} else {
-				unauthorized(request);
-			}
-		});*/
-	}
-
-	@Get("/thread/new-messages/:newestMessageId")
-	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
-	public void getNewThreadMessages(final HttpServerRequest request) {
-		arrayResponseHandler(request).handle(new Either.Right<>(new JsonArray()));
-		/*final String id = request.params().get("newestMessageId");
-		if (id == null || id.trim().isEmpty()) {
-			badRequest(request);
-			return;
-		}
-		getUserInfos(eb, request, user -> {
-			if (user != null) {
-				threadService.getMessages(id, user, arrayResponseHandler(request));
-			} else {
-				unauthorized(request);
-			}
-		});*/
-	}
 }

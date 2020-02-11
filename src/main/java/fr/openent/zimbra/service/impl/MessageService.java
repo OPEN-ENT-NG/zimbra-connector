@@ -577,7 +577,7 @@ public class MessageService {
                         id = responseObj.getString(MSG_ID, "");
                         threadid = responseObj.getString(MSG_CONVERSATION_ID, "");
                     } catch (Exception e) {
-                        log.debug("unfidable id ", e);
+                        log.debug("unfindable id ", e);
                     }
                     JsonObject rightResponse = new JsonObject()
                             .put("sent", 1)
@@ -725,8 +725,7 @@ public class MessageService {
         JsonArray toFront = frontMessage.getJsonArray("to", new JsonArray());
         JsonArray ccFront = frontMessage.getJsonArray("cc", new JsonArray());
         JsonArray bccFront = frontMessage.getJsonArray("bcc", new JsonArray());
-        String bodyFront = replaceLink(frontMessage.getString("body", ""))
-                .replace("\n", "<br/>");
+        String bodyFront = replaceLink(frontMessage.getString("body", ""));
         String subjectFront = frontMessage.getString("subject", "");
         JsonArray attsFront = frontMessage.getJsonArray("attachments", new JsonArray());
         JsonArray mailContacts = new JsonArray();

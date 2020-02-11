@@ -8,6 +8,13 @@ import java.util.*;
 
 public class RecipientHelper {
 
+    /**
+     * Get Json data as expected by the front from Zimbra data
+     * @param emailsList Source data : list of ZimbraEmail
+     * @param userMapping Mapping between emails and userIds
+     * @param zimbraType Type of users to return
+     * @return JsonArray with user ids of expected type
+     */
     public static JsonArray getUsersJson(List<ZimbraEmail> emailsList, Map<String, Recipient> userMapping,
                                          String zimbraType) {
         JsonArray users = new JsonArray();
@@ -22,6 +29,12 @@ public class RecipientHelper {
         return users;
     }
 
+    /**
+     * Get Json data for display names as expected by the front
+     * @param emailsList Source data : list of emails
+     * @param userMapping Mapping between emails, userids and displayNames
+     * @return JsonArray with mapping between ids and display names
+     */
     public static JsonArray getDisplayNamesJson(List<ZimbraEmail> emailsList, Map<String, Recipient> userMapping) {
         JsonArray displayNames = new JsonArray();
         Set<String> processedAddress = new HashSet<>();

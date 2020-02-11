@@ -40,16 +40,37 @@ public class SoapSearchHelper {
         });
     }
 
-    @SuppressWarnings("SameParameterValue")
-    private static String generateSearchQuery(String folderPath, boolean unread, String searchText) {
-        String searchQuery = "in:\"" + folderPath + "\"";
-        if(unread) {
-            searchQuery += " is:unread";
+    public static void searchMailsInConv(String userId, String conversationId, int page,
+                                           Handler<AsyncResult<Conversation>> resultHandler) {
+        SoapRequest getConvRequest = SoapRequest.MailSoapRequest(SoapConstants.SEARCH_CONV_REQUEST, userId);
+        JsonObject content = getCommonPaginatedSearchParams(SEARCH_QUERY_ALL, SEARCH_RECIP_ALL, page);
+        content.put(CONVERSATION_CID, conversationId)
+                .put(CONVERSATION_EXPAND_MESSAGES, CONV_EXPAND_ALL)
+                .put(MSG_HTML, ONE_TRUE)
+                .put(MSG_NEUTER_IMAGES, ZERO_FALSE)
+                .put(SEARCH_FULL_CONVERSATION, ONE_TRUE)
+                .put(SEARCH_NEST_RESULT, ONE_TRUE)
+                ;
+        getConvRequest.setContent(content);
+        try {
+            getConvRequest.start(processConvSearchHandler( result -> {
+                if(result.failed()) {
+                    resultHandler.handle(Future.failedFuture(result.cause()));
+                } else {
+                    JsonObject searchResult = result.result();
+                    if(searchResult.getJsonArray(CONVERSATION, new JsonArray()).isEmpty()) {
+                        resultHandler.handle(Future.succeededFuture(null));
+                    } else {
+                        JsonObject conversationObject = searchResult.getJsonArray(CONVERSATION).getJsonObject(0);
+                        Conversation conversation = Conversation.fromZimbra(conversationObject);
+                        resultHandler.handle(Future.succeededFuture(conversation));
+                    }
+                }
+            }));
+        } catch (Exception e) {
+            log.error("Exception in getConversationRequest ", e);
+            resultHandler.handle(Future.failedFuture(e));
         }
-        if(searchText != null && ! searchText.isEmpty()) {
-            searchQuery += " *" + searchText +"*";
-        }
-        return searchQuery;
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -57,17 +78,21 @@ public class SoapSearchHelper {
         return query + " NOT in:\"" + folderPath + "\"";
     }
 
-    @SuppressWarnings("SameParameterValue")
-    private static void search(String userId, String searchQuery, int page, String types, String recipientsToReturn,
-                               Handler<AsyncResult<JsonObject>> rawHandler) {
-        SoapRequest searchRequest = SoapRequest.MailSoapRequest(SoapConstants.SEARCH_REQUEST, userId);
+    private static JsonObject getCommonPaginatedSearchParams(String searchQuery, String recipientsToReturn, int page) {
         int pageSize = Zimbra.appConfig.getMailListLimit();
-        JsonObject content = new JsonObject()
+        return new JsonObject()
                 .put(SEARCH_QUERY, searchQuery)
-                .put(SEARCH_TYPES, types)
                 .put(SEARCH_RECIPIENTS_TO_RETURN, recipientsToReturn)
                 .put(SEARCH_LIMIT, pageSize)
                 .put(SEARCH_OFFSET, page * pageSize);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static void search(String userId, String searchQuery, int page, String types, String recipientsToReturn,
+                               Handler<AsyncResult<JsonObject>> rawHandler) {
+        SoapRequest searchRequest = SoapRequest.MailSoapRequest(SEARCH_REQUEST, userId);
+        JsonObject content = getCommonPaginatedSearchParams(searchQuery, recipientsToReturn, page);
+        content.put(SEARCH_TYPES, types);
         searchRequest.setContent(content);
         try {
             searchRequest.start(processRawSearchHandler(rawHandler));
@@ -79,6 +104,16 @@ public class SoapSearchHelper {
 
     private static Handler<AsyncResult<JsonObject>> processRawSearchHandler(
             Handler<AsyncResult<JsonObject>> handler) {
+        return processSearchHandler(SEARCH_RESPONSE, handler);
+    }
+
+    private static Handler<AsyncResult<JsonObject>> processConvSearchHandler(
+            Handler<AsyncResult<JsonObject>> handler) {
+        return processSearchHandler(SEARCH_CONV_RESPONSE, handler);
+    }
+
+    private static Handler<AsyncResult<JsonObject>> processSearchHandler(
+            String requestResponseName, Handler<AsyncResult<JsonObject>> handler) {
         return soapResult -> {
             if(soapResult.failed()) {
                 handler.handle(Future.failedFuture(soapResult.cause()));
@@ -86,7 +121,7 @@ public class SoapSearchHelper {
                 JsonObject jsonResponse = soapResult.result();
                 try {
                     JsonObject searchData = jsonResponse.getJsonObject(BODY)
-                            .getJsonObject(SEARCH_RESPONSE);
+                            .getJsonObject(requestResponseName);
                     handler.handle(Future.succeededFuture(searchData));
                 } catch (Exception e) {
                     handler.handle(Future.failedFuture(e));

@@ -41,7 +41,7 @@ public class MobileThreadService {
             log.error("Empty user id");
             handler.handle(Future.failedFuture("Empty user"));
         } else {
-            SoapConversationHelper.getConversationById(userId, threadId, page, zimbraResult -> {
+            SoapSearchHelper.searchMailsInConv(userId, threadId, page, zimbraResult -> {
                 if(zimbraResult.failed()) {
                     handler.handle(Future.failedFuture(zimbraResult.cause()));
                 } else {

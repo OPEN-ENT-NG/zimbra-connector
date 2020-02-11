@@ -1,7 +1,6 @@
 package fr.openent.zimbra.model.soap;
 
 import fr.openent.zimbra.model.constant.SoapConstants;
-import fr.openent.zimbra.model.message.Conversation;
 import fr.openent.zimbra.model.message.Message;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
