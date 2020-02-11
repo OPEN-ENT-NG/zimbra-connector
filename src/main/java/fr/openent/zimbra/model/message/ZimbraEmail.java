@@ -5,6 +5,12 @@ import io.vertx.core.json.JsonObject;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
+/**
+ * Represents an email address as sent by Zimbra, with :
+ *      address : actual email adress
+ *      comment : displayed name for the address
+ *      type : Type of recipient : (f)rom, (t)o, (c)c, (b)cc
+ */
 public class ZimbraEmail {
     private String address;
     private String comment;
