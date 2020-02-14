@@ -40,7 +40,7 @@ gulp.task('rev', ['webpack'], () => {
 });
 
 gulp.task('build', ['rev'], () => {
-    var refs = gulp.src("./src/main/resources/view-src/**/*.html")
+    var refs = gulp.src("./src/main/resources/view-src/**/*.+(html|json)")
         .pipe(revReplace({manifest: gulp.src("./rev-manifest.json") }))
         .pipe(gulp.dest("./src/main/resources/view"));
 
