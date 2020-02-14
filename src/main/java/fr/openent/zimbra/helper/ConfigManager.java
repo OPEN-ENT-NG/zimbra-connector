@@ -39,6 +39,7 @@ public class ConfigManager {
 
     private final int httpClientMaxPoolSize;
     private final int mailListLimit;
+    private final int mailListLimitConversation;
 
     private final String host;
     private final String dbSchema;
@@ -76,6 +77,7 @@ public class ConfigManager {
         initPublicConfig();
         this.httpClientMaxPoolSize = config.getInteger("http-client-max-pool-size", 0);
         this.mailListLimit = config.getInteger("mail-list-limit", 10);
+        this.mailListLimitConversation = config.getInteger("mail-list-limit-thread", 1000);
         this.host = config.getString("host", "");
         this.dbSchema = config.getString("db-schema", "zimbra");
         this.zimbraUri = config.getString("zimbra-uri", "");
@@ -135,6 +137,7 @@ public class ConfigManager {
     public JsonObject getPublicConfig() { return publicConfig;}
     public int getHttpClientMaxPoolSize() { return httpClientMaxPoolSize;}
     public int getMailListLimit() { return mailListLimit;}
+    public int getMailListLimitConversation() { return mailListLimitConversation;}
     public String getHost() { return host;}
     public String getDbSchema() { return dbSchema;}
     public String getZimbraUri() { return zimbraUri;}

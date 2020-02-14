@@ -2,10 +2,12 @@ package fr.openent.zimbra.model.soap;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.model.constant.ZimbraErrors;
 import fr.openent.zimbra.model.message.Conversation;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -43,7 +45,8 @@ public class SoapSearchHelper {
     public static void searchMailsInConv(String userId, String conversationId, int page,
                                            Handler<AsyncResult<Conversation>> resultHandler) {
         SoapRequest getConvRequest = SoapRequest.MailSoapRequest(SoapConstants.SEARCH_CONV_REQUEST, userId);
-        JsonObject content = getCommonPaginatedSearchParams(SEARCH_QUERY_ALL, SEARCH_RECIP_ALL, page);
+        int pageSize = Zimbra.appConfig.getMailListLimitConversation();
+        JsonObject content = getCommonPaginatedSearchParams(SEARCH_QUERY_ALL, SEARCH_RECIP_ALL, pageSize, page);
         content.put(CONVERSATION_CID, conversationId)
                 .put(CONVERSATION_EXPAND_MESSAGES, CONV_EXPAND_ALL)
                 .put(MSG_HTML, ONE_TRUE)
@@ -78,8 +81,8 @@ public class SoapSearchHelper {
         return query + " NOT in:\"" + folderPath + "\"";
     }
 
-    private static JsonObject getCommonPaginatedSearchParams(String searchQuery, String recipientsToReturn, int page) {
-        int pageSize = Zimbra.appConfig.getMailListLimit();
+    private static JsonObject getCommonPaginatedSearchParams(String searchQuery, String recipientsToReturn,
+                                                             int pageSize, int page) {
         return new JsonObject()
                 .put(SEARCH_QUERY, searchQuery)
                 .put(SEARCH_RECIPIENTS_TO_RETURN, recipientsToReturn)
@@ -91,7 +94,8 @@ public class SoapSearchHelper {
     private static void search(String userId, String searchQuery, int page, String types, String recipientsToReturn,
                                Handler<AsyncResult<JsonObject>> rawHandler) {
         SoapRequest searchRequest = SoapRequest.MailSoapRequest(SEARCH_REQUEST, userId);
-        JsonObject content = getCommonPaginatedSearchParams(searchQuery, recipientsToReturn, page);
+        int pageSize = Zimbra.appConfig.getMailListLimit();
+        JsonObject content = getCommonPaginatedSearchParams(searchQuery, recipientsToReturn, pageSize, page);
         content.put(SEARCH_TYPES, types);
         searchRequest.setContent(content);
         try {
@@ -116,7 +120,7 @@ public class SoapSearchHelper {
             String requestResponseName, Handler<AsyncResult<JsonObject>> handler) {
         return soapResult -> {
             if(soapResult.failed()) {
-                handler.handle(Future.failedFuture(soapResult.cause()));
+                handleSearchError(soapResult.cause().getMessage(), handler);
             } else {
                 JsonObject jsonResponse = soapResult.result();
                 try {
@@ -128,5 +132,19 @@ public class SoapSearchHelper {
                 }
             }
         };
+    }
+
+    private static void handleSearchError(String errorStr, Handler<AsyncResult<JsonObject>> handler) {
+        try {
+            SoapError error = new SoapError(errorStr);
+            if(ZimbraErrors.ERROR_GENERIC.equals(error.getCode())
+                && error.getMessage().contains(ZimbraErrors.ERROR_JAVA_OUTOFBOUND)) {
+                handler.handle(Future.succeededFuture(new JsonObject()));
+            } else {
+                handler.handle(Future.failedFuture(errorStr));
+            }
+        } catch (DecodeException e) {
+            handler.handle(Future.failedFuture(errorStr));
+        }
     }
 }

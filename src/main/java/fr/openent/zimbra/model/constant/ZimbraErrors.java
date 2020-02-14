@@ -132,4 +132,7 @@ public class ZimbraErrors {
     public static final String ERROR_INVALIDCOMMITID = "mail.INVALID_COMMIT_ID";
     public static final String ERROR_GRANT_EXISTS = "mail.GRANT_EXISTS";
 
+
+    public static final String ERROR_JAVA_OUTOFBOUND = "java.lang.ArrayIndexOutOfBoundsException";
+
 }
