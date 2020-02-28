@@ -94,4 +94,8 @@ public class SoapConstants {
     public static final String CONVERSATION_ACTION_REQUEST = "ConvActionRequest";
     public static final String GET_MESSAGE_REQUEST = "GetMsgRequest";
     public static final String GET_MESSAGE_RESPONSE = "GetMsgResponse";
+
+    // Http constants
+    public static final String HEADER_COOKIE = "Cookie";
+    public static final String COOKIE_AUTH_TOKEN = "ZM_AUTH_TOKEN";
 }
