@@ -19,6 +19,8 @@ package fr.openent.zimbra.model.constant;
 
 public class SoapConstants {
 
+    public static final String SEPARATOR = ",";
+
     public static final String REQ_NAME = "name";
     public static final String REQ_CONTENT = "content";
     public static final String REQ_NAMESPACE = "_jsns";
@@ -83,4 +85,17 @@ public class SoapConstants {
     public static final String FOLDER_ACTION_RESPONSE = "FolderActionResponse";
     public static final String IMPORT_CONTACTS_REQUEST = "ImportContactsRequest";
     public static final String IMPORT_CONTACTS_RESPONSE = "ImportContactsResponse";
+    public static final String GET_CONVERSATION_REQUEST = "GetConvRequest";
+    public static final String GET_CONVERSATION_RESPONSE = "GetConvResponse";
+    public static final String SEARCH_REQUEST = "SearchRequest";
+    public static final String SEARCH_RESPONSE = "SearchResponse";
+    public static final String SEARCH_CONV_REQUEST = "SearchConvRequest";
+    public static final String SEARCH_CONV_RESPONSE = "SearchConvResponse";
+    public static final String CONVERSATION_ACTION_REQUEST = "ConvActionRequest";
+    public static final String GET_MESSAGE_REQUEST = "GetMsgRequest";
+    public static final String GET_MESSAGE_RESPONSE = "GetMsgResponse";
+
+    // Http constants
+    public static final String HEADER_COOKIE = "Cookie";
+    public static final String COOKIE_AUTH_TOKEN = "ZM_AUTH_TOKEN";
 }
