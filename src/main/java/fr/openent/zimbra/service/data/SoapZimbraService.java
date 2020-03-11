@@ -41,6 +41,8 @@ import org.entcore.common.user.UserInfos;
 import java.util.HashMap;
 import java.util.Map;
 
+import static fr.openent.zimbra.model.constant.SoapConstants.COOKIE_AUTH_TOKEN;
+import static fr.openent.zimbra.model.constant.SoapConstants.HEADER_COOKIE;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
 
@@ -216,7 +218,9 @@ public class SoapZimbraService {
         Handler<HttpClientResponse> handlerRequest = zimbraRequestHandler(params, userId, userAddress, handler);
         request = httpClient.postAbs(finalUrl, handlerRequest);
         request.setChunked(true);
-
+        if(params.getBoolean(PARAM_IS_AUTH, true) && params.containsKey(PARAM_AUTH_TOKEN)) {
+            request.putHeader(HEADER_COOKIE, COOKIE_AUTH_TOKEN + "=" + params.getString(PARAM_AUTH_TOKEN));
+        }
         JsonObject jsonRequest = prepareJsonRequest(params);
 
         request.exceptionHandler( err -> {
