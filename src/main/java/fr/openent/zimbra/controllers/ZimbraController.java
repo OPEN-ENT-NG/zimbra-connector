@@ -103,7 +103,11 @@ public class ZimbraController extends BaseController {
 	@Get("zimbra")
 	@SecuredAction("zimbra.view")
 	public void view(HttpServerRequest request) {
-		renderView(request);
+		if(appConfig.isForceExpertMode()) {
+			redirect(request, appConfig.getHost(), "/zimbra/preauth");
+		} else {
+			renderView(request);
+		}
 		eventStore.createAndStoreEvent(ZimbraEvent.ACCESS.name(), request);
 	}
 
@@ -119,7 +123,9 @@ public class ZimbraController extends BaseController {
 				try {
 					String location = expertModeService.getPreauthUrl(user);
 					redirect(request, appConfig.getZimbraUri(), location);
-					userService.syncAddressBookAsync(user);
+					if(appConfig.isEnableAddressBookSynchro()) {
+						userService.syncAddressBookAsync(user);
+					}
 					eventStore.createAndStoreEvent(ZimbraEvent.ACCESS.name(), request);
 				} catch (IOException e) {
 					renderError(request);
