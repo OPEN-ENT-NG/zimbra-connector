@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-export * from  "./ngBottomScroll";
-export * from  "./recipientList";
-export * from  "./switchSearch";
+export * from "./ngBottomScroll";
+export * from "./recipientList";
+export * from "./switchSearch";
 export * from "./folderLoader";
 export * from "./end-user-typing";
