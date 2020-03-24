@@ -41,6 +41,9 @@ import fr.wseduc.webutils.request.RequestUtils;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.cache.Cache;
+import org.entcore.common.cache.CacheOperation;
+import org.entcore.common.cache.CacheScope;
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
@@ -105,6 +108,7 @@ public class ZimbraController extends BaseController {
 
 	@Get("zimbra")
 	@SecuredAction("zimbra.view")
+	@Cache(value = "/zimbra/count/INBOX",scope = CacheScope.USER, operation = CacheOperation.INVALIDATE)
 	public void view(HttpServerRequest request) {
 		if(appConfig.isForceExpertMode()) {
 			redirect(request, appConfig.getHost(), "/zimbra/preauth");
@@ -324,6 +328,7 @@ public class ZimbraController extends BaseController {
 	 *                unread ? filter only unread messages
 	 */
 	@Get("count/:folder")
+	@Cache(value = "/zimbra/count/INBOX", scope = CacheScope.USER, ttlAsMinutes = 15)
 	@SecuredAction(value = "zimbra.count", type = ActionType.AUTHENTICATED)
 	public void count(final HttpServerRequest request) {
 		final String folder = request.params().get("folder");
@@ -391,6 +396,7 @@ public class ZimbraController extends BaseController {
 	 *                 Users infos
 	 */
 	@Get("message/:id")
+	@Cache(value = "/zimbra/count/INBOX", scope = CacheScope.USER, operation = CacheOperation.INVALIDATE)
 	@SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
 	public void getMessage(final HttpServerRequest request) {
 		final String id = request.params().get("id");
@@ -534,6 +540,7 @@ public class ZimbraController extends BaseController {
 	 *                  unread : boolean
 	 */
 	@Post("toggleUnread")
+	@Cache(value = "/zimbra/count/INBOX", scope = CacheScope.USER, operation = CacheOperation.INVALIDATE)
 	@SecuredAction(value = "", type = ActionType.RESOURCE)
 	@ResourceFilter(DevLevelFilter.class)
 	public void toggleUnread(final HttpServerRequest request) {
