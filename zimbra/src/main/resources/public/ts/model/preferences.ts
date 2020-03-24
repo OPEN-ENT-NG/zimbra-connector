@@ -18,7 +18,7 @@
 import http from "axios";
 
 import { Mix } from "entcore-toolkit";
-import { ViewMode} from "./constantes/index";
+import { ViewMode} from "./constantes";
 
 export class Preference {
     modeExpert: object;

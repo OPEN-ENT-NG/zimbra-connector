@@ -33,7 +33,7 @@ buildNode () {
 }
 
 buildGradle () {
-  docker-compose run --rm -u "$USER_UID:$GROUP_GID" gradle gradle shadowJar install publishToMavenLocal
+  docker-compose run --rm -u "$USER_UID:$GROUP_GID" gradle gradle zimbra:shadowJar zimbra:install zimbra:publishToMavenLocal
 }
 
 publish () {
