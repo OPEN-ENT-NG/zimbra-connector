@@ -26,6 +26,7 @@ import fr.openent.zimbra.service.impl.UserService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
@@ -36,7 +37,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.cache.CacheService;
 import org.entcore.common.user.UserInfos;
+import org.entcore.common.user.UserUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,8 +60,9 @@ public class SoapZimbraService {
     private SynchroUserService synchroUserService;
     private HttpClient httpClient = null;
 
-    private static Map<String, JsonObject> authedUsers = new HashMap<>();
+    private static Map<String, JsonObject> authedUsers;
     private static final String MAP_AUTH_TOKEN = "authToken";
+    private static final String CACHE_AUTH_TOKEN_NAME = "zimbra_authToken";
     private static final String MAP_LIFETIME = "lifetime";
     private static final String MAP_ADDRESS = "emailAddress";
     private static final String MAP_ADMIN = "isAdmin";
@@ -80,7 +84,9 @@ public class SoapZimbraService {
     private String zimbraAdminAccount;
     private String zimbraAdminPassword;
 
-    public SoapZimbraService(Vertx vertx) {
+    private CacheService cacheService;
+
+    public SoapZimbraService(Vertx vertx, CacheService cacheService) {
         this.userService = null;
         this.synchroUserService = null;
 
@@ -93,6 +99,12 @@ public class SoapZimbraService {
         this.preauthKey = config.getPreauthKey();
         this.vertx = vertx;
 
+        // If cache service is null, use authedUsers map
+        if (cacheService != null) {
+            this.cacheService = cacheService;
+        } else {
+            authedUsers =  new HashMap<>();
+        }
     }
 
     public void setServices(UserService us, SynchroUserService synchroUserService) {
@@ -507,15 +519,60 @@ public class SoapZimbraService {
                             .put(MAP_ADDRESS, userAddress)
                             .put(MAP_ADMIN, isAdmin);
 
-                    authedUsers.put(userId, authUserData);
-                    handler.handle(new Either.Right<>(authUserData));
+                    cacheUserToken(userId, authUserData, evt -> {
+                        if (evt.failed()) {
+                            log.error("Failed to cache auth user data : " + authUserData.encodePrettily(), evt.cause());
+                        }
+                    });
 
+                    handler.handle(new Either.Right<>(authUserData));
                 } catch(NullPointerException e) {
                     log.warn("Error when reading auth response", e);
                     handler.handle(new Either.Left<>("Error when reading auth response"));
                 }
             }
         };
+    }
+
+    private void cacheUserToken(String userId, JsonObject authToken, Handler<AsyncResult<Void>> handler) {
+        if (cacheService != null) {
+            UserInfos user = new UserInfos();
+            user.setUserId(userId);
+            cacheService.upsertForUser(user, CACHE_AUTH_TOKEN_NAME, authToken.encode(), LIFETIME_OFFSET.intValue(),
+                    evt -> handler.handle(evt.failed() ? Future.failedFuture(evt.cause()) : Future.succeededFuture()));
+    } else {
+            authedUsers.put(userId, authToken);
+            handler.handle(Future.succeededFuture());
+        }
+    }
+
+    private void getCachedUserToken(String userId, Handler<AsyncResult<JsonObject>> handler) {
+        if (cacheService != null) {
+            UserInfos user = new UserInfos();
+            user.setUserId(userId);
+            cacheService.getForUser(user, CACHE_AUTH_TOKEN_NAME, res -> {
+                if (res.failed()) log.error("Failed to retrieve auth token for user " + userId, res.cause());
+                if (res.failed() || !res.result().isPresent()) handler.handle(Future.failedFuture(res.failed() ? res.cause() : null));
+                else handler.handle(Future.succeededFuture(new JsonObject(res.result().get())));
+            });
+        } else {
+            if (!authedUsers.containsKey(userId)) handler.handle(Future.failedFuture("Auth token not found"));
+            else {
+                JsonObject authToken = authedUsers.get(userId);
+                handler.handle(System.currentTimeMillis() < authToken.getLong(MAP_LIFETIME) ? Future.succeededFuture(authToken) : Future.failedFuture("Auth token not found"));
+            }
+        }
+    }
+
+    private void authentication(String userId, String userAddress, boolean isAdmin, Handler<Either<String, JsonObject>> handler) {
+        if (isAdmin) {
+            // Admin authentication
+            adminAuth(userId, userAddress, handler);
+            return;
+        }
+
+        // Classic user authentication
+        auth(userId, userAddress, handler);
     }
 
     /**
@@ -529,39 +586,19 @@ public class SoapZimbraService {
      */
     private void getAuthToken(String userId, String userAddress, boolean isAdmin,
                               Handler<Either<String,JsonObject>> handler) {
-        boolean authed = false;
-        boolean adminAuthed = false;
-        if( authedUsers.containsKey(userId) ) {
-            JsonObject authInfo = authedUsers.get(userId);
-            Long timestamp = System.currentTimeMillis();
-            if(timestamp < authInfo.getLong(MAP_LIFETIME)) {
-                authed = true;
-                if(authInfo.getBoolean(MAP_ADMIN)) {
-                    adminAuthed = true;
+        getCachedUserToken(userId, evt -> {
+            if (evt.failed()) {
+                log.info("Token not found for user " + userId);
+                authentication(userId, userAddress, isAdmin, handler);
+            } else {
+                JsonObject authToken = evt.result();
+                if (isAdmin && !authToken.getBoolean(MAP_ADMIN)) {
+                    authentication(userId, userAddress, true, handler);
+                } else {
+                    handler.handle(new Either.Right<>(authToken));
                 }
             }
-        }
-        if((isAdmin && adminAuthed) || (!isAdmin && authed)) {
-            generateAuthResponse(userId, handler);
-        } else {
-            if(isAdmin) {
-                adminAuth(userId, userAddress, response -> {
-                    if(response.isLeft()) {
-                        handler.handle(response);
-                    } else {
-                        generateAuthResponse(userId, handler);
-                    }
-                });
-            } else {
-                auth(userId, userAddress, response -> {
-                    if(response.isLeft()) {
-                        handler.handle(response);
-                    } else {
-                        generateAuthResponse(userId, handler);
-                    }
-                });
-            }
-        }
+        });
     }
 
     /**
