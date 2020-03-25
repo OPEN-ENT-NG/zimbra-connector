@@ -28,8 +28,11 @@ import fr.wseduc.webutils.email.EmailSender;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
+import org.entcore.common.cache.CacheService;
+import org.entcore.common.cache.RedisCacheService;
 import org.entcore.common.email.EmailFactory;
 import org.entcore.common.notification.TimelineHelper;
+import org.entcore.common.redis.Redis;
 
 @SuppressWarnings("unused")
 public class ServiceManager {
@@ -68,6 +71,7 @@ public class ServiceManager {
     private SynchroAddressBookService synchroAddressBookService;
     private Neo4jAddrbookService neo4jAddrbookService;
 
+    private CacheService cacheService;
 
     private SynchroLauncher synchroLauncher;
 
@@ -83,10 +87,13 @@ public class ServiceManager {
         EmailFactory emailFactory = new EmailFactory(vertx, rawConfig);
         emailSender = emailFactory.getSender();
 
+        String redisConfig = (String) vertx.sharedData().getLocalMap("server").get("redisConfig");
+        cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient()) : null;
+
         this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
         initDbMailService(appConfig);
         this.searchService = new SearchService(vertx);
-        this.soapService = new SoapZimbraService(vertx);
+        this.soapService = new SoapZimbraService(vertx, cacheService);
         this.neoService = new Neo4jZimbraService();
         this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
         this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
@@ -115,7 +122,6 @@ public class ServiceManager {
 
         soapService.setServices(userService, synchroUserService);
         synchroUserService.setUserService(userService);
-
     }
 
     private void initDbMailService(ConfigManager appConfig) {
