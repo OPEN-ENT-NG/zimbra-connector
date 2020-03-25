@@ -19,6 +19,8 @@ import { model, idiom as lang } from "entcore";
 
 import http from "axios";
 
+declare const window: any;
+
 class Quota {
     max: number;
     used: number;
@@ -50,9 +52,7 @@ class Quota {
         };
     }
 
-    async refresh() {
-        const response = await http.get("/zimbra/quota");
-        const data = response.data;
+    compute(data: {quota: number, storage: number}): void {
         data.quota = data.quota / (1024 * 1024);
         data.storage = data.storage / (1024 * 1024);
 
@@ -67,6 +67,19 @@ class Quota {
 
         this.max = data.quota;
         this.used = data.storage;
+    }
+
+    async initialValues() {
+        if ('quota' in window.user) {
+            this.compute(window.user.quota);
+        } else {
+            this.compute({quota: -1, storage: -1});
+        }
+    }
+
+    async refresh() {
+        const {data} = await http.get("/zimbra/pana/quota");
+        this.compute(data);
     }
 }
 

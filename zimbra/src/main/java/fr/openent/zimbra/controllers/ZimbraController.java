@@ -108,13 +108,21 @@ public class ZimbraController extends BaseController {
 
 	@Get("zimbra")
 	@SecuredAction("zimbra.view")
-	@Cache(value = "/zimbra/count/INBOX",scope = CacheScope.USER, operation = CacheOperation.INVALIDATE)
+	@Cache(value = "/zimbra/count/INBOX", scope = CacheScope.USER, operation = CacheOperation.INVALIDATE)
 	public void view(HttpServerRequest request) {
 		if(appConfig.isForceExpertMode()) {
 			redirect(request, appConfig.getHost(), "/zimbra/preauth");
 		} else {
-			renderView(request);
+			UserUtils.getUserInfos(eb, request, user -> this.userService.getUserInfo(user, evt -> {
+				if (evt.isLeft()) {
+					//TODO Render error page
+				} else {
+					JsonObject zUserInfo = evt.right().getValue();
+					renderView(request, zUserInfo);
+				}
+			}));
 		}
+
 		eventStore.createAndStoreEvent(ZimbraEvent.ACCESS.name(), request);
 	}
 

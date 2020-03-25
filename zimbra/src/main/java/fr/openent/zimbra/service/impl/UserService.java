@@ -117,7 +117,7 @@ public class UserService {
      * @param user Connected user
      * @param handler result handler
      */
-    void getUserInfo(UserInfos user,
+    public void getUserInfo(UserInfos user,
                              Handler<Either<String, JsonObject>> handler) {
         JsonObject getInfoRequest = new JsonObject()
                 .put("name", "GetInfoRequest")
