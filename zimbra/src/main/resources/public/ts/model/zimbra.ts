@@ -22,7 +22,7 @@ import {
     notify,
     Collection,
     _,
-    moment
+    moment, widgets
 } from "entcore";
 
 import {
@@ -38,6 +38,8 @@ import { quota } from "./quota";
 import { Eventer } from "entcore-toolkit";
 
 import http from "axios";
+
+declare const window: any;
 
 export class Zimbra {
     folders: SystemFolders;
@@ -71,14 +73,18 @@ export class Zimbra {
         this.eventer.trigger("change");
         await this.getPreference();
         await this.userFolders.sync();
-        await quota.refresh();
+        await quota.initialValues();
     }
 
     async getPreference() {
         try {
-            let response = await http.get("/zimbra/signature");
-            if (response.data.preference)
-                this.preference = JSON.parse(response.data.preference);
+            if ('signature' in window.user) {
+                const { prefered, content } = window.user.signature;
+                this.preference = {
+                    useSignature: prefered,
+                    signature: content
+                };
+            }
         } catch (e) {
             notify.error(e.response.data.error);
         }

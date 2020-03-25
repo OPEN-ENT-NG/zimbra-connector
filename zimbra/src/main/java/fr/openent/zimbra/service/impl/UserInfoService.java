@@ -21,6 +21,9 @@ import fr.openent.zimbra.model.constant.ZimbraConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import java.util.HashMap;
+import java.util.List;
+
 @SuppressWarnings("WeakerAccess")
 public class UserInfoService {
 
@@ -108,9 +111,26 @@ public class UserInfoService {
                     .getJsonObject("_attrs");
 
             if(attrs.containsKey("zimbraPrefDefaultSignatureId")) {
-                data.put(SIGN_PREF, new JsonObject()
+                JsonArray signatures = getInfoResponse.getJsonObject("signatures", new JsonObject()).getJsonArray("signature", new JsonArray());
+                String preferredSignature = attrs.getString("zimbraPrefDefaultSignatureId");
+                JsonObject signaturePreference = new JsonObject()
                         .put("prefered", true)
-                        .put("id", attrs.getString("zimbraPrefDefaultSignatureId")));
+                        .put("id", preferredSignature);
+                int i = 0;
+                while(i < signatures.size() && !data.containsKey("content")) {
+                    JsonObject signature = signatures.getJsonObject(i);
+                    if (signature.getString("id").equals(preferredSignature)) {
+                        JsonArray content = signature.getJsonArray("content");
+                        if (!content.isEmpty()) {
+                            signaturePreference.put("content", content
+                                    .getJsonObject(0)
+                                    .getString("_content"));
+                        }
+                    }
+                    i++;
+                }
+
+                data.put(SIGN_PREF, signaturePreference);
             }
             else {
                 data.put(SIGN_PREF, new JsonObject()
