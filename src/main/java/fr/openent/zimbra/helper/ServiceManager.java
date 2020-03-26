@@ -56,6 +56,7 @@ public class ServiceManager {
     private ExpertModeService expertModeService;
     private MobileThreadService mobileThreadService;
     private RecipientService recipientService;
+    private RedirectionService redirectionService;
 
 
     private SynchroUserService synchroUserService;
@@ -104,6 +105,7 @@ public class ServiceManager {
         this.expertModeService = new ExpertModeService();
         this.recipientService = new RecipientService(messageService);
         this.mobileThreadService = new MobileThreadService(recipientService);
+        this.redirectionService = new RedirectionService(eb, userService);
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
@@ -203,6 +205,10 @@ public class ServiceManager {
 
     public MobileThreadService getMobileThreadService() {
         return mobileThreadService;
+    }
+
+    public RedirectionService getRedirectionService() {
+        return redirectionService;
     }
 
     public RecipientService getRecipientService() {
