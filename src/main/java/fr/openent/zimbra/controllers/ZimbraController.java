@@ -154,7 +154,7 @@ public class ZimbraController extends BaseController {
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
 				redirectionService.getRedirectionUrl(user.getUserId(), id, name, type, redirectUrl -> {
-					redirect(request, appConfig.getZimbraUri(), redirectUrl);
+					redirect(request, appConfig.getHost(), redirectUrl);
 				});
 			} else {
 				unauthorized(request);

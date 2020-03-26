@@ -64,8 +64,6 @@ public class RedirectionService {
             } catch (UnsupportedEncodingException e) {
                 log.error("Error when encoding name from mail", e);
             }
-            params.append('<').append(recipientId)
-                    .append('@').append(Zimbra.appConfig.getZimbraDomain()).append('>');
             getEmail(recipientId, recipientType, mailResult -> {
                 params.append(mailResult);
                 try {
