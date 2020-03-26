@@ -400,53 +400,57 @@ public class UserService {
             }
             final AtomicInteger processedIds = new AtomicInteger(idListWithTypes.size());
             JsonObject addressList = new JsonObject();
-            for(Object o : idListWithTypes) {
-                if(!(o instanceof JsonObject)) continue;
-                JsonObject idInfos = (JsonObject)o;
-                JsonObject elemInfos = new JsonObject();
-                if(!idInfos.getString("displayName", "").isEmpty()) {
-                    elemInfos.put("displayName", idInfos.getString("displayName"));
-                }
-                String elemId = idInfos.getString("id");
-                switch (idInfos.getString("type", "")) {
-                    case TYPE_USER:
-                        getUserAddress(elemId, result -> {
-                            if(result.succeeded()) {
-                                elemInfos.put("email", result.result());
-                                addressList.put(elemId, elemInfos);
-                            }
+            if(idListWithTypes.isEmpty()) {
+                handler.handle(addressList);
+            } else {
+                for(Object o : idListWithTypes) {
+                    if(!(o instanceof JsonObject)) continue;
+                    JsonObject idInfos = (JsonObject)o;
+                    JsonObject elemInfos = new JsonObject();
+                    if(!idInfos.getString("displayName", "").isEmpty()) {
+                        elemInfos.put("displayName", idInfos.getString("displayName"));
+                    }
+                    String elemId = idInfos.getString("id");
+                    switch (idInfos.getString("type", "")) {
+                        case TYPE_USER:
+                            getUserAddress(elemId, result -> {
+                                if(result.succeeded()) {
+                                    elemInfos.put("email", result.result());
+                                    addressList.put(elemId, elemInfos);
+                                }
+                                if(processedIds.decrementAndGet() == 0) {
+                                    handler.handle(addressList);
+                                }
+                            });
+                            break;
+                        case TYPE_GROUP:
+                            groupService.getGroupAddress(elemId, result -> {
+                                if(result.isRight()) {
+                                    elemInfos.put("email", result.right().getValue());
+                                    elemInfos.put("displayName",
+                                            UserUtils.groupDisplayName(
+                                                    idInfos.getString("groupName", ""),
+                                                    idInfos.getString("displayName"),
+                                                    Zimbra.synchroLang));
+                                    addressList.put(elemId, elemInfos);
+                                }
+                                if(processedIds.decrementAndGet() == 0) {
+                                    handler.handle(addressList);
+                                }
+                            });
+                            break;
+                        case TYPE_EXTERNAL:
+                            // todo get display name for external addresses
+                            addressList.put(elemId, new JsonObject().put("email", elemId));
                             if(processedIds.decrementAndGet() == 0) {
                                 handler.handle(addressList);
                             }
-                        });
-                        break;
-                    case TYPE_GROUP:
-                        groupService.getGroupAddress(elemId, result -> {
-                            if(result.isRight()) {
-                                elemInfos.put("email", result.right().getValue());
-                                elemInfos.put("displayName",
-                                        UserUtils.groupDisplayName(
-                                                idInfos.getString("groupName", ""),
-                                                idInfos.getString("displayName"),
-                                                Zimbra.synchroLang));
-                                addressList.put(elemId, elemInfos);
-                            }
+                            break;
+                        default:
                             if(processedIds.decrementAndGet() == 0) {
                                 handler.handle(addressList);
                             }
-                        });
-                        break;
-                    case TYPE_EXTERNAL:
-                        // todo get display name for external addresses
-                        addressList.put(elemId, new JsonObject().put("email", elemId));
-                        if(processedIds.decrementAndGet() == 0) {
-                            handler.handle(addressList);
-                        }
-                        break;
-                    default:
-                        if(processedIds.decrementAndGet() == 0) {
-                            handler.handle(addressList);
-                        }
+                    }
                 }
             }
         });

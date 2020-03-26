@@ -23,6 +23,7 @@ import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.helper.ServiceManager;
+import fr.openent.zimbra.model.constant.ModuleConstants;
 import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.service.impl.*;
@@ -74,6 +75,7 @@ public class ZimbraController extends BaseController {
 	private SignatureService signatureService;
 	private SearchService searchService;
 	private ExpertModeService expertModeService;
+	private RedirectionService redirectionService;
 
 	private EventStore eventStore;
 	private enum ZimbraEvent { ACCESS }
@@ -98,6 +100,7 @@ public class ZimbraController extends BaseController {
 		this.messageService = serviceManager.getMessageService();
 		this.attachmentService = serviceManager.getAttachmentService();
 		this.expertModeService = serviceManager.getExpertModeService();
+		this.redirectionService = serviceManager.getRedirectionService();
 	}
 
 	@Get("zimbra")
@@ -115,13 +118,17 @@ public class ZimbraController extends BaseController {
 	 * Redirect the connected user to an authenticated session of Zimbra
 	 * @param request	http request containing user info
 	 */
-	@Get("preauth")
+	@Get(ModuleConstants.URL_PREAUTH)
 	@SecuredAction("zimbra.expert")
 	public void preauth(HttpServerRequest request) {
+		final String parameters = request.params().get("params");
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
 				try {
 					String location = expertModeService.getPreauthUrl(user);
+					if(parameters != null && ! parameters.isEmpty()) {
+						location += parameters;
+					}
 					redirect(request, appConfig.getZimbraUri(), location);
 					if(appConfig.isEnableAddressBookSynchro()) {
 						userService.syncAddressBookAsync(user);
@@ -136,6 +143,25 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
+
+	@Get("writeto")
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
+	@ResourceFilter(DevLevelFilter.class)
+	public void writeTo(final HttpServerRequest request) {
+		final String id = request.params().get("id");
+		final String name = request.params().get("name");
+		final String type = request.params().get("type");
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				redirectionService.getRedirectionUrl(user.getUserId(), id, name, type, redirectUrl -> {
+					redirect(request, appConfig.getHost(), redirectUrl);
+				});
+			} else {
+				unauthorized(request);
+			}
+
+		});
+	}
 
 	/**
 	 * Create a Draft email
