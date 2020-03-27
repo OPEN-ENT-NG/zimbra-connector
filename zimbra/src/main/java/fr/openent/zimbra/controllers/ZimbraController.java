@@ -24,6 +24,7 @@ import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.ModuleConstants;
+import fr.openent.zimbra.model.soap.model.SoapFolder;
 import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.service.impl.*;
@@ -37,7 +38,12 @@ import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 
+import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.RequestUtils;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -108,19 +114,30 @@ public class ZimbraController extends BaseController {
 
 	@Get("zimbra")
 	@SecuredAction("zimbra.view")
-	@Cache(value = "/zimbra/count/INBOX", scope = CacheScope.USER, operation = CacheOperation.INVALIDATE)
 	public void view(HttpServerRequest request) {
 		if(appConfig.isForceExpertMode()) {
 			redirect(request, appConfig.getHost(), "/zimbra/preauth");
 		} else {
-			UserUtils.getUserInfos(eb, request, user -> this.userService.getUserInfo(user, evt -> {
-				if (evt.isLeft()) {
-					//TODO Render error page
-				} else {
-					JsonObject zUserInfo = evt.right().getValue();
-					renderView(request, zUserInfo);
-				}
-			}));
+			UserUtils.getUserInfos(eb, request, user -> {
+				Future<JsonObject> userFuture = Future.future();
+				Future<SoapFolder> foldersFuture = Future.future();
+
+				CompositeFuture.all(userFuture, foldersFuture).setHandler(res -> {
+					if (res.failed()) {
+						//TODO Render error page
+					} else {
+						JsonObject zUserInfo = userFuture.result();
+						zUserInfo.put("folders", foldersFuture.result().toJson().getJsonArray("folders").toString());
+						renderView(request, zUserInfo);
+					}
+				});
+
+				folderService.getRootFolder(user, foldersFuture);
+				userService.getUserInfo(user, evt -> {
+					if (evt.isLeft()) userFuture.fail(evt.left().getValue());
+					else userFuture.complete(evt.right().getValue());
+				});
+			});
 		}
 
 		eventStore.createAndStoreEvent(ZimbraEvent.ACCESS.name(), request);
@@ -280,6 +297,15 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
+	@Get("root-folder")
+	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
+	public void getRootFolder(HttpServerRequest request) {
+		UserUtils.getUserInfos(eb, request, user -> folderService.getRootFolder(user, res -> {
+			if (res.failed()) renderError(request);
+			else renderJson(request, res.result().toJson().getJsonArray("folders"));
+		}));
+	}
+
 	/**
 	 * List messages in folders
 	 * If unread is true, filter only unread messages.
@@ -290,7 +316,7 @@ public class ZimbraController extends BaseController {
   	 *                unread ? filter only unread messages
 	 *                search ? filter only searched messages
 	 */
-	@Get("list/:folder")
+	@Get("list")
 	@SecuredAction(value = "zimbra.list", type = ActionType.AUTHENTICATED)
 	public void list(final HttpServerRequest request) {
 		final String folder = request.params().get("folder");

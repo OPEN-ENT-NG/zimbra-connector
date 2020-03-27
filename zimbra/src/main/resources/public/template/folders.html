@@ -17,7 +17,7 @@
 
 <!-- Folders - main screen recursive templates -->
 <script type="text/ng-template" id="folder-content">
-	<a ng-click="openUserFolder(folder, obj); folder.selected = !folder.selected "
+	<a ng-click="openUserFolder(folder, obj, $event);"
 	   ng-init="obj = { template: '' }"
 	   ng-class="{ selected: zimbra.currentFolder.id === folder.id, opened: isOpenedFolder(folder) }"
 	   dragdrop="dropTo(folder, $originalEvent)"
@@ -76,19 +76,27 @@
                         [[lang.translate('trash')]]
                     </a>
                 </li>
+                <li>
+                    <a class="folder-list-item"
+                       ng-click="openFolder('spams')" ng-class="{ selected: zimbra.currentFolder.folderName === 'spams' }"
+                       dragdrop="dropTo(folders.spams, $originalEvent)"
+                       dropcondition="dropCondition(folders.spams)">
+                        [[lang.translate('spams')]]
+                    </a>
+                </li>
             </ul>
 
             <lightbox show="lightbox.show" on-close="lightbox.show = false">
                 <container template="lightbox"></container>
             </lightbox>
 
-            <nav class="vertical row" ng-if="zimbra.maxFolderDepth">
+            <nav class="vertical row">
                 <h2><i18n>user.folders</i18n></h2>
             </nav>
 
-            <nav class="vertical" ng-if="zimbra.maxFolderDepth">
+            <nav class="vertical">
                 <div ng-include="rootFolderTemplate.template"></div>
-                <a class="classic-link" ng-click="openNewFolderView()" ng-show="zimbra.maxFolderDepth && zimbra.maxFolderDepth > 0 && currentFolderDepth() < zimbra.maxFolderDepth">
+                <a class="classic-link" ng-click="openNewFolderView()">
                     <i18n>create.folder</i18n>
                 </a>
             </nav>

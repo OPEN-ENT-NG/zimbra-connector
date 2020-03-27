@@ -34,8 +34,11 @@
             "prefered": {{prefered}},
             "id": "{{id}}",
             "content": "{{content}}"
-        }
+        },
         {{/signature}}
+        {{#folders}}
+        "folders": '{{{folders}}}'
+        {{/folders}}
         };
     </script>
     <script type="text/javascript" src="/zimbra/public/dist/entcore/ng-app.js" id="context"></script>
