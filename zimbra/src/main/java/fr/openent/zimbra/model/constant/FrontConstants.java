@@ -23,6 +23,12 @@ public class FrontConstants {
     public static final String FOLDER_DRAFT = "DRAFT";
     public static final String FOLDER_TRASH = "TRASH";
 
+    public static final String FOLDER_ID = "id";
+    public static final String FOLDER_SIZE = "count";
+    public static final String FOLDER_PATH = "path";
+    public static final String FOLDER_NAME = "folderName";
+    public static final String FOLDER_SUB_FOLDERS = "folders";
+
     public static final String STATE_DRAFT = "DRAFT";
     public static final String STATE_SENT = "SENT";
 

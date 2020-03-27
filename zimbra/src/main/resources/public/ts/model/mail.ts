@@ -373,8 +373,8 @@ export class Mail implements Selectable {
         try {
             const response = await http.post(path, data);
             const result = response.data;
-            Zimbra.instance.folders["outbox"].mails.refresh();
-            Zimbra.instance.folders["draft"].mails.refresh();
+            // Zimbra.instance.folders["outbox"].mails.refresh();
+            // Zimbra.instance.folders["draft"].mails.refresh();
 
             if (parseInt(result.sent) > 0) {
                 this.state = "SENT";
@@ -427,7 +427,6 @@ export class Mail implements Selectable {
         );
 
         if (!forPrint) {
-            await Zimbra.instance.folders["inbox"].countUnread();
             await this.updateAllowReply();
         }
     }
@@ -640,9 +639,9 @@ export class Mails {
             data.selectAll = false;
         }
         const response = await http.get(
-            "/zimbra/list/" +
-                this.userFolder.id +
-                "?restrain=&page=" +
+            "/zimbra/list?folder=" +
+                this.userFolder.path +
+                "&restrain=&page=" +
                 data.pageNumber +
                 "&unread=" +
                 data.filterUnread +
@@ -690,7 +689,7 @@ export class Mails {
         }
         let response = await http.get(
             this.api.get +
-                "?page=" +
+                "&page=" +
                 data.pageNumber +
                 "&unread=" +
                 data.filterUnread +

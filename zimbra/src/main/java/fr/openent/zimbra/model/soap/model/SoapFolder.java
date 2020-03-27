@@ -17,7 +17,9 @@
 
 package fr.openent.zimbra.model.soap.model;
 
+import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.model.constant.ZimbraConstants;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -27,6 +29,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
@@ -49,7 +54,7 @@ public class SoapFolder {
     private Long modifiedDate;
     private Integer nbItems;
     private Integer sizeItems;
-    private JsonArray subFolders;
+    private List<SoapFolder> subFolders = new ArrayList<>();
 
 
     private static Logger log = LoggerFactory.getLogger(SoapFolder.class);
@@ -165,13 +170,28 @@ public class SoapFolder {
         };
     }
 
+    public JsonObject toJson() {
+        JsonArray subFolders = new JsonArray();
+        for (SoapFolder folder: this.subFolders) {
+            subFolders.add(folder.toJson());
+        }
+
+        return new JsonObject()
+                .put(FrontConstants.FOLDER_ID, this.id)
+                .put(FrontConstants.FOLDER_NAME, this.name)
+                .put(FrontConstants.FOLDER_PATH, this.absolutePath)
+                .put(FrontConstants.MESSAGE_UNREAD, this.nbUnread)
+                .put(FrontConstants.FOLDER_SIZE, this.nbItems)
+                .put(FrontConstants.FOLDER_SUB_FOLDERS, subFolders);
+    }
+
     private static SoapFolder createFromJson(JsonObject folderData) throws IllegalArgumentException {
         SoapFolder folder = new SoapFolder();
         folder.id = folderData.getString(ZIMBRA_ID, "");
         folder.uuid = folderData.getString(UUID, "");
         folder.name = folderData.getString(FOLDER_NAME, "");
         folder.absolutePath = folderData.getString(FOLDER_ABSPATH, "");
-        if(folder.id.isEmpty() || folder.uuid.isEmpty() || folder.name.isEmpty() || folder.absolutePath.isEmpty()) {
+        if(!FOLDER_ROOT_ID.equals(folder.id) && (folder.id.isEmpty() || folder.uuid.isEmpty() || folder.name.isEmpty() || folder.absolutePath.isEmpty())) {
             throw new IllegalArgumentException("Invalid folder data");
         }
         folder.parentId = folderData.getString(FOLDER_PARENTID, "");
@@ -184,7 +204,12 @@ public class SoapFolder {
         folder.modifiedDate = folderData.getLong(FOLDER_MODIFIED_DATE);
         folder.nbItems = folderData.getInteger(FOLDER_NBITEMS, 0);
         folder.sizeItems = folderData.getInteger(FOLDER_SIZEITEMS, 0);
-        folder.subFolders = folderData.getJsonArray(FOLDER, new JsonArray());
+
+        JsonArray subFolders = folderData.getJsonArray(FOLDER, new JsonArray());
+        for (int i = 0; i < subFolders.size(); i++) {
+            folder.subFolders.add(SoapFolder.createFromJson(subFolders.getJsonObject(i)));
+        }
+
         return folder;
     }
 

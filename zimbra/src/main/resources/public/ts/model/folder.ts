@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { notify, toFormData, _ } from "entcore";
+import {notify, toFormData, _} from "entcore";
 import { Zimbra } from "./zimbra";
 import { Mail, Mails } from "./mail";
 import { quota } from "./quota";
@@ -23,6 +23,8 @@ import { quota } from "./quota";
 import { Mix, Eventer, Selection, Selectable } from "entcore-toolkit";
 
 import http from "axios";
+
+declare const window: any;
 
 export abstract class Folder implements Selectable {
     pageNumber: number;
@@ -35,6 +37,9 @@ export abstract class Folder implements Selectable {
     reverse: boolean;
     searchText: string;
     count: number;
+    path: string;
+    folders: Array<Folder>;
+    parentPath: string;
 
 
     abstract removeSelection();
@@ -101,34 +106,11 @@ export abstract class Folder implements Selectable {
         });
     }
 
-    async countUnread() {
-        var name = this.getName();
-        var restrain;
-        if (this instanceof SystemFolder) {
-            restrain = "";
-        }
-        if (this instanceof UserFolder) {
-            restrain = "&restrain=";
-        }
-        const response = await http.get(
-            "/zimbra/count/" + name + "?unread=true" + restrain
-        );
-        this.nbUnread = parseInt(response.data.count);
-    }
-
-    async countTotal() {
-        let name = this.getName();
-        const response = await http.get(
-            "/zimbra/count/" + name + "?unread=false"
-        );
-        this.count = parseInt(response.data.count);
-    }
-
     async toggleUnreadSelection(unread) {
         await this.mails.toggleUnread(unread);
+        const increment = unread ? this.mails.selection.length : -1 * this.mails.selection.length;
+        this.nbUnread = this.nbUnread + increment;
         this.mails.selection.deselectAll();
-        await quota.refresh();
-        await this.countUnread();
     }
 }
 
@@ -146,12 +128,17 @@ export abstract class SystemFolder extends Folder {
 
 export class Trash extends SystemFolder {
     userFolders: Selection<UserFolder> = new Selection<UserFolder>([]);
-    constructor() {
+
+    constructor({unread, count, folders, path}) {
         super({
-            get: "/zimbra/list/trash"
+            get: `/zimbra/list?folder=${path}`
         });
 
         this.folderName = "trash";
+        this.nbUnread = unread;
+        this.count = count;
+        this.folders = folders;
+        this.path = path;
     }
 
     selectAll() {
@@ -169,7 +156,6 @@ export class Trash extends SystemFolder {
             [
             await this.mails.sync({ searchText: this.searchText }),
             await this.syncUsersFolders(),
-            await this.countTotal()
         ]);
     }
 
@@ -198,7 +184,6 @@ export class Trash extends SystemFolder {
             await folder.restore();
         }
         await this.syncUsersFolders();
-        await this.countUnread();
     }
 
     async restoreMails() {
@@ -230,20 +215,20 @@ export class Trash extends SystemFolder {
 }
 
 export class Inbox extends SystemFolder {
-    constructor() {
+    constructor({unread, count, folders, path}) {
         super({
-            get: "/zimbra/list/inbox"
+            get: `/zimbra/list?folder=${path}`
         });
 
         this.folderName = "inbox";
+        this.nbUnread = unread;
+        this.count = count;
+        this.folders = folders;
+        this.path = path;
     }
 
     async sync() {
-        await Promise.all(
-            [
-                    await this.mails.sync({ searchText: this.searchText }),
-                    await this.countTotal()
-                ]);
+        await this.mails.sync({ searchText: this.searchText });
     }
 
     async removeSelection() {
@@ -263,13 +248,16 @@ export class Inbox extends SystemFolder {
 export class Draft extends SystemFolder {
     totalNb: number;
 
-    constructor() {
+    constructor({unread, count, folders, path}) {
         super({
-            get: "/zimbra/list/draft"
+            get: `/zimbra/list?folder=${path}`
         });
 
         this.folderName = "draft";
-        this.totalNb = 0;
+        this.nbUnread = unread;
+        this.count = count;
+        this.folders = folders;
+        this.path = path;
     }
 
     selectAll() {
@@ -281,11 +269,7 @@ export class Draft extends SystemFolder {
     }
 
     async sync() {
-        await Promise.all(
-            [
-                await this.mails.sync({ searchText: this.searchText }),
-                await this.countTotal()
-            ]);
+        await this.mails.sync({ searchText: this.searchText });
     }
 
     async removeSelection() {
@@ -314,21 +298,19 @@ export class Draft extends SystemFolder {
             notify.error(e.data.error);
         }
     }
-
-    async countTotal() {
-        const response = await http.get("/zimbra/count/DRAFT?unread=false");
-        this.totalNb = parseInt(response.data.count);
-        this.count = this.totalNb;
-    }
 }
 
 export class Outbox extends SystemFolder {
-    constructor() {
+    constructor({unread, count, folders, path}) {
         super({
-            get: "/zimbra/list/outbox"
+            get: `/zimbra/list?folder=${path}`
         });
 
         this.folderName = "outbox";
+        this.nbUnread = unread;
+        this.count = count;
+        this.folders = folders;
+        this.path = path;
     }
 
     selectAll() {
@@ -341,7 +323,37 @@ export class Outbox extends SystemFolder {
 
     async sync() {
         await this.mails.sync({ searchText: this.searchText });
-        await this.countTotal();
+    }
+
+    async removeSelection() {
+        await this.mails.toTrash();
+        await quota.refresh();
+    }
+}
+
+export class Spams extends SystemFolder {
+    constructor({unread, count, folders, path}) {
+        super({
+            get: `/zimbra/list?folder=${path}`
+        });
+
+        this.folderName = "spams";
+        this.nbUnread = unread;
+        this.count = count;
+        this.folders = folders;
+        this.path = path;
+    }
+
+    selectAll() {
+        this.mails.selection.selectAll();
+    }
+
+    deselectAll() {
+        this.mails.selection.deselectAll();
+    }
+
+    async sync() {
+        await this.mails.sync({ searchText: this.searchText });
     }
 
     async removeSelection() {
@@ -379,12 +391,7 @@ export class UserFolder extends Folder {
     }
 
     async sync() {
-        await Promise.all(
-            [
-            await this.mails.sync({ searchText: this.searchText }),
-            await this.syncUserFolders(),
-            await this.countTotal()
-        ]);
+        await this.mails.sync({ searchText: this.searchText });
     }
 
     selectAll() {
@@ -395,24 +402,16 @@ export class UserFolder extends Folder {
         this.mails.selection.deselectAll();
     }
 
-    async syncUserFolders() {
-        const response = await http.get("folders/list?parentId=" + this.id);
-        await this.countUnread();
-        this.userFolders.all.splice(0, this.userFolders.colLength);
-        for (let f of response.data) {
-            const folder: UserFolder = Mix.castAs(UserFolder, f);
-            folder.parentFolder = this;
-            this.userFolders.push(folder);
-            await folder.syncUserFolders();
-        }
-    }
-
-    constructor(data?) {
+    constructor(data?, obj?) {
         super(data);
 
         this.mails = new Mails(this);
         var thatFolder = this;
         this.pageNumber = 0;
+
+        if (obj && 'folders' in obj && obj.folders.length > 0) {
+            this.userFolders = new Selection<UserFolder>( new UserFolders(obj.folders).all);
+        }
     }
 
     depth(): number {
@@ -462,39 +461,58 @@ export class UserFolders {
     all: UserFolder[];
     selection: Selection<UserFolder>;
 
-    forEach(cb: (item: UserFolder, index: number) => void) {
-        return this.all.forEach(cb);
-    }
-
-    async sync() {
-        const response = await http.get("folders/list");
-        const data = response.data;
-        this.all = Mix.castArrayAs(UserFolder, data);
-        this.forEach(function(item) {
-            item.syncUserFolders();
+    constructor(folders) {
+        this.all = [];
+        folders.forEach(folder => {
+            const f = new UserFolder({get: `/zimbra/list?folder=${folder.path}`}, folder);
+            f.name = folder.folderName;
+            f.id = folder.id;
+            f.path = folder.path;
+            f.nbUnread = folder.unread;
+            f.count = folder.count;
+            f.userFolders.all.map(userFolder => userFolder.parentPath = f.path);
+            window.folderMap.set(f.path, f);
+            this.all.push(f);
         });
     }
 
-    async countUnread() {
-        for (let folder of this.all) {
-            await folder.countUnread();
-        }
+    forEach(cb: (item: UserFolder, index: number) => void) {
+        return this.all.forEach(cb);
     }
 }
 
 export class SystemFolders {
+    list: SystemFolder[];
     sync: any;
     inbox: Inbox;
     trash: Trash;
     outbox: Outbox;
     draft: Draft;
+    spams: Spams;
     systemFolders: string[];
 
     constructor() {
-        this.inbox = new Inbox();
-        this.trash = new Trash();
-        this.draft = new Draft();
-        this.outbox = new Outbox();
+        this.list = [];
+        const folders = JSON.parse(window.user.folders);
+        folders.forEach(folder => {
+            switch (folder.path) {
+                case '/Inbox':
+                    this.inbox = new Inbox(folder);
+                    break;
+                case '/Sent':
+                    this.outbox = new Outbox(folder);
+                    break;
+                case '/Drafts':
+                    this.draft = new Draft(folder);
+                    break;
+                case '/Trash':
+                    this.trash = new Trash(folder);
+                    break;
+                case '/Junk':
+                    this.spams = new Spams(folder);
+                    break;
+            }
+        });
     }
 
     async openFolder(folderName) {

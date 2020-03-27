@@ -74,59 +74,40 @@ public class MessageService {
      * List messages in folders
      * If unread is true, filter only unread messages.
      * If search is set, must be at least 3 characters. Then filter by search.
-     * @param folderId folder id where to listMessages messages
+     * @param folderPath folder id where to listMessages messages
      * @param unread filter only unread messages ?
      * @param user user infos
      * @param page page used for pagination, default 0
      * @param searchText [optional] text used for search
      * @param result Handler results
      */
-    public void listMessages(String folderId, Boolean unread, UserInfos user, int page,
+    public void listMessages(String folderPath, Boolean unread, UserInfos user, int page,
                              final String searchText, Handler<Either<String, JsonArray>> result) {
-        folderService.getFolderInfos(folderId, user, response -> {
-            if(response.isLeft()) {
-                result.handle(new Either.Left<>(response.left().getValue()));
+        String query = pathToQuery(folderPath);
+        if(unread) {
+            query += " is:unread";
+        }
+        if(searchText != null && ! searchText.isEmpty()) {
+            query += " *" + searchText +"*";
+        }
+        int pageSize = Zimbra.appConfig.getMailListLimit();
+        JsonObject searchReq = new JsonObject()
+                .put("query", query)
+                .put("types", "message")
+                .put("recip", "2")
+                .put("limit", pageSize)
+                .put("offset", page * pageSize)
+                .put("_jsns", SoapConstants.NAMESPACE_MAIL);
+
+        JsonObject searchRequest = new JsonObject()
+                .put("name", "SearchRequest")
+                .put("content", searchReq);
+
+        soapService.callUserSoapAPI(searchRequest, user, searchResult -> {
+            if(searchResult.isLeft()) {
+                result.handle(new Either.Left<>(searchResult.left().getValue()));
             } else {
-                JsonObject folderInfos = response.right().getValue();
-                try {
-
-                    JsonObject folder = folderInfos.getJsonObject("Body")
-                            .getJsonObject("GetFolderResponse")
-                            .getJsonArray("folder").getJsonObject(0);
-
-                    String folderPath = folder.getString(FOLDER_ABSPATH);
-
-                    String query = pathToQuery(folderPath);
-                    if(unread) {
-                        query += " is:unread";
-                    }
-                    if(searchText != null && ! searchText.isEmpty()) {
-                        query += " *" + searchText +"*";
-                    }
-                    int pageSize = Zimbra.appConfig.getMailListLimit();
-                    JsonObject searchReq = new JsonObject()
-                            .put("query", query)
-                            .put("types", "message")
-                            .put("recip", "2")
-                            .put("limit", pageSize)
-                            .put("offset", page * pageSize)
-                            .put("_jsns", SoapConstants.NAMESPACE_MAIL);
-
-                    JsonObject searchRequest = new JsonObject()
-                            .put("name", "SearchRequest")
-                            .put("content", searchReq);
-
-                    soapService.callUserSoapAPI(searchRequest, user, searchResult -> {
-                        if(searchResult.isLeft()) {
-                            result.handle(new Either.Left<>(searchResult.left().getValue()));
-                        } else {
-                            processListMessages(searchResult.right().getValue(), result);
-                        }
-                    });
-
-                } catch (NullPointerException e ) {
-                    result.handle(new Either.Left<>("Error when reading response for folder"));
-                }
+                processListMessages(searchResult.right().getValue(), result);
             }
         });
     }

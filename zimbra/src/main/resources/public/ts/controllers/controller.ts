@@ -21,6 +21,7 @@ import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, 
 import {Mix} from "entcore-toolkit";
 import {Preference} from "../model/preferences";
 
+declare const window: any;
 
 export let zimbraController = ng.controller("ZimbraController", [
     "$location",
@@ -49,6 +50,12 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.zimbra = Zimbra.instance;
+
+        $scope.initFolders = function () {
+            $scope.folders = Zimbra.instance.folders;
+            $scope.userFolders = Zimbra.instance.userFolders;
+        };
+
         $scope.displayLightBox = {
             readMail : false
         };
@@ -57,7 +64,6 @@ export let zimbraController = ng.controller("ZimbraController", [
                 await initPreference();
                 await Zimbra.instance.sync();
                 Zimbra.instance.folders.openFolder("inbox");
-                await Zimbra.instance.folders.draft.countTotal();
                 $scope.constructNewItem();
                 template.open("page", "folders");
                 template.open("right-side","right-side");
@@ -98,15 +104,13 @@ export let zimbraController = ng.controller("ZimbraController", [
                 await Zimbra.instance.sync();
                 template.open("page", "folders");
                 $scope.openFolder("inbox");
-                await Zimbra.instance.folders.draft.countTotal();
                 $scope.$apply();
             }
         });
 
         $scope.lang = lang;
         $scope.notify = notify;
-        $scope.folders = Zimbra.instance.folders;
-        $scope.userFolders = Zimbra.instance.userFolders;
+        $scope.initFolders();
         $scope.users = {
             list: Zimbra.instance.users,
             search: "",
@@ -215,9 +219,8 @@ export let zimbraController = ng.controller("ZimbraController", [
             template.open("main-right-side", "folders-templates/" + folderName);
             $scope.resetState();
             await Zimbra.instance.folders.openFolder(folderName);
-            await Zimbra.instance.currentFolder.countUnread();
             $scope.openRightSide();
-            $scope.nextPage();
+            // $scope.nextPage();
             $scope.$apply();
             $scope.updateWherami();
         };
@@ -227,7 +230,12 @@ export let zimbraController = ng.controller("ZimbraController", [
                 await $scope.openUserFolder(folder, obj);
         };
 
-        $scope.openUserFolder = async (folder: UserFolder, obj) => {
+        $scope.openUserFolder = async (folder: UserFolder, obj, $event) => {
+            if ($event.target.className.includes('trash')) return;
+            if ($event.target.className.includes('arrow')) {
+                obj.template = "folder-content";
+                return;
+            }
             $scope.mail = undefined;
             $scope.state.newItem = new Mail();
             $scope.state.newItem.setMailSignature($scope.getSignature());
@@ -264,8 +272,6 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.removeFromUserFolder = async (event, mail) => {
             if (Zimbra.instance.currentFolder instanceof UserFolder) {
                 await Zimbra.instance.currentFolder.removeMailsFromFolder();
-                await Zimbra.instance.folders.inbox.countUnread();
-                await Zimbra.instance.folders.draft.countTotal();
                 $scope.state.selectAll = false;
                 $scope.$apply();
             }
@@ -323,7 +329,6 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.refresh = async function() {
             notify.info("updating");
             await Zimbra.instance.currentFolder.mails.refresh();
-            await Zimbra.instance.folders.inbox.countUnread();
             $scope.$apply();
         };
 
@@ -583,25 +588,25 @@ export let zimbraController = ng.controller("ZimbraController", [
 
         $scope.restore = async () => {
             await Zimbra.instance.folders.trash.restore();
-            await Zimbra.instance.folders.draft.mails.refresh();
-            await Zimbra.instance.folders.inbox.countUnread();
-            await $scope.userFolders.countUnread();
-            await Zimbra.instance.folders.draft.countTotal();
-            $scope.refreshFolders();
+            // await Zimbra.instance.folders.draft.mails.refresh();
+            // await Zimbra.instance.folders.inbox.countUnread();
+            // await $scope.userFolders.countUnread();
+            // await Zimbra.instance.folders.draft.countTotal();
+            await $scope.refreshFolders();
+            $scope.openFolder('trash');
             $scope.state.selectAll = false;
             $scope.$apply();
         };
 
         $scope.removeSelection = async () => {
             await Zimbra.instance.currentFolder.removeSelection();
-            await Zimbra.instance.currentFolder.countUnread();
             $scope.refreshFolders();
             $scope.state.selectAll = false;
             $scope.displayLightBox.folder =false;
             $scope.$apply();
         };
 
-        $scope.toggleUnreadSelection = async unread => {
+        $scope.toggleUnreadSelection = async (unread, folder) => {
             await Zimbra.instance.currentFolder.toggleUnreadSelection(unread);
             $scope.state.selectAll = false;
             $scope.$apply();
@@ -679,13 +684,13 @@ export let zimbraController = ng.controller("ZimbraController", [
 
         $scope.rootFolderTemplate = { template: "folder-root-template" };
         $scope.refreshFolders = async () => {
-            await $scope.userFolders.sync();
-            await $scope.refreshFolder();
-            $scope.rootFolderTemplate.template = "";
-            $timeout(function() {
-                $scope.$apply();
-                $scope.rootFolderTemplate.template = "folder-root-template";
-            }, 100);
+            await Zimbra.instance.computeRootFolder();
+            $scope.initFolders();
+            // $scope.rootFolderTemplate.template = "";
+            // $timeout(function() {
+            $scope.$apply();
+                // $scope.rootFolderTemplate.template = "folder-root-template";
+            // }, 100);
         };
 
         $scope.refreshFolder = async () => {
@@ -737,7 +742,6 @@ export let zimbraController = ng.controller("ZimbraController", [
                     folderTarget
                 ))
             ) {
-                await Zimbra.instance.currentFolder.countUnread();
                 await folderTarget.countUnread();
             }
             $scope.refresh();
@@ -765,13 +769,26 @@ export let zimbraController = ng.controller("ZimbraController", [
             $event.stopPropagation();
             $scope.targetFolder = new UserFolder();
             $scope.targetFolder.name = folder.name;
+            $scope.targetFolder.oldName = folder.name;
             $scope.targetFolder.id = folder.id;
+            $scope.targetFolder.path = folder.path;
+            $scope.targetFolder.oldPath = folder.path;
+            $scope.targetFolder.parentPath = folder.parentPath;
             $scope.lightbox.show = true;
             template.open("lightbox", "update-folder");
         };
         $scope.updateFolder = async () => {
             await $scope.targetFolder.update();
-            await $scope.refreshFolders();
+            const parentFolder = window.folderMap.get($scope.targetFolder.parentPath);
+            parentFolder.userFolders.all.forEach(folder => {
+                if (folder.id === $scope.targetFolder.id) {
+                    folder.name = $scope.targetFolder.name;
+                    folder.path = folder.path.replace($scope.targetFolder.oldName, $scope.targetFolder.name);
+                    folder.parentPath = $scope.targetFolder.parentPath;
+                }
+            });
+            parentFolder.userFolders.all = parentFolder.userFolders.all.filter(folder => folder.id !== $scope.targetFolder.id);
+                await $scope.refreshFolders();
             $scope.lightbox.show = false;
             template.close("lightbox");
             $scope.$apply();
@@ -785,8 +802,14 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.trashFolder = async (folder: UserFolder) => {
             await folder.trash();
             await $scope.refreshFolders();
-            await Zimbra.instance.folders.trash.sync();
-            await $scope.openFolder("trash");
+            const parentFolder = window.folderMap.get(folder.parentPath);
+            parentFolder.userFolders.all = parentFolder.userFolders.all.filter(f => f.path !== folder.path);
+            if ($scope.zimbra.currentFolder.folderName !== 'trash') {
+                $scope.openFolder('trash');
+            } else {
+                $scope.folders.trash.userFolders.all.push(folder);
+            }
+            $scope.$apply();
         };
         $scope.restoreFolder = function(folder) {
             folder.restore().done(function() {
@@ -931,7 +954,6 @@ export let zimbraController = ng.controller("ZimbraController", [
             var draft =
                 folderSource.getName() === "DRAFT" ||
                 folderTarget.getName() === "DRAFT";
-            if (draft) await Zimbra.instance.folders.draft.countTotal();
             return draft;
         };
 
@@ -944,7 +966,6 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.lightbox.show = false;
             await Zimbra.instance.folders.trash.removeAll();
             await $scope.refreshFolders();
-            await Zimbra.instance.folders.trash.countUnread();
         };
 
         $scope.updateWherami = () => {

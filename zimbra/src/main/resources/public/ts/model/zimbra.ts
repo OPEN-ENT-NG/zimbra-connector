@@ -60,19 +60,23 @@ export class Zimbra {
     }
 
     constructor() {
+        this.compute();
+    }
+
+    compute() {
+        window.folderMap = new Map();
         this.users = new Users();
         this.folders = new SystemFolders();
-        this.userFolders = new UserFolders();
-
-        this.folders.inbox.countUnread();
+        this.userFolders = new UserFolders(this.folders.inbox.folders);
+        this.userFolders.all.map(userFolder => userFolder.parentPath = this.folders.inbox.path);
+        window.folderMap.set(this.folders.inbox.path, this);
     }
 
     async sync() {
-        let response = await http.get("max-depth");
-        this.maxFolderDepth = parseInt(response.data["max-depth"]);
+        // let response = await http.get("max-depth");
+        // this.maxFolderDepth = parseInt(response.data["max-depth"]);
         this.eventer.trigger("change");
         await this.getPreference();
-        await this.userFolders.sync();
         await quota.initialValues();
     }
 
@@ -92,5 +96,39 @@ export class Zimbra {
 
     async putPreference() {
         await http.put("/zimbra/signature", this.preference);
+    }
+
+    async computeRootFolder() {
+        const {data} = await http.get('/zimbra/root-folder');
+        const newValues = [];
+
+        const compute = function (newFolder) {
+            newValues.push(newFolder.path);
+            if (window.folderMap.has(newFolder.path)) {
+                const folder: Folder = window.folderMap.get(newFolder.path);
+                folder.count = newFolder.count;
+                folder.nbUnread = newFolder.unread;
+                newFolder.folders.forEach(compute);
+            } else {
+                const parentPath = newFolder.path.replace(`/${newFolder.folderName}`, '');
+                const parentFolder = window.folderMap.get(parentPath);
+                if (parentFolder) {
+                    const f = new UserFolder(new UserFolder({get: `/zimbra/list?folder=${newFolder.path}`}, newFolder));
+                    parentFolder.userFolders.all.push(f);
+                    f.name = newFolder.folderName;
+                    f.id = newFolder.id;
+                    f.path = newFolder.path;
+                    f.nbUnread = newFolder.unread;
+                    f.count = newFolder.count;
+                    f.parentPath = parentPath;
+                    window.folderMap.set(newFolder.path, f);
+                }
+            }
+        };
+
+        data.forEach(compute);
+        window.folderMap.forEach((value, key) => {
+           if (newValues.indexOf(key) === -1) window.folderMap.delete(key)
+        });
     }
 }

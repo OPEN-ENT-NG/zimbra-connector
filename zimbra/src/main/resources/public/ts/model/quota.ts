@@ -78,8 +78,8 @@ class Quota {
     }
 
     async refresh() {
-        const {data} = await http.get("/zimbra/pana/quota");
-        this.compute(data);
+        // const {data} = await http.get("/zimbra/pana/quota");
+        // this.compute(data);
     }
 }
 

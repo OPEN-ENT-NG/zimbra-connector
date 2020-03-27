@@ -20,8 +20,11 @@ package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.model.soap.model.SoapFolder;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -399,5 +402,9 @@ public class FolderService {
         } else {
             return folderId;
         }
+    }
+
+    public void getRootFolder(UserInfos user, Handler<AsyncResult<SoapFolder>> handler) {
+        SoapFolder.getFolderById(user.getUserId(), ZimbraConstants.FOLDER_ROOT_ID, ZimbraConstants.VIEW_MESSAGE, -1, handler);
     }
 }
