@@ -1,0 +1,12 @@
+{
+	"main":"fr.openent.apizimbra.ApiZimbra",
+	"port": 8009,
+	"mode": "dev",
+	"auto-redeploy": false,
+    "host" : "http://localhost:8009",
+    "sql": true,
+    "app-name" : "API Messagerie",
+    "app-address" : "http://localhost:8009/apizimbra",
+    "app-icon" : "conversation-large",
+	"max-folder-depth": 2
+}
