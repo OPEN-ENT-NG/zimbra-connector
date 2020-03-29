@@ -170,3 +170,12 @@ project(":zimbra") {
     testCompile 'io.gatling.highcharts:gatling-charts-highcharts:2.2.2'
   }
 }
+
+project(":apizimbra") {
+  dependencies {
+    compileOnly "io.vertx:vertx-core:$vertxVersion"
+    compile "org.entcore:common:$entCoreVersion"
+    testCompile "org.entcore:tests:$entCoreVersion"
+    testCompile 'io.gatling.highcharts:gatling-charts-highcharts:2.2.2'
+  }
+}

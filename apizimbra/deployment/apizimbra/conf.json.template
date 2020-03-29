@@ -1,0 +1,24 @@
+    {
+      "name": "fr.openent~apizimbra~2.3-SNAPSHOT",
+      "config": {
+        "main" : "fr.openent.apizimbra.ApiZimbra",
+        "port" : 8105,
+        "app-name" : "API Messagerie",
+    	"app-address" : "/apizimbra",
+    	"app-icon" : "Zimbra-large",
+        "host": "${host}",
+        "ssl" : $ssl,
+        "auto-redeploy": false,
+        "userbook-host": "${host}",
+        "integration-mode" : "BUS",
+        "app-registry.port" : 8012,
+        "mode" : "${mode}",
+        "sql": true,
+        "cache-enabled": true,
+        "db-schema": "zimbra",
+        "zimbra-uri" : "$zimbraUri",
+        "zimbra-domain" : "$zimbraDomain",
+        "zimbra-synchro-lang" : "$zimbraLang",
+        "entcore.port" : 8009
+      }
+    }
