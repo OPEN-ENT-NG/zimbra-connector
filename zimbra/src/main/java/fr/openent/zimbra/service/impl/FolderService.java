@@ -64,7 +64,8 @@ public class FolderService {
 
         soapService.callUserSoapAPI(getFolderRequest, user, response -> {
             if(response.isLeft()) {
-                result.handle(response);
+                JsonObject value = new JsonObject().put("count", 0);
+                result.handle(new Either.Right<>(value));
             } else {
                processCountMessages(unread, response.right().getValue(), result);
             }
