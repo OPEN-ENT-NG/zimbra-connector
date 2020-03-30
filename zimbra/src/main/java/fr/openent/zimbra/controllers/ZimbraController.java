@@ -122,15 +122,15 @@ public class ZimbraController extends BaseController {
 				Future<JsonObject> userFuture = Future.future();
 				Future<SoapFolder> foldersFuture = Future.future();
 
-				CompositeFuture.all(userFuture, foldersFuture).setHandler(res -> {
-					if (res.failed()) {
-						//TODO Render error page
-					} else {
-						JsonObject zUserInfo = userFuture.result();
-						zUserInfo.put("folders", foldersFuture.result().toJson().getJsonArray("folders").toString());
-						renderView(request, zUserInfo);
-					}
-				});
+			CompositeFuture.all(userFuture, foldersFuture).setHandler(res -> {
+				if (res.failed()) {
+					renderView(request, null, "error.html", null);
+				} else {
+					JsonObject zUserInfo = userFuture.result();
+					zUserInfo.put("folders", foldersFuture.result().toJson().getJsonArray("folders").toString());
+					renderView(request, zUserInfo);
+				}
+			});
 
 				folderService.getRootFolder(user, foldersFuture);
 				userService.getUserInfo(user, evt -> {
