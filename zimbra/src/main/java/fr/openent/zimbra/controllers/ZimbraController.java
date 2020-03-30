@@ -85,6 +85,7 @@ public class ZimbraController extends BaseController {
 	private SearchService searchService;
 	private ExpertModeService expertModeService;
 	private RedirectionService redirectionService;
+	private FrontPageService frontPageService;
 
 	private EventStore eventStore;
 	private enum ZimbraEvent { ACCESS }
@@ -110,6 +111,7 @@ public class ZimbraController extends BaseController {
 		this.attachmentService = serviceManager.getAttachmentService();
 		this.expertModeService = serviceManager.getExpertModeService();
 		this.redirectionService = serviceManager.getRedirectionService();
+		this.frontPageService = serviceManager.getFrontPageService();
 	}
 
 	@Get("zimbra")
@@ -119,24 +121,17 @@ public class ZimbraController extends BaseController {
 			redirect(request, appConfig.getHost(), "/zimbra/preauth");
 		} else {
 			UserUtils.getUserInfos(eb, request, user -> {
-				Future<JsonObject> userFuture = Future.future();
-				Future<SoapFolder> foldersFuture = Future.future();
-
-			CompositeFuture.all(userFuture, foldersFuture).setHandler(res -> {
-				if (res.failed()) {
-					renderView(request, null, "error.html", null);
+				if (user != null) {
+					frontPageService.getFrontPageInfos(user, result -> {
+						if(result.failed()) {
+							renderView(request, null, "error.html", null);
+						} else {
+							renderView(request, result.result());
+						}
+					});
 				} else {
-					JsonObject zUserInfo = userFuture.result();
-					zUserInfo.put("folders", foldersFuture.result().toJson().getJsonArray("folders").toString());
-					renderView(request, zUserInfo);
+					unauthorized(request);
 				}
-			});
-
-				folderService.getRootFolder(user, foldersFuture);
-				userService.getUserInfo(user, evt -> {
-					if (evt.isLeft()) userFuture.fail(evt.left().getValue());
-					else userFuture.complete(evt.right().getValue());
-				});
 			});
 		}
 

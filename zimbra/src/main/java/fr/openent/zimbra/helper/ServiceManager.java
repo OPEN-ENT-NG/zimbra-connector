@@ -60,6 +60,7 @@ public class ServiceManager {
     private MobileThreadService mobileThreadService;
     private RecipientService recipientService;
     private RedirectionService redirectionService;
+    private FrontPageService frontPageService;
 
 
     private SynchroUserService synchroUserService;
@@ -70,8 +71,6 @@ public class ServiceManager {
     private SynchroMailerService synchroMailerService;
     private SynchroAddressBookService synchroAddressBookService;
     private Neo4jAddrbookService neo4jAddrbookService;
-
-    private CacheService cacheService;
 
     private SynchroLauncher synchroLauncher;
 
@@ -88,7 +87,7 @@ public class ServiceManager {
         emailSender = emailFactory.getSender();
 
         String redisConfig = (String) vertx.sharedData().getLocalMap("server").get("redisConfig");
-        cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient()) : null;
+        CacheService cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient()) : null;
 
         this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
         initDbMailService(appConfig);
@@ -113,6 +112,7 @@ public class ServiceManager {
         this.recipientService = new RecipientService(messageService);
         this.mobileThreadService = new MobileThreadService(recipientService);
         this.redirectionService = new RedirectionService(eb, userService);
+        this.frontPageService = new FrontPageService(folderService, userService);
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
@@ -215,6 +215,10 @@ public class ServiceManager {
 
     public RedirectionService getRedirectionService() {
         return redirectionService;
+    }
+
+    public FrontPageService getFrontPageService() {
+        return frontPageService;
     }
 
     public RecipientService getRecipientService() {

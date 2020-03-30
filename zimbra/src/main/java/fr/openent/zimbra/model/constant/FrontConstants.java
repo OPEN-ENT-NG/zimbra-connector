@@ -70,4 +70,6 @@ public class FrontConstants {
     public static final String THREAD_DATE = "date";
     public static final String THREAD_NB_UNREAD = "unread";
     public static final String THREAD_SUBJECT = "subject";
+
+    public static final String FRONT_PAGE_FOLDERS = "folders";
 }
