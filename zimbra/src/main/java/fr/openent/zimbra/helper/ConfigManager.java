@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.helper;
 
+import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -71,6 +72,8 @@ public class ConfigManager {
 
     // Bug in Zimbra : when getting messages in conversations, alternative parts are inverted
     private boolean invertAltPartInConvMsg;
+
+    private CircuitBreakerOptions circuitBreakerOptions;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -133,6 +136,7 @@ public class ConfigManager {
             log.fatal("Zimbra : Missing configuration in conf.properties");
         }
 
+        this.circuitBreakerOptions = new CircuitBreakerOptions(config.getJsonObject("circuit-breaker", new JsonObject()));
         initPublicConfig();
     }
 
@@ -166,6 +170,9 @@ public class ConfigManager {
     public Integer getAddressBookSynchroTtl() { return addressBookSynchroTtl;}
     public Integer getSqlInsertPaginationSize() { return sqlInsertPaginationSize;}
     public boolean getInvertAltPartInConvMsg() { return invertAltPartInConvMsg;}
+    public CircuitBreakerOptions getCircuitBreakerOptions() {
+        return this.circuitBreakerOptions;
+    }
 
     public boolean isForceExpertMode() { return forceExpertMode;}
     public boolean isEnableAddressBookSynchro() { return enableAddressBookSynchro;}

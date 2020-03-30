@@ -93,7 +93,7 @@ public class ServiceManager {
         this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
         initDbMailService(appConfig);
         this.searchService = new SearchService(vertx);
-        this.soapService = new SoapZimbraService(vertx, cacheService);
+        this.soapService = new SoapZimbraService(vertx, cacheService, appConfig.getCircuitBreakerOptions());
         this.neoService = new Neo4jZimbraService();
         this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
         this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);

@@ -25,6 +25,8 @@ import fr.openent.zimbra.service.impl.UserInfoService;
 import fr.openent.zimbra.service.impl.UserService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
+import io.vertx.circuitbreaker.CircuitBreaker;
+import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -86,7 +88,9 @@ public class SoapZimbraService {
 
     private CacheService cacheService;
 
-    public SoapZimbraService(Vertx vertx, CacheService cacheService) {
+    private CircuitBreaker breaker;
+
+    public SoapZimbraService(Vertx vertx, CacheService cacheService, CircuitBreakerOptions cbOptions) {
         this.userService = null;
         this.synchroUserService = null;
 
@@ -105,6 +109,14 @@ public class SoapZimbraService {
         } else {
             authedUsers =  new HashMap<>();
         }
+
+        this.breaker = CircuitBreaker.create("zimbra-soap-service", vertx, cbOptions);
+        this.breaker.openHandler(v -> {
+           log.info("Zimbra circuit break " + this.breaker.name() + " opened");
+        });
+        this.breaker.closeHandler(v -> {
+            log.info("Closing " + this.breaker.name() + " circuit breaker");
+        });
     }
 
     public void setServices(UserService us, SynchroUserService synchroUserService) {
@@ -175,7 +187,7 @@ public class SoapZimbraService {
      * @return default handler
      */
     private Handler<HttpClientResponse> zimbraRequestHandler(JsonObject params, String userId, String userAddress,
-                                                             final Handler<Either<String,JsonObject>> handler) {
+                                                             final Future<JsonObject> handler) {
         return response ->
             response.bodyHandler( body -> {
                 JsonObject result;
@@ -183,11 +195,11 @@ public class SoapZimbraService {
                     result = body.toJsonObject();
                 } catch (DecodeException e) {
                     log.error("Can't process Zimbra response + " + response.statusMessage());
-                    handler.handle(new Either.Left<>(response.statusMessage()));
+                    handler.fail(response.statusMessage());
                     return;
                 }
                 if(response.statusCode() == 200) {
-                    handler.handle(new Either.Right<>(result));
+                    handler.complete(result);
                 } else {
                     try {
                         JsonObject errorJson = new JsonObject();
@@ -202,7 +214,7 @@ public class SoapZimbraService {
                                 .getString("Code"));
                         handleSoapError(errorJson, params, userId, userAddress, handler);
                     } catch (Exception e) {
-                        handler.handle(new Either.Left<>(response.statusMessage()));
+                        handler.fail(response.statusMessage());
                     }
                 }
             });
@@ -222,26 +234,31 @@ public class SoapZimbraService {
      */
     private void callSoapAPI(JsonObject params, String userId, String userAddress,
                              Handler<Either<String,JsonObject>> handler) {
-        if(httpClient == null) {
-            httpClient = HttpClientHelper.createHttpClient(vertx);
-        }
-        String finalUrl = params.getBoolean(PARAM_ISADMIN) ? zimbraAdminUri : zimbraUri;
-        HttpClientRequest request;
-        Handler<HttpClientResponse> handlerRequest = zimbraRequestHandler(params, userId, userAddress, handler);
-        request = httpClient.postAbs(finalUrl, handlerRequest);
-        request.setChunked(true);
-        if(params.getBoolean(PARAM_IS_AUTH, true) && params.containsKey(PARAM_AUTH_TOKEN)) {
-            request.putHeader(HEADER_COOKIE, COOKIE_AUTH_TOKEN + "=" + params.getString(PARAM_AUTH_TOKEN));
-        }
-        JsonObject jsonRequest = prepareJsonRequest(params);
+        breaker.<JsonObject>execute(future -> {
+            if(httpClient == null) {
+                httpClient = HttpClientHelper.createHttpClient(vertx);
+            }
+            String finalUrl = params.getBoolean(PARAM_ISADMIN) ? zimbraAdminUri : zimbraUri;
+            HttpClientRequest request;
+            Handler<HttpClientResponse> handlerRequest = zimbraRequestHandler(params, userId, userAddress, future);
+            request = httpClient.postAbs(finalUrl, handlerRequest);
+            request.setChunked(true);
+            if(params.getBoolean(PARAM_IS_AUTH, true) && params.containsKey(PARAM_AUTH_TOKEN)) {
+                request.putHeader(HEADER_COOKIE, COOKIE_AUTH_TOKEN + "=" + params.getString(PARAM_AUTH_TOKEN));
+            }
+            JsonObject jsonRequest = prepareJsonRequest(params);
 
-        request.exceptionHandler( err -> {
-           log.error("Error on request : " + finalUrl + " body : " + jsonRequest.encode(), err);
-           handler.handle(new Either.Left<>("Error on request : " + err.getMessage()));
+            request.exceptionHandler( err -> {
+                log.error("Error on request : " + finalUrl + " body : " + jsonRequest.encode(), err);
+                future.fail("Error on request : " + err.getMessage());
+            });
+
+            request.write(jsonRequest.encode());
+            request.end();
+        }).setHandler(evt -> {
+            if (evt.failed()) handler.handle(new Either.Left<>(evt.cause().getMessage()));
+            else handler.handle(new Either.Right<>(evt.result()));
         });
-
-        request.write(jsonRequest.encode());
-        request.end();
     }
 
     /**
@@ -327,8 +344,13 @@ public class SoapZimbraService {
      * @param handler final handler
      */
     private void handleSoapError(JsonObject callResult, JsonObject params, String userId, String userAddress,
-                                 Handler<Either<String,JsonObject>> handler) {
+                                 Future<JsonObject> handler) {
         String callResultStr = callResult.toString();
+        Handler<Either<String, JsonObject>> soapApiHandler = evt -> {
+            if (evt.isLeft()) handler.fail(evt.left().getValue());
+            else handler.complete(evt.right().getValue());
+        };
+
         try {
             switch(callResult.getString(ERROR_CODE, "")) {
                 case ERROR_AUTHFAILED:
@@ -338,23 +360,21 @@ public class SoapZimbraService {
                             if(ERROR_NOSUCHACCOUNT.equals(newCallResult.getString(ERROR_CODE, ""))) {
                                 synchroUserService.exportUser(userId, result -> {
                                     if (result.failed()) {
-                                        handler.handle(new Either.Left<>(result.cause().getMessage()));
+                                        handler.fail(result.cause().getMessage());
                                     } else {
-                                        callSoapAPI(params, userId, userAddress, handler);
+                                        callSoapAPI(params, userId, userAddress, soapApiHandler);
                                     }
                                 });
                             } else {
-                                handler.handle(AsyncHelper.jsonObjectAsyncToJsonObjectEither(event));
+                                handler.handle(event);
                             }
                         } else {
                             String accountStatus = event.result().getString(UserInfoService.STATUS);
                             if( ! ACCT_STATUS_ACTIVE.equals(accountStatus)) {
-                                handler.handle(new Either.Left<>(
-                                        "Account " + userAddress + " not active : " + accountStatus));
+                                handler.fail("Account " + userAddress + " not active : " + accountStatus);
                                 log.warn("Account " + userAddress + " not active : " + accountStatus);
                             } else {
-                                handler.handle(new Either.Left<>("" +
-                                        "Auth failed for " + userAddress + " with active account " + callResultStr));
+                                handler.fail("Auth failed for " + userAddress + " with active account " + callResultStr);
                                 log.error("Auth failed for " + userAddress + " with active account " + callResultStr);
                             }
                         }
@@ -364,10 +384,10 @@ public class SoapZimbraService {
                 case ERROR_AUTHREQUIRED:
                     Handler<Either<String,JsonObject>> authCheckHandler = event -> {
                         if(event.isLeft()) {
-                            handler.handle(event);
+                            handler.fail(event.left().getValue());
                         } else {
                             params.put(PARAM_AUTH_TOKEN, authedUsers.get(userId).getString(MAP_AUTH_TOKEN));
-                            callSoapAPI(params, userId, userAddress, handler);
+                            callSoapAPI(params, userId, userAddress, soapApiHandler);
                         }
                     };
                     if(params.getBoolean(PARAM_ISADMIN)) {
@@ -377,10 +397,10 @@ public class SoapZimbraService {
                     }
                     break;
                 default:
-                    handler.handle(new Either.Left<>(callResultStr));
+                    handler.fail(callResultStr);
             }
         } catch (Exception e) {
-            handler.handle(new Either.Left<>(callResultStr));
+            handler.fail(callResultStr);
         }
     }
 
