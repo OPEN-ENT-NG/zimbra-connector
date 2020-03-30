@@ -116,7 +116,7 @@ public class ZimbraController extends BaseController {
 
 			CompositeFuture.all(userFuture, foldersFuture).setHandler(res -> {
 				if (res.failed()) {
-					//TODO Render error page
+					renderView(request, null, "error.html", null);
 				} else {
 					JsonObject zUserInfo = userFuture.result();
 					zUserInfo.put("folders", foldersFuture.result().toJson().getJsonArray("folders").toString());
