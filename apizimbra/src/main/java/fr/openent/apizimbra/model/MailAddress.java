@@ -57,7 +57,9 @@ public class MailAddress {
     public boolean isExternal() {
         return !isLocal;
     }
-
+    public String getNeoId() {
+        return neoId;
+    }
 
     public MailAddress(String rawAddress) throws IllegalArgumentException {
         this.rawAddress = rawAddress;
