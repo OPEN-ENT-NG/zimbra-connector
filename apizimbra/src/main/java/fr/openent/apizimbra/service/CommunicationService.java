@@ -61,42 +61,75 @@ public class CommunicationService {
             return;
         }
 
-        //noinspection CodeBlock2Expr
-        sender.fetchNeoId(senderId -> {
-            recipient.fetchNeoId(recipientId -> {
+        sender.fetchNeoId(senderId ->
+            recipient.fetchNeoId(recipientId ->
+                checkCommunicationRights(sender, recipient, handler)
+            )
+        );
+    }
 
-                if(sender.isExternal() && recipient.isExternal()) {
-                    log.error(String.format("Sender %s and recipient %s are external", inSender, inRecipient));
-                    refuseCommunication(handler);
-                } else  if(sender.isExternal() && !recipientId.isEmpty()) {
-                    neoZimbraService.hasExternalCommunicationRole(recipientId, neoResult ->
-                        validateExternalCommunication(neoResult, handler)
-                    );
-                } else if(recipient.isExternal() && !senderId.isEmpty()) {
-                    neoZimbraService.hasExternalCommunicationRole(senderId, neoResult ->
-                        validateExternalCommunication(neoResult, handler)
-                    );
-                } else if(senderId.isEmpty() || recipientId.isEmpty()) {
-                    handler.handle(new Either.Right<>(new JsonObject().put(CAN_COMMUNICATE, false)));
+    private void checkCommunicationRights(MailAddress sender, MailAddress recipient,
+                                          Handler<Either<String,JsonObject>> handler) {
+        String senderId = sender.getNeoId();
+        String recipientId = recipient.getNeoId();
+        if(sender.isExternal() && recipient.isExternal()) {
+            log.error(String.format("Sender %s and recipient %s are external", sender.toString(), recipient.toString()));
+            refuseCommunication(handler);
+        } else  if(sender.isExternal() && !recipientId.isEmpty()) {
+            neoZimbraService.hasExternalCommunicationRole(recipientId, neoResult ->
+                    validateExternalCommunication(neoResult, handler)
+            );
+        } else if(recipient.isExternal() && !senderId.isEmpty()) {
+            neoZimbraService.hasExternalCommunicationRole(senderId, neoResult ->
+                    validateExternalCommunication(neoResult, handler)
+            );
+        } else if(senderId.isEmpty() || recipientId.isEmpty()) {
+            handler.handle(new Either.Right<>(new JsonObject().put(CAN_COMMUNICATE, false)));
+        } else {
+            checkExternalRoles(senderId, recipientId, hasBothExternalCommunicationRole -> {
+                if(hasBothExternalCommunicationRole) {
+                    allowCommunication(handler);
                 } else {
-                    // check if user
-                    neoZimbraService.checkUserCommunication(senderId, recipientId, neoResult -> {
-                        if (neoResult.isRight() && !neoResult.right().getValue().isEmpty()) {
-                            handler.handle(neoResult);
-                        } else {
-                            // check if group
-                            neoZimbraService.checkGroupCommunication(senderId, recipientId, neoResultGroup -> {
-                                if (neoResultGroup.isRight()) {
-                                    handler.handle(neoResultGroup);
-                                } else {
-                                    log.error("Error when checking communication rights : " + neoResultGroup.left().getValue());
-                                    refuseCommunication(handler);
-                                }
-                            });
-                        }
-                    });
+                    checkCommunicationRules(senderId, recipientId, handler);
                 }
             });
+
+        }
+    }
+
+    private void checkExternalRoles(String senderId, String recipientId, Handler<Boolean> handler) {
+        neoZimbraService.hasExternalCommunicationRole(senderId, resultSender -> {
+            if(resultSender.failed() || !resultSender.result().getBoolean(HAS_EXTERNAL_ROLE, false)) {
+                handler.handle(false);
+            } else {
+                neoZimbraService.hasExternalCommunicationRole(recipientId, resultRecipient -> {
+                    if(resultRecipient.failed()) {
+                        handler.handle(false);
+                    } else {
+                        handler.handle(resultRecipient.result().getBoolean(HAS_EXTERNAL_ROLE, false));
+                    }
+                });
+            }
+        });
+    }
+
+    private void checkCommunicationRules(String senderId, String recipientId,
+                                         Handler<Either<String,JsonObject>> handler) {
+        // check if user
+        neoZimbraService.checkUserCommunication(senderId, recipientId, neoResult -> {
+            if (neoResult.isRight() && !neoResult.right().getValue().isEmpty()) {
+                handler.handle(neoResult);
+            } else {
+                // check if group
+                neoZimbraService.checkGroupCommunication(senderId, recipientId, neoResultGroup -> {
+                    if (neoResultGroup.isRight()) {
+                        handler.handle(neoResultGroup);
+                    } else {
+                        log.error("Error when checking communication rights : " + neoResultGroup.left().getValue());
+                        refuseCommunication(handler);
+                    }
+                });
+            }
         });
     }
 
