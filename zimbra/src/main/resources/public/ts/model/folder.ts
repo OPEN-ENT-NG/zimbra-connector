@@ -231,7 +231,6 @@ export class Inbox extends SystemFolder {
 
     async removeSelection() {
         await this.mails.toTrash();
-        await quota.refresh();
     }
 
     selectAll() {
@@ -272,7 +271,6 @@ export class Draft extends SystemFolder {
 
     async removeSelection() {
         await this.mails.toTrash();
-        await quota.refresh();
     }
 
     async saveDraft(draft: Mail): Promise<any> {

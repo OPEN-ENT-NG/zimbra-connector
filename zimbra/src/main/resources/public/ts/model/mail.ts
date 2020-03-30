@@ -718,7 +718,6 @@ export class Mails {
             "/zimbra/trash?" +
                 toFormData({ id: _.pluck(this.selection.selected, "id") })
         );
-        Zimbra.instance.folders.trash.mails.refresh();
         quota.refresh();
         this.selection.removeSelection();
     }

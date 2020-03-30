@@ -1068,6 +1068,10 @@ export let zimbraController = ng.controller("ZimbraController", [
                 template.open('folder-lightbox','folders-templates/lightboxs/confirm-delete-mail');
             }else{
                 $scope.removeSelection();
+                const mailIds = [];
+                $scope.zimbra.currentFolder.mails.selection.selected.forEach(({id}) => mailIds.push(id));
+                $scope.zimbra.currentFolder.mails.selection.all = $scope.zimbra.currentFolder.mails.all.filter(({id}) => mailIds.indexOf(id) === -1);
+                $scope.$apply();
             }
         };
         $scope.cancelDelete = () => {
