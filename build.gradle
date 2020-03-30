@@ -58,6 +58,7 @@ subprojects {
   }
   dependencies {
     compileOnly "io.vertx:vertx-core:$vertxVersion"
+    compile "io.vertx:vertx-circuit-breaker:$vertxVersion"
     compile "org.entcore:common:$entCoreVersion"
     compile "fr.wseduc:vertx-cron-timer:$vertxCronTimer"
     compile "org.apache.commons:commons-text:1.6"
@@ -163,6 +164,7 @@ subprojects {
 project(":zimbra") {
   dependencies {
     compileOnly "io.vertx:vertx-core:$vertxVersion"
+    compile "io.vertx:vertx-circuit-breaker:$vertxVersion"
     compile "org.entcore:common:$entCoreVersion"
     testCompile "org.entcore:tests:$entCoreVersion"
     testCompile 'io.gatling.highcharts:gatling-charts-highcharts:2.2.2'
