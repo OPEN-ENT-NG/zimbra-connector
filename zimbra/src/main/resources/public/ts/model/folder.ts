@@ -175,7 +175,6 @@ export class Trash extends SystemFolder {
         for (let folder of this.userFolders.selected) {
             await folder.delete();
         }
-        await quota.refresh();
     }
 
     async restore() {
@@ -183,7 +182,6 @@ export class Trash extends SystemFolder {
         for (let folder of this.userFolders.selected) {
             await folder.restore();
         }
-        await this.syncUsersFolders();
     }
 
     async restoreMails() {
