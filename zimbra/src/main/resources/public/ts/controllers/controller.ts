@@ -230,11 +230,13 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.openUserFolder = async (folder: UserFolder, obj, $event) => {
-            if ($event.target.className.includes('trash')) return;
-            if ($event.target.className.includes('arrow')) {
-                obj.template = "folder-content";
-                folder.selected = !folder.selected;
-                return;
+            if ($event) {
+                if ($event.target.className.includes('trash')) return;
+                if ($event.target.className.includes('arrow')) {
+                    obj.template = "folder-content";
+                    folder.selected = !folder.selected;
+                    return;
+                }
             }
             $scope.mail = undefined;
             $scope.state.newItem = new Mail();
