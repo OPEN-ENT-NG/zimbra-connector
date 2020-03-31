@@ -171,18 +171,21 @@ public class SoapFolder {
     }
 
     public JsonObject toJson() {
-        JsonArray subFolders = new JsonArray();
-        for (SoapFolder folder: this.subFolders) {
-            subFolders.add(folder.toJson());
-        }
-
         return new JsonObject()
                 .put(FrontConstants.FOLDER_ID, this.id)
                 .put(FrontConstants.FOLDER_NAME, this.name)
                 .put(FrontConstants.FOLDER_PATH, this.absolutePath)
                 .put(FrontConstants.MESSAGE_UNREAD, this.nbUnread)
                 .put(FrontConstants.FOLDER_SIZE, this.nbItems)
-                .put(FrontConstants.FOLDER_SUB_FOLDERS, subFolders);
+                .put(FrontConstants.FOLDER_SUB_FOLDERS, getJsonSubfolders());
+    }
+
+    public JsonArray getJsonSubfolders() {
+        JsonArray subFolders = new JsonArray();
+        for (SoapFolder folder: this.subFolders) {
+            subFolders.add(folder.toJson());
+        }
+        return subFolders;
     }
 
     private static SoapFolder createFromJson(JsonObject folderData) throws IllegalArgumentException {

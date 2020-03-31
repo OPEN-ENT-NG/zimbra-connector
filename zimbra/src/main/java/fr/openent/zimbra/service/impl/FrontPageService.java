@@ -27,7 +27,7 @@ public class FrontPageService {
             } else {
                 JsonObject zUserInfo = userFuture.result();
                 zUserInfo.put(FrontConstants.FRONT_PAGE_FOLDERS,
-                        foldersFuture.result().toJson().getJsonArray(FrontConstants.FOLDER_SUB_FOLDERS).toString());
+                        foldersFuture.result().getJsonSubfolders().toString());
                 handler.handle(Future.succeededFuture(zUserInfo));
             }
         });
