@@ -69,7 +69,7 @@ export class Zimbra {
         this.folders = new SystemFolders();
         this.userFolders = new UserFolders(this.folders.inbox.folders);
         this.userFolders.all.map(userFolder => userFolder.parentPath = this.folders.inbox.path);
-        window.folderMap.set(this.folders.inbox.path, this);
+        window.folderMap.set(this.folders.inbox.path, this.folders.inbox);
     }
 
     async sync() {
