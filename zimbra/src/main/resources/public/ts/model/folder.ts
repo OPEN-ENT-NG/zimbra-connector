@@ -108,8 +108,9 @@ export abstract class Folder implements Selectable {
     }
 
     async toggleUnreadSelection(unread) {
+        let counter = this.mails.selection.selected.filter(mail => mail.unread === !unread).length;
         await this.mails.toggleUnread(unread);
-        const increment = unread ? this.mails.selection.length : -1 * this.mails.selection.length;
+        const increment = unread ? counter : -1 * counter;
         this.nbUnread = this.nbUnread + increment;
         this.mails.selection.deselectAll();
     }
