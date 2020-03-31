@@ -615,6 +615,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.toggleUnreadSelection = async (unread, folder) => {
             await Zimbra.instance.currentFolder.toggleUnreadSelection(unread);
             $scope.state.selectAll = false;
+            $scope.updateWherami();
             $scope.$apply();
         };
 
@@ -692,6 +693,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.refreshFolders = async () => {
             await Zimbra.instance.computeRootFolder();
             $scope.initFolders();
+            $scope.updateWherami();
             $scope.$apply();
         };
 
