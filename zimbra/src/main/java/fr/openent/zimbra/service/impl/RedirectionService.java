@@ -3,7 +3,9 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import io.vertx.core.Handler;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -42,8 +44,20 @@ public class RedirectionService {
         if(Zimbra.appConfig.isForceExpertMode()) {
             handler.handle(true);
         } else {
-            // TODO : check preferences in userbook : https://github.com/opendigitaleducation/entcore/blob/f74b59d54d27e4cd79d1b49b8741d0106b05f4f2/common/src/main/java/org/entcore/common/notification/NotificationUtils.java
-            handler.handle(true);
+            JsonObject params = new JsonObject().put("action", "get.userlist").put("application", "zimbra")
+                    .put("userIds", new JsonArray().add(userid));
+
+            eb.send("userbook.preferences", params, (Handler<AsyncResult<Message<JsonObject>>>) res -> {
+                if (res.failed() || res.result().body().getString("status", "error").equals("error")) {
+                    handler.handle(false);
+                } else {
+                    try {
+                        handler.handle(res.result().body().getJsonArray("results", new JsonArray()).getJsonObject(0).getJsonObject("preferences").getBoolean("modeExpert", false));
+                    } catch (Exception e) {
+                        handler.handle(false);
+                    }
+                }
+            });
         }
     }
 
