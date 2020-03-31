@@ -739,10 +739,15 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.lightbox.show = false;
             template.close("lightbox");
             let mailIds = [];
-            $scope.zimbra.currentFolder.mails.selection.selected.forEach(({id}) => mailIds.push(id));
+            let counter = 0;
+            $scope.zimbra.currentFolder.mails.selection.selected.forEach(({id, unread}) => {
+                mailIds.push(id);
+                if (unread) counter++;
+            });
             await Zimbra.instance.currentFolder.mails.moveSelection(
                 folderTarget
             );
+            folderTarget.nbUnread += counter;
             $scope.zimbra.currentFolder.mails.selection.all = $scope.zimbra.currentFolder.mails.selection.all.filter(({id}) => mailIds.indexOf(id) === -1);
             $scope.refresh();
             $scope.$apply();
