@@ -233,6 +233,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             if ($event.target.className.includes('trash')) return;
             if ($event.target.className.includes('arrow')) {
                 obj.template = "folder-content";
+                folder.selected = !folder.selected;
                 return;
             }
             $scope.mail = undefined;
