@@ -38,6 +38,7 @@ export abstract class Folder implements Selectable {
     searchText: string;
     count: number;
     path: string;
+    id: string;
     folders: Array<Folder>;
     parentPath: string;
 
@@ -328,7 +329,7 @@ export class Outbox extends SystemFolder {
 }
 
 export class Spams extends SystemFolder {
-    constructor({unread, count, folders, path}) {
+    constructor({unread, count, folders, path, id}) {
         super({
             get: `/zimbra/list?folder=${path}`
         });
@@ -338,6 +339,7 @@ export class Spams extends SystemFolder {
         this.count = count;
         this.folders = folders;
         this.path = path;
+        this.id = id;
     }
 
     selectAll() {
