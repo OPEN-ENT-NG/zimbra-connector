@@ -275,6 +275,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             if (Zimbra.instance.currentFolder instanceof UserFolder) {
                 await Zimbra.instance.currentFolder.removeMailsFromFolder();
                 $scope.state.selectAll = false;
+                $scope.refreshFolders();
                 $scope.$apply();
             }
         };
@@ -903,10 +904,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 $scope.$apply();
             }
 
-            if (!(await $scope.countDraft($scope.state.dragFolder, folder))) {
-                await folder.countUnread();
-                await $scope.state.dragFolder.countUnread();
-            }
+            $scope.refreshFolders();
             $scope.$apply();
         };
 
