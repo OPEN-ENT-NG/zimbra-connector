@@ -257,6 +257,7 @@ export class Draft extends SystemFolder {
         this.count = count;
         this.folders = folders;
         this.path = path;
+        this.totalNb = count;
     }
 
     selectAll() {
