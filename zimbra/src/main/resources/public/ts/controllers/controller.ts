@@ -616,6 +616,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             await Zimbra.instance.currentFolder.toggleUnreadSelection(unread);
             $scope.state.selectAll = false;
             $scope.updateWherami();
+            $scope.$root.$emit("refreshMails");
             $scope.$apply();
         };
 
