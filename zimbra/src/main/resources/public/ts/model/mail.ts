@@ -753,7 +753,6 @@ export class Mails {
 
         try {
             await http.post(`/zimbra/toggleUnread?${paramsIds}&${paramUnread}`);
-            quota.refresh();
             selected.forEach(mail => (mail.unread = unread));
         } catch (e) {
             notify.error(e.response.data.error);
