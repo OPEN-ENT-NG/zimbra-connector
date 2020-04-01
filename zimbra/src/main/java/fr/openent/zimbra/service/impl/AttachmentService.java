@@ -36,6 +36,7 @@ import io.vertx.core.logging.Logger;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.regex.Pattern;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 
@@ -166,6 +167,13 @@ public class AttachmentService {
             requestZimbra = httpClient.postAbs(zimbraUrlUpload, response -> {
                 if(response.statusCode() == 200) {
                     response.bodyHandler( body -> {
+                        if (!(Pattern.compile("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$")).matcher(body.toString()).find()) {
+                            JsonObject res = new JsonObject()
+                                    .put("code", "mail.INVALID_REQUEST");
+                            handler.handle(new Either.Left<>(res.encode()));
+                            return;
+                        }
+
                         String aid = body.toString().replaceAll("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$", "$1");
                         updateDraft(messageId, aid, user, null, handler);
                     });
