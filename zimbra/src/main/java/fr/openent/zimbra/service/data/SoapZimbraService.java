@@ -258,7 +258,7 @@ public class SoapZimbraService {
         }).setHandler(evt -> {
             if (evt.failed()) {
                 log.error("Zimbra Soap API call failed", evt.cause().getMessage());
-                handler.handle(new Either.Left<>(new JsonObject()));
+                handler.handle(new Either.Left<>(new JsonObject().encode()));
             }
             else handler.handle(new Either.Right<>(evt.result()));
         });
