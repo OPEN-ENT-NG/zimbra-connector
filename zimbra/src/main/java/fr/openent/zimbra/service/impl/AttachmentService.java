@@ -160,6 +160,7 @@ public class AttachmentService {
             String authToken = authTokenResponse.right().getValue().getString("authToken");
             HttpClient httpClient = HttpClientHelper.createHttpClient(vertx);
 
+            requestFront.resume();
             String cdHeader = Utils.getOrElse(requestFront.getHeader("Content-Disposition"), "attachment");
             HttpClientRequest requestZimbra;
             requestZimbra = httpClient.postAbs(zimbraUrlUpload, response -> {
