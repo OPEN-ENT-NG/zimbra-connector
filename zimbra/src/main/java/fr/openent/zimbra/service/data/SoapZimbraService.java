@@ -41,7 +41,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.cache.CacheService;
 import org.entcore.common.user.UserInfos;
-import org.entcore.common.user.UserUtils;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -111,12 +111,12 @@ public class SoapZimbraService {
         }
 
         this.breaker = CircuitBreaker.create("zimbra-soap-service", vertx, cbOptions);
-        this.breaker.openHandler(v -> {
-           log.info("Zimbra circuit break " + this.breaker.name() + " opened");
-        });
-        this.breaker.closeHandler(v -> {
-            log.info("Closing " + this.breaker.name() + " circuit breaker");
-        });
+        this.breaker.openHandler(v ->
+           log.info("Zimbra circuit break " + this.breaker.name() + " opened")
+        );
+        this.breaker.closeHandler(v ->
+            log.info("Closing " + this.breaker.name() + " circuit breaker")
+        );
     }
 
     public void setServices(UserService us, SynchroUserService synchroUserService) {
@@ -258,7 +258,7 @@ public class SoapZimbraService {
         }).setHandler(evt -> {
             if (evt.failed()) {
                 log.error("Zimbra Soap API call failed", evt.cause().getMessage());
-                handler.handle(new Either.Left<>(new JsonObject().put("code", "service.CIRCUIT_BREAKER").encode()));
+                handler.handle(new Either.Left<>(evt.cause().getMessage()));
             }
             else handler.handle(new Either.Right<>(evt.result()));
         });
@@ -622,16 +622,6 @@ public class SoapZimbraService {
                 }
             }
         });
-    }
-
-    /**
-     * Return authInfos for specified user from Map data
-     * @param userId User id
-     * @param handler result Handler
-     */
-    private void generateAuthResponse(String userId, Handler<Either<String, JsonObject>> handler) {
-        JsonObject authInfo = authedUsers.get(userId);
-        handler.handle(new Either.Right<>(authInfo));
     }
 
     /**
