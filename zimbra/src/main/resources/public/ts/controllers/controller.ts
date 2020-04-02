@@ -787,15 +787,16 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.updateFolder = async () => {
             await $scope.targetFolder.update();
             const parentFolder = window.folderMap.get($scope.targetFolder.parentPath);
-            parentFolder.userFolders.all.forEach(folder => {
+            const folders = parentFolder.path !== '/Inbox' ? parentFolder.userFolders : $scope.zimbra.userFolders;
+            folders.all.forEach(folder => {
                 if (folder.id === $scope.targetFolder.id) {
                     folder.name = $scope.targetFolder.name;
                     folder.path = folder.path.replace($scope.targetFolder.oldName, $scope.targetFolder.name);
                     folder.parentPath = $scope.targetFolder.parentPath;
                 }
             });
-            parentFolder.userFolders.all = parentFolder.userFolders.all.filter(folder => folder.id !== $scope.targetFolder.id);
-                await $scope.refreshFolders();
+            folders.all = folders.all.filter(folder => folder.id !== $scope.targetFolder.id);
+            await $scope.refreshFolders();
             $scope.lightbox.show = false;
             template.close("lightbox");
             $scope.$apply();
@@ -810,7 +811,8 @@ export let zimbraController = ng.controller("ZimbraController", [
             await folder.trash();
             await $scope.refreshFolders();
             const parentFolder = window.folderMap.get(folder.parentPath);
-            parentFolder.userFolders.all = parentFolder.userFolders.all.filter(f => f.path !== folder.path);
+            const folders = parentFolder.path !== '/Inbox' ? parentFolder.userFolders : $scope.zimbra.userFolders;
+            folders.all = folders.all.filter(f => f.path !== folder.path);
             if ($scope.zimbra.currentFolder.folderName !== 'trash') {
                 $scope.openFolder('trash');
             } else {

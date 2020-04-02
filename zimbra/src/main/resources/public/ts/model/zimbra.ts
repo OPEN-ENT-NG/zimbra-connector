@@ -102,7 +102,7 @@ export class Zimbra {
         const {data} = await http.get('/zimbra/root-folder');
         const newValues = [];
 
-        const compute = function (newFolder) {
+        const compute = (newFolder) => {
             newValues.push(newFolder.path);
             if (window.folderMap.has(newFolder.path)) {
                 const folder: Folder = window.folderMap.get(newFolder.path);
@@ -110,11 +110,13 @@ export class Zimbra {
                 folder.nbUnread = newFolder.unread;
                 newFolder.folders.forEach(compute);
             } else {
+                if (!newFolder.path.startsWith('/Inbox')) return;
                 const parentPath = newFolder.path.replace(`/${newFolder.folderName}`, '');
-                const parentFolder = window.folderMap.get(parentPath);
+                const parentFolder = window.folderMap.get(parentPath.trim() !== '' ? parentPath : '/Inbox');
                 if (parentFolder) {
-                    const f = new UserFolder(new UserFolder({get: `/zimbra/list?folder=${newFolder.path}`}, newFolder));
-                    parentFolder.userFolders.all.push(f);
+                    const f = new UserFolder({get: `/zimbra/list?folder=${newFolder.path}`}, newFolder);
+                    if (parentFolder.path === '/Inbox') this.userFolders.all.push(f);
+                    else parentFolder.userFolders.all.push(f);
                     f.name = newFolder.folderName;
                     f.id = newFolder.id;
                     f.path = newFolder.path;
