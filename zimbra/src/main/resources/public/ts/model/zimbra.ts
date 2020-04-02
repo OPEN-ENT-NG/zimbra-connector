@@ -37,7 +37,7 @@ import { quota } from "./quota";
 
 import { Eventer } from "entcore-toolkit";
 
-import http from "axios";
+import http from './http';
 
 declare const window: any;
 

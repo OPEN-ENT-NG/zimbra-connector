@@ -1,5 +1,6 @@
 export enum SERVICE {
-    INVALID_REQUEST = "service.INVALID_REQUEST"
+    INVALID_REQUEST = "service.INVALID_REQUEST",
+    CIRCUIT_BREAKER = "service.CIRCUIT_BREAKER"
 }
 
 export enum MAIL {

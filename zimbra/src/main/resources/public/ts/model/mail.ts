@@ -32,7 +32,7 @@ import { SystemFolder, UserFolder, Folder } from "./folder";
 
 import { Mix, Eventer, Selection, Selectable } from "entcore-toolkit";
 
-import http from "axios";
+import http from './http';
 
 import { MAIL, SERVICE } from "./constantes";
 

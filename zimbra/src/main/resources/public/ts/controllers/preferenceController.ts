@@ -20,7 +20,7 @@ import { User} from "../model";
 
 
 import {Preference} from "../model/preferences";
-import http from "axios";
+import http from '../model/http';
 
 export let preferenceController = ng.controller("preferenceController", [
     "$location",

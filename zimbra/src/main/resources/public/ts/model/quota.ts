@@ -17,8 +17,6 @@
 
 import { model, idiom as lang } from "entcore";
 
-import http from "axios";
-
 declare const window: any;
 
 class Quota {

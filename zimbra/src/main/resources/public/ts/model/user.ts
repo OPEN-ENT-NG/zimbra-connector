@@ -19,7 +19,7 @@ import {idiom as lang, _, model, notify} from "entcore";
 
 import { Mix, Selection, Selectable, Eventer } from "entcore-toolkit";
 
-import http from "axios";
+import http from './http';
 
 export class User implements Selectable {
     displayName: string;
