@@ -14,6 +14,7 @@ import io.vertx.core.logging.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+import static fr.openent.zimbra.model.constant.FrontConstants.*;
 import static fr.openent.zimbra.model.constant.ModuleConstants.*;
 
 public class RedirectionService {
@@ -29,12 +30,13 @@ public class RedirectionService {
     }
 
     public void getRedirectionUrl(String userId, String recipientId, String recipientName, String recipientType,
-                                  Handler<String> handler) {
+                                  Handler<JsonObject> handler) {
         isExpertPreferredMode(userId, isExpertPreferred -> {
+            JsonObject result = new JsonObject().put(REDIR_MODE, isExpertPreferred ? EXPERT_MODE : SIMPLE_MODE);
             if(isExpertPreferred) {
-                getExpertUrl(recipientId, recipientName, recipientType, handler);
+                getExpertUrl(recipientId, recipientName, recipientType, url -> handler.handle(result.put(REDIR_URL, url)));
             } else {
-                handler.handle(getModuleUrl(recipientId, recipientType));
+                handler.handle(result.put(REDIR_URL, getModuleUrl(recipientId, recipientType)));
             }
         });
 
@@ -52,7 +54,8 @@ public class RedirectionService {
                     handler.handle(false);
                 } else {
                     try {
-                        handler.handle(res.result().body().getJsonArray("results", new JsonArray()).getJsonObject(0).getJsonObject("preferences").getBoolean("modeExpert", false));
+                        handler.handle(res.result().body().getJsonArray("results", new JsonArray())
+                                .getJsonObject(0).getJsonObject("preferences").getBoolean(PREF_EXPERT_MODE, false));
                     } catch (Exception e) {
                         handler.handle(false);
                     }

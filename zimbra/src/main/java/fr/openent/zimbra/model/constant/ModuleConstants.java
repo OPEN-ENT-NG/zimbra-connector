@@ -12,4 +12,6 @@ public class ModuleConstants {
 
     public static final String TYPE_GROUP = "Group";
     public static final String TYPE_USER = "User";
+
+    public static final String PREF_EXPERT_MODE = "modeExpert";
 }

@@ -105,6 +105,7 @@
     "sniplet.ml.info": "Ce message sera transmis à tous les utilisateurs ayant accès à ce site.",
     "sniplet.ml.subject.placeholder": "Sujet",
     "sniplet.ml.title": "Liste de diffusion",
+    "sniplet.openZimbra.invalid": "Destinataire invalide",
     "subject": "Subject",
     "submit": "Send",
     "tag.read": "Tag as read",

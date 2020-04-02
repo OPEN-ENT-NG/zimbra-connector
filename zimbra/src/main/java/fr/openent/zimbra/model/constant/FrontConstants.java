@@ -72,4 +72,11 @@ public class FrontConstants {
     public static final String THREAD_SUBJECT = "subject";
 
     public static final String FRONT_PAGE_FOLDERS = "folders";
+
+
+    // Redirection Constants
+    public static final String REDIR_MODE = "mode";
+    public static final String REDIR_URL = "url";
+    public static final String EXPERT_MODE = "expert";
+    public static final String SIMPLE_MODE = "simplified";
 }
