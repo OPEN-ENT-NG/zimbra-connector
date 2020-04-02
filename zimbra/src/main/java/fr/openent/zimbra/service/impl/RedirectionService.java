@@ -29,12 +29,13 @@ public class RedirectionService {
     }
 
     public void getRedirectionUrl(String userId, String recipientId, String recipientName, String recipientType,
-                                  Handler<String> handler) {
+                                  Handler<JsonObject> handler) {
         isExpertPreferredMode(userId, isExpertPreferred -> {
+            JsonObject result = new JsonObject().put("mode", isExpertPreferred ? "expert" : "simplified");
             if(isExpertPreferred) {
-                getExpertUrl(recipientId, recipientName, recipientType, handler);
+                getExpertUrl(recipientId, recipientName, recipientType, url -> handler.handle(result.put("url", url)));
             } else {
-                handler.handle(getModuleUrl(recipientId, recipientType));
+                handler.handle(result.put("url", getModuleUrl(recipientId, recipientType)));
             }
         });
 
