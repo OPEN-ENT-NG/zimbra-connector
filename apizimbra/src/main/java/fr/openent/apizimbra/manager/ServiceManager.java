@@ -45,9 +45,10 @@ public class ServiceManager {
 
 
 
-    private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix) {
+    private ServiceManager(Vertx vertx, EventBus eb) {
         ConfigManager appConfig = ApiZimbra.appConfig;
         JsonObject rawConfig = appConfig.getRawConfig();
+        String pathPrefix = appConfig.getPathPrefix();
 
         timelineHelper = new TimelineHelper(vertx, eb, rawConfig);
         EmailFactory emailFactory = new EmailFactory(vertx, rawConfig);
@@ -69,9 +70,9 @@ public class ServiceManager {
         }
     }
 
-    public static ServiceManager init(Vertx vertx, EventBus eb, String pathPrefix) {
+    public static ServiceManager init(Vertx vertx, EventBus eb) {
         if(serviceManager == null) {
-            serviceManager = new ServiceManager(vertx, eb, pathPrefix);
+            serviceManager = new ServiceManager(vertx, eb);
         }
         return serviceManager;
     }

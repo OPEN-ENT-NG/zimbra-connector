@@ -51,7 +51,7 @@ public class ApiController extends BaseController {
                      Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
         super.init(vertx, config, rm, securedActions);
 
-        ServiceManager serviceManager = ServiceManager.init(vertx, eb, pathPrefix);
+        ServiceManager serviceManager = ServiceManager.init(vertx, eb);
         notificationService = serviceManager.getNotificationService();
         communicationService = serviceManager.getCommunicationService();
     }
