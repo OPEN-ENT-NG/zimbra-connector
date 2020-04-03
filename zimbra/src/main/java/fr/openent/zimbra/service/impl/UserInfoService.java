@@ -21,8 +21,7 @@ import fr.openent.zimbra.model.constant.ZimbraConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import java.util.HashMap;
-import java.util.List;
+import static org.apache.commons.text.StringEscapeUtils.escapeJava;
 
 @SuppressWarnings("WeakerAccess")
 public class UserInfoService {
@@ -122,9 +121,9 @@ public class UserInfoService {
                     if (signature.getString("id").equals(preferredSignature)) {
                         JsonArray content = signature.getJsonArray("content");
                         if (!content.isEmpty()) {
-                            signaturePreference.put("content", content
+                            signaturePreference.put("content", escapeJava(content
                                     .getJsonObject(0)
-                                    .getString("_content"));
+                                    .getString("_content")));
                         }
                     }
                     i++;
