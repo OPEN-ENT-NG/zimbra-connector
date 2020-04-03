@@ -79,7 +79,7 @@ public class NotificationService {
                 }
                 List<String> recipients = new ArrayList<>();
                 recipients.add(zimbraRecipient);
-                timelineHelper.notifyTimeline(null, "messagerie.send-message",
+                timelineHelper.notifyTimeline(null, "apimessagerie.send-message",
                         user, recipients, messageId, params);
                 handler.handle(new Either.Right<>(new JsonObject()));
             })

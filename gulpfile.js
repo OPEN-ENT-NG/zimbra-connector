@@ -7,6 +7,7 @@ var clean = require('gulp-clean');
 var args = require('yargs').argv;
 
 var apps = ['zimbra'];
+var apps_viewonly = ['apizimbra'];
 
 if (args.module) {
     apps = [args.module];
@@ -65,5 +66,10 @@ gulp.task('build', ['rev'], function () {
         streams.push(gulp.src("./" + app + "/src/main/resources/public/dist/behaviours.js")
             .pipe(gulp.dest("./" + app + "/src/main/resources/public/js")));
     });
+    apps_viewonly.forEach(function (app) {
+        streams.push(gulp.src("./" + app + "/src/main/resources/view-src/**/*.html")
+                    .pipe(revReplace({manifest: gulp.src("./" + app + "/rev-manifest.json")}))
+                    .pipe(gulp.dest("./" + app + "/src/main/resources/view")));
+    }
     return merge(streams);
 });
