@@ -784,6 +784,8 @@ http.get("/zimbra/public/template/mail-content/reply.html").then(response => {
 export const format = mailFormat;
 
 export const sendNotificationErrorZimbra = (errorReturnByZimbra:string):void => {
+
+    //TODO extraire la gestion d'erreur du mail
     try{
         console.error("Zimbra returning : ", errorReturnByZimbra);
         switch (JSON.parse(errorReturnByZimbra).code) {
@@ -793,11 +795,9 @@ export const sendNotificationErrorZimbra = (errorReturnByZimbra:string):void => 
             case MAIL.MESSAGE_TOO_BIG:
                 notify.info(lang.translate("zimbra.message.error.mail.size"));
                 break;
-            default:
-                notify.error(JSON.parse(errorReturnByZimbra));
         }
     } catch (error) {
         console.error("Error in processing notification error : ", error);
-        notify.error(error);
+        notify.error(lang.translate(errorReturnByZimbra));
     }
 };
