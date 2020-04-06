@@ -27,7 +27,7 @@ public class FrontPageService {
             } else {
                 JsonObject zUserInfo = userFuture.result();
                 zUserInfo.put(FrontConstants.FRONT_PAGE_FOLDERS,
-                        foldersFuture.result().getJsonSubfolders().toString().replaceAll("'", "\\\\'"));
+                        foldersFuture.result().getJsonSubfolders().toString().replaceAll("['|\\\\]", "\\\\$0"));
                 handler.handle(Future.succeededFuture(zUserInfo));
             }
         });
