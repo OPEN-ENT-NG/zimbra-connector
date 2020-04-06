@@ -210,7 +210,12 @@ public class SoapFolder {
 
         JsonArray subFolders = folderData.getJsonArray(FOLDER, new JsonArray());
         for (int i = 0; i < subFolders.size(); i++) {
-            folder.subFolders.add(SoapFolder.createFromJson(subFolders.getJsonObject(i)));
+            try {
+                folder.subFolders.add(SoapFolder.createFromJson(subFolders.getJsonObject(i)));
+            } catch (IllegalArgumentException e) {
+                // IMAP folder are ROOT subfolders without uuid, and must not be processed
+                log.debug("Subfolder can't be processed");
+            }
         }
 
         return folder;
