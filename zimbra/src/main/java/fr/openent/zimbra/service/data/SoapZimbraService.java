@@ -28,6 +28,7 @@ import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
+import io.vertx.circuitbreaker.CircuitBreakerState;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -266,7 +267,18 @@ public class SoapZimbraService {
         }).setHandler(evt -> {
             if (evt.failed()) {
                 log.error("Zimbra Soap API call failed", evt.cause().getMessage());
-                handler.handle(new Either.Left<>(evt.cause().getMessage()));
+                String error;
+                if(breaker.state() == CircuitBreakerState.OPEN || breaker.state() == CircuitBreakerState.HALF_OPEN) {
+                    JsonObject errorJsonFault = new JsonObject();
+                    errorJsonFault.put(ERROR_MESSAGE, evt.cause().getMessage());
+                    errorJsonFault.put(ERROR_CODE, "service.CIRCUIT_BREAKER");
+
+                    error = errorJsonFault.toString();
+                } else {
+                    error = evt.cause().getMessage();
+                }
+
+                handler.handle(new Either.Left<>(error));
             }
             else handler.handle(new Either.Right<>(evt.result()));
         });

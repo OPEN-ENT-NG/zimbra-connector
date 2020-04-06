@@ -5,8 +5,7 @@ import {SERVICE} from './constantes/codeZimbra';
 class Http {
     private static parseError(e) {
         try {
-            const {error} = e.response.data;
-            if (error && error === "open circuit") {
+            if (JSON.parse(e.response.data.error).code === SERVICE.CIRCUIT_BREAKER) {
                 toasts.info(`${idiom.translate('zimbra.view.error.title')} ${idiom.translate('zimbra.view.error.footer')}`);
             }
             return e;
