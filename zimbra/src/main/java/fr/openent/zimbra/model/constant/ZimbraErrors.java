@@ -18,6 +18,12 @@
 package fr.openent.zimbra.model.constant;
 
 public class ZimbraErrors {
+
+    // Non-zimbra errors
+    public static final String ERROR_CIRCUITBREAKER = "service.CIRCUIT_BREAKER";
+    public static final String IS_SUCCESSFUL = "success";
+
+
     // Error codes can be found in /opt/zimbra/docs/soap.txt
     public static final String ERROR_GENERIC = "service.FAILURE";
     public static final String ERROR_BADREQUEST = "service.INVALID_REQUEST";

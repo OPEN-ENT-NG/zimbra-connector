@@ -28,7 +28,6 @@ import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
-import io.vertx.circuitbreaker.CircuitBreakerState;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -91,7 +90,6 @@ public class SoapZimbraService {
     private CacheService cacheService;
 
     private CircuitBreaker breaker;
-    private SlackService slack;
 
     public SoapZimbraService(Vertx vertx, CacheService cacheService, SlackService slackService, CircuitBreakerOptions cbOptions) {
         this.userService = null;
@@ -113,11 +111,9 @@ public class SoapZimbraService {
             authedUsers =  new HashMap<>();
         }
 
-        this.slack = slackService;
-
         this.breaker = CircuitBreaker.create("zimbra-soap-service", vertx, cbOptions);
         this.breaker.openHandler(v -> {
-            String message = "Zimbra circuit break " + this.breaker.name() + " opened";
+            String message = "Zimbra circuit breaker " + this.breaker.name() + " opened";
             slackService.sendMessage(message);
            log.info(message);
         });
@@ -195,8 +191,7 @@ public class SoapZimbraService {
      * @param handler final response handler
      * @return default handler
      */
-    private Handler<HttpClientResponse> zimbraRequestHandler(JsonObject params, String userId, String userAddress,
-                                                             final Future<JsonObject> handler) {
+    private Handler<HttpClientResponse> zimbraRequestHandler(final Future<JsonObject> handler) {
         return response ->
             response.bodyHandler( body -> {
                 JsonObject result;
@@ -204,11 +199,12 @@ public class SoapZimbraService {
                     result = body.toJsonObject();
                 } catch (DecodeException e) {
                     log.error("Can't process Zimbra response + " + response.statusMessage());
+                    log.debug("Zimbra response details : " + body.toString());
                     handler.fail(response.statusMessage());
                     return;
                 }
                 if(response.statusCode() == 200) {
-                    handler.complete(result);
+                    handler.complete(result.put(IS_SUCCESSFUL, true));
                 } else {
                     try {
                         JsonObject errorJson = new JsonObject();
@@ -221,7 +217,7 @@ public class SoapZimbraService {
                                 .getJsonObject("Detail")
                                 .getJsonObject("Error")
                                 .getString("Code"));
-                        handleSoapError(errorJson, params, userId, userAddress, handler);
+                        handler.complete(errorJson.put(IS_SUCCESSFUL, false));
                     } catch (Exception e) {
                         handler.fail(response.statusMessage());
                     }
@@ -249,7 +245,7 @@ public class SoapZimbraService {
             }
             String finalUrl = params.getBoolean(PARAM_ISADMIN) ? zimbraAdminUri : zimbraUri;
             HttpClientRequest request;
-            Handler<HttpClientResponse> handlerRequest = zimbraRequestHandler(params, userId, userAddress, future);
+            Handler<HttpClientResponse> handlerRequest = zimbraRequestHandler(future);
             request = httpClient.postAbs(finalUrl, handlerRequest);
             request.setChunked(true);
             if(params.getBoolean(PARAM_IS_AUTH, true) && params.containsKey(PARAM_AUTH_TOKEN)) {
@@ -266,21 +262,19 @@ public class SoapZimbraService {
             request.end();
         }).setHandler(evt -> {
             if (evt.failed()) {
-                log.error("Zimbra Soap API call failed", evt.cause().getMessage());
-                String error;
-                if(breaker.state() == CircuitBreakerState.OPEN || breaker.state() == CircuitBreakerState.HALF_OPEN) {
-                    JsonObject errorJsonFault = new JsonObject();
-                    errorJsonFault.put(ERROR_MESSAGE, evt.cause().getMessage());
-                    errorJsonFault.put(ERROR_CODE, "service.CIRCUIT_BREAKER");
-
-                    error = errorJsonFault.toString();
+                log.error("Zimbra Soap API call failed " + evt.cause().getMessage());
+                JsonObject errorJsonFault = new JsonObject();
+                errorJsonFault.put(ERROR_MESSAGE, evt.cause().getMessage());
+                errorJsonFault.put(ERROR_CODE, ERROR_CIRCUITBREAKER);
+                handler.handle(new Either.Left<>(errorJsonFault.toString()));
+            } else  {
+                JsonObject result = evt.result();
+                if(result.getBoolean(IS_SUCCESSFUL)) {
+                    handler.handle(new Either.Right<>(evt.result()));
                 } else {
-                    error = evt.cause().getMessage();
+                    handleSoapError(result, params, userId, userAddress, AsyncHelper.getFutureFromEither(handler));
                 }
-
-                handler.handle(new Either.Left<>(error));
             }
-            else handler.handle(new Either.Right<>(evt.result()));
         });
     }
 
@@ -369,10 +363,7 @@ public class SoapZimbraService {
     private void handleSoapError(JsonObject callResult, JsonObject params, String userId, String userAddress,
                                  Future<JsonObject> handler) {
         String callResultStr = callResult.toString();
-        Handler<Either<String, JsonObject>> soapApiHandler = evt -> {
-            if (evt.isLeft()) handler.fail(evt.left().getValue());
-            else handler.complete(evt.right().getValue());
-        };
+        Handler<Either<String, JsonObject>> soapApiHandler = AsyncHelper.getEitherFromFuture(handler);
 
         try {
             switch(callResult.getString(ERROR_CODE, "")) {
