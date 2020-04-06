@@ -28,6 +28,13 @@
         "zimbra-synchro-cron" : "$zimbraSynchroCron",
         "mail-config" : {"imaps":{"server":"mx.monlycee.net","port":993,"ssl":"SSL/TLS","auth":"Mot de passe normal"},"smtps":{"server":"mx.monlycee.net","port":587,"ssl":"STARTTLS","auth":"Mot de passe normal"}},
         "shared-folder-name" : "-- Carnets Adresses ENT --",
-        "entcore.port" : 8009
-      }
+        "entcore.port" : 8009,
+        "slack": {
+            "api-uri": "$zimbraSlackApiUri",
+            "api-token": "$zimbraSlackApiToken",
+            "channel": "$zimbraSlackChannel",
+            "bot-username": "$zimbraSlackBotUsername"
+        }
     }
+  }
+}

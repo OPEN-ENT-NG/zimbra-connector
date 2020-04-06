@@ -61,7 +61,7 @@ public class ServiceManager {
     private RecipientService recipientService;
     private RedirectionService redirectionService;
     private FrontPageService frontPageService;
-
+    private SlackService slackService;
 
     private SynchroUserService synchroUserService;
     private SynchroUserService synchroUserServiceApp;
@@ -89,10 +89,12 @@ public class ServiceManager {
         String redisConfig = (String) vertx.sharedData().getLocalMap("server").get("redisConfig");
         CacheService cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient()) : null;
 
+        this.slackService = new SlackService(vertx, appConfig.getSlackConfiguration());
+
         this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
         initDbMailService(appConfig);
         this.searchService = new SearchService(vertx);
-        this.soapService = new SoapZimbraService(vertx, cacheService, appConfig.getCircuitBreakerOptions());
+        this.soapService = new SoapZimbraService(vertx, cacheService, slackService, appConfig.getCircuitBreakerOptions());
         this.neoService = new Neo4jZimbraService();
         this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
         this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);

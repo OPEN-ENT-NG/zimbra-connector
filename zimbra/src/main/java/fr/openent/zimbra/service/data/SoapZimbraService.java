@@ -21,6 +21,7 @@ import fr.openent.zimbra.Zimbra;
 
 import fr.openent.zimbra.helper.*;
 import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.service.impl.SlackService;
 import fr.openent.zimbra.service.impl.UserInfoService;
 import fr.openent.zimbra.service.impl.UserService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
@@ -89,8 +90,9 @@ public class SoapZimbraService {
     private CacheService cacheService;
 
     private CircuitBreaker breaker;
+    private SlackService slack;
 
-    public SoapZimbraService(Vertx vertx, CacheService cacheService, CircuitBreakerOptions cbOptions) {
+    public SoapZimbraService(Vertx vertx, CacheService cacheService, SlackService slackService, CircuitBreakerOptions cbOptions) {
         this.userService = null;
         this.synchroUserService = null;
 
@@ -110,13 +112,19 @@ public class SoapZimbraService {
             authedUsers =  new HashMap<>();
         }
 
+        this.slack = slackService;
+
         this.breaker = CircuitBreaker.create("zimbra-soap-service", vertx, cbOptions);
-        this.breaker.openHandler(v ->
-           log.info("Zimbra circuit break " + this.breaker.name() + " opened")
-        );
-        this.breaker.closeHandler(v ->
-            log.info("Closing " + this.breaker.name() + " circuit breaker")
-        );
+        this.breaker.openHandler(v -> {
+            String message = "Zimbra circuit break " + this.breaker.name() + " opened";
+            slackService.sendMessage(message);
+           log.info(message);
+        });
+        this.breaker.closeHandler(v -> {
+            String message = "Closing " + this.breaker.name() + " circuit breaker";
+            slackService.sendMessage(message);
+            log.info(message);
+        });
     }
 
     public void setServices(UserService us, SynchroUserService synchroUserService) {

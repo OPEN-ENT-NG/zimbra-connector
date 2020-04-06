@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.helper;
 
+import fr.openent.zimbra.model.SlackConfiguration;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -74,6 +75,8 @@ public class ConfigManager {
     private boolean invertAltPartInConvMsg;
 
     private CircuitBreakerOptions circuitBreakerOptions;
+
+    private SlackConfiguration slackConfiguration;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -137,6 +140,8 @@ public class ConfigManager {
         }
 
         this.circuitBreakerOptions = new CircuitBreakerOptions(config.getJsonObject("circuit-breaker", new JsonObject()));
+        JsonObject slackConfig = config.getJsonObject("slack", new JsonObject());
+        this.slackConfiguration = new SlackConfiguration(slackConfig.getString("api-uri", ""), slackConfig.getString("api-token", ""), slackConfig.getString("channel", ""), slackConfig.getString("bot-username", ""), config.getString("host", ""));
         initPublicConfig();
     }
 
@@ -173,6 +178,7 @@ public class ConfigManager {
     public CircuitBreakerOptions getCircuitBreakerOptions() {
         return this.circuitBreakerOptions;
     }
+    public SlackConfiguration getSlackConfiguration() { return this.slackConfiguration; }
 
     public boolean isForceExpertMode() { return forceExpertMode;}
     public boolean isEnableAddressBookSynchro() { return enableAddressBookSynchro;}
