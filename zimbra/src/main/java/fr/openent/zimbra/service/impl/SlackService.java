@@ -30,7 +30,7 @@ public class SlackService {
                 + "&channel=" + encodeParam(this.config.channel()) + "&text=" + encodeParam(message)
                 + "&username=" + encodeParam(this.config.botUsername())
                 + "&pretty=1";
-        final HttpClientRequest notification = httpClient.post(address, response -> {
+        final HttpClientRequest notification = httpClient.postAbs(address, response -> {
             if (response.statusCode() != 200) {
                 LOGGER.error("An error occurred when notify slack");
             }
