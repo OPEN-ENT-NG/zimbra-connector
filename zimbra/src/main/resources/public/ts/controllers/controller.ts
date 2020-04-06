@@ -575,6 +575,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             $('div.drawing-zone').trigger('click');
             $scope.sending = true; //Blocks submit button while message hasn't been send
             $scope.result = await $scope.state.newItem.send();
+            $timeout(() => $scope.sending = false, 5000)
 
             if (!$scope.result.undelivered) {
                 $scope.state.newItem = new Mail();
