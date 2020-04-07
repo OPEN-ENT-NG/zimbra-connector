@@ -135,12 +135,14 @@ public class AsyncHelper {
     }
 
     public static <T> Future<T> getFutureFromEither(Handler<Either<String, T>> either) {
-        return Future.future( evt -> {
+        Future<T> future = Future.future();
+        future.setHandler(evt -> {
             if(evt.failed()) {
                 either.handle(new Either.Left<>(evt.cause().getMessage()));
             } else {
                 either.handle(new Either.Right<>(evt.result()));
             }
         });
+        return future;
     }
 }
