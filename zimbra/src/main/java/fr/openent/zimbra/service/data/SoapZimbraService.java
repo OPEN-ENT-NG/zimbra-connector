@@ -115,7 +115,7 @@ public class SoapZimbraService {
         this.breaker.openHandler(v -> {
             String message = "Zimbra circuit breaker " + this.breaker.name() + " opened";
             slackService.sendMessage(message);
-           log.info(message);
+            log.info(message);
         });
         this.breaker.closeHandler(v -> {
             String message = "Closing " + this.breaker.name() + " circuit breaker";
@@ -400,8 +400,14 @@ public class SoapZimbraService {
                         if(event.isLeft()) {
                             handler.fail(event.left().getValue());
                         } else {
-                            params.put(PARAM_AUTH_TOKEN, authedUsers.get(userId).getString(MAP_AUTH_TOKEN));
-                            callSoapAPI(params, userId, userAddress, soapApiHandler);
+                            getCachedUserToken(userId, evt ->  {
+                               if(evt.failed()) {
+                                   handler.fail(evt.cause());
+                               } else {
+                                   params.put(PARAM_AUTH_TOKEN, evt.result().getString(MAP_AUTH_TOKEN));
+                                   callSoapAPI(params, userId, userAddress, soapApiHandler);
+                               }
+                            });
                         }
                     };
                     if(params.getBoolean(PARAM_ISADMIN)) {
