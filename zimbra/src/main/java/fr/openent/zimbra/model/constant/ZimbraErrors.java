@@ -21,6 +21,7 @@ public class ZimbraErrors {
 
     // Non-zimbra errors
     public static final String ERROR_CIRCUITBREAKER = "service.CIRCUIT_BREAKER";
+    public static final String ERROR_EXCEPTIONINREQ = "service.EXCEPTION_IN_REQUEST";
     public static final String IS_SUCCESSFUL = "success";
 
 

@@ -255,7 +255,10 @@ public class SoapZimbraService {
 
             request.exceptionHandler( err -> {
                 log.error("Error on request : " + finalUrl + " body : " + jsonRequest.encode(), err);
-                future.fail("Error on request : " + err.getMessage());
+                JsonObject errorJsonFault = new JsonObject();
+                errorJsonFault.put(ERROR_MESSAGE, "Error on request : " + err.getMessage());
+                errorJsonFault.put(ERROR_CODE, ERROR_EXCEPTIONINREQ);
+                future.fail(errorJsonFault.toString());
             });
 
             request.write(jsonRequest.encode());
