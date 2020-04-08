@@ -63,6 +63,7 @@ Behaviours.register("zimbra", {
           switch (this.source.type) {
             case "User":
               this.translation = lang.translate("userBook.class.write-message");
+              break;
             case "Group":
               this.translation = lang.translate("userBook.directory.group.write-message");
           }
