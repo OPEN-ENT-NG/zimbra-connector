@@ -198,5 +198,7 @@
     "zimbra.message.error.get.group": "Une erreur est survenue lors de la récupération du groupe",
     "zimbra.message.error.get.default": "Une erreur est survenue lors de la récupération",
     "zimbra.view.error.title": "Hélas, la messagerie est indisponible pour le moment.",
-    "zimbra.view.error.footer": "Mais pas d'inquiétude, elle revient très prochainement !"
+    "zimbra.view.error.footer": "Mais pas d'inquiétude, elle revient très prochainement !",
+    "zimbra.quota.info.message": "Votre boîte aux lettres est presque pleine. Réduisez la taille de votre boîte aux lettres en supprimant de cette dernière les éléments superflus et en vidant le dossier Corbeille.",
+    "zimbra.quota.info.warning": "Votre boîte aux lettres est pleine. Votre boîte aux lettres ne peut plus envoyer de messages. Réduisez sa taille. Supprimez de votre boîte aux lettres les éléments superflus et videz votre dossier Corbeille."
 }

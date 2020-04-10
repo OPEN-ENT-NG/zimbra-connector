@@ -48,6 +48,20 @@ export let zimbraController = ng.controller("ZimbraController", [
             searchSmall: 'search.condition.small',
         };
 
+        $scope.quotaMessage = {
+            active: false,
+            percent: 0
+        };
+
+        $scope.initQuotaMessage = function () {
+          if (window.user.quota.quota ===0) return;
+          const percent = Math.round((100/window.user.quota.quota)*window.user.quota.storage*100)/100;
+          $scope.quotaMessage = {
+              active: percent > 90,
+              percent
+          }
+        };
+
         $scope.zimbra = Zimbra.instance;
 
         $scope.initFolders = function () {
