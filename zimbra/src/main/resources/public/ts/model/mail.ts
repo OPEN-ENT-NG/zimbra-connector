@@ -34,7 +34,7 @@ import { Mix, Eventer, Selection, Selectable } from "entcore-toolkit";
 
 import http from './http';
 
-import { MAIL, SERVICE } from "./constantes";
+import { MAIL, SERVICE, QUOTA } from "./constantes";
 
 export class Attachment {
     file: File;
@@ -795,6 +795,8 @@ export const sendNotificationErrorZimbra = (errorReturnByZimbra:string):void => 
             case MAIL.MESSAGE_TOO_BIG:
                 notify.info(lang.translate("zimbra.message.error.mail.size"));
                 break;
+            case QUOTA.QUOTA_EXCEEDED:
+                notify.error(lang.translate("zimbra.quota.info.warning"));
         }
     } catch (error) {
         console.error("Error in processing notification error : ", error);

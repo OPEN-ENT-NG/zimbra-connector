@@ -6,3 +6,7 @@ export enum SERVICE {
 export enum MAIL {
     MESSAGE_TOO_BIG = "mail.MESSAGE_TOO_BIG"
 }
+
+export enum QUOTA {
+    QUOTA_EXCEEDED = "mail.QUOTA_EXCEEDED"
+}
