@@ -56,8 +56,8 @@ public class SoapZimbraService {
 
     private static final Long LIFETIME_OFFSET = (long)3600000; // 1h
 
-    private String preauthKey;
-    private Vertx vertx;
+    private final String preauthKey;
+    private final Vertx vertx;
     private static final Logger log = LoggerFactory.getLogger(SoapZimbraService.class);
     private UserService userService;
     private SynchroUserService synchroUserService;
@@ -80,16 +80,16 @@ public class SoapZimbraService {
     public static final String ERROR_CODE = "code";
     public static final String ERROR_MESSAGE = "message";
 
-    private String zimbraUri;
-    private String zimbraAdminUri;
+    private final String zimbraUri;
+    private final String zimbraAdminUri;
     private static final String URI_SOAP = "/service/soap";
 
-    private String zimbraAdminAccount;
-    private String zimbraAdminPassword;
+    private final String zimbraAdminAccount;
+    private final String zimbraAdminPassword;
 
     private CacheService cacheService;
 
-    private CircuitBreaker breaker;
+    private final CircuitBreaker breaker;
 
     public SoapZimbraService(Vertx vertx, CacheService cacheService, SlackService slackService, CircuitBreakerOptions cbOptions) {
         this.userService = null;
