@@ -23,8 +23,6 @@ import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.model.constant.ModuleConstants;
-import fr.openent.zimbra.model.soap.model.SoapFolder;
 import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.service.impl.*;
@@ -38,12 +36,7 @@ import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 
-import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.RequestUtils;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -54,7 +47,6 @@ import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.user.UserUtils;
-import org.entcore.common.utils.Config;
 
 import fr.wseduc.security.ActionType;
 import fr.wseduc.security.SecuredAction;
@@ -69,6 +61,7 @@ import org.vertx.java.core.http.RouteMatcher;
 import java.io.IOException;
 import java.util.*;
 
+import static fr.openent.zimbra.model.constant.ModuleConstants.*;
 import static fr.wseduc.webutils.request.RequestUtils.bodyToJson;
 import static org.entcore.common.http.response.DefaultResponseHandler.arrayResponseHandler;
 import static org.entcore.common.http.response.DefaultResponseHandler.defaultResponseHandler;
@@ -86,6 +79,7 @@ public class ZimbraController extends BaseController {
 	private ExpertModeService expertModeService;
 	private RedirectionService redirectionService;
 	private FrontPageService frontPageService;
+	private AccessLoggerService accessLoggerService;
 
 	private EventStore eventStore;
 	private enum ZimbraEvent { ACCESS }
@@ -112,16 +106,18 @@ public class ZimbraController extends BaseController {
 		this.expertModeService = serviceManager.getExpertModeService();
 		this.redirectionService = serviceManager.getRedirectionService();
 		this.frontPageService = serviceManager.getFrontPageService();
+		this.accessLoggerService = serviceManager.getAccessLoggerService();
 	}
 
-	@Get("zimbra")
+	@Get(URL_ROOT)
 	@SecuredAction("zimbra.view")
 	public void view(HttpServerRequest request) {
 		if(appConfig.isForceExpertMode()) {
-			redirect(request, appConfig.getHost(), "/zimbra/preauth");
+			redirect(request, appConfig.getHost(), URL_PREFIX + URL_PREAUTH);
 		} else {
 			UserUtils.getUserInfos(eb, request, user -> {
 				if (user != null) {
+					accessLoggerService.logAction(user, request.uri(), null);
 					frontPageService.getFrontPageInfos(user, result -> {
 						if(result.failed()) {
 							renderView(request, null, "error.html", null);
@@ -142,12 +138,13 @@ public class ZimbraController extends BaseController {
 	 * Redirect the connected user to an authenticated session of Zimbra
 	 * @param request	http request containing user info
 	 */
-	@Get(ModuleConstants.URL_PREAUTH)
+	@Get(URL_PREAUTH)
 	@SecuredAction("zimbra.expert")
 	public void preauth(HttpServerRequest request) {
 		final String parameters = request.params().get("params");
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
+				accessLoggerService.logAction(user, request.uri(), null);
 				try {
 					String location = expertModeService.getPreauthUrl(user);
 					if(parameters != null && ! parameters.isEmpty()) {
@@ -177,9 +174,10 @@ public class ZimbraController extends BaseController {
 		final String type = request.params().get("type");
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
-				redirectionService.getRedirectionUrl(user.getUserId(), id, name, type, redirectObject -> {
-					renderJson(request, redirectObject);
-				});
+				accessLoggerService.logAction(user, request.uri(), null);
+				redirectionService.getRedirectionUrl(user.getUserId(), id, name, type, redirectObject ->
+					renderJson(request, redirectObject)
+				);
 			} else {
 				unauthorized(request);
 			}
@@ -206,10 +204,6 @@ public class ZimbraController extends BaseController {
 	@SecuredAction("zimbra.create.draft")
 	@ResourceFilter(DevLevelFilter.class)
 	public void createDraft(final HttpServerRequest request) {
-		if(Zimbra.appConfig.isActionBlocked(ConfigManager.UPDATE_ACTION)) {
-			badRequest(request);
-			return;
-		}
 		final String parentMessageId = request.params().get("In-Reply-To");
 		String replyType = request.params().get("reply");
 
@@ -222,6 +216,7 @@ public class ZimbraController extends BaseController {
 		final String reply = replyType;
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
+					accessLoggerService.logAction(user, request.uri(), null);
 					bodyToJson(request, message ->
 						messageService.saveDraft(message, user, null, parentMessageId, reply,
 								defaultResponseHandler(request))
@@ -255,6 +250,7 @@ public class ZimbraController extends BaseController {
 		}
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
+					accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageId", messageId));
 					bodyToJson(request, message ->
 						messageService.saveDraft(message, user, messageId, null, null,
 								defaultResponseHandler(request))
@@ -283,6 +279,7 @@ public class ZimbraController extends BaseController {
 		final String parentMessageId = request.params().get("In-Reply-To");
 		getUserInfos(eb, request, user -> {
 				if (user != null) {
+					accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageId", messageId));
 					bodyToJson(request, message ->
 						messageService.sendMessage(messageId, message, user, parentMessageId, defaultResponseHandler(request))
 					);
@@ -295,10 +292,17 @@ public class ZimbraController extends BaseController {
 	@Get("root-folder")
 	@SecuredAction(value = "", type = ActionType.AUTHENTICATED)
 	public void getRootFolder(HttpServerRequest request) {
-		UserUtils.getUserInfos(eb, request, user -> folderService.getRootFolder(user, res -> {
-			if (res.failed()) renderError(request);
-			else renderJson(request, res.result().toJson().getJsonArray("folders"));
-		}));
+		UserUtils.getUserInfos(eb, request, user -> {
+			if(user != null) {
+				accessLoggerService.logAction(user, request.uri(), null);
+				folderService.getRootFolder(user, res -> {
+					if (res.failed()) renderError(request);
+					else renderJson(request, res.result().toJson().getJsonArray("folders"));
+				});
+			} else {
+				unauthorized(request);
+			}
+		});
 	}
 
 	/**
@@ -336,6 +340,7 @@ public class ZimbraController extends BaseController {
 				if (unread != null && !unread.isEmpty()) {
 					b = Boolean.parseBoolean(unread);
 				}
+				accessLoggerService.logAction(user, request.uri(), new JsonObject().put("folder", folder).put("page", page));
 				messageService.listMessages(folder, b, user, page, search, arrayResponseHandler(request));
 			} else {
 				unauthorized(request);
@@ -372,6 +377,7 @@ public class ZimbraController extends BaseController {
 				if (unread != null && !unread.isEmpty()) {
 					b = Boolean.valueOf(unread);
 				}
+				accessLoggerService.logAction(user, request.uri(), new JsonObject().put("folder", folder).put("unread", b));
 				folderService.countMessages(folder, b, user, defaultResponseHandler(request));
 			} else {
 				unauthorized(request);
@@ -384,7 +390,9 @@ public class ZimbraController extends BaseController {
 	public void visible(final HttpServerRequest request) {
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
-				searchService.findVisibleRecipients(user, I18n.acceptLanguage(request), request.params().get("search"),
+				String search = request.params().get("search");
+				accessLoggerService.logAction(user, request.uri(), new JsonObject().put("search", search));
+				searchService.findVisibleRecipients(user, I18n.acceptLanguage(request), search,
 						defaultResponseHandler(request));
 			} else {
 				unauthorized(request);
@@ -435,6 +443,7 @@ public class ZimbraController extends BaseController {
 		}
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
+				accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageId", id));
 				messageService.getMessage(id, user, defaultResponseHandler(request));
 			} else {
 				unauthorized(request);
@@ -469,6 +478,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageIds", messageIds));
 			messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_TRASH, user,
 					defaultResponseHandler(request));
 		});
@@ -500,6 +510,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageIds", messageIds));
 			messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_INBOX, user,
 					defaultResponseHandler(request));
 		});
@@ -531,6 +542,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageIds", messageIds));
 			messageService.deleteMessages(messageIds, user, defaultResponseHandler(request));
 		});
 	}
@@ -547,6 +559,7 @@ public class ZimbraController extends BaseController {
 	public void emptyTrash(final HttpServerRequest request) {
         getUserInfos(eb, request, user -> {
             if (user != null) {
+				accessLoggerService.logAction(user, request.uri(), null);
                 messageService.emptyTrash(user, defaultResponseHandler(request));
             } else {
                 unauthorized(request);
@@ -582,20 +595,13 @@ public class ZimbraController extends BaseController {
 		}
 		UserUtils.getUserInfos(eb, request, user -> {
 				if (user != null) {
+					accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageIds", ids));
 					messageService.toggleUnreadMessages(ids, Boolean.parseBoolean(unread), user, defaultResponseHandler(request));
 				} else {
 					unauthorized(request);
 				}
 		});
 
-	}
-
-	//Get max folder depth
-	@Get("max-depth")
-	@SecuredAction(value="zimbra.max.depth", type=ActionType.AUTHENTICATED)
-	public void getMaxDepth(final HttpServerRequest request){
-		renderJson(request, new JsonObject().put("max-depth",
-				Config.getConf().getInteger("max-folder-depth", Zimbra.DEFAULT_FOLDER_DEPTH)));
 	}
 
 	/**
@@ -627,6 +633,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("parentId", parentId == null ? "" : parentId));
 			Boolean trashed = (listTrash != null);
 			folderService.listFolders(parentId, trashed, user, arrayResponseHandler(request));
 		});
@@ -658,6 +665,8 @@ public class ZimbraController extends BaseController {
 						badRequest(request);
 						return;
 					}
+					accessLoggerService.logAction(user, request.uri(), new JsonObject().put("name", name)
+							.put("parentId", parentId == null ? "" : parentId));
 					folderService.createFolder(name, parentId, user, defaultResponseHandler(request, 201));
 				});
 			});
@@ -690,6 +699,7 @@ public class ZimbraController extends BaseController {
 					badRequest(request);
 					return;
 				}
+				accessLoggerService.logAction(user, request.uri(), new JsonObject().put("folderId", folderId).put("folderName", name));
                 folderService.updateFolder(folderId, name, user, defaultResponseHandler(request, 200));
             });
         });
@@ -724,6 +734,8 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageIds", messageIds)
+					.put("folderId", folderId));
 			messageService.moveMessagesToFolder(messageIds, folderId, user, defaultResponseHandler(request));
 		});
 	}
@@ -755,6 +767,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageIds", messageIds));
 			messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_INBOX, user,
 					defaultResponseHandler(request));
 		});
@@ -778,6 +791,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("folderId", folderId));
 			folderService.trashFolder(folderId, user, defaultResponseHandler(request));
 		});
 
@@ -801,6 +815,7 @@ public class ZimbraController extends BaseController {
 					unauthorized(request);
 					return;
 				}
+				accessLoggerService.logAction(user, request.uri(), new JsonObject().put("folderId", folderId));
 				folderService.restoreFolder(folderId, user, defaultResponseHandler(request));
 			});
 	}
@@ -823,6 +838,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("folderId", folderId));
 			folderService.deleteFolder(folderId, user, defaultResponseHandler(request));
 		});
 	}
@@ -847,8 +863,8 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
-
 			request.pause();
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageId", messageId));
 			attachmentService.addAttachment(messageId, user, request, defaultResponseHandler(request));
 		});
 	}
@@ -874,6 +890,8 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageId", messageId)
+					.put("attachmentId", attachmentId));
 			attachmentService.getAttachment(messageId, attachmentId, user, false, request, defaultResponseHandler(request));
 		});
 
@@ -903,6 +921,8 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageId", messageId)
+					.put("attachmentId", attachmentId));
 			attachmentService.removeAttachment(messageId, attachmentId, user, defaultResponseHandler(request));
 		});
 	}
@@ -919,6 +939,8 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), new JsonObject().put("messageId", messageId)
+					.put("forwardedId", forwardedId));
 			attachmentService.forwardAttachments(forwardedId, messageId, user, defaultResponseHandler(request));
 		});
 	}
@@ -979,6 +1001,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), null);
 			userService.getQuota(user, defaultResponseHandler(request));
 		});
 	}
@@ -1005,6 +1028,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), null);
 			signatureService.getSignature(user, defaultResponseHandler(request));
 		});
 	}
@@ -1024,6 +1048,7 @@ public class ZimbraController extends BaseController {
 				unauthorized(request);
 				return;
 			}
+			accessLoggerService.logAction(user, request.uri(), null);
 			RequestUtils.bodyToJson(request, body -> {
 				final String signatureBody = body.getString("signature", null);
 				final Boolean useSignature = body.getBoolean("useSignature");
@@ -1087,7 +1112,6 @@ public class ZimbraController extends BaseController {
 	}
 
 	@Get("/idToCheck/:id")
-	@ResourceFilter(DevLevelFilter.class)
 	public void checkIfIdGroup(HttpServerRequest request) {
 		String idToCheck = request.params().get("id");
 		userService.requestIfIdGroup(idToCheck, defaultResponseHandler(request));

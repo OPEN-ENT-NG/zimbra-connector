@@ -7,6 +7,7 @@ public class ModuleConstants {
     public static final String URL_PREAUTH = "preauth";
     public static final String URL_ROOT = "zimbra";
     public static final String URL_PREFIX = "/zimbra/";
+    public static final String URL_WRITETO = "writeto";
 
     public static final String URL_MIDDLE_WRITEMAIL = "#/write-mail/";
 

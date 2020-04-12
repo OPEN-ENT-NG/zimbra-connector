@@ -39,40 +39,40 @@ public class ServiceManager {
 
     private static ServiceManager serviceManager = null;
 
-    private TimelineHelper timelineHelper;
-    private EmailSender emailSender;
-    private Vertx vertx;
+    private final TimelineHelper timelineHelper;
+    private final EmailSender emailSender;
+    private final Vertx vertx;
 
-    private SoapZimbraService soapService;
-    private UserService userService;
-    private FolderService folderService;
-    private AttachmentService attachmentService;
-    private MessageService messageService;
-    private SignatureService signatureService;
+    private final SoapZimbraService soapService;
+    private final UserService userService;
+    private final FolderService folderService;
+    private final AttachmentService attachmentService;
+    private final MessageService messageService;
+    private final SignatureService signatureService;
     private DbMailService dbMailServiceSync;
     private DbMailService dbMailServiceApp;
-    private SearchService searchService;
-    private NotificationService notificationService;
-    private CommunicationService communicationService;
-    private GroupService groupService;
-    private Neo4jZimbraService neoService;
-    private ExpertModeService expertModeService;
-    private MobileThreadService mobileThreadService;
-    private RecipientService recipientService;
-    private RedirectionService redirectionService;
-    private FrontPageService frontPageService;
-    private SlackService slackService;
+    private final SearchService searchService;
+    private final NotificationService notificationService;
+    private final CommunicationService communicationService;
+    private final GroupService groupService;
+    private final Neo4jZimbraService neoService;
+    private final ExpertModeService expertModeService;
+    private final MobileThreadService mobileThreadService;
+    private final RecipientService recipientService;
+    private final RedirectionService redirectionService;
+    private final FrontPageService frontPageService;
+    private final AccessLoggerService accessLoggerService;
 
-    private SynchroUserService synchroUserService;
+    private final SynchroUserService synchroUserService;
     private SynchroUserService synchroUserServiceApp;
-    private SynchroService synchroService;
-    private SqlSynchroService sqlSynchroService;
-    private SynchroGroupService synchroGroupService;
-    private SynchroMailerService synchroMailerService;
-    private SynchroAddressBookService synchroAddressBookService;
-    private Neo4jAddrbookService neo4jAddrbookService;
+    private final SynchroService synchroService;
+    private final SqlSynchroService sqlSynchroService;
+    private final SynchroGroupService synchroGroupService;
+    private final SynchroMailerService synchroMailerService;
+    private final SynchroAddressBookService synchroAddressBookService;
+    private final Neo4jAddrbookService neo4jAddrbookService;
 
-    private SynchroLauncher synchroLauncher;
+    private final SynchroLauncher synchroLauncher;
 
 
 
@@ -89,7 +89,7 @@ public class ServiceManager {
         String redisConfig = (String) vertx.sharedData().getLocalMap("server").get("redisConfig");
         CacheService cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient()) : null;
 
-        this.slackService = new SlackService(vertx, appConfig.getSlackConfiguration());
+        SlackService slackService = new SlackService(vertx, appConfig.getSlackConfiguration());
 
         this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
         initDbMailService(appConfig);
@@ -115,6 +115,7 @@ public class ServiceManager {
         this.mobileThreadService = new MobileThreadService(recipientService);
         this.redirectionService = new RedirectionService(eb, userService);
         this.frontPageService = new FrontPageService(folderService, userService);
+        this.accessLoggerService = new AccessLoggerService();
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
@@ -221,6 +222,10 @@ public class ServiceManager {
 
     public FrontPageService getFrontPageService() {
         return frontPageService;
+    }
+
+    public AccessLoggerService getAccessLoggerService() {
+        return accessLoggerService;
     }
 
     public RecipientService getRecipientService() {
