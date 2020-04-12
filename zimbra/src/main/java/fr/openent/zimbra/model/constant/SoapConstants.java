@@ -37,7 +37,7 @@ public class SoapConstants {
     public static final String EMPTY_VALUE = "";
     public static final String TRUE_VALUE = "TRUE";
     public static final String FALSE_VALUE = "FALSE";
-    public static final String UUID = "uuid";
+    public static final String ZUUID = "uuid";
     public static final String ZIMBRA_ID = "id";
     public static final String ZIMBRA_ZID = "zid";
 

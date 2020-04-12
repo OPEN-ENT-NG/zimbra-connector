@@ -21,6 +21,7 @@ import fr.openent.zimbra.Zimbra;
 
 import fr.openent.zimbra.helper.*;
 import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.service.impl.AccessLoggerService;
 import fr.openent.zimbra.service.impl.SlackService;
 import fr.openent.zimbra.service.impl.UserInfoService;
 import fr.openent.zimbra.service.impl.UserService;
@@ -44,11 +45,13 @@ import org.entcore.common.cache.CacheService;
 import org.entcore.common.user.UserInfos;
 
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
-import static fr.openent.zimbra.model.constant.SoapConstants.COOKIE_AUTH_TOKEN;
-import static fr.openent.zimbra.model.constant.SoapConstants.HEADER_COOKIE;
+import static fr.openent.zimbra.model.constant.SoapConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
 
@@ -61,6 +64,7 @@ public class SoapZimbraService {
     private static final Logger log = LoggerFactory.getLogger(SoapZimbraService.class);
     private UserService userService;
     private SynchroUserService synchroUserService;
+    private final AccessLoggerService accessLoggerService;
     private HttpClient httpClient = null;
 
     private static Map<String, JsonObject> authedUsers;
@@ -91,9 +95,11 @@ public class SoapZimbraService {
 
     private final CircuitBreaker breaker;
 
-    public SoapZimbraService(Vertx vertx, CacheService cacheService, SlackService slackService, CircuitBreakerOptions cbOptions) {
+    public SoapZimbraService(Vertx vertx, CacheService cacheService, SlackService slackService,
+                             AccessLoggerService accessLoggerService, CircuitBreakerOptions cbOptions) {
         this.userService = null;
         this.synchroUserService = null;
+        this.accessLoggerService = accessLoggerService;
 
         ConfigManager config = Zimbra.appConfig;
         String zimbraBaseUri = config.getZimbraUri();
@@ -158,7 +164,7 @@ public class SoapZimbraService {
      * }
      * @return Complete Json to send
      */
-    private JsonObject prepareJsonRequest(JsonObject params) {
+    private JsonObject prepareJsonRequest(JsonObject params, String requestId, String userId) {
 
         JsonObject context = new JsonObject()
                 .put("_jsns", SoapConstants.NAMESPACE_ZIMBRA);
@@ -178,6 +184,9 @@ public class SoapZimbraService {
         JsonObject body = new JsonObject();
         body.put(params.getString(PARAM_NAME),
                 params.getJsonObject(PARAM_CONTENT));
+
+        accessLoggerService.logZimbraRequestStart(requestId, userId, params.getString(PARAM_NAME),
+                params.getJsonObject(PARAM_CONTENT).getString(REQ_NAMESPACE));
 
         return new JsonObject()
                 .put("Header", header)
@@ -239,6 +248,8 @@ public class SoapZimbraService {
      */
     private void callSoapAPI(JsonObject params, String userId, String userAddress,
                              Handler<Either<String,JsonObject>> handler) {
+        final String requestId = UUID.randomUUID().toString();
+        final Instant startInstant = Instant.now();
         breaker.<JsonObject>execute(future -> {
             if(httpClient == null) {
                 httpClient = HttpClientHelper.createHttpClient(vertx);
@@ -251,10 +262,10 @@ public class SoapZimbraService {
             if(params.getBoolean(PARAM_IS_AUTH, true) && params.containsKey(PARAM_AUTH_TOKEN)) {
                 request.putHeader(HEADER_COOKIE, COOKIE_AUTH_TOKEN + "=" + params.getString(PARAM_AUTH_TOKEN));
             }
-            JsonObject jsonRequest = prepareJsonRequest(params);
+            JsonObject jsonRequest = prepareJsonRequest(params, requestId, userId);
 
             request.exceptionHandler( err -> {
-                log.error("Error on request : " + finalUrl + " body : " + jsonRequest.encode(), err);
+                log.error("Error on request : " + requestId + " body : " + jsonRequest.encode(), err);
                 JsonObject errorJsonFault = new JsonObject();
                 errorJsonFault.put(ERROR_MESSAGE, "Error on request : " + err.getMessage());
                 errorJsonFault.put(ERROR_CODE, ERROR_EXCEPTIONINREQ);
@@ -264,8 +275,10 @@ public class SoapZimbraService {
             request.write(jsonRequest.encode());
             request.end();
         }).setHandler(evt -> {
+            final Duration requestDuration = Duration.between(startInstant, Instant.now());
+            accessLoggerService.logZimbraRequestEnd(requestId, userId, requestDuration, evt);
             if (evt.failed()) {
-                log.error("Zimbra Soap API call failed " + evt.cause().getMessage());
+                log.error("Zimbra Soap API call failed " + requestId + " " + evt.cause().getMessage());
                 JsonObject errorJsonFault = new JsonObject();
                 errorJsonFault.put(ERROR_MESSAGE, evt.cause().getMessage());
                 errorJsonFault.put(ERROR_CODE, ERROR_CIRCUITBREAKER);

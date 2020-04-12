@@ -19,7 +19,6 @@ package fr.openent.zimbra.model.soap.model;
 
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
-import fr.openent.zimbra.model.constant.ZimbraConstants;
 import fr.openent.zimbra.model.soap.SoapRequest;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -191,7 +190,7 @@ public class SoapFolder {
     private static SoapFolder createFromJson(JsonObject folderData) throws IllegalArgumentException {
         SoapFolder folder = new SoapFolder();
         folder.id = folderData.getString(ZIMBRA_ID, "");
-        folder.uuid = folderData.getString(UUID, "");
+        folder.uuid = folderData.getString(ZUUID, "");
         folder.name = folderData.getString(FOLDER_NAME, "");
         folder.absolutePath = folderData.getString(FOLDER_ABSPATH, "");
         if(!FOLDER_ROOT_ID.equals(folder.id) && (folder.id.isEmpty() || folder.uuid.isEmpty() || folder.name.isEmpty() || folder.absolutePath.isEmpty())) {

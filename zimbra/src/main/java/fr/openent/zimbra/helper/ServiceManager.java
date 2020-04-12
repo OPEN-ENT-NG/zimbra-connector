@@ -94,7 +94,9 @@ public class ServiceManager {
         this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
         initDbMailService(appConfig);
         this.searchService = new SearchService(vertx);
-        this.soapService = new SoapZimbraService(vertx, cacheService, slackService, appConfig.getCircuitBreakerOptions());
+        this.accessLoggerService = new AccessLoggerService();
+        this.soapService = new SoapZimbraService(vertx, cacheService, slackService, accessLoggerService,
+                appConfig.getCircuitBreakerOptions());
         this.neoService = new Neo4jZimbraService();
         this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
         this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
@@ -115,7 +117,6 @@ public class ServiceManager {
         this.mobileThreadService = new MobileThreadService(recipientService);
         this.redirectionService = new RedirectionService(eb, userService);
         this.frontPageService = new FrontPageService(folderService, userService);
-        this.accessLoggerService = new AccessLoggerService();
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
