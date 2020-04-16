@@ -644,7 +644,7 @@ public class SoapZimbraService {
                               Handler<Either<String,JsonObject>> handler) {
         getCachedUserToken(userId, evt -> {
             if (evt.failed()) {
-                log.info("Token not found for user " + userId);
+                log.debug("Token not found for user " + userId);
                 authentication(userId, userAddress, isAdmin, handler);
             } else {
                 JsonObject authToken = evt.result();
