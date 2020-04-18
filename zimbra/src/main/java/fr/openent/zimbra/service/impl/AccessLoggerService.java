@@ -11,7 +11,7 @@ import java.time.Duration;
 import static fr.openent.zimbra.model.constant.ZimbraErrors.IS_SUCCESSFUL;
 
 public class AccessLoggerService {
-    private static final Logger log = LoggerFactory.getLogger(AttachmentService.class);
+    private static final Logger log = LoggerFactory.getLogger(AccessLoggerService.class);
 
     public void logAction(UserInfos user, String route, JsonObject data) {
         if(data == null) {
