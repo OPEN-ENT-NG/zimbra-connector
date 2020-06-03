@@ -385,6 +385,7 @@ public class SoapZimbraService {
             switch(callResult.getString(ERROR_CODE, "")) {
                 case ERROR_AUTHFAILED:
                     userService.getUserAccount(userAddress, event -> {
+                        log.info("First auth failed for user " + userId);
                         if(event.failed()) {
                             JsonObject newCallResult = new JsonObject(event.cause().getMessage());
                             if(ERROR_NOSUCHACCOUNT.equals(newCallResult.getString(ERROR_CODE, ""))) {
@@ -412,6 +413,7 @@ public class SoapZimbraService {
                     break;
                 case ERROR_AUTHEXPIRED:
                 case ERROR_AUTHREQUIRED:
+                    log.info("Auth failed for user " + userId + " " + callResult.getString(ERROR_CODE, "") + ", retrying...");
                     Handler<Either<String,JsonObject>> authCheckHandler = event -> {
                         if(event.isLeft()) {
                             handler.fail(event.left().getValue());
