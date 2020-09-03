@@ -19,7 +19,6 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ConfigManager;
-import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
@@ -54,12 +53,12 @@ import static fr.openent.zimbra.model.constant.SoapConstants.*;
 
 public class MessageService {
 
-    private SoapZimbraService soapService;
-    private FolderService folderService;
-    private DbMailService dbMailService;
-    private UserService userService;
-    private GroupService groupService;
-    private static Logger log = LoggerFactory.getLogger(MessageService.class);
+    private final SoapZimbraService soapService;
+    private final FolderService folderService;
+    private final DbMailService dbMailService;
+    private final UserService userService;
+    private final GroupService groupService;
+    private static final Logger log = LoggerFactory.getLogger(MessageService.class);
 
     public MessageService(SoapZimbraService soapService, FolderService folderService,
                           DbMailService dbMailService, UserService userService, SynchroUserService synchroUserService) {
@@ -346,18 +345,7 @@ public class MessageService {
         dbMailService.getNeoIdFromMail(mail, sqlResponse -> {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
                 log.debug("no user in database for address : " + mail);
-                userService.getAliases(mail, zimbraResponse -> {
-                    if(zimbraResponse.succeeded()) {
-                        ZimbraUser user = zimbraResponse.result();
-                        if(user.getFirstAliasName().isEmpty()) {
-                            handler.handle(null);
-                        } else {
-                            handler.handle(user.getFirstAliasName());
-                        }
-                    } else {
-                        handler.handle(groupService.getGroupId(mail));
-                    }
-                });
+                handler.handle(groupService.getGroupId(mail));
             } else {
                 JsonArray results = sqlResponse.right().getValue();
                 if(results.size() > 1) {
