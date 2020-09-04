@@ -172,11 +172,24 @@ public class ExternalWebservicesController extends BaseController {
             badRequest(request);
         } else {
             switch (action) {
+                case "conversationEB":
+                    String useridFrom = request.params().get("userId");
+                    String subject = request.params().get("subject");
+                    String body = request.params().get("body");
+                    String to = request.params().get("to");
+                    JsonObject message = new JsonObject().put("subject",subject)
+                            .put("body",body)
+                            .put("to",new JsonArray().add(to));
+                    eb.send("org.entcore.conversation",
+                            new JsonObject().put("action", "send")
+                                    .put("userId", useridFrom).put("message",message),
+                            res -> renderJson(request, (JsonObject)res.result().body()));
+                    return;
                 case "getmail":
                     String userid = request.params().get("userid");
                     eb.send("fr.openent.zimbra",
                             new JsonObject().put("action", "getMailUser")
-                            .put("idList", new JsonArray().add(userid)),
+                                    .put("idList", new JsonArray().add(userid)),
                             res -> renderJson(request, (JsonObject)res.result().body()));
                     return;
                 case "syncuserab":

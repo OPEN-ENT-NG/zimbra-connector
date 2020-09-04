@@ -929,12 +929,42 @@ public class ZimbraController extends BaseController {
 		renderView(request, null, "print.html", null);
 	}
 
+
+	/** Replace Conversation Event Bus
+	 * send API
+	 * 	Send an email via Conversation Event Bus
+	 * 	In case of success, return empty Json Object.
+	 * 	@param message JsonObject containing infos
+	 *   	          body : message body
+	 *   	          subject : message subject
+	 * 	              to : id of each recipient
+	 * 	              cc : id of each cc recipient
+	 *  @param userId Id of the user from who we send the message
+	 */
 	@SuppressWarnings("SwitchStatementWithTooFewBranches")
 	@BusAddress("org.entcore.conversation")
 	public void conversationEventBusHandler(Message<JsonObject> message) {
 		switch (message.body().getString("action", "")) {
-			case "send" : log.error("BUS sending not implemented : " + message.toString());
-				// send(message);
+			case "send" :
+				JsonObject messageToSend = message.body().getJsonObject("message", new JsonObject());
+				String userIdOfExpeditor = message.body().getString("userId");
+				UserUtils.getUserInfos(eb, userIdOfExpeditor, user -> {
+					if(user == null){
+						message.reply(new JsonObject().put("status", "ko")
+								.put("message", "userId of expeditor is not defined or doesn't exists in Neo4j"));
+						return;
+					}
+					messageService.sendMessage(null, messageToSend, user, null, res -> {
+								if(res.isLeft()){
+									message.reply(new JsonObject().put("status", "ko")
+											.put("message", res));
+								}else{
+									message.reply(new JsonObject().put("status", "ok")
+											.put("message", res));
+								}
+							}
+					);
+				});
 				break;
 			default:
 				message.reply(new JsonObject().put("status", "error")
