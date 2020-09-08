@@ -76,6 +76,16 @@ public class ApiController extends BaseController {
         });
     }
 
+    /**
+     * Configure notification
+     * Only used for rights management, should not be called
+     */
+    @Get("/rights/notification")
+    @SecuredAction("zimbra.notification.configuration")
+    public void configureNotification(final HttpServerRequest request) {
+        renderError(request);
+    }
+
 
     /**
      * Create notification in timeline when receiving a mail
