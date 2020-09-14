@@ -58,6 +58,7 @@ public class ConfigManager {
 
     private final String appSynchroType;
     private final String syncSynchroType;
+    private final String appSyncTtl;
 
     private final String mailerCron;
     private final Integer maxRecipients;
@@ -100,6 +101,7 @@ public class ConfigManager {
         this.synchroFromMail = config.getString("zimbra-synchro-frommail", "zimbra-sync@cgi.com");
         String appSynchroType = config.getString("app-synctype", SYNC_NEO);
         String syncSynchroType = config.getString("sync-synctype", SYNC_NEO);
+        this.appSyncTtl = config.getString("app-sync-ttl", "30 minutes");
         this.mailerCron = config.getString("zimbra-mailer-cron", "");
         this.maxRecipients = config.getInteger("max-recipients", 50);
         this.mailConfig = config.getJsonObject("mail-config", new JsonObject());
@@ -164,6 +166,7 @@ public class ConfigManager {
     public String getZimbraDomain() { return zimbraDomain;}
     public String getAppSynchroType() { return appSynchroType;}
     public String getSyncSynchroType() { return syncSynchroType;}
+    public String getAppSyncTtl() { return appSyncTtl;}
     public String getSynchroLang() { return synchroLang;}
     public String getSynchroCronDate() { return synchroCronDate;}
     public String getSynchroFromMail() { return synchroFromMail;}

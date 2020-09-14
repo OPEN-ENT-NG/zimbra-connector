@@ -190,7 +190,16 @@ public class SqlSynchroService {
             return;
         }
 
+        String synchroType = SynchroConstants.SYNC_DAILY;
         String statusCondition = String.format("%s='%s'", USER_STATUS, SynchroConstants.STATUS_TODO);
+        if(idSynchro == 0) {
+            synchroType = SynchroConstants.SYNC_APP;
+            // (status='TODO' OR age(synchro_date, now()) < '30 minutes')
+            statusCondition = "(" + statusCondition + " OR " +
+                    String.format("age(now(), %s) < '%s'", USER_SYNCDATE, Zimbra.appConfig.getAppSyncTtl()) +
+                    ")";
+        }
+
 
         StringBuilder query = new StringBuilder("WITH new_values (new_user_id) AS ( ");
 
@@ -205,7 +214,7 @@ public class SqlSynchroService {
                 .append(String.format("(%s,%s,%s,%s,%s) ",
                         USER_SYNCID, USER_IDUSER, USER_SYNCTYPE, USER_SYNCACTION, USER_STATUS))
                 .append(String.format("SELECT %d,new_user_id,'%s','%s','%s'",
-                        idSynchro, SynchroConstants.SYNC_DAILY, modification, SynchroConstants.STATUS_TODO))
+                        idSynchro, synchroType, modification, SynchroConstants.STATUS_TODO))
                 .append("FROM new_values ")
                 .append("WHERE NOT EXISTS ( SELECT 1 FROM ")
                 .append(userSynchroTable)
