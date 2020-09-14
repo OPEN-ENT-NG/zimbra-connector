@@ -148,7 +148,26 @@ public class SqlSynchroService {
         JsonArray params = new JsonArray().add(maillingList).add(SynchroConstants.STATUS_TODO);
 
         sql.prepared(query, params,
-                SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
+                SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(res -> {
+                    if(res.succeeded()){
+
+                        String queryCancelOrders = String.format("UPDATE %s SET %s='%s' where %s='%s'",
+                                userSynchroTable,
+                                USER_STATUS,
+                                SynchroConstants.STATUS_CANCELLED,
+                                USER_STATUS,
+                                SynchroConstants.STATUS_TODO);
+
+                        sql.prepared(queryCancelOrders, new JsonArray(),SqlResult.validUniqueResultHandler( resCanc -> {
+                            if(resCanc.isLeft()) {
+                                log.error("Error when cancelling sync orders."  + queryCancelOrders + " : "  + resCanc.left().getValue());
+                            }
+                            handler.handle(res);
+                        }));
+                    } else {
+                        handler.handle(res);
+                    }
+                })));
     }
 
 
