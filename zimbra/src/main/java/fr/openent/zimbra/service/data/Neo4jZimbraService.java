@@ -183,9 +183,11 @@ public class Neo4jZimbraService {
 	}
 
 	public void checkIfIdGroupFromNeo4j(String idToCheck, Handler<Either<String, JsonObject>> handler) {
-		String query = "MATCH (g { id: {idToCheck}}) " +
-				"WHERE g:Group OR g:User WITH g, CASE WHEN g:Group THEN true ELSE false END AS result " +
-				"RETURN g,result";
+		String query = "MATCH (g:Group { id: {idToCheck}}) " +
+		"RETURN g.id as id, true as result " +
+		"UNION " +
+		"MATCH (u:User { id: {idToCheck}}) " +
+		"RETURN u.id as id, false as result;";
 
 		JsonObject params = new JsonObject().put("idToCheck", idToCheck);
 
