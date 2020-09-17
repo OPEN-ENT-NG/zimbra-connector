@@ -957,10 +957,10 @@ public class ZimbraController extends BaseController {
 					messageService.sendMessage(null, messageToSend, user, null, res -> {
 								if(res.isLeft()){
 									message.reply(new JsonObject().put("status", "ko")
-											.put("message", res));
+											.put("message", res.right().getValue()));
 								}else{
 									message.reply(new JsonObject().put("status", "ok")
-											.put("message", res));
+											.put("message", res.right().getValue()));
 								}
 							}
 					);
