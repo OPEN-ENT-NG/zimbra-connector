@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import {$, _, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
+import {$, _, Document, idiom as lang, moment, ng, notify, skin, template, angular} from "entcore";
 import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, REGEXLIB, RECEIVER_TYPE, Group, Users} from "../model";
 
 import {Preference} from "../model/preferences";
@@ -208,11 +208,14 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.getSignature = () => {
-            if (Zimbra.instance.preference.useSignature)
-                return Zimbra.instance.preference.signature.replace(
+            if (Zimbra.instance.preference.useSignature) {
+                let signature = Zimbra.instance.preference.signature.replace(
                     new RegExp("\n", "g"),
                     "<br>"
                 );
+                signature = angular.element('<textarea />').html(signature).text();
+                return signature;
+            }
             return "";
         };
 
