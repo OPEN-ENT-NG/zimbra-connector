@@ -380,11 +380,6 @@ export class Mail implements Selectable {
                 this.state = "SENT";
                 notify.success("mail.sent");
             }
-
-            return {
-                inactive: result.inactive,
-                undelivered: result.undelivered
-            };
         } catch (e) {
             sendNotificationErrorZimbra(e.response.data.error);
             return {
@@ -797,6 +792,9 @@ export const sendNotificationErrorZimbra = (errorReturnByZimbra:string):void => 
                 break;
             case QUOTA.QUOTA_EXCEEDED:
                 notify.error(lang.translate("zimbra.quota.info.warning"));
+                break;
+            default: notify.error(lang.translate("zimbra.default.intern.error" + errorReturnByZimbra));
+
         }
     } catch (error) {
         console.error("Error in processing notification error : ", error);
