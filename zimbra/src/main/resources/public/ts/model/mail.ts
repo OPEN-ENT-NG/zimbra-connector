@@ -379,6 +379,14 @@ export class Mail implements Selectable {
             if (parseInt(result.sent) > 0) {
                 this.state = "SENT";
                 notify.success("mail.sent");
+                return {
+                    undelivered: false
+                };
+            } else {
+                sendNotificationErrorZimbra('{ "code":"resul.sent<=0"');
+                return {
+                    undelivered: true
+                };
             }
         } catch (e) {
             sendNotificationErrorZimbra(e.response.data.error);
