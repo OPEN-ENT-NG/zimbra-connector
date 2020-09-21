@@ -93,7 +93,7 @@ export class Mail implements Selectable {
     }
 
     getSystemFolder(): string {
-     return this.systemFolder ;
+        return this.systemFolder ;
     }
 
     matchSystemIcon(): string {
@@ -383,7 +383,7 @@ export class Mail implements Selectable {
                     undelivered: false
                 };
             } else {
-                sendNotificationErrorZimbra('{ "code":"resul.sent<=0"');
+                sendNotificationErrorZimbra('{"code":"resul.sent<=0"}');
                 return {
                     undelivered: true
                 };
@@ -521,7 +521,7 @@ export class Mail implements Selectable {
                     );
                     sendNotificationErrorZimbra(e.response.data.error);
                 });
-           await Promise.resolve(promise);
+            await Promise.resolve(promise);
         }
     }
 
@@ -578,7 +578,7 @@ export class Mails {
     async removeFromFolder() {
         await http.put(
             "move/root?" +
-                toFormData({ id: _.pluck(this.selection.selected, "id") })
+            toFormData({ id: _.pluck(this.selection.selected, "id") })
         );
     }
 
@@ -643,12 +643,12 @@ export class Mails {
         }
         const response = await http.get(
             "/zimbra/list?folder=" +
-                this.userFolder.path +
-                "&restrain=&page=" +
-                data.pageNumber +
-                "&unread=" +
-                data.filterUnread +
-                data.searchText
+            this.userFolder.path +
+            "&restrain=&page=" +
+            data.pageNumber +
+            "&unread=" +
+            data.filterUnread +
+            data.searchText
         );
         if (data.emptyList !== false) {
             this.all.splice(0, this.all.length);
@@ -692,11 +692,11 @@ export class Mails {
         }
         let response = await http.get(
             this.api.get +
-                "&page=" +
-                data.pageNumber +
-                "&unread=" +
-                data.filterUnread +
-                data.searchText
+            "&page=" +
+            data.pageNumber +
+            "&unread=" +
+            data.filterUnread +
+            data.searchText
         );
         if (data.emptyList !== false) {
             this.all.splice(0, this.all.length);
@@ -719,7 +719,7 @@ export class Mails {
     async toTrash() {
         await http.put(
             "/zimbra/trash?" +
-                toFormData({ id: _.pluck(this.selection.selected, "id") })
+            toFormData({ id: _.pluck(this.selection.selected, "id") })
         );
         quota.refresh();
         this.selection.removeSelection();
@@ -732,9 +732,9 @@ export class Mails {
     async moveSelection(destinationFolder) {
         await http.put(
             "move/userfolder/" +
-                destinationFolder.id +
-                "?" +
-                toFormData({ id: _.pluck(this.selection.selected, "id") })
+            destinationFolder.id +
+            "?" +
+            toFormData({ id: _.pluck(this.selection.selected, "id") })
         );
     }
 
