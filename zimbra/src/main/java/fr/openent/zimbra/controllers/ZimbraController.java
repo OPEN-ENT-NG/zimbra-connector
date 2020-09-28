@@ -957,7 +957,7 @@ public class ZimbraController extends BaseController {
 					messageService.sendMessage(null, messageToSend, user, null, res -> {
 								if(res.isLeft()){
 									message.reply(new JsonObject().put("status", "ko")
-											.put("message", res.right().getValue()));
+											.put("message", res.left().getValue()));
 								}else{
 									message.reply(new JsonObject().put("status", "ok")
 											.put("message", res.right().getValue()));
