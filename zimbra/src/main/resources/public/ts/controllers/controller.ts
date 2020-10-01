@@ -767,6 +767,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 folderTarget
             );
             folderTarget.nbUnread += counter;
+            $scope.zimbra.currentFolder.nbUnread -= counter;
             $scope.zimbra.currentFolder.mails.selection.all = $scope.zimbra.currentFolder.mails.selection.all.filter(({id}) => mailIds.indexOf(id) === -1);
             $scope.refresh();
             $scope.$apply();
