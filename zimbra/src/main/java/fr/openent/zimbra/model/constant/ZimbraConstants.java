@@ -27,6 +27,8 @@ public class ZimbraConstants {
 
     public static final String FOLDER_CONTACTS = "/Contacts";
 
+    public static final String PATH_EMAILED_CONTACTS = "/Emailed Contacts";
+
     public static final String FOLDER_ROOT_ID = "1";
     public static final String FOLDER_INBOX_ID= "2";
     public static final String FOLDER_OUTBOX_ID = "5";

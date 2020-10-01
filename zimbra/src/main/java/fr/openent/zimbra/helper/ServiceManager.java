@@ -74,6 +74,8 @@ public class ServiceManager {
 
     private SynchroLauncher synchroLauncher;
 
+    private final AddressBookService addressBookService;
+
 
 
     private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix) {
@@ -99,7 +101,7 @@ public class ServiceManager {
         this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
         this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
         SqlAddressBookService sqlAddressBookService = new SqlAddressBookService(appConfig.getDbSchema());
-        AddressBookService addressBookService = new AddressBookService(sqlAddressBookService);
+        this.addressBookService = new AddressBookService(sqlAddressBookService);
         this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
                 synchroAddressBookService, addressBookService);
         this.folderService = new FolderService(soapService);
@@ -258,4 +260,6 @@ public class ServiceManager {
     public SynchroLauncher getSynchroLauncher() {
         return synchroLauncher;
     }
+
+    public AddressBookService getAddressBookService() { return addressBookService; }
 }

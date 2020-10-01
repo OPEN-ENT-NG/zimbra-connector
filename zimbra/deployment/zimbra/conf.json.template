@@ -1,39 +1,53 @@
-    {
-      "name": "fr.openent~zimbra~2.4-SNAPSHOT",
-      "config": {
-        "main" : "fr.openent.zimbra.Zimbra",
-        "port" : 8104,
-        "app-name" : "Messagerie",
-    	"app-address" : "/zimbra/zimbra",
-    	"app-icon" : "Zimbra-large",
-        "host": "${host}",
-        "ssl" : $ssl,
-        "auto-redeploy": false,
-        "userbook-host": "${host}",
-        "integration-mode" : "BUS",
-        "app-registry.port" : 8012,
-        "mode" : "${mode}",
-        "sql": true,
-        "cache-enabled": true,
-        "max-recipients": $zimbraMaxRecipients,
-        "db-schema": "zimbra",
-        "zimbra-uri" : "$zimbraUri",
-        "preauth-key" : "$zimbraPreauthKey",
-        "zimbra-domain" : "$zimbraDomain",
-        "zimbra-synchro-lang" : "$zimbraLang",
-        "zimbra-admin-uri" : "$zimbraAdminUri",
-        "admin-account" : "$zimbraAdminAccount",
-        "address-book-account" : "$zimbraAddressBookAccount",
-        "admin-password" : "$zimbraAdminPassword",
-        "zimbra-synchro-cron" : "$zimbraSynchroCron",
-        "mail-config" : {"imaps":{"server":"mx.monlycee.net","port":993,"ssl":"SSL/TLS","auth":"Mot de passe normal"},"smtps":{"server":"mx.monlycee.net","port":587,"ssl":"STARTTLS","auth":"Mot de passe normal"}},
-        "shared-folder-name" : "-- Carnets Adresses ENT --",
-        "entcore.port" : 8009,
-        "slack": {
-            "api-uri": "$zimbraSlackApiUri",
-            "api-token": "$zimbraSlackApiToken",
-            "channel": "$zimbraSlackChannel",
-            "bot-username": "$zimbraSlackBotUsername"
-        }
+{
+  "name": "fr.openent~zimbra~2.4-SNAPSHOT",
+  "config": {
+    "main" : "fr.openent.zimbra.Zimbra",
+    "port" : 8104,
+    "app-name" : "Messagerie",
+    "app-address" : "/zimbra/zimbra",
+    "app-icon" : "Zimbra-large",
+    "host": "${host}",
+    "ssl" : $ssl,
+    "auto-redeploy": false,
+    "userbook-host": "${host}",
+    "integration-mode" : "BUS",
+    "app-registry.port" : 8012,
+    "mode" : "${mode}",
+    "sql": true,
+    "cache-enabled": true,
+    "max-recipients": $zimbraMaxRecipients,
+    "db-schema": "zimbra",
+    "zimbra-uri" : "$zimbraUri",
+    "preauth-key" : "$zimbraPreauthKey",
+    "zimbra-domain" : "$zimbraDomain",
+    "zimbra-synchro-lang" : "$zimbraLang",
+    "zimbra-admin-uri" : "$zimbraAdminUri",
+    "admin-account" : "$zimbraAdminAccount",
+    "address-book-account" : "$zimbraAddressBookAccount",
+    "admin-password" : "$zimbraAdminPassword",
+    "zimbra-synchro-cron" : "$zimbraSynchroCron",
+    "mail-config" : {
+      "imaps":{
+        "server":"mx.monlycee.net",
+        "port":993,
+        "ssl":"SSL/TLS",
+        "auth":"Mot de passe normal"
+      },
+      "smtps":{
+        "server":"mx.monlycee.net",
+        "port":587,
+        "ssl":"STARTTLS",
+        "auth":"Mot de passe normal"
+      }
+    },
+    "shared-folder-name" : "-- Carnets Adresses ENT --",
+    "purge-emailed-contacts" : $zimbraPurgeEmailedContacts,
+    "entcore.port" : 8009,
+    "slack": {
+      "api-uri": "$zimbraSlackApiUri",
+      "api-token": "$zimbraSlackApiToken",
+      "channel": "$zimbraSlackChannel",
+      "bot-username": "$zimbraSlackBotUsername"
     }
   }
+}

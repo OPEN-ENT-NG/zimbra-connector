@@ -72,6 +72,8 @@ public class ConfigManager {
     private boolean forceExpertMode;
     private boolean enableAddressBookSynchro;
 
+    private final boolean purgeEmailedContacts;
+
     // Bug in Zimbra : when getting messages in conversations, alternative parts are inverted
     private boolean invertAltPartInConvMsg;
 
@@ -110,6 +112,7 @@ public class ConfigManager {
         this.addressBookSynchroTtl = config.getInteger("abook-sync-ttl-minutes", 1440); // default 24h
         this.sqlInsertPaginationSize = config.getInteger("sql-insert-pagination-size", 5000);
         this.invertAltPartInConvMsg = config.getBoolean("invert-alt-part-in-conv-msg", false);
+        this.purgeEmailedContacts = config.getBoolean("purge-emailed-contacts",false);
 
         // In case of emergency
         this.forceExpertMode = config.getBoolean("force-expert-mode", false);
@@ -178,6 +181,7 @@ public class ConfigManager {
     public Integer getAddressBookSynchroTtl() { return addressBookSynchroTtl;}
     public Integer getSqlInsertPaginationSize() { return sqlInsertPaginationSize;}
     public boolean getInvertAltPartInConvMsg() { return invertAltPartInConvMsg;}
+    public boolean getPurgeEmailedContacts() {return purgeEmailedContacts;}
     public CircuitBreakerOptions getCircuitBreakerOptions() {
         return this.circuitBreakerOptions;
     }

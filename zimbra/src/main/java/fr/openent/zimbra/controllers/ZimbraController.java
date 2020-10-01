@@ -21,30 +21,29 @@ import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.filters.DevLevelFilter;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
-import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.helper.ServiceManager;
+import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.ModuleConstants;
-import fr.openent.zimbra.model.soap.model.SoapFolder;
 import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.service.impl.*;
-
+import fr.openent.zimbra.service.synchro.AddressBookService;
 import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.Delete;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
+import fr.wseduc.security.ActionType;
+import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
-
-import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.RequestUtils;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.Message;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.cache.Cache;
@@ -55,19 +54,11 @@ import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.utils.Config;
-
-import fr.wseduc.security.ActionType;
-import fr.wseduc.security.SecuredAction;
-
-import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.json.JsonObject;
 import org.vertx.java.core.http.RouteMatcher;
 
-
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 import static fr.wseduc.webutils.request.RequestUtils.bodyToJson;
 import static org.entcore.common.http.response.DefaultResponseHandler.arrayResponseHandler;
@@ -86,6 +77,7 @@ public class ZimbraController extends BaseController {
 	private ExpertModeService expertModeService;
 	private RedirectionService redirectionService;
 	private FrontPageService frontPageService;
+	private AddressBookService addressBookService;
 
 	private EventStore eventStore;
 	private enum ZimbraEvent { ACCESS }
@@ -112,6 +104,7 @@ public class ZimbraController extends BaseController {
 		this.expertModeService = serviceManager.getExpertModeService();
 		this.redirectionService = serviceManager.getRedirectionService();
 		this.frontPageService = serviceManager.getFrontPageService();
+		this.addressBookService = serviceManager.getAddressBookService();
 	}
 
 	@Get("zimbra")
@@ -149,6 +142,9 @@ public class ZimbraController extends BaseController {
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
 				try {
+					if(appConfig.getPurgeEmailedContacts()) {
+						addressBookService.purgeEmailedContacts(user);
+					}
 					String location = expertModeService.getPreauthUrl(user);
 					if(parameters != null && ! parameters.isEmpty()) {
 						location += parameters;

@@ -21,6 +21,7 @@ import fr.openent.zimbra.controllers.*;
 import fr.openent.zimbra.filters.RequestErrorFilter;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.constant.BusConstants;
+import fr.openent.zimbra.service.impl.ZimbraRepositoryEvents;
 import fr.openent.zimbra.service.synchro.SynchroTask;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -53,6 +54,8 @@ public class Zimbra extends BaseServer {
 		addController(new ExternalWebservicesController());
 		addController(new ZimbraAdminController());
 		addFilter(new RequestErrorFilter());
+		// Repository Events
+		setRepositoryEvents(new ZimbraRepositoryEvents());
 
 		try {
 			SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
