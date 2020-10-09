@@ -247,6 +247,7 @@ public class SqlSynchroService {
                     + "SELECT " + USER_IDROW
                     + " FROM " + userSynchroTable
                     + " WHERE " + USER_STATUS + "='" + SynchroConstants.STATUS_TODO + "'"
+                    + " ORDER BY " + USER_SYNCID + " DESC"
                     + " LIMIT 1"
                     + " FOR UPDATE SKIP LOCKED"
                 + " ) "
