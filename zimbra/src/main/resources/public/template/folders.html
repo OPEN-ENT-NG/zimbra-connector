@@ -101,10 +101,15 @@
                 </a>
             </nav>
 
-            <nav class="vertical">
+            <nav class="vertical" ng-if="quota.max > 0">
                 <hr class="row" />
                 <h2><i18n>used.space</i18n></h2>
                 <progress-bar max="quota.max" filled="quota.used" unit="[[quota.unit]]"></progress-bar>
+            </nav>
+            <nav class="vertical" ng-if="quota.max == 0">
+                <hr class="row" />
+                <h2><i18n>used.space</i18n></h2>
+                <progress-bar filled="quota.used + ' ' + quota.unit" ></progress-bar>
             </nav>
 
             <br />
