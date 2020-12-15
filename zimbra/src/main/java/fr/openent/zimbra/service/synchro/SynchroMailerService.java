@@ -21,31 +21,27 @@ package fr.openent.zimbra.service.synchro;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.constant.SynchroConstants;
 import fr.openent.zimbra.model.synchro.DatabaseSynchro;
 import fr.openent.zimbra.service.data.SqlSynchroService;
 import fr.wseduc.webutils.email.EmailSender;
-import io.vertx.core.*;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.http.*;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.core.net.NetSocket;
-import io.vertx.core.net.SocketAddress;
+import org.entcore.common.http.request.JsonHttpServerRequest;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SynchroMailerService {
 
-    private SqlSynchroService sqlSynchroService;
+    private final SqlSynchroService sqlSynchroService;
 
     private static final Logger log = LoggerFactory.getLogger(SynchroMailerService.class);
 
@@ -129,22 +125,26 @@ public class SynchroMailerService {
                 + String.format("Date launched : %s<br/>\r\n", syncDate)
                 + "Errors : <br/>\r\n"
                 + logsContent;
-
-        emailSender.sendEmail(null,
-                to,
-                from,
-                cc,
-                bcc,
-                subject,
-                mailContent,
-                null,
-                false, headers,
-                res -> {
-                    if(res.failed()) {
-                        handler.handle(Future.failedFuture(res.cause()));
-                    } else {
-                        handler.handle(Future.succeededFuture(res.result().body()));
-                    }
-                });
+        try{
+            final HttpServerRequest request = new JsonHttpServerRequest(new JsonObject());
+            emailSender.sendEmail(request,
+                    to,
+                    from,
+                    cc,
+                    bcc,
+                    subject,
+                    mailContent,
+                    null,
+                    false, headers,
+                    res -> {
+                        if(res.failed()) {
+                            handler.handle(Future.failedFuture(res.cause()));
+                        } else {
+                            handler.handle(Future.succeededFuture(res.result().body()));
+                        }
+                    });
+        }catch(Exception e){
+            log.error("Failed to send Zimbra synchronization report : ", e);
+        }
     }
 }
