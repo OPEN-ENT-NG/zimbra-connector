@@ -127,7 +127,26 @@ public class ZimbraController extends BaseController {
 				}
 			});
 		}
+		eventStore.createAndStoreEvent(ZimbraEvent.ACCESS.name(), request);
+	}
 
+	@Get("zimbra/json")
+	@SecuredAction(value = "zimbra.view", type = ActionType.AUTHENTICATED)
+	public void jsonInfos(HttpServerRequest request) {
+		UserUtils.getUserInfos(eb, request, user -> {
+			if (user != null) {
+				frontPageService.getFrontPageInfos(user, result -> {
+					if(result.failed()) {
+						badRequest(request);
+					} else {
+						result.result().put("folders",new JsonArray(result.result().getString("folders")));
+						renderJson(request, result.result());
+					}
+				});
+			} else {
+				unauthorized(request);
+			}
+		});
 		eventStore.createAndStoreEvent(ZimbraEvent.ACCESS.name(), request);
 	}
 
