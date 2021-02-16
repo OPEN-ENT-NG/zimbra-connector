@@ -28,10 +28,7 @@ import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
@@ -191,7 +188,7 @@ public class SoapZimbraService {
      * @param handler final response handler
      * @return default handler
      */
-    private Handler<HttpClientResponse> zimbraRequestHandler(final Future<JsonObject> handler) {
+    private Handler<HttpClientResponse> zimbraRequestHandler(final Promise<JsonObject> handler) {
         return response ->
             response.bodyHandler( body -> {
                 JsonObject result;
