@@ -18,8 +18,10 @@
 package fr.openent.zimbra.service.data;
 
 import fr.openent.zimbra.Zimbra;
-
-import fr.openent.zimbra.helper.*;
+import fr.openent.zimbra.helper.AsyncHelper;
+import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.helper.HttpClientHelper;
+import fr.openent.zimbra.helper.PreauthHelper;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.service.impl.SlackService;
 import fr.openent.zimbra.service.impl.UserInfoService;
@@ -43,13 +45,12 @@ import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.cache.CacheService;
 import org.entcore.common.user.UserInfos;
 
-
 import java.util.HashMap;
 import java.util.Map;
 
 import static fr.openent.zimbra.model.constant.SoapConstants.COOKIE_AUTH_TOKEN;
 import static fr.openent.zimbra.model.constant.SoapConstants.HEADER_COOKIE;
-import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraConstants.ACCT_STATUS_ACTIVE;
 import static fr.openent.zimbra.model.constant.ZimbraErrors.*;
 
 public class SoapZimbraService {
@@ -245,7 +246,7 @@ public class SoapZimbraService {
             }
             String finalUrl = params.getBoolean(PARAM_ISADMIN) ? zimbraAdminUri : zimbraUri;
             HttpClientRequest request;
-            Handler<HttpClientResponse> handlerRequest = zimbraRequestHandler(future);
+            Handler<HttpClientResponse> handlerRequest = zimbraRequestHandler(future.future());
             request = httpClient.postAbs(finalUrl, handlerRequest);
             request.setChunked(true);
             if(params.getBoolean(PARAM_IS_AUTH, true) && params.containsKey(PARAM_AUTH_TOKEN)) {
