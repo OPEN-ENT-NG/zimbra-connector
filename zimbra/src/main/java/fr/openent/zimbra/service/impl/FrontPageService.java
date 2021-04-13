@@ -6,6 +6,8 @@ import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import org.entcore.common.user.UserInfos;
 
+import static fr.openent.zimbra.Zimbra.appConfig;
+
 public class FrontPageService {
 
     FolderService folderService;
@@ -28,6 +30,7 @@ public class FrontPageService {
                 JsonObject zUserInfo = userFuture.result();
                 zUserInfo.put(FrontConstants.FRONT_PAGE_FOLDERS,
                         foldersFuture.result().getJsonSubfolders().toString().replaceAll("['|\\\\]", "\\\\$0"));
+                zUserInfo.put(FrontConstants.CONFIG_SAVE_DRAFT_AUTO_TIME,appConfig.getsaveDraftAutoTime());
                 handler.handle(Future.succeededFuture(zUserInfo));
             }
         });

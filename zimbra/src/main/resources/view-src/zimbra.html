@@ -37,8 +37,11 @@
         },
         {{/signature}}
         {{#folders}}
-        "folders": '{{{folders}}}'
+        "folders": '{{{folders}}}',
         {{/folders}}
+        {{#configSaveDraftAutoTime}}
+        "configSaveDraftAutoTime": {{configSaveDraftAutoTime}}
+        {{/configSaveDraftAutoTime}}
         };
     </script>
     <script type="text/javascript" src="/zimbra/public/dist/entcore/ng-app.js" id="context"></script>

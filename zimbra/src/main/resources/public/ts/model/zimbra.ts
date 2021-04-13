@@ -50,6 +50,7 @@ export class Zimbra {
     maxFolderDepth: number;
     eventer = new Eventer();
     preference = { useSignature: false, signature: "" };
+    configSaveDraftAutoTime = 60000;
 
     static _instance: Zimbra;
     static get instance(): Zimbra {
@@ -70,6 +71,9 @@ export class Zimbra {
         this.userFolders = new UserFolders(this.folders.inbox.folders);
         this.userFolders.all.map(userFolder => userFolder.parentPath = this.folders.inbox.path);
         window.folderMap.set(this.folders.inbox.path, this.folders.inbox);
+        if(window.user && window.user.configSaveDraftAutoTime) {
+            this.configSaveDraftAutoTime = window.user.configSaveDraftAutoTime;
+        }
     }
 
     async sync() {

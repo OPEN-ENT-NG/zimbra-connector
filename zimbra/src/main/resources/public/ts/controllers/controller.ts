@@ -567,7 +567,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                         notify.info(lang.translate("zimbra.message.info.iframe"));
                     }
                     $scope.draftSavingFlag = false;
-                }, 5000);
+                }, $scope.zimbra.configSaveDraftAutoTime);
             }
         };
 

@@ -73,6 +73,8 @@ public class FrontConstants {
 
     public static final String FRONT_PAGE_FOLDERS = "folders";
 
+    public static final String CONFIG_SAVE_DRAFT_AUTO_TIME = "configSaveDraftAutoTime";
+
 
     // Redirection Constants
     public static final String REDIR_MODE = "mode";

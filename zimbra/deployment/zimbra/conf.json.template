@@ -43,6 +43,7 @@
     "shared-folder-name" : "-- Carnets Adresses ENT --",
     "purge-emailed-contacts" : $zimbraPurgeEmailedContacts,
     "force-synchro-adressbook" : $zimbraForceSyncAdressBook,
+    "save-draft-auto-time" : $saveDraftAutoTime
     "entcore.port" : 8009,
     "slack": {
       "api-uri": "$zimbraSlackApiUri",
