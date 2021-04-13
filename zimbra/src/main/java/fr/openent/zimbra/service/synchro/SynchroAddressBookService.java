@@ -102,7 +102,7 @@ public class SynchroAddressBookService {
      */
     private AsyncHandler<Structure> getHandlerFromCommunicationRole(String userId, Boolean hasRole) {
         AsyncHandler<Structure> handler;
-        if (hasRole) {
+        if (hasRole || Zimbra.appConfig.getForceSyncAdressBooks()) {
             handler = (structure, handlerStructure) -> shareAddressBook(userId, structure, handlerStructure);
         } else {
             handler = (structure, handlerStructure) -> {
