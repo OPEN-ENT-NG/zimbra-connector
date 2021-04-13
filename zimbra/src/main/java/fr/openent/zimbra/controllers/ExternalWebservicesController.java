@@ -18,19 +18,19 @@
 package fr.openent.zimbra.controllers;
 
 
-import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchroVisibles;
 import fr.openent.zimbra.service.impl.CommunicationService;
 import fr.openent.zimbra.service.impl.NotificationService;
+import fr.openent.zimbra.service.impl.UserService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
-import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.security.SecuredAction;
+import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.request.RequestUtils;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
@@ -38,10 +38,12 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.user.UserInfos;
 import org.vertx.java.core.http.RouteMatcher;
 
 import java.util.Map;
 
+import static fr.openent.zimbra.Zimbra.appConfig;
 import static org.entcore.common.http.response.DefaultResponseHandler.defaultResponseHandler;
 import static org.entcore.common.user.UserUtils.getUserInfos;
 
@@ -50,6 +52,7 @@ public class ExternalWebservicesController extends BaseController {
     private SynchroUserService synchroUserService;
     private NotificationService notificationService;
     private CommunicationService communicationService;
+    private UserService userService;
 
     private static final Logger log = LoggerFactory.getLogger(ExternalWebservicesController.class);
 
@@ -62,6 +65,7 @@ public class ExternalWebservicesController extends BaseController {
         synchroUserService = serviceManager.getSynchroUserService();
         notificationService = serviceManager.getNotificationService();
         communicationService = serviceManager.getCommunicationService();
+        userService = serviceManager.getUserService();
     }
 
 
@@ -171,9 +175,9 @@ public class ExternalWebservicesController extends BaseController {
         if(action == null || action.isEmpty()) {
             badRequest(request);
         } else {
+            String userid = request.params().get("userid");
             switch (action) {
                 case "conversationEB":
-                    String useridFrom = request.params().get("userId");
                     String subject = request.params().get("subject");
                     String body = request.params().get("body");
                     String to = request.params().get("to");
@@ -182,31 +186,39 @@ public class ExternalWebservicesController extends BaseController {
                             .put("to",new JsonArray().add(to));
                     eb.send("org.entcore.conversation",
                             new JsonObject().put("action", "send")
-                                    .put("userId", useridFrom).put("message",message),
+                                    .put("userId", userid).put("message",message),
                             res -> renderJson(request, (JsonObject)res.result().body()));
                     return;
                 case "getmail":
-                    String userid = request.params().get("userid");
                     eb.send("fr.openent.zimbra",
                             new JsonObject().put("action", "getMailUser")
                                     .put("idList", new JsonArray().add(userid)),
                             res -> renderJson(request, (JsonObject)res.result().body()));
                     return;
                 case "syncuserab":
-                    String useridsync = request.params().get("userid");
                     String uai = request.params().get("uai");
                     String visibles = request.params().get("visibles");
                     Structure structure = new Structure(new JsonObject().put(Structure.UAI, uai));
                     AddressBookSynchro absync = "true".equals(visibles)
-                            ? new AddressBookSynchroVisibles(structure, useridsync)
+                            ? new AddressBookSynchroVisibles(structure, userid)
                             : new AddressBookSynchro(structure);
-                    absync.synchronize(useridsync, ressync -> {
+                    absync.synchronize(userid, ressync -> {
                         if(ressync.failed()) {
                             renderError(request);
                         } else {
                             renderJson(request, ressync.result());
                         }
                     });
+                    break;
+                case "forceSynchUserAdressBook":
+                    UserInfos user = new UserInfos();
+                    user.setUserId(userid);
+                    if(appConfig.isEnableAddressBookSynchro()) {
+                        userService.syncAddressBookAsync(user);
+                        ok(request);
+                    }else{
+                        unauthorized(request);
+                    }
                     break;
                 default:
                     badRequest(request);
@@ -217,6 +229,6 @@ public class ExternalWebservicesController extends BaseController {
     @Get("config")
     @SecuredAction("zimbra.manage.config")
     public void getConfig(HttpServerRequest request) {
-        renderJson(request, Zimbra.appConfig.getPublicConfig());
+        renderJson(request, appConfig.getPublicConfig());
     }
 }

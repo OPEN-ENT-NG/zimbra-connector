@@ -182,6 +182,25 @@ public class ZimbraController extends BaseController {
 		});
 	}
 
+	/**
+	 * Authenticate and authorize the connected user to go to Zimbra expert
+	 * @param request	http request containing user info
+	 */
+	@Get("/zimbra/oauth")
+	@SecuredAction("zimbra.expert")
+	public void oauth(HttpServerRequest request) {
+		getUserInfos(eb, request, user -> {
+			if (user != null) {
+				if(appConfig.isEnableAddressBookSynchro()) {
+					userService.syncAddressBookAsync(user);
+				}
+				eventStore.createAndStoreEvent(ZimbraEvent.ACCESS.name(), request);
+			} else {
+				unauthorized(request);
+			}
+		});
+	}
+
 
 	@Get("writeto")
 	@SecuredAction(value = "", type = ActionType.RESOURCE)
