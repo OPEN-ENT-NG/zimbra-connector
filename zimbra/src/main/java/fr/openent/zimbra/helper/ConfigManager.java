@@ -67,6 +67,7 @@ public class ConfigManager {
     private final String sharedFolderName;
     private String addressBookAccountName;
     private final Integer addressBookSynchroTtl;
+    private final String structureAddressBookSynchroTtl;
     private Integer sqlInsertPaginationSize;
 
     private boolean forceExpertMode;
@@ -114,6 +115,7 @@ public class ConfigManager {
         this.sharedFolderName = config.getString("shared-folder-name", "-- Carnets Adresses ENT --");
         this.addressBookAccountName  = config.getString("address-book-account", "");
         this.addressBookSynchroTtl = config.getInteger("abook-sync-ttl-minutes", 1440); // default 24h
+        this.structureAddressBookSynchroTtl = config.getString("structure-abook-sync-delay", "1 day");
         this.sqlInsertPaginationSize = config.getInteger("sql-insert-pagination-size", 5000);
         this.invertAltPartInConvMsg = config.getBoolean("invert-alt-part-in-conv-msg", false);
         this.purgeEmailedContacts = config.getBoolean("purge-emailed-contacts",false);
@@ -185,6 +187,7 @@ public class ConfigManager {
     public String getSharedFolderName() { return sharedFolderName;}
     public String getAddressBookAccountName() { return addressBookAccountName;}
     public Integer getAddressBookSynchroTtl() { return addressBookSynchroTtl;}
+    public String getStructureAddressBookSynchroTtl() { return structureAddressBookSynchroTtl;}
     public Integer getSqlInsertPaginationSize() { return sqlInsertPaginationSize;}
     public boolean getInvertAltPartInConvMsg() { return invertAltPartInConvMsg;}
     public boolean getPurgeEmailedContacts() {return purgeEmailedContacts;}

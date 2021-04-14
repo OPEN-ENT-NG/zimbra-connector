@@ -183,11 +183,12 @@ public class ZimbraController extends BaseController {
 	}
 
 	/**
-	 * Authenticate and authorize the connected user to go to Zimbra expert
+	 * Trigger sync of user adressbook.
+	 * if all conditions are OK, sync is really launched
 	 * @param request	http request containing user info
 	 */
-	@Get("/zimbra/oauth")
-	@SecuredAction("zimbra.expert")
+	@Get("user/syncaddressbook")
+	@SecuredAction(value = "zimbra.view", type = ActionType.AUTHENTICATED)
 	public void oauth(HttpServerRequest request) {
 		getUserInfos(eb, request, user -> {
 			if (user != null) {
@@ -195,6 +196,7 @@ public class ZimbraController extends BaseController {
 					userService.syncAddressBookAsync(user);
 				}
 				eventStore.createAndStoreEvent(ZimbraEvent.ACCESS.name(), request);
+				renderJson(request, new JsonObject());
 			} else {
 				unauthorized(request);
 			}

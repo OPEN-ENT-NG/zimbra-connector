@@ -126,7 +126,7 @@ public class SqlSynchroService {
         query += " SET " + AB_SYNC_DATE + " = now() ";
         query += "WHERE " + UAI + " = ? ";
         query += "AND " + AB_SYNC_DATE + " IS NULL ";
-        query += "OR " + AB_SYNC_DATE + " < (now() - '1 day'::interval) ";
+        query += "OR " + AB_SYNC_DATE + " < (now() - '"+Zimbra.appConfig.getStructureAddressBookSynchroTtl()+"'::interval) ";
         query += "RETURNING " + deployedStructuresTable + "." + UAI;
 
         sql.prepared(query, new JsonArray().add(structureUAI),
