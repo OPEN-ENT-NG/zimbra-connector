@@ -186,7 +186,7 @@ public class SynchroAddressBookService {
         };
     }
 
-    private void synchronizeStructure(Structure structure, Handler<AsyncResult<JsonObject>> handler) {
+    public void synchronizeStructure(Structure structure, Handler<AsyncResult<JsonObject>> handler) {
         log.info("Trying to sync struct " + structure.getUai());
         AddressBookSynchro addressBook;
         try {

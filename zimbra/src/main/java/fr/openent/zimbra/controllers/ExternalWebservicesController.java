@@ -27,6 +27,7 @@ import fr.openent.zimbra.service.data.SqlSynchroService;
 import fr.openent.zimbra.service.impl.CommunicationService;
 import fr.openent.zimbra.service.impl.NotificationService;
 import fr.openent.zimbra.service.impl.UserService;
+import fr.openent.zimbra.service.synchro.SynchroAddressBookService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.rs.Get;
 import fr.wseduc.rs.Post;
@@ -57,6 +58,7 @@ public class ExternalWebservicesController extends BaseController {
     private UserService userService;
     private SqlSynchroService sqlSynchroService;
     private SqlAddressBookService sqlAddressBookService;
+    private SynchroAddressBookService synchroAddressBookService;
 
     private static final Logger log = LoggerFactory.getLogger(ExternalWebservicesController.class);
 
@@ -72,6 +74,7 @@ public class ExternalWebservicesController extends BaseController {
         userService = serviceManager.getUserService();
         sqlSynchroService = serviceManager.getSqlSynchroService();
         sqlAddressBookService = serviceManager.getSqlAddressBookService();
+        synchroAddressBookService = serviceManager.getSynchroAddressBookService();
     }
 
 
@@ -183,6 +186,7 @@ public class ExternalWebservicesController extends BaseController {
         } else {
             String userid = request.params().get("userid");
             String uai = request.params().get("uai");
+            Structure structure = new Structure(new JsonObject().put(Structure.UAI, uai));
             switch (action) {
                 case "conversationEB":
                     String subject = request.params().get("subject");
@@ -204,7 +208,6 @@ public class ExternalWebservicesController extends BaseController {
                     return;
                 case "syncuserab":
                     String visibles = request.params().get("visibles");
-                    Structure structure = new Structure(new JsonObject().put(Structure.UAI, uai));
                     AddressBookSynchro absync = "true".equals(visibles)
                             ? new AddressBookSynchroVisibles(structure, userid)
                             : new AddressBookSynchro(structure);
@@ -216,7 +219,7 @@ public class ExternalWebservicesController extends BaseController {
                         }
                     });
                     break;
-                case "forceSynchUserAdressBook":
+                case "forceSynchUserAddressBook":
                     UserInfos user = new UserInfos();
                     user.setUserId(userid);
                     sqlAddressBookService.purgeUserSyncAddressBook(userid, done -> {
@@ -228,7 +231,7 @@ public class ExternalWebservicesController extends BaseController {
                         }
                     });
                     break;
-                case "purgeUserAdressBook":
+                case "purgeUserAddressBook":
                     sqlAddressBookService.purgeUserSyncAddressBook(userid, done ->{
                         if(done.isLeft()) {
                             renderError(request);
@@ -237,12 +240,27 @@ public class ExternalWebservicesController extends BaseController {
                         }
                     });
                     break;
-                case "purgeStructureAdressBook":
+                case "purgeStructureAddressBook":
                     sqlSynchroService.purgeStructureSyncAddressBook(uai, done -> {
                         if(done.isLeft()) {
                             renderError(request);
                         } else {
                             ok(request);
+                        }
+                    });
+                    break;
+                case "forceSynchStructureAddressBook":
+                    sqlSynchroService.purgeStructureSyncAddressBook(uai, done -> {
+                        if (done.isLeft()) {
+                            renderError(request);
+                        } else {
+                            synchroAddressBookService.synchronizeStructure(structure, structureSynch -> {
+                                if(structureSynch.failed()) {
+                                    renderError(request);
+                                } else {
+                                    ok(request);
+                                }
+                            });
                         }
                     });
                     break;
