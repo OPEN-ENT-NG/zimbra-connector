@@ -120,7 +120,7 @@ public class SynchroAddressBookService {
     }
 
     private void shareAddressBook(String userId, Structure structure, Handler<AsyncResult<Structure>> handler) {
-        String adminName = Zimbra.appConfig.getAddressBookAccountName();
+        String adminName = structure.getUai() + Zimbra.appConfig.getAddressBookAccountName();
         String rootFolderPath = Zimbra.appConfig.getSharedFolderName();
         String adminMail = adminName + "@" + Zimbra.appConfig.getZimbraDomain();
 
@@ -163,14 +163,10 @@ public class SynchroAddressBookService {
         Future<String> finalFuture = Future.future();
         finalFuture.setHandler(getFinalSyncHandler(handler));
 
-        Future<SoapAccount> abookAccountFetched = Future.future();
-        SoapAccount.getUserAccount(Zimbra.appConfig.getAddressBookAccountName(), abookAccountFetched.completer());
+        Future<List<String>> deployedStructuresFetched = Future.future();
+        sqlSynchroService.getDeployedStructures(deployedStructuresFetched.completer());
 
-        abookAccountFetched.compose( soapAccount -> {
-                Future<List<String>> deployedStructuresFetched = Future.future();
-                sqlSynchroService.getDeployedStructures(deployedStructuresFetched.completer());
-                return deployedStructuresFetched;
-        }).compose( structureList ->
+        deployedStructuresFetched.compose( structureList ->
             AsyncHelper.processListSynchronously(structureList, (uai, hand) -> {
                 log.info("Synchronizing addressbook for structure "+ uai);
                 Structure structure = new Structure(new JsonObject().put(Structure.UAI, uai));
@@ -178,7 +174,6 @@ public class SynchroAddressBookService {
             },
             finalFuture.completer())
         , finalFuture);
-
     }
 
     private Handler<AsyncResult<String>> getFinalSyncHandler(Handler<AsyncResult<JsonObject>> handler) {
@@ -210,7 +205,7 @@ public class SynchroAddressBookService {
                     handler.handle(Future.succeededFuture(new JsonObject()));
                 } else {
                     log.info("Sycing struct " + structure.getUai());
-                    addressBook.synchronize(Zimbra.appConfig.getAddressBookAccountName(), true, handler);
+                    addressBook.synchronize(structure.getUai() + Zimbra.appConfig.getAddressBookAccountName(), true, handler);
                 }
             }
         });
