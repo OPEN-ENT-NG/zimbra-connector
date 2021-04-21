@@ -33,6 +33,7 @@ import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static fr.openent.zimbra.Zimbra.appConfig;
 import static org.entcore.common.neo4j.Neo4jResult.validResultHandler;
 import static org.entcore.common.neo4j.Neo4jResult.validUniqueResultHandler;
 
@@ -158,13 +159,17 @@ public class Neo4jZimbraService {
 	}
 
 	public void getUserStructuresFromNeo4j(String userId, Handler<AsyncResult<List<Structure>>> handler) {
-		String query = "MATCH (u:User)-[:IN]-(:Group)-[:DEPENDS]-(s:Structure) " +
-				"WHERE u.id = {userId} " +
-				"RETURN distinct s.name as " + Structure.NAME + ", " +
+		String queryGetAdministrativeAttachment = "MATCH (s:Structure)<-[:ADMINISTRATIVE_ATTACHMENT]-(u:User{id:{userId}})" +
+				"-[:IN]->(:Group)-[:DEPENDS]->(s:Structure) ";
+		String queryGetFewStructures = "MATCH (u:User{id:{userId}})-[:IN]->(:Group)-[:DEPENDS]->(s:Structure) ";
+		String queryReturn = "RETURN distinct s.name as " + Structure.NAME + ", " +
 				"s.UAI as " + Structure.UAI + ", " +
-				"s.id as " + Structure.ID;
+				"s.id as " + Structure.ID +
+				" LIMIT {limit}	";
 
-		neo.execute(query, new JsonObject().put("userId", userId),
+		String query = queryGetAdministrativeAttachment + queryReturn + " UNION " + queryGetFewStructures + queryReturn;
+
+		neo.execute(query, new JsonObject().put("userId", userId).put("limit",appConfig.getStructureToSynchroABLimit()),
 				validResultHandler( res -> {
 					if(res.isLeft()) {
 						handler.handle(Future.failedFuture(res.left().getValue()

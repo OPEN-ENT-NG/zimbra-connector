@@ -79,6 +79,8 @@ public class ConfigManager {
 
     private final int saveDraftAutoTime;
 
+    private final int structureToSynchroABLimit;
+
     // Bug in Zimbra : when getting messages in conversations, alternative parts are inverted
     private boolean invertAltPartInConvMsg;
 
@@ -121,6 +123,7 @@ public class ConfigManager {
         this.purgeEmailedContacts = config.getBoolean("purge-emailed-contacts",false);
         this.forceSyncAdressBook = config.getBoolean("force-synchro-adressbook",false);
         this.saveDraftAutoTime = config.getInteger("save-draft-auto-time",60000);
+        this.structureToSynchroABLimit = config.getInteger("limit-structures-synchro-ab",5);
 
         // In case of emergency
         this.forceExpertMode = config.getBoolean("force-expert-mode", false);
@@ -199,6 +202,7 @@ public class ConfigManager {
     public boolean isForceExpertMode() { return forceExpertMode;}
     public boolean isEnableAddressBookSynchro() { return enableAddressBookSynchro;}
     public int getsaveDraftAutoTime() { return saveDraftAutoTime;}
+    public int getStructureToSynchroABLimit() { return structureToSynchroABLimit;}
 
     private void initPublicConfig() {
         publicConfig.put("admin-password", hidePasswd(rawConfig.getString("admin-password","")));
