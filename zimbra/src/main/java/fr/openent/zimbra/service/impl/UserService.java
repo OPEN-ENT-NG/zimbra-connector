@@ -460,11 +460,13 @@ public class UserService {
         addressBookService.isUserReadyToSync(user, isready ->  {
             if(isready) {
                 try {
-                    neoService.getUserStructuresFromNeo4j(user.getUserId(), resNeo -> {
-                        if(resNeo.failed() || resNeo.result().isEmpty()) {
+                    neoService.getUserFilterAndStructuresFromNeo4j(user.getUserId(), resNeo -> {
+                        if(resNeo.failed()) {
                             log.error("Unable to get structures for user : " + user.getUserId());
+                        } else if(resNeo.result().isEmpty()){
+                            log.info("There are no structures link to the user or his profile not respect the condition in the conf." +
+                                    " id du user : " + user.getUserId());
                         } else {
-
                             synchroAddressBookService.syncUser(user.getUserId(), resNeo.result(), res -> {
                                 if(res.failed()) {
                                     log.error("zimbra ABsync failed for user " + user.getUserId() + " " + res.cause());
