@@ -76,7 +76,7 @@ public class ServiceManager {
 
     private final AddressBookService addressBookService;
 
-
+    private final SqlAddressBookService sqlAddressBookService;
 
     private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix) {
 
@@ -100,7 +100,7 @@ public class ServiceManager {
         this.neoService = new Neo4jZimbraService();
         this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
         this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
-        SqlAddressBookService sqlAddressBookService = new SqlAddressBookService(appConfig.getDbSchema());
+        this.sqlAddressBookService = new SqlAddressBookService(appConfig.getDbSchema());
         this.addressBookService = new AddressBookService(sqlAddressBookService);
         this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
                 synchroAddressBookService, addressBookService);
@@ -262,4 +262,6 @@ public class ServiceManager {
     }
 
     public AddressBookService getAddressBookService() { return addressBookService; }
+
+    public SqlAddressBookService getSqlAddressBookService() { return sqlAddressBookService; }
 }

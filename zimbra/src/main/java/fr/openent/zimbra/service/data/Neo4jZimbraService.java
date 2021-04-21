@@ -167,7 +167,7 @@ public class Neo4jZimbraService {
 				"s.id as " + Structure.ID +
 				" LIMIT {limit}	";
 
-		String query = queryGetAdministrativeAttachment + queryReturn + " UNION " + queryGetFewStructures + queryReturn;
+		String query = queryGetAdministrativeAttachment + queryReturn ;//+ " UNION " + queryGetFewStructures + queryReturn;
 
 		neo.execute(query, new JsonObject().put("userId", userId).put("limit",appConfig.getStructureToSynchroABLimit()),
 				validResultHandler( res -> {

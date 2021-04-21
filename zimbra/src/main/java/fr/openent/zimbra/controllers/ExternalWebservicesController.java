@@ -22,6 +22,8 @@ import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchro;
 import fr.openent.zimbra.model.synchro.addressbook.AddressBookSynchroVisibles;
+import fr.openent.zimbra.service.data.SqlAddressBookService;
+import fr.openent.zimbra.service.data.SqlSynchroService;
 import fr.openent.zimbra.service.impl.CommunicationService;
 import fr.openent.zimbra.service.impl.NotificationService;
 import fr.openent.zimbra.service.impl.UserService;
@@ -53,6 +55,8 @@ public class ExternalWebservicesController extends BaseController {
     private NotificationService notificationService;
     private CommunicationService communicationService;
     private UserService userService;
+    private SqlSynchroService sqlSynchroService;
+    private SqlAddressBookService sqlAddressBookService;
 
     private static final Logger log = LoggerFactory.getLogger(ExternalWebservicesController.class);
 
@@ -66,6 +70,8 @@ public class ExternalWebservicesController extends BaseController {
         notificationService = serviceManager.getNotificationService();
         communicationService = serviceManager.getCommunicationService();
         userService = serviceManager.getUserService();
+        sqlSynchroService = serviceManager.getSqlSynchroService();
+        sqlAddressBookService = serviceManager.getSqlAddressBookService();
     }
 
 
@@ -176,6 +182,7 @@ public class ExternalWebservicesController extends BaseController {
             badRequest(request);
         } else {
             String userid = request.params().get("userid");
+            String uai = request.params().get("uai");
             switch (action) {
                 case "conversationEB":
                     String subject = request.params().get("subject");
@@ -196,7 +203,6 @@ public class ExternalWebservicesController extends BaseController {
                             res -> renderJson(request, (JsonObject)res.result().body()));
                     return;
                 case "syncuserab":
-                    String uai = request.params().get("uai");
                     String visibles = request.params().get("visibles");
                     Structure structure = new Structure(new JsonObject().put(Structure.UAI, uai));
                     AddressBookSynchro absync = "true".equals(visibles)
@@ -213,12 +219,32 @@ public class ExternalWebservicesController extends BaseController {
                 case "forceSynchUserAdressBook":
                     UserInfos user = new UserInfos();
                     user.setUserId(userid);
-                    if(appConfig.isEnableAddressBookSynchro()) {
-                        userService.syncAddressBookAsync(user);
-                        ok(request);
-                    }else{
-                        unauthorized(request);
-                    }
+                    sqlAddressBookService.purgeUserSyncAddressBook(userid, done -> {
+                        if (done.isLeft()) {
+                            renderError(request);
+                        } else {
+                            userService.syncAddressBookAsync(user);
+                            ok(request);
+                        }
+                    });
+                    break;
+                case "purgeUserAdressBook":
+                    sqlAddressBookService.purgeUserSyncAddressBook(userid, done ->{
+                        if(done.isLeft()) {
+                            renderError(request);
+                        } else {
+                            ok(request);
+                        }
+                    });
+                    break;
+                case "purgeStructureAdressBook":
+                    sqlSynchroService.purgeStructureSyncAddressBook(uai, done -> {
+                        if(done.isLeft()) {
+                            renderError(request);
+                        } else {
+                            ok(request);
+                        }
+                    });
                     break;
                 default:
                     badRequest(request);

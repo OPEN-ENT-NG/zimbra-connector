@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.data;
 
 import fr.openent.zimbra.Zimbra;
+import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -95,6 +96,11 @@ public class SqlAddressBookService {
                 log.error("Error when update db in markUserAsSynced for user " + userId + " : " + result.left().getValue());
             }
         }));
+    }
+
+    public void purgeUserSyncAddressBook(String userId, Handler<Either<String, JsonObject>> handler) {
+        String query = "DELETE FROM " + abookSyncTable + " WHERE userid = ?;";
+        sql.prepared(query, new JsonArray().add(userId), SqlResult.validUniqueResultHandler(handler));
     }
 
     public void getUserPurgeEmailedContacts(String userId, Handler<JsonObject> handler) {

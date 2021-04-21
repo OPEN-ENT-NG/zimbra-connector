@@ -169,7 +169,11 @@ public class AddressBookSynchro {
 
 
     private void processGroups(JsonArray neoData, Handler<AsyncResult<AddressBookSynchro>> handler) {
-        UserUtils.translateGroupsNames(neoData, Zimbra.appConfig.getSynchroLang());
+        try {
+            UserUtils.translateGroupsNames(neoData, Zimbra.appConfig.getSynchroLang());
+        } catch (Exception e){
+            log.error("ABSync : Error when translating groups : " + neoData, e);
+        }
         for(Object o : neoData) {
             if(!(o instanceof JsonObject)) continue;
             try{

@@ -22,6 +22,7 @@ import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.constant.SynchroConstants;
+import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -131,6 +132,11 @@ public class SqlSynchroService {
 
         sql.prepared(query, new JsonArray().add(structureUAI),
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
+    }
+
+    public void purgeStructureSyncAddressBook(String uai, Handler<Either<String, JsonObject>> handler) {
+        String query = "UPDATE " + deployedStructuresTable + " SET " + AB_SYNC_DATE + " = NULL WHERE " + UAI + " = ?  ;";
+        sql.prepared(query, new JsonArray().add(uai), SqlResult.validUniqueResultHandler(handler));
     }
 
 
