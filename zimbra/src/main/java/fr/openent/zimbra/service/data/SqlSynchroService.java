@@ -123,12 +123,11 @@ public class SqlSynchroService {
 
 
     public void updateStructureForAbSync(String structureUAI, Handler<AsyncResult<JsonObject>> handler) {
-        String query = "UPDATE " + deployedStructuresTable;
-        query += " SET " + AB_SYNC_DATE + " = now() ";
-        query += "WHERE " + UAI + " = ? ";
-        query += "AND " + AB_SYNC_DATE + " IS NULL ";
-        query += "OR " + AB_SYNC_DATE + " < (now() - '"+Zimbra.appConfig.getStructureAddressBookSynchroTtl()+"'::interval) ";
-        query += "RETURNING " + deployedStructuresTable + "." + UAI;
+        String query = "UPDATE " + deployedStructuresTable + " SET " + AB_SYNC_DATE + " = now() ";
+        query += "WHERE " + UAI + " = ? AND ";
+        query += "( " + AB_SYNC_DATE + " IS NULL ";
+            query += "OR " + AB_SYNC_DATE + " < (now() - '"+Zimbra.appConfig.getStructureAddressBookSynchroTtl()+"'::interval) )";
+        query += " RETURNING " + deployedStructuresTable + "." + UAI;
 
         sql.prepared(query, new JsonArray().add(structureUAI),
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));

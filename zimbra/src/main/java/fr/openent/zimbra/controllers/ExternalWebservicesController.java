@@ -130,7 +130,7 @@ public class ExternalWebservicesController extends BaseController {
      * @param request request containing data :
      *                sender : mail address of the sender
      *                recipient : neo4j id of the recipient
-     *                messageId : essage_id in the mailbox of recipient
+     *                messageId : message_id in the mailbox of recipient
      *                subject : message subject
      */
     @Post("notification")
