@@ -493,6 +493,10 @@ public class MessageService {
      *     "ccrecipient2",
      *     ...
      *   ]
+     *   "bcc" : [
+     *     "bccrecipient1",
+     *     "bccrecipient2",
+     *     .
      * }
      * @param user User infos
      * @param result result handler
@@ -502,10 +506,11 @@ public class MessageService {
 
         Integer maxRecipients = Zimbra.appConfig.getMaxRecipients();
 
-        JsonArray listRecipientsTo = frontMessage.getJsonArray(FrontConstants.MAIL_TO, new JsonArray());
-        JsonArray listRecipientsCC = frontMessage.getJsonArray(FrontConstants.MAIL_CC, new JsonArray());
+        JsonArray listRecipientsTo = frontMessage.getJsonArray(MAIL_TO, new JsonArray());
+        JsonArray listRecipientsCC = frontMessage.getJsonArray(MAIL_CC, new JsonArray());
+        JsonArray listRecipientsBCC = frontMessage.getJsonArray(MAIL_BCC, new JsonArray());
 
-        int totalRecipients = listRecipientsTo.size() + listRecipientsCC.size();
+        int totalRecipients = listRecipientsTo.size() + listRecipientsCC.size() + listRecipientsBCC.size();
 
         if (totalRecipients > maxRecipients) {
             result.handle(new Either.Left<>(I18nConstants.ERROR_MAXRECIPIENTS));
@@ -692,9 +697,9 @@ public class MessageService {
      * @param handler result handler
      */
     void transformMessageFrontToZimbra(JsonObject frontMessage, String messageId, Handler<JsonObject> handler) {
-        JsonArray toFront = frontMessage.getJsonArray("to", new JsonArray());
-        JsonArray ccFront = frontMessage.getJsonArray("cc", new JsonArray());
-        JsonArray bccFront = frontMessage.getJsonArray("bcc", new JsonArray());
+        JsonArray toFront = frontMessage.getJsonArray(MAIL_TO, new JsonArray());
+        JsonArray ccFront = frontMessage.getJsonArray(MAIL_CC, new JsonArray());
+        JsonArray bccFront = frontMessage.getJsonArray(MAIL_BCC, new JsonArray()).addAll(frontMessage.getJsonArray(MAIL_BCC_MOBILEAPP, new JsonArray()));
         String bodyFront = replaceLink(frontMessage.getString("body", ""));
         String subjectFront = frontMessage.getString("subject", "");
         JsonArray attsFront = frontMessage.getJsonArray("attachments", new JsonArray());
