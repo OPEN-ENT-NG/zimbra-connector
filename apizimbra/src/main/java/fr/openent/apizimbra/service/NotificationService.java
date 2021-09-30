@@ -70,7 +70,8 @@ public class NotificationService {
                         .put("messageUri", messageUri)
                         .put("resourceUri", messageUri)
                         .put("disableAntiFlood", true);
-                params.put("pushNotif", new JsonObject().put("title", "push.notif.new.message").put("body", ""));
+                String userName = (timelineSender != null) ? timelineSender : zimbraSender;
+                params.put("pushNotif", new JsonObject().put("title", "push.notif.new.message").put("body", userName + " : " + timelineSubject));
                 if(timelineSender != null) {
                     params.put("username", timelineSender)
                             .put("uri", "/userbook/annuaire#" + userId );
