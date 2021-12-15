@@ -74,7 +74,8 @@ class AddressBookZimbraSynchro {
     public void sync(Map<String,AddressBookFolder> folders, Handler<AsyncResult<JsonObject>> handler) {
         syncSubFolders(structureRootFolderPath, folders, res -> {
             if(res.failed()) {
-                log.error("AddrBookSync : Error when syncing etab " + uai + " for user " + userId, res.cause());
+                log.error("AddrBookSync : Error in the function syncSubFolders when syncing etab " + uai + " for user " + userId,
+                        res.cause());
             }
             handler.handle(res);
         });

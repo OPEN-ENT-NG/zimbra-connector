@@ -205,7 +205,8 @@ public class SynchroAddressBookService {
                     handler.handle(Future.succeededFuture(new JsonObject()));
                 } else {
                     log.info("Sycing struct " + structure.getUai());
-                    addressBook.synchronize(structure.getUai() + Zimbra.appConfig.getAddressBookAccountName(), true, handler);
+                    addressBook.synchronize(structure.getUai() + Zimbra.appConfig.getAddressBookAccountName(),
+                            true, handler);
                 }
             }
         });

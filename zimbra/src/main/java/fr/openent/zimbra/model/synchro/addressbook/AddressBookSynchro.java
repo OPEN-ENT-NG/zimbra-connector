@@ -61,7 +61,11 @@ public class AddressBookSynchro {
             if (res.failed()) {
                 handler.handle(Future.failedFuture(res.cause()));
             } else {
-                sync(userId, handler);
+                if(folders.isEmpty()){
+                    handler.handle(Future.succeededFuture());
+                }else{
+                    sync(userId, handler);
+                }
             }
         });
     }
@@ -77,6 +81,7 @@ public class AddressBookSynchro {
         Future<AddressBookSynchro> groups = Future.future();
         neo4jAddrbookService.getAllUsersFromStructure(uai, res ->  {
             if(res.failed()) {
+                log.error("Error in getAllUsersFromStructure during loading the Adress Book",res.cause());
                 users.fail(res.cause());
             } else {
                 processUsers(res.result(), users.completer());
@@ -84,6 +89,7 @@ public class AddressBookSynchro {
         });
         neo4jAddrbookService.getAllGroupsFromStructure(uai, res ->  {
             if(res.failed()) {
+                log.error("Error in getAllGroupsFromStructure during loading the Adress Book",res.cause());
                 groups.fail(res.cause());
             } else {
                 processGroups(res.result(), groups.completer());
@@ -109,6 +115,7 @@ public class AddressBookSynchro {
         AddressBookZimbraSynchro zimbraSynchro = new AddressBookZimbraSynchro(userId, uai, adminSync ? "" : name);
         zimbraSynchro.initSync(res -> {
             if(res.failed()) {
+                log.error("Trying to initSync zimbraSynchro but failure",res.cause());
                 handler.handle(res);
             } else {
                 zimbraSynchro.sync(folders, handler);
@@ -127,17 +134,16 @@ public class AddressBookSynchro {
             }
         }
         if(folders.isEmpty()) {
-            handler.handle(Future.failedFuture("no address book generated"));
-        } else {
-            handler.handle(Future.succeededFuture(this));
+            log.info("No address book generated because there are no users in the structure");
         }
+        handler.handle(Future.succeededFuture(this));
     }
 
 
     void processUser(JsonObject neoUser)  {
         String profile = neoUser.getString(PROFILE, "");
         if(profile.isEmpty()) {
-            log.warn("ABSync : no profile for user " + neoUser.toString());
+            log.warn("ABSync : no profile for user " + neoUser);
         } else {
             Contact contact;
             switch (profile) {
