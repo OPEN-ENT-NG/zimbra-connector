@@ -1,0 +1,80 @@
+{
+    "name": "{{ zimbraVersion }}",
+    "config": {
+        "main" : "fr.openent.zimbra.Zimbra",
+        "port" : 8104,
+        "app-name" : "Zimbra",
+        "app-address" : "/zimbra/zimbra",
+        "app-icon" : "Zimbra-large",
+        "host": "https://{{ host }}",
+        "ssl" : true,
+        "auto-redeploy": false,
+        "userbook-host": "https://{{ host }}",
+        "integration-mode" : "BUS",
+        "app-registry.port" : 8012,
+        "mode" : "prod",
+        "sql": true,
+        "db-schema": "zimbra",
+        "app-synctype" : "neo4j",
+        "zimbra-uri" : "{{ zimbraUri }}",
+        "preauth-key" : "{{ zimbraPreauthKey }}",
+        "zimbra-domain" : "{{ zimbraDomain }}",
+        "zimbra-synchro-lang" : "{{ zimbraLang }}",
+        "zimbra-admin-uri" : "{{ zimbraAdminUri }}",
+        "admin-account" : "{{ zimbraAdminAccount }}",
+        "admin-password" : "{{ zimbraAdminPassword }}",
+        "max-recipients" : {{ zimbraMaxRecipients }},
+        {% if zimbraCron is defined and zimbraCron %}
+        "zimbra-synchro-cron" : "0 5/10 * * * ? *",
+        "zimbra-mailer-cron" : "0 0/10 * * * ? *",
+        {% else %}
+        "zimbra-mailer-cron" : "0 0/10 * * * ? 2099",
+        {% endif %}
+        "http-client-max-pool-size" : {{ zimbraMaxPoolSize | default('50') }},
+        "address-book-account" : "{{ zimbraAddressBookAccount }}",
+        "shared-folder-name" : "-- Carnets Adresses ENT --",
+        "abook-sync-ttl-minutes": {{ zimbraSyncTTL| default('10080') }},
+        "force-expert-mode" : {{ zimbraModeExpert | default('false') }},
+        "force-synchro-adressbook" : {{ zimbraForceSynchroAdressbook | default('true') }},
+        "structure-abook-sync-delay" : "{{ zimbraStructureAbookSyncDelay | default('21 days') }}",
+        "purge-emailed-contacts" : {{ zimbraPurgeEmailedContacts | default('false') }},
+        "save-draft-auto-time" : {{ zimbraSaveDraftAutoTime | default('60000') }},
+        "enable-addressbook-synchro" : {{ zimbraAdressBookSynchro | default('true') }},
+        "filter-profile-sync-ab" : "['Personnel','Teacher']",
+        "circuit-breaker": {
+            "maxFailures": 50,
+            "timeout": -1
+        },
+        "slack": {
+            "api-uri": "{{ zimbraSlackURI | default('https://slack.com/api/') }}",
+            "api-token": "{{ zimbraSlackToken }}",
+            "channel": "{{ zimbraSlackChannel }}",
+            "bot-username": "{{ zimbraSlackUsername }}"
+        },
+        "entcore.port" : 8009,
+        "publicConf": {
+            "xiti": {
+                "ID_SERVICE": {
+                    "default": 10
+                },
+                "LIBELLE_SERVICE": {
+                    "default": "COURRIER_ELECTRONIQUE"
+                },
+                "OUTIL": "ZIMBRA"
+            }
+        },
+        "mail-config":{
+            "imaps":{
+                "server":"{{ zimbraMailConfigSrv }}",
+                "port":993,"ssl":"SSL/TLS",
+                "auth":"{{ zimbraMailConfigAuthMsg }}"
+            },
+            "smtps":{
+                "server":"{{ zimbraMailConfigSrv }}",
+                "port":587,
+                "ssl":"STARTTLS",
+                "auth":"{{ zimbraMailConfigAuthMsg }}"
+            }
+        }
+    }
+}
