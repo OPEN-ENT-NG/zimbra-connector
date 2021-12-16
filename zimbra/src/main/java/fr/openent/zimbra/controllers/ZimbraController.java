@@ -975,7 +975,6 @@ public class ZimbraController extends BaseController {
 	 *   	          subject : message subject
 	 * 	              to : id of each recipient
 	 * 	              cc : id of each cc recipient
-	 *  @param userId Id of the user from who we send the message
 	 */
 	@SuppressWarnings("SwitchStatementWithTooFewBranches")
 	@BusAddress("org.entcore.conversation")

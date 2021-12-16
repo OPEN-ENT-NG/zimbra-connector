@@ -201,5 +201,6 @@
     "zimbra.view.error.footer": "Mais pas d'inquiétude, elle revient très prochainement !",
     "zimbra.quota.info.message": "Votre boîte aux lettres est presque pleine. Réduisez la taille de votre boîte aux lettres en supprimant de cette dernière les éléments superflus et en vidant le dossier Corbeille.",
     "zimbra.quota.info.warning": "Votre boîte aux lettres est pleine. Votre boîte aux lettres ne peut plus envoyer de messages. Réduisez sa taille. Supprimez de votre boîte aux lettres les éléments superflus et videz votre dossier Corbeille.",
-    "zimbra.default.intern.error": "Erreur interne: "
+    "zimbra.default.intern.error": "Erreur interne: ",
+    "zimbra.share.search.help": "Ex : Sabine, Dupont, Enseignants..."
 }

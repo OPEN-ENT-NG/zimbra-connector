@@ -39,7 +39,7 @@
 						<recipient-list
 							ng-model="state.newItem.to"
 							ng-change="quickSaveDraft()"
-                            restriction="isLocalAdmin()"
+                            restriction= false
 							update-found-items="updateFoundUsers(search, model, founds)">
 						</recipient-list>
 					</div>
@@ -64,7 +64,7 @@
                                    <recipient-list
                                            ng-model="state.newItem.cc"
                                            ng-change="quickSaveDraft()"
-                                           restriction="isLocalAdmin()"
+                                           restriction=false
                                            update-found-items="updateFoundUsers(search, model, founds)">
                                    </recipient-list>
                                </div>
@@ -77,7 +77,7 @@
                                    <recipient-list
                                            ng-model="state.newItem.bcc"
                                            ng-change="quickSaveDraft()"
-                                           restriction="isLocalAdmin()"
+                                           restriction=false
                                            update-found-items="updateFoundUsers(search, model, founds)">
                                    </recipient-list>
                                </div>
@@ -165,7 +165,7 @@
             </h2>
             <hr class="line no-margin" />
 
-            <div class="loading-list no-padding vertical-spacing-twice">
+            <div class="loading-list no-padding vertical-spacingm-twice">
                 <ul>
                     <li class="no-margin" ng-repeat="attachment in state.newItem.loadingAttachments">
                         <div class="title">

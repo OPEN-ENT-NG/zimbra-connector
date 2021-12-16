@@ -50,7 +50,7 @@ export const recipientList = ng.directive("recipientList", () => {
                 <img skin-src="/img/illustrations/loading.gif" width="30px" heigh="30px" ng-if="loading"/>
                 <form class="input-help" ng-submit="update(true)">
                     <input class="chip-input right-magnet" type="text" ng-model="searchText" end-user-typing="update()" autocomplete="off" ng-class="{ move: searchText.length > 0 }" 
-                    i18n-placeholder="[[restriction ? 'share.search.help' : 'share.search.placeholder' ]]"
+                    i18n-placeholder="zimbra.share.search.help"
                     ng-keyup="addExternalItem($event)"
                     />
                     

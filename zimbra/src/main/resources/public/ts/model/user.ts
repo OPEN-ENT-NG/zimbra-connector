@@ -119,6 +119,7 @@ export class Users {
             return bookmark;
         });
         newArr = Mix.castArrayAs(User, bookmarks);
+        search = search.split(' ').join('');
         response = await http.get("/zimbra/visible?search=" + search);
         response.data.groups.forEach(group => {
             group.isGroup = true;
@@ -144,8 +145,7 @@ export class Users {
                         includeUser.profile = user.profile;
                     return includeUser === undefined;
                 })
-                .concat(include),
-            function(user) {
+                .concat(include), function(user) {
                 var testDisplayName = "",
                     testNameReversed = "";
                 if (user.displayName) {
