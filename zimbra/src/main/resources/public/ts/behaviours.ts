@@ -16,6 +16,7 @@
  */
 
 import { Behaviours, http, notify, idiom as lang, _ } from "entcore";
+import {SnipletUtil} from "./utils/sniplet.util";
 
 Behaviours.register("zimbra", {
   rights: {
@@ -74,6 +75,9 @@ Behaviours.register("zimbra", {
           this.$apply();
         },
         openWindow: function() {
+          console.log(this.source);
+          this.source = SnipletUtil.getUpdatedSource("openZimbra");
+          console.log(this.source);
           if (!this.isValid) {
             notify.error("sniplet.openZimbra.invalid");
           } else {
