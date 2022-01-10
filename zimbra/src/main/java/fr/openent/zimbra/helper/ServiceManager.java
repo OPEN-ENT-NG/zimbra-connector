@@ -62,6 +62,7 @@ public class ServiceManager {
     private RedirectionService redirectionService;
     private FrontPageService frontPageService;
     private SlackService slackService;
+    private ReturnedMailService returnedMailService;
 
     private SynchroUserService synchroUserService;
     private SynchroUserService synchroUserServiceApp;
@@ -103,11 +104,12 @@ public class ServiceManager {
         this.sqlAddressBookService = new SqlAddressBookService(appConfig.getDbSchema());
         this.addressBookService = new AddressBookService(sqlAddressBookService);
         this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
-                synchroAddressBookService, addressBookService);
+                synchroAddressBookService, addressBookService, eb);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
         this.messageService = new MessageService(soapService, folderService,
                 dbMailServiceApp, userService, synchroUserService);
+        this.returnedMailService = new ReturnedMailService();
         this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig);
         this.notificationService = new NotificationService(pathPrefix, timelineHelper);
         this.communicationService = new CommunicationService();
@@ -264,4 +266,6 @@ public class ServiceManager {
     public AddressBookService getAddressBookService() { return addressBookService; }
 
     public SqlAddressBookService getSqlAddressBookService() { return sqlAddressBookService; }
+
+    public ReturnedMailService getReturnedMailService() { return returnedMailService; }
 }

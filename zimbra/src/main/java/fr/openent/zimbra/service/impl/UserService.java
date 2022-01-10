@@ -37,6 +37,8 @@ import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -49,6 +51,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static fr.openent.zimbra.service.data.Neo4jZimbraService.*;
+import static fr.wseduc.webutils.Utils.handlerToAsyncHandler;
+import static org.entcore.common.neo4j.Neo4jResult.validResultHandler;
+import static org.entcore.common.neo4j.Neo4jResult.validUniqueResultHandler;
 
 public class UserService {
 
@@ -61,10 +66,13 @@ public class UserService {
     private AddressBookService addressBookService;
 
     private static Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final String DIRECTORY_ADDRESS = "directory";
+
+    private EventBus eb;
 
     public UserService(SoapZimbraService soapService, SynchroUserService synchroUserService,
-                        DbMailService dbMailService, SynchroAddressBookService synchroAddressBookService,
-                        AddressBookService addressBookService) {
+                       DbMailService dbMailService, SynchroAddressBookService synchroAddressBookService,
+                       AddressBookService addressBookService, EventBus eb) {
         this.soapService = soapService;
         this.synchroUserService = synchroUserService;
         this.dbMailService = dbMailService;
@@ -72,6 +80,7 @@ public class UserService {
         this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
         this.synchroAddressBookService = synchroAddressBookService;
         this.addressBookService = addressBookService;
+        this.eb = eb;
     }
 
     /**
@@ -492,6 +501,29 @@ public class UserService {
                 handler.handle(new Either.Right<>(response));
             } else {
                 handler.handle(new Either.Left<>("Failed to check the type in Neo4j"));
+            }
+        });
+    }
+
+    public void getUsers(final JsonArray userIds, final JsonArray groupIds,
+                         final Handler<Either<String, JsonArray>> handler) {
+
+        JsonObject action = new JsonObject()
+                .put("action", "list-users")
+                .put("userIds", userIds)
+                .put("groupIds", groupIds);
+
+        eb.send(DIRECTORY_ADDRESS, action, handlerToAsyncHandler(validResultHandler(handler)));
+    }
+
+    public void getLocalAdministrators(String structure, final Handler<JsonArray> handler) {
+        JsonObject action = new JsonObject()
+                .put("action", "list-adml")
+                .put("structureId", structure);
+        eb.send(DIRECTORY_ADDRESS, action, new Handler<AsyncResult<Message<JsonArray>>>() {
+            @Override
+            public void handle(AsyncResult<Message<JsonArray>> res) {
+                handler.handle(res.result().body());
             }
         });
     }

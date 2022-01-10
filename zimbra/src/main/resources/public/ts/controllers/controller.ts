@@ -19,6 +19,7 @@ import {$, _, Document, idiom as lang, moment, ng, notify, skin, template, angul
 import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, REGEXLIB, RECEIVER_TYPE, Group, Users} from "../model";
 
 import {Preference} from "../model/preferences";
+import http from "../model/http";
 
 declare const window: any;
 
@@ -739,6 +740,11 @@ export let zimbraController = ng.controller("ZimbraController", [
             template.open("lightbox", "move-mail");
         };
 
+        $scope.returnSelection = function() {
+            $scope.lightbox.show = true;
+            template.open("lightbox", "return-mail");
+        };
+
         $scope.moveToFolderClick = async (folder, obj) => {
             obj.template = "";
 
@@ -753,6 +759,19 @@ export let zimbraController = ng.controller("ZimbraController", [
                 obj.template = "move-folders-content";
             }, 10);
         };
+
+        $scope.returnMail = async (id, comment) => {
+            $scope.lightbox.show = false;
+            template.close("lightbox");
+            let params = "?id=" + id + "&comment=" + comment;
+            let response = await http.get("/zimbra/return" + params);
+            if(response.status == 200) {
+                $scope.refresh();
+                $scope.$apply();
+            }
+
+
+        }
 
         $scope.moveMessages = async folderTarget => {
             $scope.lightbox.show = false;
