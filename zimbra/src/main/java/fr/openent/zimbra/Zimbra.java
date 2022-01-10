@@ -38,6 +38,8 @@ public class Zimbra extends BaseServer {
 	public static String domain;
 	public static String synchroLang;
 	public static ConfigManager appConfig;
+	public static String zimbraSchema;
+
 
 	private static Logger log = LoggerFactory.getLogger(Zimbra.class);
 
@@ -46,6 +48,7 @@ public class Zimbra extends BaseServer {
 		super.start();
 
 		appConfig = new ConfigManager(config);
+		zimbraSchema = config.getString("db-schema");
 		Zimbra.domain = appConfig.getZimbraDomain();
 		Zimbra.synchroLang = appConfig.getSynchroLang();
 		addController(new ZimbraController());

@@ -20,6 +20,8 @@ package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.model.MailAddress;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -47,7 +49,7 @@ public class NotificationService {
     }
 
     public void sendNewMailNotification(String zimbraSender, String zimbraRecipient, String messageId, String subject,
-                                        Handler<Either<String,JsonObject>> handler) {
+                                        Handler<Either<String, JsonObject>> handler) {
         MailAddress sender;
         try {
             sender = MailAddress.createFromRawAddress(zimbraSender);
@@ -60,36 +62,36 @@ public class NotificationService {
                 ? subject
                 : "<span translate key=\"timeline.no.subject\"></span>";
         sender.fetchNeoId(userId ->
-            getUserInfos(userId, user -> {
-                String timelineSender = (user != null && user.getUsername() != null)
-                        ? user.getUsername()
-                        : null;
-                String messageUri = pathPrefix + "/zimbra#/read-mail/" + messageId;
-                final JsonObject params = new JsonObject()
-                        .put("subject", timelineSubject)
-                        .put("messageUri", messageUri)
-                        .put("resourceUri", messageUri)
-                        .put("disableAntiFlood", true);
-                String userName = (timelineSender != null) ? timelineSender : zimbraSender;
-                params.put("pushNotif", new JsonObject().put("title", "push.notif.new.message").put("body", userName + " : " + timelineSubject));
-                if(timelineSender != null) {
-                    params.put("username", timelineSender)
-                            .put("uri", "/userbook/annuaire#" + userId );
-                } else {
-                    params.put("username", zimbraSender);
-                }
-                List<String> recipients = new ArrayList<>();
-                recipients.add(zimbraRecipient);
-                timelineHelper.notifyTimeline(null, "messagerie.send-message",
-                        user, recipients, messageId, params);
-                handler.handle(new Either.Right<>(new JsonObject()));
-            })
+                getUserInfos(userId, user -> {
+                    String timelineSender = (user != null && user.getUsername() != null)
+                            ? user.getUsername()
+                            : null;
+                    String messageUri = pathPrefix + "/zimbra#/read-mail/" + messageId;
+                    final JsonObject params = new JsonObject()
+                            .put("subject", timelineSubject)
+                            .put("messageUri", messageUri)
+                            .put("resourceUri", messageUri)
+                            .put("disableAntiFlood", true);
+                    String userName = (timelineSender != null) ? timelineSender : zimbraSender;
+                    params.put("pushNotif", new JsonObject().put("title", "push.notif.new.message").put("body", userName + " : " + timelineSubject));
+                    if (timelineSender != null) {
+                        params.put("username", timelineSender)
+                                .put("uri", "/userbook/annuaire#" + userId);
+                    } else {
+                        params.put("username", zimbraSender);
+                    }
+                    List<String> recipients = new ArrayList<>();
+                    recipients.add(zimbraRecipient);
+                    timelineHelper.notifyTimeline(null, "messagerie.send-message",
+                            user, recipients, messageId, params);
+                    handler.handle(new Either.Right<>(new JsonObject()));
+                })
         );
     }
 
-    private void getUserInfos(String userId, Handler<UserInfos> handler)  {
+    private void getUserInfos(String userId, Handler<UserInfos> handler) {
 
-        if(userId == null || userId.isEmpty()) {
+        if (userId == null || userId.isEmpty()) {
             handler.handle(null);
             return;
         }
@@ -99,7 +101,7 @@ public class NotificationService {
         JsonObject params = new JsonObject().put("userId", userId);
         neo.execute(query, params, validUniqueResultHandler(result -> {
             UserInfos returnUser = null;
-            if(result.isRight()) {
+            if (result.isRight()) {
                 JsonObject neoData = result.right().getValue();
                 returnUser = new UserInfos();
                 returnUser.setUserId(neoData.getString("id"));
@@ -108,4 +110,18 @@ public class NotificationService {
             handler.handle(returnUser);
         }));
     }
+
+    public void sendReturnMailNotification(UserInfos user, String subject, List<String> recipient, HttpServerRequest request, Handler<Either<String, JsonObject>> handler) {
+        JsonObject params = new JsonObject()
+                .put("user", user.getLastName() + " " + user.getFirstName())
+                .put("subject", subject)
+                .put("adminUri", "/admin/" + user.getStructures().get(0) +"/management/zimbra")
+                .put("pushNotif", new JsonObject().put("title", "push.notif.zimbra.delete.request").put("body", ""));
+
+
+        timelineHelper.notifyTimeline(request, "messagerie.return-message",
+                user, recipient, params);
+        handler.handle(new Either.Right<>(new JsonObject()));
+    }
+
 }
