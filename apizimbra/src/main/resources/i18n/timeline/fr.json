@@ -1,6 +1,8 @@
 {
     "messagerie": "Messagerie",
     "messagerie.send-message": "Réception d'un message",
+    "messagerie.return-message": "Retour d'un message",
+    "message.return.label": "a envoyé une demande de rappel de mail",
     "messagerie.storage": "Espace de stockage bientôt plein",
     "timeline.zimbra.sent.message": "vous a envoyé un message ",
     "timeline.zimbra.storage.size.alert": "Votre espace de stockage est bientôt plein.",

@@ -24,8 +24,11 @@
             <button ng-click="restore()" ng-if="(zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length) && zimbra.currentFolder.folderName === 'trash'">
                 <i18n>restore</i18n>
             </button>
-            <button ng-click="moveSelection()" ng-if="zimbra.currentFolder.mails.selection.length && zimbra.currentFolder.folderName !== 'trash'">
+                <button ng-click="moveSelection()" ng-if="zimbra.currentFolder.mails.selection.length && zimbra.currentFolder.folderName !== 'trash'">
                 <i18n>move.inside.folder</i18n>
+            </button>
+            <button ng-click="returnSelection()" ng-if="zimbra.currentFolder.mails.selection.length < 2 && zimbra.currentFolder.folderName === 'outbox'">
+                <i18n>return</i18n>
             </button>
             <button ng-click="removeFromUserFolder()" ng-if="zimbra.currentFolder.mails.selection.length && zimbra.currentFolder.id">
                 <i18n>remove.from.folder</i18n>

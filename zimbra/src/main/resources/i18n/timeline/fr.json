@@ -1,8 +1,11 @@
 {
     "messagerie": "Messagerie",
     "messagerie.send-message": "Réception d'un message",
+    "messagerie.return-message": "Retour d'un message",
+    "push.notif.zimbra.delete.request": "Demande d'un retour de message",
     "messagerie.storage": "Espace de stockage bientôt plein",
     "timeline.zimbra.sent.message": "vous a envoyé un message ",
+    "timeline.zimbra.return.message": "vous a envoyé une demande de rappel de message",
     "timeline.zimbra.storage.size.alert": "Votre espace de stockage est bientôt plein.",
     "timeline.no.subject": "aucun objet",
     "push.notif.new.message": "Nouveau message",
