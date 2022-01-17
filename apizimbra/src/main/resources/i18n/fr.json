@@ -195,5 +195,6 @@
     "zimbra.message.error.get.favorite": "Une erreur est survenue lors de la récupération du groupe favori",
     "zimbra.message.error.get.user": "Une erreur est survenue lors de la récupération de utilisateur",
     "zimbra.message.error.get.group": "Une erreur est survenue lors de la récupération du groupe",
-    "zimbra.message.error.get.default": "Une erreur est survenue lors de la récupération"
+    "zimbra.message.error.get.default": "Une erreur est survenue lors de la récupération",
+    "timeline.zimbra.return.label": " a envoyé une demande de rappel de mail avec l'objet : "
 }

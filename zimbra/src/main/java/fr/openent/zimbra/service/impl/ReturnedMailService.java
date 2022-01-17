@@ -1,9 +1,6 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.service.DbMailService;
-import fr.openent.zimbra.service.data.SoapZimbraService;
-import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -24,20 +21,21 @@ public class ReturnedMailService {
      */
     public void insertReturnedMail(JsonObject returnedMail, Handler<Either<String, JsonObject>> handler) {
         String query = "INSERT INTO " + Zimbra.zimbraSchema + ".mail_returned(" +
-                "user_id, user_name, structure_id, object, number_message, recipient, statut, comment)" +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?) returning id;";
+                "user_id, user_name, mail_id, structure_id, object, number_message, recipient, statut, comment, mail_date)" +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) returning id;";
         JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
                 .add(returnedMail.getString("userId"))
                 .add(returnedMail.getString("userName"))
+                .add(returnedMail.getString("mailId"))
                 .add(returnedMail.getString("structureId"))
                 .add(returnedMail.getString("subject"))
                 .add(returnedMail.getInteger("nb_messages"))
                 .add(returnedMail.getJsonArray("to"))
                 .add("WAITING")
-                .add(returnedMail.getString("comment"));
+                .add(returnedMail.getString("comment"))
+                .add(returnedMail.getString("mail_date"));
         Sql.getInstance().prepared(query, params, SqlResult.validUniqueResultHandler(handler));
     }
-
 
     /**
      * Get all returned mail by id structure
