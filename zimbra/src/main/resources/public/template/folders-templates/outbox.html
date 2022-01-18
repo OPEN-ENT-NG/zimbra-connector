@@ -81,14 +81,17 @@
 			<div class="notification-date">
 				<em class="low-importance right-magnet">[[mail.notifDate()]]</em>
 			</div>
-            <div class="notification-attachment column" ng-if="showRightSide()">
-                <i class="attachment" ng-if="mail.hasAttachment"></i>
-                <i class="undo " ng-if="mail.response" tooltip="you.answered"></i>
-            </div>
-            <div class="notification-attachment" ng-hide="showRightSide()">
-                <i class="attachment" ng-if="mail.hasAttachment"></i>
-            </div>
-
+			<div class="notifications" ng-hide="showRightSide()">
+				<i class="attachment" ng-if="mail.hasAttachment"></i>
+				<i class="paper-plane removed" ng-if="mail.returned == 'REMOVED'"></i>
+				<i class="paper-plane" ng-if="mail.returned == 'WAITING'"></i>
+			</div>
+			<div class="notifications" ng-if="showRightSide()">
+				<i class="attachment" ng-if="mail.hasAttachment"></i>
+				<i class="undo " ng-if="mail.response" tooltip="you.answered"></i>
+				<i class="paper-plane removed" ng-if="mail.returned == 'REMOVED'"></i>
+				<i class="paper-plane" ng-if="mail.returned == 'WAITING'"></i>
+			</div>
 		</article>
 	</div>
     <div ng-if="!zimbra.currentFolder.mails.full && !isLoading()" class="element-circle-add">

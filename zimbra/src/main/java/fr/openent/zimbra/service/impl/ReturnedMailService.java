@@ -66,6 +66,23 @@ public class ReturnedMailService {
     }
 
     /**
+     * Get all returned mail by mails ids and user id
+     * @param ids List of mails ids
+     * @param user_id Id of the user
+     */
+    public void getMailReturnedByMailsIdsAndUser(List<String> ids,String user_id, Handler<Either<String, JsonArray>> handler) {
+        String query = "SELECT * " +
+                "FROM " + Zimbra.zimbraSchema + ".mail_returned " +
+                "WHERE user_id = ? AND mail_id IN " + Sql.listPrepared(ids);
+        JsonArray params = new fr.wseduc.webutils.collections.JsonArray();
+        params.add(user_id);
+        for (int i = 0; i < ids.size(); i++) {
+            params.add(ids.get(i));
+        }
+        Sql.getInstance().prepared(query, params, SqlResult.validResultHandler(handler));
+    }
+
+    /**
      * Change statut of returnedMail from WAITING to REMOVED
      * @param ids List of returnedMail ids
      */

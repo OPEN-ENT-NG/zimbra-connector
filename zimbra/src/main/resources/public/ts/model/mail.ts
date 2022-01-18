@@ -25,16 +25,16 @@ import {
     $
 } from "entcore";
 
-import { User } from "./user";
-import { Zimbra } from "./zimbra";
-import { quota } from "./quota";
-import { SystemFolder, UserFolder, Folder } from "./folder";
+import {User} from "./user";
+import {Zimbra} from "./zimbra";
+import {quota} from "./quota";
+import {SystemFolder, UserFolder, Folder} from "./folder";
 
-import { Mix, Eventer, Selection, Selectable } from "entcore-toolkit";
+import {Mix, Eventer, Selection, Selectable} from "entcore-toolkit";
 
 import http from './http';
 
-import { MAIL, SERVICE, QUOTA } from "./constantes";
+import {MAIL, SERVICE, QUOTA} from "./constantes";
 
 export class Attachment {
     file: File;
@@ -68,7 +68,7 @@ export class Mail implements Selectable {
     bcc: User[];
     unread: boolean;
     state: string;
-    systemFolder:string;
+    systemFolder: string;
     parentConversation: Mail;
     replyType: string;
     newAttachments: FileList;
@@ -79,6 +79,7 @@ export class Mail implements Selectable {
     selected: boolean;
     allowReply: boolean;
     allowReplyAll: boolean;
+    returned: string;
 
     constructor(id?: string) {
         this.id = id;
@@ -86,6 +87,7 @@ export class Mail implements Selectable {
         this.attachments = [];
         this.allowReply = true;
         this.allowReplyAll = true;
+        this.returned = "NONE";
     }
 
     isUserAuthor(): boolean {
@@ -93,7 +95,7 @@ export class Mail implements Selectable {
     }
 
     getSystemFolder(): string {
-        return this.systemFolder ;
+        return this.systemFolder;
     }
 
     matchSystemIcon(): string {
@@ -139,7 +141,7 @@ export class Mail implements Selectable {
         if (this.isAvatarUnknown(systemFolder))
             return "/img/illustrations/unknown-avatar.svg?thumbnail=100x100";
         if (this.isAvatarAlone()) {
-            const id : User = systemFolder === "INBOX" ? this.map(this.from) : this.map(this.to[0]);
+            const id: User = systemFolder === "INBOX" ? this.map(this.from) : this.map(this.to[0]);
             if (id.isAMail()) {
                 return "public/img/external-avatar.png?thumbnail=100x100";
             } else {
@@ -226,7 +228,7 @@ export class Mail implements Selectable {
                 origin.body +
                 "</blockquote>";
             const tempElement = compile(format[mailType].content)($scope);
-            setTimeout(function() {
+            setTimeout(function () {
                 this.body =
                     $(document.createElement("div")).append(tempElement)[0]
                         .outerHTML +
@@ -317,10 +319,10 @@ export class Mail implements Selectable {
     }
 
     async saveAsDraft(): Promise<any> {
-        try{
+        try {
             var that = this;
             this.rewriteBody();
-            var data: any = { subject: this.subject, body: this.body };
+            var data: any = {subject: this.subject, body: this.body};
             data.to = _.pluck(this.to, "id");
             data.cc = _.pluck(this.cc, "id");
             data.bcc = _.pluck(this.bcc, "id");
@@ -345,7 +347,7 @@ export class Mail implements Selectable {
 
     async send() {
         this.rewriteBody();
-        var data: any = { subject: this.subject, body: this.body };
+        var data: any = {subject: this.subject, body: this.body};
         data.to = _.pluck(this.to, "id");
         data.cc = _.pluck(this.cc, "id");
         data.bcc = _.pluck(this.bcc, "id");
@@ -396,7 +398,7 @@ export class Mail implements Selectable {
         }
     }
 
-    async open(forPrint?: boolean, notMakeItRead?:boolean ) {
+    async open(forPrint?: boolean, notMakeItRead?: boolean) {
         if (this.unread && this.state !== "DRAFT" && !notMakeItRead) {
             Zimbra.instance.currentFolder.nbUnread--;
         }
@@ -488,7 +490,7 @@ export class Mail implements Selectable {
                                 'attachment; filename="' +
                                 attachmentObj.file.name.replace(
                                     /[\u00A0-\u9999<>\&]/gim,
-                                    function(i) {
+                                    function (i) {
                                         return "&#" + i.charCodeAt(0) + ";";
                                     }
                                 ) +
@@ -578,7 +580,7 @@ export class Mails {
     async removeFromFolder() {
         await http.put(
             "move/root?" +
-            toFormData({ id: _.pluck(this.selection.selected, "id") })
+            toFormData({id: _.pluck(this.selection.selected, "id")})
         );
     }
 
@@ -706,6 +708,13 @@ export class Mails {
         if (response.data.length === 0) {
             this.full = true;
         }
+        var paramsIds = toFormData({id: _.pluck(this.all, "id")});
+        let responseReturned = await http.get("/zimbra/return/list/user?" + paramsIds);
+        if (responseReturned.status == 200) {
+            responseReturned.data.forEach(returnedMail => {
+                this.all.filter(mail => mail.id == returnedMail.mail_id)[0].returned = returnedMail.statut;
+            });
+        }
         this.selection.all = _.sortBy(this.all, 'date').reverse();
         return;
     }
@@ -719,7 +728,7 @@ export class Mails {
     async toTrash() {
         await http.put(
             "/zimbra/trash?" +
-            toFormData({ id: _.pluck(this.selection.selected, "id") })
+            toFormData({id: _.pluck(this.selection.selected, "id")})
         );
         quota.refresh();
         this.selection.removeSelection();
@@ -734,7 +743,7 @@ export class Mails {
             "move/userfolder/" +
             destinationFolder.id +
             "?" +
-            toFormData({ id: _.pluck(this.selection.selected, "id") })
+            toFormData({id: _.pluck(this.selection.selected, "id")})
         );
     }
 
@@ -751,7 +760,7 @@ export class Mails {
         });
         if (selected.length === 0) return;
 
-        var paramsIds = toFormData({ id: _.pluck(selected, "id") });
+        var paramsIds = toFormData({id: _.pluck(selected, "id")});
         var paramUnread = `unread=${unread}`;
 
         try {
@@ -786,10 +795,10 @@ http.get("/zimbra/public/template/mail-content/reply.html").then(response => {
 
 export const format = mailFormat;
 
-export const sendNotificationErrorZimbra = (errorReturnByZimbra:string):void => {
+export const sendNotificationErrorZimbra = (errorReturnByZimbra: string): void => {
 
     //TODO extraire la gestion d'erreur du mail
-    try{
+    try {
         console.error("Zimbra returning : ", errorReturnByZimbra);
         switch (JSON.parse(errorReturnByZimbra).code) {
             case SERVICE.INVALID_REQUEST:
@@ -801,7 +810,8 @@ export const sendNotificationErrorZimbra = (errorReturnByZimbra:string):void => 
             case QUOTA.QUOTA_EXCEEDED:
                 notify.error(lang.translate("zimbra.quota.info.warning"));
                 break;
-            default: notify.error(lang.translate("zimbra.default.intern.error" + errorReturnByZimbra));
+            default:
+                notify.error(lang.translate("zimbra.default.intern.error" + errorReturnByZimbra));
 
         }
     } catch (error) {

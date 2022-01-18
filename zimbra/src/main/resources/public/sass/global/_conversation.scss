@@ -101,6 +101,21 @@
     font-size: 15px;
   }
 
+  i.paper-plane{
+    text-align: center;
+    line-height: initial;
+    &.removed {
+      color: green;
+    }
+  }
+
+  i.paper-plane:before {
+    content: '\e849';
+    font-size: 15px;
+    padding-right: 10px;
+  }
+
+
   $mobile : 600px;
   $tablette: 760px;
   $small-pc : 960px;
@@ -274,7 +289,22 @@
     }
     }
   }
-  .MJXc-display{
+
+  .notifications {
+    display: flex;
+    height: 100%;
+    justify-content: flex-end;
+    &.column {
+        width: 16px !important;
+        height: 16px !important;
+        min-width: 16px !important;
+        min-height: 16px !important;
+        display: contents;
+      }
+  }
+
+
+    .MJXc-display{
     display: inline-block;
   }
 
