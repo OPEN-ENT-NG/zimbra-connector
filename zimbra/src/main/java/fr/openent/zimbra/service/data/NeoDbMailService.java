@@ -225,4 +225,34 @@ public class NeoDbMailService extends DbMailService {
             }
         });
     }
+
+    @Override
+    public void insertReturnedMail(JsonObject returnedMail, Handler<Either<String, JsonObject>> handler) {
+        // Not needed in neo4j implementation
+        handler.handle(new Either.Right<>(new JsonObject()));
+    }
+
+    @Override
+    public void getMailReturned(String idStructure, Handler<Either<String, JsonArray>> handler) {
+        // Not needed in neo4j implementation
+        handler.handle(new Either.Right<>(new JsonArray()));
+    }
+
+    @Override
+    public void getMailReturnedByMailsIdsAndUser(List<String> ids, String user_id, Handler<Either<String, JsonArray>> handler) {
+        // Not needed in neo4j implementation
+        handler.handle(new Either.Right<>(new JsonArray()));
+    }
+
+    @Override
+    public void updateStatut(List<String> ids, Handler<Either<String, JsonArray>> handler) {
+        // Not needed in neo4j implementation
+        handler.handle(new Either.Right<>(new JsonArray()));
+    }
+
+    @Override
+    public void getMailReturnedByIds(List<String> ids, Handler<Either<String, JsonArray>> handler) {
+        // Not needed in neo4j implementation
+        handler.handle(new Either.Right<>(new JsonArray()));
+    }
 }

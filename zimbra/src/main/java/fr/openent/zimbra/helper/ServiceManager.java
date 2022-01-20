@@ -109,7 +109,6 @@ public class ServiceManager {
         this.signatureService = new SignatureService(userService, soapService);
         this.messageService = new MessageService(soapService, folderService,
                 dbMailServiceApp, userService, synchroUserService);
-        this.returnedMailService = new ReturnedMailService();
         this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig);
         this.notificationService = new NotificationService(pathPrefix, timelineHelper);
         this.communicationService = new CommunicationService();
@@ -119,6 +118,7 @@ public class ServiceManager {
         this.mobileThreadService = new MobileThreadService(recipientService);
         this.redirectionService = new RedirectionService(eb, userService);
         this.frontPageService = new FrontPageService(folderService, userService);
+        this.returnedMailService = new ReturnedMailService(new DbMailServiceFactory(vertx, sqlSynchroService).getDbMailService("postgres"), messageService, userService, notificationService, eb);
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);

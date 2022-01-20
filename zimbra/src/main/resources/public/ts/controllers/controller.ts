@@ -763,14 +763,12 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.returnMail = async (id, comment) => {
             $scope.lightbox.show = false;
             template.close("lightbox");
-            let params = "?id=" + id + "&comment=" + comment;
-            let response = await http.get("/zimbra/return" + params);
+            var data: any = {id: id, comment: comment};
+            let response = await http.put("/zimbra/return", data);
             if(response.status == 200) {
                 $scope.refresh();
                 $scope.$apply();
             }
-
-
         }
 
         $scope.moveMessages = async folderTarget => {

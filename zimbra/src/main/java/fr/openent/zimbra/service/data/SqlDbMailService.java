@@ -42,6 +42,7 @@ public class SqlDbMailService extends DbMailService {
 
     private final String userTable;
     private final String groupTable;
+    private final String returnedMailTable;
 
     private static Logger log = LoggerFactory.getLogger(SqlDbMailService.class);
 
@@ -49,6 +50,7 @@ public class SqlDbMailService extends DbMailService {
         this.sql = Sql.getInstance();
         this.userTable = schema + ".users";
         this.groupTable = schema + ".groups";
+        this.returnedMailTable = schema + ".mail_returned";
     }
 
     /**
@@ -246,6 +248,88 @@ public class SqlDbMailService extends DbMailService {
 
         sql.prepared(query.toString(), params,
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
+    }
+
+    /**
+     * Insert in database request of returned mail
+     * @param returnedMail Object which contains all data to insert (user_id, user_name, object, recipient etc..)
+     */
+    public void insertReturnedMail(JsonObject returnedMail, Handler<Either<String, JsonObject>> handler) {
+        String query = "INSERT INTO " + this.returnedMailTable +
+                "(user_id, user_name, mail_id, structure_id, object, number_message, recipient, statut, comment, mail_date)" +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) returning id;";
+        JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
+                .add(returnedMail.getString("userId"))
+                .add(returnedMail.getString("userName"))
+                .add(returnedMail.getString("mailId"))
+                .add(returnedMail.getString("structureId"))
+                .add(returnedMail.getString("subject"))
+                .add(returnedMail.getInteger("nb_messages"))
+                .add(returnedMail.getJsonArray("to"))
+                .add("WAITING")
+                .add(returnedMail.getString("comment"))
+                .add(returnedMail.getString("mail_date"));
+        sql.prepared(query, params, SqlResult.validUniqueResultHandler(handler));
+    }
+
+    /**
+     * Get all returned mail by id structure
+     * @param idStructure Id of a structure
+     */
+    public void getMailReturned(String idStructure, Handler<Either<String, JsonArray>> handler) {
+        String query = "SELECT *" +
+                " FROM " + this.returnedMailTable +
+                " WHERE structure_id = ?; ";
+        JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
+                .add(idStructure);
+        sql.prepared(query, params, SqlResult.validResultHandler(handler));
+    }
+
+    /**
+     * Get all returned mail by ids
+     * @param ids List of returnedMail ids
+     */
+    public void getMailReturnedByIds(List<String> ids, Handler<Either<String, JsonArray>> handler) {
+        String query = "SELECT *" +
+                " FROM " + this.returnedMailTable +
+                " WHERE id IN " + Sql.listPrepared(ids);
+        JsonArray params = new fr.wseduc.webutils.collections.JsonArray();
+        for (int i = 0; i < ids.size(); i++) {
+            params.add(Integer.parseInt(ids.get(i)));
+        }
+        sql.prepared(query, params, SqlResult.validResultHandler(handler));
+    }
+
+    /**
+     * Get all returned mail by mails ids and user id
+     * @param ids List of mails ids
+     * @param user_id Id of the user
+     */
+    public void getMailReturnedByMailsIdsAndUser(List<String> ids,String user_id, Handler<Either<String, JsonArray>> handler) {
+        String query = "SELECT *" +
+                " FROM " + this.returnedMailTable +
+                " WHERE user_id = ? AND mail_id IN " + Sql.listPrepared(ids);
+        JsonArray params = new fr.wseduc.webutils.collections.JsonArray();
+        params.add(user_id);
+        for (int i = 0; i < ids.size(); i++) {
+            params.add(ids.get(i));
+        }
+        sql.prepared(query, params, SqlResult.validResultHandler(handler));
+    }
+
+    /**
+     * Change statut of returnedMail from WAITING to REMOVED
+     * @param ids List of returnedMail ids
+     */
+    public void updateStatut(List<String> ids, Handler<Either<String, JsonArray>> handler) {
+        String query = "UPDATE " + this.returnedMailTable +
+                " SET statut = 'REMOVED'" +
+                " WHERE id IN " + Sql.listPrepared(ids);
+        JsonArray params = new fr.wseduc.webutils.collections.JsonArray();
+        for (int i = 0; i < ids.size(); i++) {
+            params.add(Integer.parseInt(ids.get(i)));
+        }
+        sql.prepared(query, params, SqlResult.validResultHandler(handler));
     }
 
 }

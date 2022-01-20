@@ -72,4 +72,35 @@ public abstract class DbMailService {
     public abstract void checkGroupsExistence(List<Group> groups, Handler<AsyncResult<JsonArray>> handler);
 
     public abstract void updateGroup(String groupId, String groupAddr, Handler<AsyncResult<JsonObject>> handler);
+
+    /**
+     * Insert in database request of returned mail
+     * @param returnedMail Object which contains all data to insert (user_id, user_name, object, recipient etc..)
+     */
+    public abstract void insertReturnedMail(JsonObject returnedMail, Handler<Either<String, JsonObject>> handler);
+
+    /**
+     * Get all returned mail by id structure
+     * @param idStructure Id of a structure
+     */
+    public abstract void getMailReturned(String idStructure, Handler<Either<String, JsonArray>> handler);
+
+    /**
+     * Get all returned mail by mails ids and user id
+     * @param ids List of mails ids
+     * @param user_id Id of the user
+     */
+    public abstract void getMailReturnedByMailsIdsAndUser(List<String> ids,String user_id, Handler<Either<String, JsonArray>> handler);
+
+    /**
+     * Change statut of returnedMail from WAITING to REMOVED
+     * @param ids List of returnedMail ids
+     */
+    public abstract void updateStatut(List<String> ids, Handler<Either<String, JsonArray>> handler);
+
+    /**
+     * Get all returned mail by ids
+     * @param ids List of returnedMail ids
+     */
+    public abstract void getMailReturnedByIds(List<String> ids, Handler<Either<String, JsonArray>> handler);
 }

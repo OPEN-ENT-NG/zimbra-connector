@@ -708,13 +708,6 @@ export class Mails {
         if (response.data.length === 0) {
             this.full = true;
         }
-        var paramsIds = toFormData({id: _.pluck(this.all, "id")});
-        let responseReturned = await http.get("/zimbra/return/list/user?" + paramsIds);
-        if (responseReturned.status == 200) {
-            responseReturned.data.forEach(returnedMail => {
-                this.all.filter(mail => mail.id == returnedMail.mail_id)[0].returned = returnedMail.statut;
-            });
-        }
         this.selection.all = _.sortBy(this.all, 'date').reverse();
         return;
     }

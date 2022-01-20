@@ -25,6 +25,7 @@ import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.message.Multipart;
 import fr.openent.zimbra.model.message.Recipient;
 import fr.openent.zimbra.model.soap.SoapMessageHelper;
+import fr.openent.zimbra.model.soap.SoapSearchHelper;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
@@ -32,13 +33,10 @@ import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.entcore.common.sql.Sql;
-import org.entcore.common.sql.SqlResult;
 import org.entcore.common.user.UserInfos;
 
 import java.util.ArrayList;
@@ -50,9 +48,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static fr.openent.zimbra.model.constant.FrontConstants.*;
-import static fr.openent.zimbra.model.constant.ZimbraErrors.ERROR_NOSUCHMSG;
-import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraErrors.ERROR_NOSUCHMSG;
 
 public class MessageService {
 
@@ -930,6 +928,45 @@ public class MessageService {
         });
     }
 
+    /**
+     * Retrieve an unique email from inbox
+     *
+     * @param returnedMail JsonObject containing data like object, user_id or mail_date
+     * @param user_id     User id of the sender
+     * @param end    Boolean to know if it's the end of the loop, set it to true if you just want to find a mail
+     * @param handler     Handler who send when we are at the end of the loop
+     * @param result    result handler
+     */
+    public void retrieveMailFromZimbra(JsonObject returnedMail, String user_id, boolean end,
+                                        Handler<Either<String, JsonObject>> handler, Handler<Either<String, List<String>>> result) {
+        String subject = returnedMail.getString("object");
+        String from = returnedMail.getString("user_id");
+        String date = returnedMail.getString("mail_date");
+        List<String> ids = new ArrayList<>();
+        userService.getMailAddresses(new JsonArray().add(from), fromMail -> {
+            String from_mail = fromMail.getJsonObject(from).getString("email");
+            // Etape 3 : On recherche en fonction de l'objet, de l'expéditeur, de la date et de la boite de réception le mail à supprimer
+            String query = "in:\"" + "Inbox" + "\"" + " AND subject:\"" + subject + "\"" + " AND from:\"" + from_mail + "\"" + " AND date:\"" + date + "\"";
+            SoapSearchHelper.searchAllMailedConv(user_id, 0, query, event -> {
+                if (event.succeeded()) {
+                    if (event.result().size() > 0) {
+                        ids.add(event.result().get(0).getMessageList().get(0).getId());
+                        result.handle(new Either.Right<>(ids));
+                    } else {
+                        result.handle(new Either.Left<>("[Zimbra] retrieveMailFromZimbra : No mails found"));
+                        log.error("[Zimbra] retrieveMailFromZimbra : No mails found");
+                        if (end) {
+                            handler.handle(new Either.Right<>(new JsonObject().put("end", true)));
+                        }
+                    }
+                } else {
+                    result.handle(new Either.Left<>("[Zimbra] retrieveMailFromZimbra : Error while searching mails"));
+                    log.error("[Zimbra] retrieveMailFromZimbra : Error while searching mails");
+                }
+            });
+        });
+    }
+
 
     /**
      * Mark emails as unread / read
@@ -1008,19 +1045,5 @@ public class MessageService {
                 }
             });
         }
-    }
-
-    public void insertMailReturnedLog(JsonObject returnedMail, Handler<Either<String, JsonObject>> handler) {
-        String query = "INSERT INTO " + Zimbra.zimbraSchema + ".mail_returned(" +
-                "userid, object, number_message, recipient, statut, comment)" +
-                "VALUES (?, ?, ?, ?, ?, ?) returning id;";
-        JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
-                .add(returnedMail.getString("userid"))
-                .add(returnedMail.getString("subject"))
-                .add(returnedMail.getInteger("nb_messages"))
-                .add(returnedMail.getJsonArray("to"))
-                .add("WAITING")
-                .add(returnedMail.getString("comment"));
-        Sql.getInstance().prepared(query, params, SqlResult.validUniqueResultHandler(handler));
     }
 }
