@@ -23,8 +23,13 @@
         <h5>
             <i18n>mail.return.libelle</i18n>
         </h5>
-        <ul>
+        <ul ng-hide="!!mail">
             <li class="list-return-mail" ng-repeat="mail in zimbra.currentFolder.mails.selection.selectedElements" >
+                [[mail.subject]]
+            </li>
+        </ul>
+        <ul ng-if="!!mail">
+            <li class="list-return-mail">
                 [[mail.subject]]
             </li>
         </ul>
@@ -37,7 +42,8 @@
         <textarea ng-model="comment"></textarea>
     </div>
 
-    <input type="submit" class="right-magnet" i18n-value="validate" ng-click="returnMail(zimbra.currentFolder.mails.selection.selectedElements[0].id, comment)"/>
+    <input type="submit" class="right-magnet" ng-hide="!!mail" i18n-value="validate" ng-click="returnMail(zimbra.currentFolder.mails.selection.selectedElements[0].id, comment)"/>
+    <input type="submit" class="right-magnet" ng-if="!!mail" i18n-value="validate" ng-click="returnMail(mail.id, comment)"/>
     <input type="button" class="right-magnet cancel button" i18n-value="cancel"
            ng-click="lightbox.show = false; template.close('lightbox')"/>
 </div>

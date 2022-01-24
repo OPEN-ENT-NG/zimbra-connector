@@ -86,6 +86,12 @@ public abstract class DbMailService {
     public abstract void getMailReturned(String idStructure, Handler<Either<String, JsonArray>> handler);
 
     /**
+     * Get all returned mail by id structure
+     * @param statut Statut to filter
+     */
+    public abstract void getMailReturnedByStatut(String statut, Handler<Either<String, JsonArray>> handler);
+
+    /**
      * Get all returned mail by mails ids and user id
      * @param ids List of mails ids
      * @param user_id Id of the user
@@ -94,9 +100,9 @@ public abstract class DbMailService {
 
     /**
      * Change statut of returnedMail from WAITING to REMOVED
-     * @param ids List of returnedMail ids
+     * @param returnedMailsStatut Array of returnedMail ids and statut
      */
-    public abstract void updateStatut(List<String> ids, Handler<Either<String, JsonArray>> handler);
+    public abstract void updateStatut(JsonArray returnedMailsStatut, Handler<Either<String, JsonArray>> handler);
 
     /**
      * Get all returned mail by ids

@@ -20,59 +20,86 @@ package fr.openent.zimbra;
 import fr.openent.zimbra.controllers.*;
 import fr.openent.zimbra.filters.RequestErrorFilter;
 import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.helper.JsonHelper;
+import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.BusConstants;
+import fr.openent.zimbra.service.impl.ReturnedMailService;
 import fr.openent.zimbra.service.impl.ZimbraRepositoryEvents;
 import fr.openent.zimbra.service.synchro.SynchroTask;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.BaseServer;
 import fr.wseduc.cron.CronTrigger;
 
 import java.text.ParseException;
+import java.util.List;
 
 
 public class Zimbra extends BaseServer {
 
-	public final static int DEFAULT_FOLDER_DEPTH = 3;
-	public static final String URL = "/zimbra";
-	public static String domain;
-	public static String synchroLang;
-	public static ConfigManager appConfig;
-	public static String zimbraSchema;
+    public final static int DEFAULT_FOLDER_DEPTH = 3;
+    public static final String URL = "/zimbra";
+    public static String domain;
+    public static String synchroLang;
+    public static ConfigManager appConfig;
+    public static String zimbraSchema;
+    private ReturnedMailService returnedMailService;
 
 
-	private static Logger log = LoggerFactory.getLogger(Zimbra.class);
+    private static Logger log = LoggerFactory.getLogger(Zimbra.class);
 
-	@Override
-	public void start() throws Exception {
-		super.start();
+    @Override
+    public void start() throws Exception {
+        super.start();
 
-		appConfig = new ConfigManager(config);
-		zimbraSchema = config.getString("db-schema");
-		Zimbra.domain = appConfig.getZimbraDomain();
-		Zimbra.synchroLang = appConfig.getSynchroLang();
-		addController(new ZimbraController());
-		addController(new ZimbraMobileController());
-		addController(new SynchroController());
-		addController(new ExternalWebservicesController());
-		addController(new ZimbraAdminController());
-		addFilter(new RequestErrorFilter());
-		// Repository Events
-		setRepositoryEvents(new ZimbraRepositoryEvents());
+        appConfig = new ConfigManager(config);
+        zimbraSchema = config.getString("db-schema");
+        Zimbra.domain = appConfig.getZimbraDomain();
+        Zimbra.synchroLang = appConfig.getSynchroLang();
+        addController(new ZimbraController());
+        addController(new ZimbraMobileController());
+        addController(new SynchroController());
+        addController(new ExternalWebservicesController());
+        addController(new ZimbraAdminController());
+        addFilter(new RequestErrorFilter());
+        ServiceManager serviceManager = ServiceManager.init(vertx, vertx.eventBus(), "");
+        this.returnedMailService = serviceManager.getReturnedMailService();
+        // Repository Events
+        setRepositoryEvents(new ZimbraRepositoryEvents());
 
-		try {
-			SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
-			new CronTrigger(vertx, appConfig.getSynchroCronDate()).schedule(syncLauncherTask);
-			log.info("Cron launched with date : " + appConfig.getSynchroCronDate());
-		} catch (ParseException e) {
-			log.fatal(e);
-		}
-		try {
-			SynchroTask syncMailerTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_MAILINGSYNCHRO);
-			new CronTrigger(vertx, appConfig.getMailerCron()).schedule(syncMailerTask);
-		} catch (ParseException e) {
-			log.warn("Mailer Cron deactivated");
-		}
-	}
+        try {
+            SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
+            new CronTrigger(vertx, appConfig.getSynchroCronDate()).schedule(syncLauncherTask);
+            log.info("Cron launched with date : " + appConfig.getSynchroCronDate());
+            deleteMailsProgress();
+        } catch (ParseException e) {
+            log.fatal(e);
+        }
+        try {
+            SynchroTask syncMailerTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_MAILINGSYNCHRO);
+            new CronTrigger(vertx, appConfig.getMailerCron()).schedule(syncMailerTask);
+        } catch (ParseException e) {
+            log.warn("Mailer Cron deactivated");
+        }
+    }
+
+    private void deleteMailsProgress() {
+        log.info("Remove mails in progress");
+        returnedMailService.getMailReturnedByStatut("PROGRESS", returnedMailsIdsEvent -> {
+            if (returnedMailsIdsEvent.isRight()) {
+                List<String> returnedMailsIds = JsonHelper.extractValueFromJsonObjects(returnedMailsIdsEvent.right().getValue(), "id");
+                returnedMailService.deleteMessages(returnedMailsIds, deleteMailEvent -> {
+                    if (deleteMailEvent.isRight()) {
+                        log.info(deleteMailEvent.right().getValue());
+                    } else {
+                        log.error("[Zimbra] deleteMailsProgress : Failed deleting mails");
+                    }
+                });
+            } else {
+                log.error("[Zimbra] deleteMailsProgress : Failed to retrieve mail in progress");
+            }
+        });
+    }
 
 }

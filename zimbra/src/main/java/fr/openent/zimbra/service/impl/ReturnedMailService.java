@@ -1,10 +1,9 @@
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.service.DbMailService;
 import fr.wseduc.webutils.Either;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServerRequest;
@@ -17,7 +16,6 @@ import org.entcore.common.user.UserUtils;
 
 import java.util.*;
 
-import static fr.openent.zimbra.helper.FutureHelper.handlerJsonObject;
 import static fr.wseduc.webutils.http.Renders.renderJson;
 
 
@@ -105,6 +103,17 @@ public class ReturnedMailService {
         });
     }
 
+    public void getMailReturnedByStatut(String statut, Handler<Either<String, JsonArray>> result) {
+        dbMailService.getMailReturnedByStatut(statut, event -> {
+            if (event.isRight()) {
+                result.handle(new Either.Right<>(event.right().getValue()));
+            } else {
+                result.handle(new Either.Left<>("[Zimbra] getMailReturned : Error while getting returned mail by id structure"));
+                log.error("[Zimbra] getMailReturned : Error while getting returned mail by id structure");
+            }
+        });
+    }
+
     public void getMailReturnedByMailsIdsAndUser(List<String> mailIds, JsonArray mails, String user_id, Handler<Either<String, JsonArray>> result) {
         dbMailService.getMailReturnedByMailsIdsAndUser(mailIds, user_id, returnedMailsEvent -> {
             if (returnedMailsEvent.isRight()) {
@@ -124,99 +133,156 @@ public class ReturnedMailService {
         });
     }
 
-    public void deleteMessages(List<String> returnedMailsIds, Handler<Either<String, JsonObject>> result) {
-        List<Future> futures = new ArrayList<>();
+    public void deleteMessages(List<String> returnedMailsIds, Handler<Either<String, JsonArray>> result) {
         // Etape 1 : Récupérer toute les infos sur les mails à delete dans la base
         dbMailService.getMailReturnedByIds(returnedMailsIds, returnedMailEvent -> {
             if (returnedMailEvent.isRight()) {
                 JsonArray returnedMails = returnedMailEvent.right().getValue();
+                JsonArray returnedMailsStatut = new JsonArray();
+                JsonArray returnedMailsInProgress = new JsonArray();
                 for (int i = 0; i < returnedMails.size(); i++) {
-                    // Etape 2 : Pour chaque utilisateur à qui on a envoyé le mail, on ajoute la fonction de suppresion dans la liste de futures
-                    this.addDeleteFutures(futures, returnedMails, i, event -> {
-                        if (event.isRight()) {
-                            // Etape 3 : Une fois que nous avons parcouru tout les mails, on supprime les mails de la boîte de reception et on met à jour leur statut
-                            this.updateStatus(returnedMailsIds, futures, result);
-                        }
-                    });
+                    JsonObject returnedMail = new JsonObject()
+                            .put("id", returnedMails.getJsonObject(i).getLong("id"))
+                            .put("statut", "PROGRESS");
+                    returnedMailsInProgress.add(returnedMail);
                 }
+                this.updateStatus(returnedMailsInProgress, updateStatutInProgressEvent -> {
+                    if (updateStatutInProgressEvent.isRight()) {
+                        this.recursiveDeleteMailLoop(returnedMails, returnedMailsStatut, 0, event -> {
+                            if (event.isRight()) {
+                                result.handle(new Either.Right<>(returnedMailsStatut));
+                            } else {
+                                result.handle(new Either.Left<>("All mails not deleted"));
+                            }
+                        });
+                    } else {
+                        result.handle(new Either.Left<>("[Zimbra] deleteMessages: Error while updating returned mail statut to in progress : " +
+                                updateStatutInProgressEvent.left().getValue()));
+                        log.error("[Zimbra] deleteMessages: Error while updating returned mail statut to in progress : " +
+                                updateStatutInProgressEvent.left().getValue());
+                    }
+                });
+            } else {
+                result.handle(new Either.Left<>("[Zimbra] deleteMessages: Error while getting returned mails by ids : " +
+                        returnedMailEvent.left().getValue()));
             }
         });
     }
 
-    private void addDeleteFutures(List<Future> futures, JsonArray returnedMails, int i, Handler<Either<String, JsonObject>> result) {
-        JsonObject returnedMail = returnedMails.getJsonObject(i);
+
+    private void recursiveDeleteMailLoop(JsonArray returnedMails, JsonArray returnedMailsStatut, int index, Handler<Either<String, JsonObject>> result) {
+        this.addDeleteFutures(returnedMails.getJsonObject(index), event -> {
+            Long returned_mail_id = returnedMails.getJsonObject(index).getLong("id");
+            // TODO : mettre cron au cas ou prod crash ou relance donc Zimbra.java
+            if (event.isRight()) {
+                returnedMailsStatut
+                        .add(new JsonObject()
+                                .put("id", returned_mail_id)
+                                .put("statut", "REMOVED"));
+                // Etape 3 : Une fois que nous avons parcouru tout les mails, on supprime les mails de la boîte de reception et on met à jour leur statut
+            } else {
+                returnedMailsStatut
+                        .add(new JsonObject()
+                                .put("id", returned_mail_id)
+                                .put("statut", "ERROR"));
+            }
+            if (index == returnedMails.size() - 1) {
+                this.updateStatus(returnedMailsStatut, result);
+            } else {
+                this.recursiveDeleteMailLoop(returnedMails, returnedMailsStatut, index + 1, result);
+            }
+            ;
+        });
+    }
+
+    private void addDeleteFutures(JsonObject returnedMail, Handler<Either<String, JsonObject>> result) {
         JsonArray userIds = new JsonArray(returnedMail.getString("recipient"));
-        for (int j = 0; j < userIds.size(); j++) {
-            boolean end = j == userIds.size() - 1 && i == returnedMails.size() - 1;
-            this.deleteMail(userIds.getString(j), returnedMail, end, futures, isEndEvent -> {
-                if (isEndEvent.isRight()) {
-                    if (isEndEvent.right().getValue().getBoolean("end")) {
-                        result.handle(isEndEvent);
-                    }
-                }
-            });
-        }
+        int j = 0;
+        this.recursiveDeleteMail(userIds, j, returnedMail, deleteEvent -> {
+            if (deleteEvent.isRight()) {
+                result.handle(new Either.Right<>(deleteEvent.right().getValue()));
+            } else {
+                result.handle(new Either.Left<>("[Zimbra] addDeleteFutures: Error while deleting mails : " +
+                        deleteEvent.left().getValue()));
+            }
+        });
     }
 
-
-    private void updateStatus(List<String> returnedMailsIds, List<Future> futures, Handler<Either<String, JsonObject>> result) {
-        if (futures.size() > 0) {
-            CompositeFuture.all(futures).setHandler(event -> {
-                if (event.succeeded()) {
-                    dbMailService.updateStatut(returnedMailsIds, updateStatutEvent -> {
-                        if (updateStatutEvent.isRight()) {
-                            result.handle(new Either.Right<>(new JsonObject()));
-                        } else {
-                            result.handle(new Either.Left<>("[Zimbra] updateStatus: Error while updating status of returned mails : " +
-                                    updateStatutEvent.left().getValue()));
-                            log.error("[Zimbra] updateStatus: Error while updating status of returned mails : ",
-                                    updateStatutEvent.left().getValue());
-                        }
-                    });
+    private void recursiveDeleteMail(JsonArray userIds, int indexUser, JsonObject returnedMail, Handler<Either<String, JsonObject>> result) {
+        this.deleteMail(userIds.getJsonObject(indexUser), returnedMail, deleteEvent -> {
+            if (deleteEvent.isRight()) {
+                if (indexUser == userIds.size() - 1) {
+                    result.handle(new Either.Right<>(deleteEvent.right().getValue()));
                 } else {
-                    result.handle(new Either.Left<>("[Zimbra] updateStatus: Error while deleting mails : " +
-                            event.cause()));
-                    log.error("[Zimbra] updateStatus: Error while deleting mails : ",
-                            event.cause());
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    this.recursiveDeleteMail(userIds, indexUser + 1, returnedMail, result);
                 }
-            });
-        } else {
-            result.handle(new Either.Left<>("[Zimbra] updateStatus:  No mail found"));
-            log.info("[Zimbra] updateStatus: No mail found");
-        }
+            } else {
+                result.handle(new Either.Left<>("[Zimbra] recursiveDeleteMail: Error while deleting mail : " +
+                        deleteEvent.left().getValue()));
+            }
+        });
     }
 
-    private void deleteMail(String userId, JsonObject returnedMail, boolean end, List<Future> futures, Handler<Either<String, JsonObject>> handler) {
+
+    private void updateStatus(JsonArray returnedMailsStatuts, Handler<Either<String, JsonObject>> result) {
+        dbMailService.updateStatut(returnedMailsStatuts, updateStatutEvent -> {
+            if (updateStatutEvent.isRight()) {
+                for(int i = 0; i < returnedMailsStatuts.size(); i++) {
+                    returnedMailsStatuts.getJsonObject(i).put("date", updateStatutEvent.right().getValue().getJsonObject(0).getString("date"));
+                }
+                result.handle(new Either.Right<>(new JsonObject()));
+            } else {
+                result.handle(new Either.Left<>("[Zimbra] updateStatus: Error while updating status of returned mails : " +
+                        updateStatutEvent.left().getValue()));
+                log.error("[Zimbra] updateStatus: Error while updating status of returned mails : ",
+                        updateStatutEvent.left().getValue());
+            }
+        });
+    }
+
+    private void deleteMail(JsonObject userInfos, JsonObject returnedMail, Handler<Either<String, JsonObject>> handler) {
         // Etape 1 : on récupère les infos de l'utilisateur
+        String userId = userInfos.getString("id");
         UserUtils.getUserInfos(eb, userId, user -> {
-            messageService.retrieveMailFromZimbra(returnedMail, userId, end, handler, mailIds -> {
+            messageService.retrieveMailFromZimbra(returnedMail, userInfos, mailIds -> {
                 if (mailIds.isRight()) {
-                    List<String> ids = mailIds.right().getValue();
-                    this.deleteMailFromZimbra(ids, end, user, futures, handler);
+                    if (mailIds.right().getValue().size() > 0) {
+                        List<String> ids = mailIds.right().getValue();
+                        this.deleteMailFromZimbra(ids, user, handler);
+                    } else {
+                        handler.handle(new Either.Right<>(new JsonObject()));
+                    }
                 }
             });
         });
     }
 
-    private void deleteMailFromZimbra(List<String> ids, boolean end, UserInfos user, List<Future> futures, Handler<Either<String, JsonObject>> handler) {
+    private void deleteMailFromZimbra(List<String> ids, UserInfos user, Handler<Either<String, JsonObject>> handler) {
         // Etape 4 : On déplace le mail à supprimer vers la corbeille
         messageService.moveMessagesToFolder(ids, FrontConstants.FOLDER_TRASH, user,
                 moveToTrash -> {
                     if (moveToTrash.isRight()) {
                         // Etape 5 : On supprime définitivement le message de la boite de réception
-                        Future<JsonObject> deleteFuture = Future.future();
-                        futures.add(deleteFuture);
-                        messageService.deleteMessages(ids, user, handlerJsonObject(deleteFuture));
-                        if (end) {
-                            handler.handle(new Either.Right<>(new JsonObject().put("end", true)));
-                        }
+                        messageService.deleteMessages(ids, user, event -> {
+                            if (event.isRight()) {
+                                handler.handle(new Either.Right<>(event.right().getValue()));
+                            } else {
+                                handler.handle(new Either.Left<>("[Zimbra] getReturnedMailsInfos : Error while deleting mails : " + event.left().getValue()));
+                            }
+                        });
                     } else {
                         log.error("Erreur lors du déplacement vers la corbeille du mail " + ids.get(0));
                     }
                 });
     }
 
-    private void getReturnedMailsInfos(JsonObject mail, String comment, UserInfos user, Handler<Either<String, JsonObject>> result) {
+    private void getReturnedMailsInfos(JsonObject mail, String comment, UserInfos
+            user, Handler<Either<String, JsonObject>> result) {
         String mail_date = new java.text.SimpleDateFormat("MM/dd/yyyy")
                 .format(new java.util.Date(mail.getLong("date")));
         JsonObject returnedMail = new JsonObject();
@@ -224,16 +290,20 @@ public class ReturnedMailService {
         JsonArray recipients = mail.getJsonArray("to").addAll(mail.getJsonArray("cc")).addAll(mail.getJsonArray("bcc"));
         userService.getUsers(recipients, recipients, usersFromGroup -> {
             if (usersFromGroup.isRight()) {
-                Set<String> setUser = new HashSet<>();
+                Set<JsonObject> setUser = new HashSet<>();
                 JsonArray usersGroup = usersFromGroup.right().getValue();
                 for (int i = 0; i < usersGroup.size(); i++) {
-                    setUser.add(usersGroup.getJsonObject(i).getString("id"));
+                    JsonObject userInfo = new JsonObject()
+                            .put("id", usersGroup.getJsonObject(i).getString("id"))
+                            .put("mail", usersGroup.getJsonObject(i).getString("login") + "@" + Zimbra.domain);
+                    setUser.add(userInfo);
                 }
                 JsonArray to = new JsonArray(Arrays.asList(setUser.toArray()));
                 returnedMail
                         .put("subject", mail.getString("subject"))
                         .put("userId", user.getUserId())
                         .put("userName", user.getLastName() + " " + user.getFirstName())
+                        .put("userMail", user.getLogin() + "@" + Zimbra.domain)
                         .put("mailId", mail.getString("id"))
                         .put("structureId", user.getStructures().get(0))
                         .put("nb_messages", to.size())
@@ -257,7 +327,7 @@ public class ReturnedMailService {
         }
         if (user != null && mailIds.size() > 0) {
             this.getMailReturnedByMailsIdsAndUser(mailIds, mails, user.getUserId(), returnedMailsEvent -> {
-                if(returnedMailsEvent.isRight()) {
+                if (returnedMailsEvent.isRight()) {
                     renderJson(request, returnedMailsEvent.right().getValue());
                 } else {
                     renderJson(request, mails);

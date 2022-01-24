@@ -239,13 +239,19 @@ public class NeoDbMailService extends DbMailService {
     }
 
     @Override
+    public void getMailReturnedByStatut(String statut, Handler<Either<String, JsonArray>> handler) {
+        // Not needed in neo4j implementation
+        handler.handle(new Either.Right<>(new JsonArray()));
+    }
+
+    @Override
     public void getMailReturnedByMailsIdsAndUser(List<String> ids, String user_id, Handler<Either<String, JsonArray>> handler) {
         // Not needed in neo4j implementation
         handler.handle(new Either.Right<>(new JsonArray()));
     }
 
     @Override
-    public void updateStatut(List<String> ids, Handler<Either<String, JsonArray>> handler) {
+    public void updateStatut(JsonArray returnedMailsStatut, Handler<Either<String, JsonArray>> handler) {
         // Not needed in neo4j implementation
         handler.handle(new Either.Right<>(new JsonArray()));
     }

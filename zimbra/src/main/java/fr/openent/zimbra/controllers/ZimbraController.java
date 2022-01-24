@@ -35,7 +35,6 @@ import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
 import fr.wseduc.security.ActionType;
 import fr.wseduc.security.SecuredAction;
-import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
@@ -53,13 +52,11 @@ import org.entcore.common.cache.CacheScope;
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
-import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.utils.Config;
 import org.vertx.java.core.http.RouteMatcher;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -82,7 +79,6 @@ public class ZimbraController extends BaseController {
     private RedirectionService redirectionService;
     private FrontPageService frontPageService;
     private AddressBookService addressBookService;
-    private NotificationService notificationService;
 
 
     private EventStore eventStore;
@@ -112,7 +108,6 @@ public class ZimbraController extends BaseController {
         this.redirectionService = serviceManager.getRedirectionService();
         this.frontPageService = serviceManager.getFrontPageService();
         this.addressBookService = serviceManager.getAddressBookService();
-        this.notificationService = serviceManager.getNotificationService();
         this.returnedMailService = serviceManager.getReturnedMailService();
     }
 
@@ -379,7 +374,6 @@ public class ZimbraController extends BaseController {
         returnedMailService.getMailReturned(structureId, returnedMails -> {
             if (returnedMails.isRight()) {
                 renderJson(request, returnedMails.right().getValue());
-                log.info("[Zimbra]getReturnedMails: Collecting returned mail successfully");
             } else {
                 badRequest(request);
                 log.error("[Zimbra]getReturnedMails: Collecting returned mail failed : " + returnedMails.left().getValue());
@@ -404,6 +398,10 @@ public class ZimbraController extends BaseController {
     @SecuredAction("zimbra.return.mail.delete")
     public void deleteSentEmail(final HttpServerRequest request) {
         final List<String> returnedMailsIds = request.params().getAll("id");
+        deleteMailByIds(request, returnedMailsIds);
+    }
+
+    public void deleteMailByIds(HttpServerRequest request, List<String> returnedMailsIds) {
         returnedMailService.deleteMessages(returnedMailsIds, deleteMailEvent -> {
             if (deleteMailEvent.isRight()) {
                 renderJson(request, deleteMailEvent.right().getValue());

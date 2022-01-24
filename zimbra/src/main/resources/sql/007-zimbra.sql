@@ -3,6 +3,7 @@ CREATE TABLE zimbra.mail_returned
     id serial NOT NULL,
     user_id character varying(36),
     user_name character varying,
+    user_mail character varying,
     structure_id character varying,
     mail_id character varying,
     object character varying,

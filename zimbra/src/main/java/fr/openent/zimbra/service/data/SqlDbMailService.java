@@ -55,7 +55,8 @@ public class SqlDbMailService extends DbMailService {
 
     /**
      * Get user uuid from mail in database
-     * @param mail Zimbra mail
+     *
+     * @param mail    Zimbra mail
      * @param handler result handler
      */
     public void getNeoIdFromMail(String mail, Handler<Either<String, JsonArray>> handler) {
@@ -72,7 +73,8 @@ public class SqlDbMailService extends DbMailService {
 
     /**
      * Get user mail from uuid in database
-     * @param uuid User uuid
+     *
+     * @param uuid    User uuid
      * @param handler result handler
      */
     public void getUserMailFromId(String uuid, Handler<Either<String, JsonArray>> handler) {
@@ -81,7 +83,8 @@ public class SqlDbMailService extends DbMailService {
 
     /**
      * Get group mail from uuid in database
-     * @param uuid Group uuid
+     *
+     * @param uuid    Group uuid
      * @param handler result handler
      */
     public void getGroupMailFromId(String uuid, Handler<Either<String, JsonArray>> handler) {
@@ -90,8 +93,9 @@ public class SqlDbMailService extends DbMailService {
 
     /**
      * Get mail from uuid in database
-     * @param uuid User uuid
-     * @param table table to use for correspondance
+     *
+     * @param uuid    User uuid
+     * @param table   table to use for correspondance
      * @param handler result handler
      */
     private void getMailFromId(String uuid, String table, Handler<Either<String, JsonArray>> handler) {
@@ -105,11 +109,12 @@ public class SqlDbMailService extends DbMailService {
 
     /**
      * Remove user from base
-     * @param userId user id
+     *
+     * @param userId   user id
      * @param userMail user mail
-     * @param handler final handler
+     * @param handler  final handler
      */
-    public void removeUserFrombase(String userId, String userMail, Handler<Either<String,JsonObject>> handler) {
+    public void removeUserFrombase(String userId, String userMail, Handler<Either<String, JsonObject>> handler) {
         String query = "DELETE FROM " + userTable
                 + " WHERE " + NEO4J_UID + " = ? OR "
                 + ZIMBRA_NAME + " = ?";
@@ -122,7 +127,7 @@ public class SqlDbMailService extends DbMailService {
             List<ZimbraUser> userList = new ArrayList<>();
             userList.add(user);
             updateUsers(userList, sqlResponse -> {
-                if(sqlResponse.isLeft()) {
+                if (sqlResponse.isLeft()) {
                     log.error("Error when updating Zimbra users : " + sqlResponse.left().getValue());
                 }
             });
@@ -134,21 +139,22 @@ public class SqlDbMailService extends DbMailService {
 
     /**
      * Update users mails in database if not already present
-     * @param users Array of users :
-     *              [
+     *
+     * @param users   Array of users :
+     *                [
      *                {
-     *                  "name" : user address in Zimbra,
-     *                  "aliases :
-     *                      [
-     *                          "alias"
-     *                      ]
+     *                "name" : user address in Zimbra,
+     *                "aliases :
+     *                [
+     *                "alias"
+     *                ]
      *                }
-     *              ]
+     *                ]
      * @param handler result handler
      */
     private void updateUsers(List<ZimbraUser> users, Handler<Either<String, JsonObject>> handler) {
         JsonArray jsonUsers = new JsonArray();
-        for(ZimbraUser user : users) {
+        for (ZimbraUser user : users) {
             JsonObject jsonUser = new JsonObject()
                     .put("name", user.getName())
                     .put("aliases", new JsonArray(user.getAliases()));
@@ -161,20 +167,20 @@ public class SqlDbMailService extends DbMailService {
 
         boolean atLeastOne = false;
 
-        if(users.size() == 0) {
+        if (users.size() == 0) {
             handler.handle(new Either.Left<>("Incorrect data, can't update users"));
             return;
         }
 
         StringBuilder query = new StringBuilder();
         query.append("WITH data (name, alias) as ( values ");
-        for(Object obj : users) {
-            if(!(obj instanceof JsonObject)) continue;
-            JsonObject user = (JsonObject)obj;
+        for (Object obj : users) {
+            if (!(obj instanceof JsonObject)) continue;
+            JsonObject user = (JsonObject) obj;
             String name = user.getString("name");
             JsonArray aliases = user.getJsonArray("aliases");
             for (Object o : aliases) {
-                if(!(o instanceof String)) continue;
+                if (!(o instanceof String)) continue;
                 String alias = o.toString();
                 atLeastOne = true;
                 query.append("( '").append(name).append("', '")
@@ -194,7 +200,7 @@ public class SqlDbMailService extends DbMailService {
                 .append("AND u.").append(NEO4J_UID).append(" = d.alias ")
                 .append(")");
 
-        if(!atLeastOne) {
+        if (!atLeastOne) {
             handler.handle(new Either.Left<>("No users to process"));
         } else {
             sql.prepared(query.toString(), new JsonArray(), SqlResult.validUniqueResultHandler(handler));
@@ -202,9 +208,8 @@ public class SqlDbMailService extends DbMailService {
     }
 
 
-
     public void checkGroupsExistence(List<Group> groups, Handler<AsyncResult<JsonArray>> handler) {
-        if(groups.isEmpty()) {
+        if (groups.isEmpty()) {
             handler.handle(Future.succeededFuture(new JsonArray()));
             return;
         }
@@ -214,7 +219,7 @@ public class SqlDbMailService extends DbMailService {
                 .append("FROM (")
                 .append("VALUES");
         String delim = " ";
-        for(Group group : groups) {
+        for (Group group : groups) {
             query.append(delim).append("(?)");
             params.add(group.getId());
             delim = ",";
@@ -241,10 +246,10 @@ public class SqlDbMailService extends DbMailService {
                 .append("SELECT ng.id, ng.addr ")
                 .append("FROM new_group ng ")
                 .append("WHERE NOT EXISTS ")
-                    .append("( SELECT 1 ")
-                    .append("FROM ").append(groupTable).append(" g ")
-                    .append("WHERE g.").append(NEO4J_UID).append(" = ng.id ")
-                    .append(")");
+                .append("( SELECT 1 ")
+                .append("FROM ").append(groupTable).append(" g ")
+                .append("WHERE g.").append(NEO4J_UID).append(" = ng.id ")
+                .append(")");
 
         sql.prepared(query.toString(), params,
                 SqlResult.validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
@@ -252,15 +257,17 @@ public class SqlDbMailService extends DbMailService {
 
     /**
      * Insert in database request of returned mail
+     *
      * @param returnedMail Object which contains all data to insert (user_id, user_name, object, recipient etc..)
      */
     public void insertReturnedMail(JsonObject returnedMail, Handler<Either<String, JsonObject>> handler) {
         String query = "INSERT INTO " + this.returnedMailTable +
-                "(user_id, user_name, mail_id, structure_id, object, number_message, recipient, statut, comment, mail_date)" +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) returning id;";
+                "(user_id, user_name, user_mail, mail_id, structure_id, object, number_message, recipient, statut, comment, mail_date)" +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) returning id;";
         JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
                 .add(returnedMail.getString("userId"))
                 .add(returnedMail.getString("userName"))
+                .add(returnedMail.getString("userMail"))
                 .add(returnedMail.getString("mailId"))
                 .add(returnedMail.getString("structureId"))
                 .add(returnedMail.getString("subject"))
@@ -274,19 +281,37 @@ public class SqlDbMailService extends DbMailService {
 
     /**
      * Get all returned mail by id structure
+     *
      * @param idStructure Id of a structure
      */
     public void getMailReturned(String idStructure, Handler<Either<String, JsonArray>> handler) {
         String query = "SELECT *" +
                 " FROM " + this.returnedMailTable +
-                " WHERE structure_id = ?; ";
+                " WHERE structure_id = ?" +
+                " ORDER BY date DESC;";
         JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
                 .add(idStructure);
         sql.prepared(query, params, SqlResult.validResultHandler(handler));
     }
 
     /**
+     * Get all returned mail by id structure
+     *
+     * @param statut Statut to filter
+     */
+    public void getMailReturnedByStatut(String statut, Handler<Either<String, JsonArray>> handler) {
+        String query = "SELECT *" +
+                " FROM " + this.returnedMailTable +
+                " WHERE statut = ?" +
+                " ORDER BY date DESC;";
+        JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
+                .add(statut);
+        sql.prepared(query, params, SqlResult.validResultHandler(handler));
+    }
+
+    /**
      * Get all returned mail by ids
+     *
      * @param ids List of returnedMail ids
      */
     public void getMailReturnedByIds(List<String> ids, Handler<Either<String, JsonArray>> handler) {
@@ -302,10 +327,11 @@ public class SqlDbMailService extends DbMailService {
 
     /**
      * Get all returned mail by mails ids and user id
-     * @param ids List of mails ids
+     *
+     * @param ids     List of mails ids
      * @param user_id Id of the user
      */
-    public void getMailReturnedByMailsIdsAndUser(List<String> ids,String user_id, Handler<Either<String, JsonArray>> handler) {
+    public void getMailReturnedByMailsIdsAndUser(List<String> ids, String user_id, Handler<Either<String, JsonArray>> handler) {
         String query = "SELECT *" +
                 " FROM " + this.returnedMailTable +
                 " WHERE user_id = ? AND mail_id IN " + Sql.listPrepared(ids);
@@ -318,16 +344,20 @@ public class SqlDbMailService extends DbMailService {
     }
 
     /**
-     * Change statut of returnedMail from WAITING to REMOVED
-     * @param ids List of returnedMail ids
+     * Change statut of returnedMail
+     *
+     * @param returnedMailsStatut Array containing object (Id of returnedMail, Statut of returnedMail)
      */
-    public void updateStatut(List<String> ids, Handler<Either<String, JsonArray>> handler) {
-        String query = "UPDATE " + this.returnedMailTable +
-                " SET statut = 'REMOVED'" +
-                " WHERE id IN " + Sql.listPrepared(ids);
+    public void updateStatut(JsonArray returnedMailsStatut, Handler<Either<String, JsonArray>> handler) {
+        String query = "";
         JsonArray params = new fr.wseduc.webutils.collections.JsonArray();
-        for (int i = 0; i < ids.size(); i++) {
-            params.add(Integer.parseInt(ids.get(i)));
+        for (int i = 0; i < returnedMailsStatut.size(); i++) {
+            query += " UPDATE " + this.returnedMailTable +
+                     " SET statut = ?, date = now()" +
+                     " WHERE id = ?" +
+                     " RETURNING date;";
+            params.add(returnedMailsStatut.getJsonObject(i).getString("statut"))
+                  .add(returnedMailsStatut.getJsonObject(i).getLong("id"));
         }
         sql.prepared(query, params, SqlResult.validResultHandler(handler));
     }

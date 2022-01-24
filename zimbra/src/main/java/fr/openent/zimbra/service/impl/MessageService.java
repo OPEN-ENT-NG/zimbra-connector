@@ -19,6 +19,8 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.model.MailAddress;
+import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.I18nConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
@@ -931,39 +933,72 @@ public class MessageService {
     /**
      * Retrieve an unique email from inbox
      *
-     * @param returnedMail JsonObject containing data like object, user_id or mail_date
-     * @param user_id     User id of the sender
-     * @param end    Boolean to know if it's the end of the loop, set it to true if you just want to find a mail
-     * @param handler     Handler who send when we are at the end of the loop
-     * @param result    result handler
+     * @param returnedMail  JsonObject containing data like object, user_id or mail_date
+     * @param to_user_infos User id and mail of the recipient
+     * @param result        result handler
      */
-    public void retrieveMailFromZimbra(JsonObject returnedMail, String user_id, boolean end,
-                                        Handler<Either<String, JsonObject>> handler, Handler<Either<String, List<String>>> result) {
+    public void retrieveMailFromZimbra(JsonObject returnedMail, JsonObject to_user_infos, Handler<Either<String, List<String>>> result) {
         String subject = returnedMail.getString("object");
-        String from = returnedMail.getString("user_id");
+        String from_mail = returnedMail.getString("user_mail");
         String date = returnedMail.getString("mail_date");
-        List<String> ids = new ArrayList<>();
-        userService.getMailAddresses(new JsonArray().add(from), fromMail -> {
-            String from_mail = fromMail.getJsonObject(from).getString("email");
-            // Etape 3 : On recherche en fonction de l'objet, de l'expéditeur, de la date et de la boite de réception le mail à supprimer
-            String query = "in:\"" + "Inbox" + "\"" + " AND subject:\"" + subject + "\"" + " AND from:\"" + from_mail + "\"" + " AND date:\"" + date + "\"";
-            SoapSearchHelper.searchAllMailedConv(user_id, 0, query, event -> {
-                if (event.succeeded()) {
-                    if (event.result().size() > 0) {
-                        ids.add(event.result().get(0).getMessageList().get(0).getId());
-                        result.handle(new Either.Right<>(ids));
-                    } else {
-                        result.handle(new Either.Left<>("[Zimbra] retrieveMailFromZimbra : No mails found"));
-                        log.error("[Zimbra] retrieveMailFromZimbra : No mails found");
-                        if (end) {
-                            handler.handle(new Either.Right<>(new JsonObject().put("end", true)));
+        String to_user_id = to_user_infos.getString("id");
+        ZimbraUser user = new ZimbraUser(new MailAddress(to_user_infos.getString("mail")));
+        user.checkIfExists(userResponse -> {
+            if (userResponse.failed()) {
+                log.error("[Zimbra] retrieveMailFromZimbra : Error while checking if user exists in Zimbra :" + userResponse.cause().getMessage());
+                result.handle(new Either.Right<>(new ArrayList<>()));
+            } else {
+                if(user.existsInZimbra()) {
+                    // Etape 3 : On recherche en fonction de l'objet, de l'expéditeur, de la date et de la boite de réception le mail à supprimer
+                    String query = "* NOT in:\"" + "Sent" + "\"" + " AND subject:\"" + subject + "\"" + " AND from:\"" + from_mail + "\"" + " AND date:\"" + date + "\"";
+                    log.info(query);
+                    SoapSearchHelper.searchAllMailedConv(to_user_id, 0, query, event -> {
+                        if (event.succeeded()) {
+                            if (event.result().size() > 0) {
+                                List<String> ids = new ArrayList<>();
+                                ids.add(event.result().get(0).getMessageList().get(0).getId());
+                                result.handle(new Either.Right<>(ids));
+                            } else {
+                                result.handle(new Either.Right<>(new ArrayList<>()));
+                            }
+                        } else {
+                            log.error("[Zimbra] retrieveMailFromZimbra : Error while searching mails : " + event.cause().getMessage());
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            reccursiveSearch(to_user_id, query, result, 0);
                         }
-                    }
+                    });
                 } else {
-                    result.handle(new Either.Left<>("[Zimbra] retrieveMailFromZimbra : Error while searching mails"));
-                    log.error("[Zimbra] retrieveMailFromZimbra : Error while searching mails");
+                    log.error("[Zimbra] retrieveMailFromZimbra : No Zimbra acc found");
+                    result.handle(new Either.Right<>(new ArrayList<>()));
                 }
-            });
+            }
+        });
+    }
+
+    //Todo : A tester sans reccursif dans le cas où on ne trouve pas de mail pour l'utilsiateur mais à laisser dans le cas d'une erreur Zimbra
+    private void reccursiveSearch(String user_id, String query, Handler<Either<String, List<String>>> result, int nb) {
+        log.info(query);
+        SoapSearchHelper.searchAllMailedConv(user_id, 0, query, event -> {
+            if (event.succeeded()) {
+                if (event.result().size() > 0) {
+                    List<String> ids = new ArrayList<>();
+                    ids.add(event.result().get(0).getMessageList().get(0).getId());
+                    result.handle(new Either.Right<>(ids));
+                } else {
+                    if (nb < 5) {
+                        reccursiveSearch(user_id, query, result, nb + 1);
+                    } else {
+                        result.handle(new Either.Right<>(new ArrayList<>()));
+                        log.error("[Zimbra] retrieveMailFromZimbra : No mails found");
+                    }
+                }
+            } else {
+                log.error("[Zimbra] reccursiveSearch : Error while searching mails : " + event.cause().getMessage());
+            }
         });
     }
 
