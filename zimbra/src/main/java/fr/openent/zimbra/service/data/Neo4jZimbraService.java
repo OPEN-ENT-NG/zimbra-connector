@@ -160,7 +160,7 @@ public class Neo4jZimbraService {
 
 	public void getUserFilterAndStructuresFromNeo4j(String userId, Handler<AsyncResult<List<Structure>>> handler) {
 		String queryGetAdministrativeAttachment = "MATCH (s:Structure)<-[:ADMINISTRATIVE_ATTACHMENT]-(u:User{id:{userId}})-[:IN]->(pg:ProfileGroup) ";
-		String queryGetFewStructures = "MATCH (pg:ProfileGroup)<-[:IN]-(u:User{id:{userId}})-[:IN]->(:Group)-[:DEPENDS]->(s:Structure) ";
+		String queryGetFewStructures = "MATCH (s:Structure)<-[:DEPENDS]-(:Group)<-[:IN]-(u:User{id:{userId}})-[:IN]->(pg:ProfileGroup) ";
 		if(!appConfig.getFilterUserProfileSynchAB().isEmpty()){
 			String profileConditionUser = "WHERE pg.filter IN " + appConfig.getFilterUserProfileSynchAB();
 			queryGetAdministrativeAttachment += profileConditionUser;
@@ -171,7 +171,7 @@ public class Neo4jZimbraService {
 				"s.id as " + Structure.ID +
 				" LIMIT {limit}	";
 
-		String query = queryGetAdministrativeAttachment + queryReturn ;//+ " UNION " + queryGetFewStructures + queryReturn;
+		String query = queryGetAdministrativeAttachment + queryReturn + " UNION " + queryGetFewStructures + queryReturn;
 
 		neo.execute(query,
 				new JsonObject().put("userId", userId).put("limit",appConfig.getStructureToSynchroABLimit()),
