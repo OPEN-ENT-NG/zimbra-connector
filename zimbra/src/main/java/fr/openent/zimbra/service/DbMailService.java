@@ -86,6 +86,13 @@ public abstract class DbMailService {
     public abstract void getMailReturned(String idStructure, Handler<Either<String, JsonArray>> handler);
 
     /**
+     * Remove returned mail by id
+     * @param id Id of the returned mail
+     */
+
+    public abstract void removeMailReturned(String id, Handler<Either<String, JsonArray>> handler);
+
+    /**
      * Get all returned mail by id structure
      * @param statut Statut to filter
      */

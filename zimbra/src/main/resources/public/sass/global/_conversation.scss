@@ -105,7 +105,10 @@
     text-align: center;
     line-height: initial;
     &.removed {
-      color: #63D602;;
+      color: #63D602;
+    }
+    &.progress {
+      color: orange;
     }
   }
 

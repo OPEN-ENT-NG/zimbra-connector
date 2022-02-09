@@ -381,6 +381,20 @@ public class ZimbraController extends BaseController {
         });
     }
 
+    @Delete("/return/delete/:id")
+    @SecuredAction("zimbra.return.delete")
+    public void deleteReturnedMails(final HttpServerRequest request) {
+        final String returnedMailId = request.params().get("id");
+        returnedMailService.deleteMailReturned(returnedMailId, deleteEvent -> {
+            if (deleteEvent.isRight()) {
+                renderJson(request, deleteEvent.right().getValue().getJsonObject(0));
+            } else {
+                badRequest(request);
+                log.error("[Zimbra]deleteReturnedMails: Deleting returned mail failed : " + deleteEvent.left().getValue());
+            }
+        });
+    }
+
     /**
      * Delete definitively messages by Subject, Date, and User
      * In case of success, return empty Json Object.

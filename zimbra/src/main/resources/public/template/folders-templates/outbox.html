@@ -84,12 +84,14 @@
 			<div class="notifications" ng-hide="showRightSide()">
 				<i class="attachment" ng-if="mail.hasAttachment"></i>
 				<i class="paper-plane removed" tooltip="return.mail.validate.tooltip" ng-if="mail.returned == 'REMOVED'"></i>
+				<i class="paper-plane progress" tooltip="return.mail.progress.tooltip" ng-if="mail.returned == 'PROGRESS'"></i>
 				<i class="paper-plane" tooltip="return.mail.waiting.tooltip" ng-if="mail.returned == 'WAITING'"></i>
 			</div>
 			<div class="notifications" ng-if="showRightSide()">
 				<i class="attachment" ng-if="mail.hasAttachment"></i>
 				<i class="undo " ng-if="mail.response" tooltip="you.answered"></i>
 				<i class="paper-plane removed" tooltip="return.mail.validate.tooltip" ng-if="mail.returned == 'REMOVED'"></i>
+				<i class="paper-plane progress" tooltip="return.mail.progress.tooltip" ng-if="mail.returned == 'PROGRESS'"></i>
 				<i class="paper-plane" tooltip="return.mail.waiting.tooltip" ng-if="mail.returned == 'WAITING'"></i>
 			</div>
 		</article>

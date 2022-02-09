@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.service.DbMailService;
 import fr.wseduc.webutils.Either;
@@ -99,6 +100,17 @@ public class ReturnedMailService {
             } else {
                 result.handle(new Either.Left<>("[Zimbra] getMailReturned : Error while getting returned mail by id structure"));
                 log.error("[Zimbra] getMailReturned : Error while getting returned mail by id structure");
+            }
+        });
+    }
+
+    public void deleteMailReturned(String id, Handler<Either<String, JsonArray>> result) {
+        dbMailService.removeMailReturned(id, event -> {
+            if (event.isRight()) {
+                result.handle(new Either.Right<>(event.right().getValue()));
+            } else {
+                result.handle(new Either.Left<>("[Zimbra] deleteMailReturned : Error while getting deleting mail by id"));
+                log.error("[Zimbra] deleteMailReturned : Error while getting deleting mail by id");
             }
         });
     }
@@ -232,7 +244,7 @@ public class ReturnedMailService {
     private void updateStatus(JsonArray returnedMailsStatuts, Handler<Either<String, JsonObject>> result) {
         dbMailService.updateStatut(returnedMailsStatuts, updateStatutEvent -> {
             if (updateStatutEvent.isRight()) {
-                for(int i = 0; i < returnedMailsStatuts.size(); i++) {
+                for (int i = 0; i < returnedMailsStatuts.size(); i++) {
                     returnedMailsStatuts.getJsonObject(i).put("date", updateStatutEvent.right().getValue().getJsonObject(0).getString("date"));
                 }
                 result.handle(new Either.Right<>(new JsonObject()));
@@ -336,5 +348,24 @@ public class ReturnedMailService {
         } else {
             renderJson(request, mails);
         }
+    }
+
+    public void deleteMailsProgress(Handler<Either<String, JsonObject>> handler) {
+        this.getMailReturnedByStatut("PROGRESS", returnedMailsIdsEvent -> {
+            if (returnedMailsIdsEvent.isRight()) {
+                List<String> returnedMailsIds = JsonHelper.extractValueFromJsonObjects(returnedMailsIdsEvent.right().getValue(), "id");
+                this.deleteMessages(returnedMailsIds, deleteMailEvent -> {
+                    if (deleteMailEvent.isRight()) {
+                        handler.handle(new Either.Right(deleteMailEvent.right().getValue()));
+                    } else {
+                        handler.handle(new Either.Left("[Zimbra] deleteMailsProgress : Failed deleting mails"));
+                        log.error("[Zimbra] deleteMailsProgress : Failed deleting mails");
+                    }
+                });
+            } else {
+                handler.handle(new Either.Left("[Zimbra] deleteMailsProgress : Failed to retrieve mail in progress"));
+                log.error("[Zimbra] deleteMailsProgress : Failed to retrieve mail in progress");
+            }
+        });
     }
 }

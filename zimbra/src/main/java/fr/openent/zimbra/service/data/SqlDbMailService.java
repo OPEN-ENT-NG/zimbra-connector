@@ -295,6 +295,21 @@ public class SqlDbMailService extends DbMailService {
     }
 
     /**
+     * Remove returned mail by id
+     *
+     * @param id Id of a returned mail
+     */
+    public void removeMailReturned(String id, Handler<Either<String, JsonArray>> handler) {
+        String query = "DELETE" +
+                " FROM " + this.returnedMailTable +
+                " WHERE id = ?" +
+                " RETURNING id;";
+        JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
+                .add(id);
+        sql.prepared(query, params, SqlResult.validResultHandler(handler));
+    }
+
+    /**
      * Get all returned mail by id structure
      *
      * @param statut Statut to filter

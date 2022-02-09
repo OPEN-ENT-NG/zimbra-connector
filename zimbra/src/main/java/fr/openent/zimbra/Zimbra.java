@@ -72,7 +72,11 @@ public class Zimbra extends BaseServer {
             SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
             new CronTrigger(vertx, appConfig.getSynchroCronDate()).schedule(syncLauncherTask);
             log.info("Cron launched with date : " + appConfig.getSynchroCronDate());
-            deleteMailsProgress();
+            returnedMailService.deleteMailsProgress(event -> {
+                if(event.isLeft()) {
+                 log.error("Failed to remove returned mails in progress : " + event.left().getValue());
+                }
+            });
         } catch (ParseException e) {
             log.fatal(e);
         }
@@ -83,23 +87,4 @@ public class Zimbra extends BaseServer {
             log.warn("Mailer Cron deactivated");
         }
     }
-
-    private void deleteMailsProgress() {
-        log.info("Remove mails in progress");
-        returnedMailService.getMailReturnedByStatut("PROGRESS", returnedMailsIdsEvent -> {
-            if (returnedMailsIdsEvent.isRight()) {
-                List<String> returnedMailsIds = JsonHelper.extractValueFromJsonObjects(returnedMailsIdsEvent.right().getValue(), "id");
-                returnedMailService.deleteMessages(returnedMailsIds, deleteMailEvent -> {
-                    if (deleteMailEvent.isRight()) {
-                        log.info(deleteMailEvent.right().getValue());
-                    } else {
-                        log.error("[Zimbra] deleteMailsProgress : Failed deleting mails");
-                    }
-                });
-            } else {
-                log.error("[Zimbra] deleteMailsProgress : Failed to retrieve mail in progress");
-            }
-        });
-    }
-
 }
