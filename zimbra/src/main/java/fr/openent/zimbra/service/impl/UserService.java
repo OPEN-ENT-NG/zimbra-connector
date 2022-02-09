@@ -365,6 +365,29 @@ public class UserService {
     }
 
     /**
+     * Get a user adress
+     * First query database
+     * If not present, log debug
+     * @param userId User Id
+     * @param handler result handler
+     */
+    public void getUserAddressMail(String userId, Handler<AsyncResult<String>> handler) {
+        dbMailService.getUserMailFromId(userId, result -> {
+            if(result.isLeft() || result.right().getValue().isEmpty()) {
+                log.debug("no user in database for id : " + userId);
+                handler.handle(Future.failedFuture("no user in database for id : " + userId));
+            } else {
+                JsonArray results = result.right().getValue();
+                if(results.size() > 1) {
+                    log.warn("More than one address for user id : " + userId);
+                }
+                String mail = results.getJsonObject(0).getString(SqlDbMailService.ZIMBRA_NAME);
+                handler.handle(Future.succeededFuture(mail));
+            }
+        });
+    }
+
+    /**
      * Get addresses for a list of users or groupes
      * Return a Json Object :
      * {

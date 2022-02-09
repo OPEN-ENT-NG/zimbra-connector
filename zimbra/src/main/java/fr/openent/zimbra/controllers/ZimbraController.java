@@ -209,6 +209,21 @@ public class ZimbraController extends BaseController {
         });
     }
 
+    @Get("/user/mail")
+    @SecuredAction("zimbra.user.info.mail")
+    public void getMailAddressById(final HttpServerRequest request) {
+        final String userId = request.params().get("userId");
+        userService.getUserAddressMail(userId, userInfos -> {
+            if (userInfos.failed() ) {
+                renderJson(request, new JsonObject().put("mail", "No user found"));
+                log.error("[Zimbra] getMailAddressById : User id not found in database");
+            } else {
+                String mail = userInfos.result();
+                renderJson(request, new JsonObject().put("mail", mail));
+            }
+        });
+    }
+
 
     @Get("writeto")
     @SecuredAction(value = "", type = ActionType.RESOURCE)
