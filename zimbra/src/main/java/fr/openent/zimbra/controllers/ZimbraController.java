@@ -38,6 +38,7 @@ import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
+import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.RequestUtils;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
@@ -83,7 +84,7 @@ public class ZimbraController extends BaseController {
 
     private EventStore eventStore;
 
-    private enum ZimbraEvent {ACCESS}
+    private enum ZimbraEvent {ACCESS, CREATE}
 
 
     private static final Logger log = LoggerFactory.getLogger(ZimbraController.class);
@@ -343,9 +344,17 @@ public class ZimbraController extends BaseController {
         final String parentMessageId = request.params().get("In-Reply-To");
         getUserInfos(eb, request, user -> {
             if (user != null) {
-                bodyToJson(request, message ->
-                        messageService.sendMessage(messageId, message, user, parentMessageId, defaultResponseHandler(request))
-                );
+                bodyToJson(request, message -> {
+                    messageService.sendMessage(messageId, message, user, parentMessageId, event -> {
+                        if (event.isRight()) {
+                            eventStore.createAndStoreEvent(ZimbraEvent.CREATE.name(), request);
+                            Renders.renderJson(request, (JsonObject)event.right().getValue(), 200);
+                        } else {
+                            JsonObject error = (new JsonObject()).put("error", (String)event.left().getValue());
+                            Renders.renderJson(request, error, 400);
+                        }
+                    });
+                });
             } else {
                 unauthorized(request);
             }
@@ -500,8 +509,6 @@ public class ZimbraController extends BaseController {
             }
         });
     }
-
-
 
 
     /**
