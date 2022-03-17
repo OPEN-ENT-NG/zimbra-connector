@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import {$, _, Document, idiom as lang, moment, ng, notify, skin, template, angular, workspace} from "entcore";
+import {$, _, Document, idiom as lang, moment, ng, notify, skin, template, angular} from "entcore";
 import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, REGEXLIB, RECEIVER_TYPE, Group, Users} from "../model";
 
 import {Preference} from "../model/preferences";
@@ -47,11 +47,6 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.display = {
             searchLong: 'search.condition',
             searchSmall: 'search.condition.small',
-        };
-        $scope.attachmentOption = {
-            display: {
-                files: undefined
-            }
         };
 
         $scope.quotaMessage = {
@@ -1116,32 +1111,9 @@ export let zimbraController = ng.controller("ZimbraController", [
                 $scope.$apply();
             }
         };
-        $scope.uploadAttachment = async (attachment) => {
-            let {data} = await http.get(`workspace/document/base64/${attachment._id}`, {baseURL: '/'});
-            const u8arr = extractedFileBinary(data.base64File);
-            let file = new File([u8arr], attachment.metadata.filename, {type: attachment.metadata["content-type"] });
-            $scope.state.newItem.newAttachments = [];
-            $scope.state.newItem.newAttachments.push(file);
-            $scope.postAttachments();
-            $scope.displayLightBox.attachment = false;
-        }
-        function extractedFileBinary(base64) {
-            const byteCharacters = atob(base64);
-            let n = byteCharacters.length;
-            const u8arr = new Uint8Array(n);
-            while (n--) {
-                u8arr[n] = byteCharacters.charCodeAt(n);
-            }
-            return u8arr;
-        }
-
         $scope.cancelDelete = () => {
             $scope.displayLightBox.folder = true;
             Zimbra.instance.currentFolder.deselectAll();
         };
         $scope.searchText = () => $scope.showRightSide() ? $scope.display.searchSmall : $scope.display.searchLong;
-        $scope.showAttachmentLightbox = () => {
-            $scope.displayLightBox.attachment = true;
-        }
-
     }]);

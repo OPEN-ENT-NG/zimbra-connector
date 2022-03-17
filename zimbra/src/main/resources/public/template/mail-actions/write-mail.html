@@ -205,13 +205,12 @@
         </ul>
     </div>
 
-    <div class="right-magnet select-file ">
-        <button ng-click="showAttachmentLightbox()" class="flat-button file-button" translate="" content="add.attachment"></button>
+    <div class="right-magnet select-file nomargin" drop-files="state.newItem.newAttachments" on-drop="postAttachments()">
+        <div class="hidden-content">
+            <input type="file" multiple files-input-change="postAttachments()" ng-model="state.newItem.newAttachments">
+            <input type="text" data-display-file="">
+        </div>
+        <button class="flat-button file-button" translate="" content="add.attachment"></button>
     </div>
-</article>
 
-<lightbox show="displayLightBox.attachment" on-close="displayLightBox.attachment = false">
-    <div ng-if="displayLightBox.attachment">
-        <media-library ng-model="attachmentOption.display.files" ng-change="uploadAttachment(attachmentOption.display.files);" file-format="'any'"></media-library>
-    </div>
-</lightbox>
+</article>
