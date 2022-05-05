@@ -63,8 +63,6 @@ subprojects {
     compileOnly "io.vertx:vertx-core:$vertxVersion"
     compile "io.vertx:vertx-circuit-breaker:$vertxVersion"
     compile "org.entcore:common:$entCoreVersion"
-    testCompile "io.vertx:vertx-unit:$vertxVersion"
-    testCompile "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
     testCompile "org.entcore:tests:$entCoreVersion"
     testCompile "org.mockito:mockito-core:$mockitoVersion"
     testCompile "org.powermock:powermock-core:$powerMockVersion"
