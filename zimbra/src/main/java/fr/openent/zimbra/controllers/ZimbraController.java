@@ -19,6 +19,7 @@ package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.filters.DevLevelFilter;
+import fr.openent.zimbra.filters.AccessibleDocFilter;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.ServiceManager;
@@ -27,6 +28,7 @@ import fr.openent.zimbra.model.constant.ModuleConstants;
 import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.service.impl.*;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.service.synchro.AddressBookService;
 import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.Delete;
@@ -35,11 +37,13 @@ import fr.wseduc.rs.Post;
 import fr.wseduc.rs.Put;
 import fr.wseduc.security.ActionType;
 import fr.wseduc.security.SecuredAction;
+import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.RequestUtils;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpServerRequest;
@@ -47,17 +51,22 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.auth.User;
 import org.entcore.common.cache.Cache;
 import org.entcore.common.cache.CacheOperation;
 import org.entcore.common.cache.CacheScope;
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
+import org.entcore.common.storage.Storage;
+import org.entcore.common.storage.StorageFactory;
+import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.utils.Config;
 import org.vertx.java.core.http.RouteMatcher;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -80,13 +89,13 @@ public class ZimbraController extends BaseController {
     private RedirectionService redirectionService;
     private FrontPageService frontPageService;
     private AddressBookService addressBookService;
-
-
+    private Storage storage;
     private EventStore eventStore;
+
 
     private enum ZimbraEvent {ACCESS, CREATE}
 
-
+    private static final String WORKSPACE_BUS_ADDRESS = "org.entcore.workspace";
     private static final Logger log = LoggerFactory.getLogger(ZimbraController.class);
 
     @Override
@@ -95,6 +104,8 @@ public class ZimbraController extends BaseController {
         super.init(vertx, config, rm, securedActions);
 
         eventStore = EventStoreFactory.getFactory().getEventStore(Zimbra.class.getSimpleName());
+        storage = new StorageFactory(vertx, config).getStorage();
+
 
         ServiceManager serviceManager = ServiceManager.init(vertx, eb, pathPrefix);
 
@@ -506,6 +517,32 @@ public class ZimbraController extends BaseController {
                 });
             } else {
                 unauthorized(request);
+            }
+        });
+    }
+
+    @Get("message/:id/upload/:idAttachment")
+    @SecuredAction(value = "", type = ActionType.RESOURCE)
+    @ResourceFilter(AccessibleDocFilter.class)
+    public void uploadAttachment(final HttpServerRequest request) {
+        final String id = request.params().get("id");
+        final String idAttachment = request.params().get("idAttachment");
+        attachmentService.getDocument(eb, idAttachment, event -> {
+            if (event.isRight()) {
+                JsonObject document = event.right().getValue();
+                String file = document.getString("file");
+                storage.readStreamFile(file, buffer->{
+                    if(buffer==null){
+                        notFound(request);
+                    } else {
+
+                        String userId = document.getString("owner");
+                        UserInfos user = new UserInfos();
+                        user.setUserId(userId);
+
+                        attachmentService.addAttachment(id, user, buffer, document, defaultResponseHandler(request));
+                    }
+                });
             }
         });
     }
@@ -1008,32 +1045,6 @@ public class ZimbraController extends BaseController {
         });
     }
 
-
-    /**
-     * Post an new attachment to a drafted message.
-     * In case of success, return Json Object :
-     * {
-     * "id" : "new-zimbra-attachment-id"
-     * }
-     *
-     * @param request http request
-     */
-    @Post("message/:id/attachment")
-    @SecuredAction(value = "", type = ActionType.RESOURCE)
-    @ResourceFilter(DevLevelFilter.class)
-    public void postAttachment(final HttpServerRequest request) {
-        final String messageId = request.params().get("id");
-
-        UserUtils.getUserInfos(eb, request, user -> {
-            if (user == null) {
-                unauthorized(request);
-                return;
-            }
-
-            request.pause();
-            attachmentService.addAttachment(messageId, user, request, defaultResponseHandler(request));
-        });
-    }
 
     /**
      * Download an attachment
