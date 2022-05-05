@@ -16,10 +16,12 @@
  */
 
 import {$, _, Document, idiom as lang, moment, ng, notify, skin, template, angular, workspace} from "entcore";
-import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, REGEXLIB, RECEIVER_TYPE, Group, Users} from "../model";
+import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, REGEXLIB, RECEIVER_TYPE, Group, Users, Attachment} from "../model";
+
 
 import {Preference} from "../model/preferences";
 import http from "../model/http";
+
 
 declare const window: any;
 
@@ -78,6 +80,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.displayLightBox = {
             readMail : false
         };
+        $scope.isFileLoading = false;
         route({
             readMail: async function(params) {
                 await initPreference();
@@ -980,18 +983,15 @@ export let zimbraController = ng.controller("ZimbraController", [
             );
         };
 
-        $scope.postAttachments = async () => {
-            const mail = $scope.state.newItem as Mail;
-            if (!mail.id) {
-                await Zimbra.instance.folders.draft.saveDraft(mail);
-                await mail.postAttachments($scope);
-            } else {
-                await mail.postAttachments($scope);
-            }
-        };
-
         $scope.deleteAttachment = function(event, attachment, mail) {
-            mail.deleteAttachment(attachment);
+            const response = mail.deleteAttachment(attachment);
+
+            this.attachments = response.data.attachments;
+            this.attachments.map(attachment => {
+                attachment.filename = decodeURI(attachment.filename);
+            })
+            $scope.isFileLoading = false;
+            $scope.$apply();
         };
 
         $scope.quota = quota;
@@ -1116,23 +1116,22 @@ export let zimbraController = ng.controller("ZimbraController", [
                 $scope.$apply();
             }
         };
+
         $scope.uploadAttachment = async (attachment) => {
-            let {data} = await http.get(`workspace/document/base64/${attachment._id}`, {baseURL: '/'});
-            const u8arr = extractedFileBinary(data.base64File);
-            let file = new File([u8arr], attachment.metadata.filename, {type: attachment.metadata["content-type"] });
-            $scope.state.newItem.newAttachments = [];
-            $scope.state.newItem.newAttachments.push(file);
-            $scope.postAttachments();
-            $scope.displayLightBox.attachment = false;
-        }
-        function extractedFileBinary(base64) {
-            const byteCharacters = atob(base64);
-            let n = byteCharacters.length;
-            const u8arr = new Uint8Array(n);
-            while (n--) {
-                u8arr[n] = byteCharacters.charCodeAt(n);
+            $scope.isFileLoading = true;
+            $scope.$apply();
+            const mail = $scope.state.newItem as Mail;
+            if (!mail.id) {
+                await Zimbra.instance.folders.draft.saveDraft(mail);
             }
-            return u8arr;
+
+            let newAttachment = new Attachment(attachment);
+            mail.attachments.push(newAttachment);
+
+            $scope.displayLightBox.attachment = false;
+            $scope.$apply();
+
+            await mail.postAttachment($scope, newAttachment);
         }
 
         $scope.cancelDelete = () => {

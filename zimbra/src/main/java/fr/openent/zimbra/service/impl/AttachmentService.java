@@ -16,29 +16,47 @@
  */
 
 package fr.openent.zimbra.service.impl;
+import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.HttpClientHelper;
+import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Utils;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.file.OpenOptions;
+import io.vertx.core.file.impl.FileSystemImpl;
 import io.vertx.core.http.*;
+import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.net.ProxyOptions;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.streams.Pump;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.WriteStream;
+import io.vertx.ext.web.client.WebClientOptions;
 import org.entcore.common.user.UserInfos;
 import io.vertx.core.json.JsonObject;
 
 import io.vertx.core.logging.Logger;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import io.vertx.core.file.FileSystem;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.regex.Pattern;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.wseduc.webutils.Utils.handlerToAsyncHandler;
 
 public class AttachmentService {
 
@@ -49,9 +67,10 @@ public class AttachmentService {
     private final String zimbraUrlAttachment;
     private final String zimbraUrlUpload;
     private final Queue<HttpClient> httpClientPool;
+    private final WebClient client;
 
     public AttachmentService( SoapZimbraService soapService, MessageService messageService,
-                              Vertx vertx, JsonObject config) {
+                              Vertx vertx, JsonObject config, WebClient webClient) {
         String zimbraUri = config.getString("zimbra-uri", "");
         this.zimbraUrlAttachment = zimbraUri + "/service/home/~/?auth=co";
         this.zimbraUrlUpload = zimbraUri + "/service/upload?fmt=extended,raw";
@@ -59,6 +78,7 @@ public class AttachmentService {
         this.soapService = soapService;
         this.messageService = messageService;
         this.httpClientPool = new LinkedList<>();
+        this.client = webClient;
     }
 
     /**
@@ -126,11 +146,12 @@ public class AttachmentService {
      * Dump one request into another.
      * Used to transfer attachment from Zimbra to Front, or Front to Zimbra
      * @param httpClient HttpClient used for pump, can be closed afterwards
+     *
      * @param inRequest Request containing the data
      * @param outRequest Request that must be filled
      */
     private void pumpRequests(HttpClient httpClient, ReadStream<Buffer> inRequest, WriteStream<Buffer> outRequest) {
-            Pump pump = Pump.pump(inRequest, outRequest);
+        Pump pump = Pump.pump(inRequest, outRequest);
             outRequest.exceptionHandler( event -> log.error(event.getMessage()) );
             inRequest.exceptionHandler( event -> log.error(event.getMessage()) );
             inRequest.endHandler(event -> {
@@ -138,6 +159,58 @@ public class AttachmentService {
                 httpClientPool.add(httpClient);
             });
             pump.start();
+    }
+
+    /**
+     * Pump data from frontRequest to Zimbra, then update existing draft with attachment.
+     * Send back new draft content to front
+     * @param messageId Message Id
+     * @param user User Infos
+     * @param buffer Attachment as a stream
+     * @param document Document as a JsonObject
+     * @param handler Final handler
+     */
+    public void addAttachment(String messageId,
+                              UserInfos user,
+                              ReadStream<Buffer> buffer,
+                              JsonObject document,
+                              Handler<Either<String, JsonObject>> handler) {
+        soapService.getUserAuthToken(user, authTokenResponse -> {
+            if(authTokenResponse.isLeft()) {
+                handler.handle(authTokenResponse);
+                return;
+            }
+            String authToken = authTokenResponse.right().getValue().getString(Field.AUTH_TOKEN);
+            String filename = null;
+            try {
+                filename = encodeFileName(document.getString(Field.NAME));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            this.client.postAbs(zimbraUrlUpload)
+                    .putHeader(Field.COOKIE,"ZM_AUTH_TOKEN=" + authToken)
+                    .putHeader(Field.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                    .putHeader(Field.CONTENT_TYPE, document.getJsonObject("metadata").getString(Field.CONTENT_TYPE))
+                    .sendStream(buffer, ar -> {
+                        if(ar.failed()){
+                            log.error("An error has occured while fetching the attachment");
+                        } else {
+                            HttpResponse<Buffer> response = ar.result();
+                            if (response.statusCode() == 200) {
+                                    if (!(Pattern.compile("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$")).matcher(response.bodyAsString()).find()) {
+                                        JsonObject res = new JsonObject()
+                                                .put("code", "mail.INVALID_REQUEST");
+                                        handler.handle(new Either.Left<>(res.encode()));
+                                        return;
+                                    }
+                                    String aid = response.bodyAsString().replaceAll("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$", "$1");
+                                    updateDraft(messageId, aid, user, null, handler);
+                            } else {
+                                handler.handle(new Either.Left<>(response.statusMessage()));
+                            }
+                        }
+                    });
+        });
     }
 
     /**
@@ -149,7 +222,7 @@ public class AttachmentService {
      * @param requestFront Request from front with attachment data
      * @param handler Final handler
      */
-    public void addAttachment(String messageId,
+    public void addAttachmentBuffer(String messageId,
                               UserInfos user,
                               HttpServerRequest requestFront,
                               Handler<Either<String, JsonObject>> handler) {
@@ -182,8 +255,8 @@ public class AttachmentService {
                 }
             });
             requestZimbra.exceptionHandler( err -> {
-               log.error("Error when uploading attachment : ", err);
-               handler.handle(new Either.Left<>("Error when uploading attachment"));
+                log.error("Error when uploading attachment : ", err);
+                handler.handle(new Either.Left<>("Error when uploading attachment"));
             });
             requestZimbra.setChunked(true)
                     .putHeader("Content-Disposition", cdHeader)
@@ -192,6 +265,10 @@ public class AttachmentService {
             pumpRequests(httpClient, requestFront, requestZimbra);
         });
 
+    }
+
+    private static String encodeFileName(String fileName) throws UnsupportedEncodingException {
+        return URLEncoder.encode(fileName, "UTF-8").replace("+", "%20");
     }
 
     /**
@@ -296,6 +373,19 @@ public class AttachmentService {
                 });
             }
         });
+    }
+
+    public void getDocument(EventBus eb, String idImage, Handler<Either<String, JsonObject>> handler) {
+        JsonObject action = new JsonObject().put("action", "getDocument").put("id", idImage);
+        String WORKSPACE_BUS_ADDRESS = "org.entcore.workspace";
+        eb.send(WORKSPACE_BUS_ADDRESS, action, handlerToAsyncHandler(message -> {
+            JsonObject body = message.body();
+            if (!"ok".equals(body.getString("status"))) {
+                handler.handle(new Either.Left<>("[AttachmentService@getImage] An error occured: inexistant document id"));
+            } else {
+                handler.handle(new Either.Right<>(message.body().getJsonObject("result")));
+            }
+        }));
     }
 
 }
