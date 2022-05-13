@@ -1,3 +1,4 @@
+DROP TABLE zimbra.mail_returned;
 CREATE TABLE zimbra.mail_returned
 (
     id serial NOT NULL,

@@ -262,14 +262,14 @@ public class SqlDbMailService extends DbMailService {
      */
     public void insertReturnedMail(JsonObject returnedMail, Handler<Either<String, JsonObject>> handler) {
         String query = "INSERT INTO " + this.returnedMailTable +
-                "(user_id, user_name, user_mail, mail_id, structure_id, object, number_message, recipient, statut, comment, mail_date)" +
+                "(user_id, user_name, user_mail, mail_id, structures, object, number_message, recipient, statut, comment, mail_date)" +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) returning id;";
         JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
                 .add(returnedMail.getString("userId"))
                 .add(returnedMail.getString("userName"))
                 .add(returnedMail.getString("userMail"))
                 .add(returnedMail.getString("mailId"))
-                .add(returnedMail.getString("structureId"))
+                .add(returnedMail.getJsonArray("structureIds"))
                 .add(returnedMail.getString("subject"))
                 .add(returnedMail.getInteger("nb_messages"))
                 .add(returnedMail.getJsonArray("to"))
@@ -285,9 +285,10 @@ public class SqlDbMailService extends DbMailService {
      * @param idStructure Id of a structure
      */
     public void getMailReturned(String idStructure, Handler<Either<String, JsonArray>> handler) {
-        String query = "SELECT *" +
-                " FROM " + this.returnedMailTable +
-                " WHERE structure_id = ?" +
+        String query = "SELECT mr.*" +
+                " FROM " + this.returnedMailTable + " AS mr, " +
+                " json_to_recordset(mr.structures) AS structures(id text)" +
+                " WHERE structures.id = ?" +
                 " ORDER BY date DESC;";
         JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
                 .add(idStructure);

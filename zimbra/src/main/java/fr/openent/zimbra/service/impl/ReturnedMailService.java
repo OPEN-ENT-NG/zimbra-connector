@@ -5,7 +5,10 @@ import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.service.DbMailService;
 import fr.wseduc.webutils.Either;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
@@ -17,6 +20,9 @@ import org.entcore.common.user.UserUtils;
 
 import java.util.*;
 
+import static fr.openent.zimbra.helper.FutureHelper.handlerJsonObject;
+import static fr.openent.zimbra.model.constant.FrontConstants.*;
+import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 import static fr.wseduc.webutils.http.Renders.renderJson;
 
 
@@ -42,8 +48,8 @@ public class ReturnedMailService {
     }
 
     public void returnMails(UserInfos user, JsonObject body, HttpServerRequest request, Handler<Either<String, JsonObject>> result) {
-        String messagesId = body.getString("id");
-        String comment = body.getString("comment");
+        String messagesId = body.getString(MESSAGE_ID);
+        String comment = body.getString(ZIMBRA_COMMENT);
         // Etape 1 : récupérer le message à supprimer
         messageService.getMessage(messagesId, user, getMail -> {
             if (getMail.isRight()) {
@@ -55,16 +61,54 @@ public class ReturnedMailService {
                         dbMailService.insertReturnedMail(returnedMail, insertMailLog -> {
                             if (insertMailLog.isRight()) {
                                 // Etape 4 : Récuperer les ADML pour leur envoyer la notification de validation
-                                final List<String> recipients = new ArrayList<>();
-                                userService.getLocalAdministrators(user.getStructures().get(0), admins -> {
-                                    if (admins != null) {
-                                        for (Object adminObj : admins) {
-                                            JsonObject userAdml = (JsonObject) adminObj;
-                                            recipients.add(userAdml.getString("id"));
+                                final HashMap<String, List<String>> recipients = new HashMap<String, List<String>>();
+                                List<Future> promises = new ArrayList<>();
+                                List<String> structures = user.getStructures();
+                                for (int i = 0; i < structures.size(); i++) {
+                                    Promise<JsonArray> getADML = Promise.promise();
+                                    int finalI = i;
+                                    userService.getLocalAdministrators(structures.get(i), event -> {
+                                        if (event.isRight()) {
+                                            JsonArray admins = event.right().getValue();
+                                            for (Object admin : admins) {
+                                                JsonObject userAdml = (JsonObject) admin;
+                                                userAdml.put(ZIMBRA_ID_STRUCTURE, structures.get(finalI));
+                                            }
+                                            getADML.complete(admins);
+                                        } else {
+                                            log.error(event.left().getValue());
+                                            getADML.fail(event.left().getValue());
                                         }
-                                        // Etape 5 : Envoie de la notification aux ADML
-                                        notificationService.sendReturnMailNotification(user, mail.getString("subject"), recipients, request, notifEvent -> {
-                                            if (notifEvent.isRight()) {
+                                    });
+                                    promises.add(getADML.future());
+                                }
+                                CompositeFuture.all(promises).onComplete(event -> {
+                                    List<JsonArray> admins = event.result().list();
+                                    if (admins.size() > 0) {
+                                        for (JsonArray adminsArray : admins) {
+                                            for (Object adminObj : adminsArray) {
+                                                JsonObject userAdml = (JsonObject) adminObj;
+                                                String idStructure = userAdml.getString(ZIMBRA_ID_STRUCTURE);
+                                                String idUser = userAdml.getString(MESSAGE_ID);
+                                                if (recipients.get(idStructure) == null) {
+                                                    List<String> ids = new ArrayList<>();
+                                                    ids.add(idUser);
+                                                    recipients.put(idStructure, ids);
+                                                } else {
+                                                    recipients.get(idStructure).add(idUser);
+                                                }
+                                            }
+                                        }
+                                        List<Future> promisesNotif = new ArrayList<>();
+                                        for (int i = 0; i < structures.size(); i++) {
+                                            String idStructure = structures.get(i);
+                                            Promise<JsonObject> sendNotifFuture = Promise.promise();
+                                            notificationService.sendReturnMailNotification(user, mail.getString(MESSAGE_SUBJECT), idStructure, recipients.get(idStructure), request, handlerJsonObject(sendNotifFuture));
+                                            promisesNotif.add(sendNotifFuture.future());
+                                        }
+                                        CompositeFuture.all(promisesNotif).onComplete(notifEvent -> {
+                                            // Etape 5 : Envoie de la notification aux ADML
+                                            if (notifEvent.succeeded()) {
                                                 result.handle(new Either.Right<>(new JsonObject()));
                                             } else {
                                                 result.handle(new Either.Left<>("[Zimbra] returnMails : Error while sending notifications to ADML"));
@@ -132,8 +176,8 @@ public class ReturnedMailService {
                 JsonArray returnedMails = returnedMailsEvent.right().getValue();
                 for (int i = 0; i < mails.size(); i++) {
                     for (int j = 0; j < returnedMails.size(); j++) {
-                        if (mails.getJsonObject(i).getString("id").equals(returnedMails.getJsonObject(j).getString("mail_id"))) {
-                            mails.getJsonObject(i).put("returned", returnedMails.getJsonObject(j).getString("statut"));
+                        if (mails.getJsonObject(i).getString(MESSAGE_ID).equals(returnedMails.getJsonObject(j).getString("mail_id"))) {
+                            mails.getJsonObject(i).put("returned", returnedMails.getJsonObject(j).getString(ZIMBRA_STATUT));
                         }
                     }
                 }
@@ -154,8 +198,8 @@ public class ReturnedMailService {
                 JsonArray returnedMailsInProgress = new JsonArray();
                 for (int i = 0; i < returnedMails.size(); i++) {
                     JsonObject returnedMail = new JsonObject()
-                            .put("id", returnedMails.getJsonObject(i).getLong("id"))
-                            .put("statut", "PROGRESS");
+                            .put(MESSAGE_ID, returnedMails.getJsonObject(i).getLong(MESSAGE_ID))
+                            .put(ZIMBRA_STATUT, "PROGRESS");
                     returnedMailsInProgress.add(returnedMail);
                 }
                 this.updateStatus(returnedMailsInProgress, updateStatutInProgressEvent -> {
@@ -184,19 +228,18 @@ public class ReturnedMailService {
 
     private void recursiveDeleteMailLoop(JsonArray returnedMails, JsonArray returnedMailsStatut, int index, Handler<Either<String, JsonObject>> result) {
         this.addDeleteFutures(returnedMails.getJsonObject(index), event -> {
-            Long returned_mail_id = returnedMails.getJsonObject(index).getLong("id");
-            // TODO : mettre cron au cas ou prod crash ou relance donc Zimbra.java
+            Long returned_mail_id = returnedMails.getJsonObject(index).getLong(MESSAGE_ID);
             if (event.isRight()) {
                 returnedMailsStatut
                         .add(new JsonObject()
-                                .put("id", returned_mail_id)
-                                .put("statut", "REMOVED"));
+                                .put(MESSAGE_ID, returned_mail_id)
+                                .put(ZIMBRA_STATUT, "REMOVED"));
                 // Etape 3 : Une fois que nous avons parcouru tout les mails, on supprime les mails de la boîte de reception et on met à jour leur statut
             } else {
                 returnedMailsStatut
                         .add(new JsonObject()
-                                .put("id", returned_mail_id)
-                                .put("statut", "ERROR"));
+                                .put(MESSAGE_ID, returned_mail_id)
+                                .put(ZIMBRA_STATUT, "ERROR"));
             }
             if (index == returnedMails.size() - 1) {
                 this.updateStatus(returnedMailsStatut, result);
@@ -208,7 +251,7 @@ public class ReturnedMailService {
     }
 
     private void addDeleteFutures(JsonObject returnedMail, Handler<Either<String, JsonObject>> result) {
-        JsonArray userIds = new JsonArray(returnedMail.getString("recipient"));
+        JsonArray userIds = new JsonArray(returnedMail.getString(NOTIF_RECIPIENT));
         int j = 0;
         this.recursiveDeleteMail(userIds, j, returnedMail, deleteEvent -> {
             if (deleteEvent.isRight()) {
@@ -245,7 +288,7 @@ public class ReturnedMailService {
         dbMailService.updateStatut(returnedMailsStatuts, updateStatutEvent -> {
             if (updateStatutEvent.isRight()) {
                 for (int i = 0; i < returnedMailsStatuts.size(); i++) {
-                    returnedMailsStatuts.getJsonObject(i).put("date", updateStatutEvent.right().getValue().getJsonObject(0).getString("date"));
+                    returnedMailsStatuts.getJsonObject(i).put(MESSAGE_DATE, updateStatutEvent.right().getValue().getJsonObject(0).getString(MESSAGE_DATE));
                 }
                 result.handle(new Either.Right<>(new JsonObject()));
             } else {
@@ -259,7 +302,7 @@ public class ReturnedMailService {
 
     private void deleteMail(JsonObject userInfos, JsonObject returnedMail, Handler<Either<String, JsonObject>> handler) {
         // Etape 1 : on récupère les infos de l'utilisateur
-        String userId = userInfos.getString("id");
+        String userId = userInfos.getString(MESSAGE_ID);
         UserUtils.getUserInfos(eb, userId, user -> {
             messageService.retrieveMailFromZimbra(returnedMail, userInfos, mailIds -> {
                 if (mailIds.isRight()) {
@@ -295,33 +338,35 @@ public class ReturnedMailService {
 
     private void getReturnedMailsInfos(JsonObject mail, String comment, UserInfos
             user, Handler<Either<String, JsonObject>> result) {
-        String mail_date = new java.text.SimpleDateFormat("MM/dd/yyyy")
-                .format(new java.util.Date(mail.getLong("date")));
+        String mail_date = new java.text.SimpleDateFormat(ZIMBRA_FORMAT_DATE)
+                .format(new java.util.Date(mail.getLong(MESSAGE_DATE)));
         JsonObject returnedMail = new JsonObject();
         // Etape 2 : récupérer la liste des utilisateurs des groupes
-        JsonArray recipients = mail.getJsonArray("to").addAll(mail.getJsonArray("cc")).addAll(mail.getJsonArray("bcc"));
+        JsonArray recipients = mail.getJsonArray(MAIL_TO)
+                .addAll(mail.getJsonArray(MAIL_CC))
+                .addAll(mail.getJsonArray(MAIL_BCC));
         userService.getUsers(recipients, recipients, usersFromGroup -> {
             if (usersFromGroup.isRight()) {
                 Set<JsonObject> setUser = new HashSet<>();
                 JsonArray usersGroup = usersFromGroup.right().getValue();
                 for (int i = 0; i < usersGroup.size(); i++) {
                     JsonObject userInfo = new JsonObject()
-                            .put("id", usersGroup.getJsonObject(i).getString("id"))
-                            .put("mail", usersGroup.getJsonObject(i).getString("login") + "@" + Zimbra.domain);
+                            .put(MESSAGE_ID, usersGroup.getJsonObject(i).getString(MESSAGE_ID))
+                            .put(ZIMBRA_MAIL, usersGroup.getJsonObject(i).getString(ZIMBRA_LOGIN) + "@" + Zimbra.domain);
                     setUser.add(userInfo);
                 }
                 JsonArray to = new JsonArray(Arrays.asList(setUser.toArray()));
                 returnedMail
-                        .put("subject", mail.getString("subject"))
-                        .put("userId", user.getUserId())
-                        .put("userName", user.getLastName() + " " + user.getFirstName())
-                        .put("userMail", user.getLogin() + "@" + Zimbra.domain)
-                        .put("mailId", mail.getString("id"))
-                        .put("structureId", user.getStructures().get(0))
-                        .put("nb_messages", to.size())
-                        .put("to", to)
-                        .put("mail_date", mail_date)
-                        .put("comment", comment);
+                        .put(MESSAGE_SUBJECT, mail.getString(MESSAGE_SUBJECT))
+                        .put(ZIMBRA_USER_ID, user.getUserId())
+                        .put(ZIMBRA_USER_NAME, user.getLastName() + " " + user.getFirstName())
+                        .put(ZIMBRA_USER_MAIL, user.getLogin() + "@" + Zimbra.domain)
+                        .put(ZIMBRA_MAIL_ID, mail.getString(MESSAGE_ID))
+                        .put(ZIMBRA_ID_STRUCTURES, formatStructures(user.getStructures()))
+                        .put(ZIMBRA_NB_MESSAGES, to.size())
+                        .put(MAIL_TO, to)
+                        .put(ZIMBRA_MAIL_DATE, mail_date)
+                        .put(ZIMBRA_COMMENT, comment);
                 result.handle(new Either.Right<>(returnedMail));
             } else {
                 result.handle(new Either.Left<>("[Zimbra] getReturnedMailsInfos : Error while getting users id from group id"));
@@ -335,7 +380,7 @@ public class ReturnedMailService {
         List<String> mailIds = new ArrayList<>();
         JsonArray mails = event.right().getValue();
         for (int i = 0; i < mails.size(); i++) {
-            mailIds.add(mails.getJsonObject(i).getString("id"));
+            mailIds.add(mails.getJsonObject(i).getString(MESSAGE_ID));
         }
         if (user != null && mailIds.size() > 0) {
             this.getMailReturnedByMailsIdsAndUser(mailIds, mails, user.getUserId(), returnedMailsEvent -> {
@@ -353,7 +398,7 @@ public class ReturnedMailService {
     public void deleteMailsProgress(Handler<Either<String, JsonObject>> handler) {
         this.getMailReturnedByStatut("PROGRESS", returnedMailsIdsEvent -> {
             if (returnedMailsIdsEvent.isRight()) {
-                List<String> returnedMailsIds = JsonHelper.extractValueFromJsonObjects(returnedMailsIdsEvent.right().getValue(), "id");
+                List<String> returnedMailsIds = JsonHelper.extractValueFromJsonObjects(returnedMailsIdsEvent.right().getValue(), MESSAGE_ID);
                 this.deleteMessages(returnedMailsIds, deleteMailEvent -> {
                     if (deleteMailEvent.isRight()) {
                         handler.handle(new Either.Right(deleteMailEvent.right().getValue()));
@@ -367,5 +412,16 @@ public class ReturnedMailService {
                 log.error("[Zimbra] deleteMailsProgress : Failed to retrieve mail in progress");
             }
         });
+    }
+
+    private JsonArray formatStructures(List<String> structures) {
+        JsonArray structuresArray = new JsonArray();
+        for (int i = 0; i < structures.size(); i++) {
+            String structureId = structures.get(i);
+            JsonObject structure = new JsonObject().
+                    put(MESSAGE_ID, structureId);
+            structuresArray.add(structure);
+        }
+        return structuresArray;
     }
 }

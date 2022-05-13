@@ -539,14 +539,14 @@ public class UserService {
         eb.send(DIRECTORY_ADDRESS, action, handlerToAsyncHandler(validResultHandler(handler)));
     }
 
-    public void getLocalAdministrators(String structure, final Handler<JsonArray> handler) {
+    public void getLocalAdministrators(String structure, Handler<Either<String, JsonArray>> handler) {
         JsonObject action = new JsonObject()
                 .put("action", "list-adml")
                 .put("structureId", structure);
         eb.send(DIRECTORY_ADDRESS, action, new Handler<AsyncResult<Message<JsonArray>>>() {
             @Override
             public void handle(AsyncResult<Message<JsonArray>> res) {
-                handler.handle(res.result().body());
+                handler.handle(new Either.Right<>(res.result().body()));
             }
         });
     }

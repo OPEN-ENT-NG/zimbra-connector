@@ -75,6 +75,9 @@ public class FrontConstants {
 
     public static final String CONFIG_SAVE_DRAFT_AUTO_TIME = "configSaveDraftAutoTime";
 
+    public static final String NOTIF_RECIPIENT = "recipient";
+
+
 
     // Redirection Constants
     public static final String REDIR_MODE = "mode";

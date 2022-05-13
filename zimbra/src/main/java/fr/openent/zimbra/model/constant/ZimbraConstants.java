@@ -30,7 +30,7 @@ public class ZimbraConstants {
     public static final String PATH_EMAILED_CONTACTS = "/Emailed Contacts";
 
     public static final String FOLDER_ROOT_ID = "1";
-    public static final String FOLDER_INBOX_ID= "2";
+    public static final String FOLDER_INBOX_ID = "2";
     public static final String FOLDER_OUTBOX_ID = "5";
     public static final String FOLDER_DRAFT_ID = "6";
     public static final String FOLDER_TRASH_ID = "3";
@@ -78,7 +78,6 @@ public class ZimbraConstants {
 
 
     public static final String ATTR_MAIL_QUOTA = "zimbraMailQuota";
-
 
 
     public static final String MSG_EMAILS = "e";
@@ -218,4 +217,21 @@ public class ZimbraConstants {
     public static final String SEARCH_NEST_RESULT = "nest";
 
     public static final String SEARCH_QUERY_ALL = "*";
+
+    //Return Mail Service
+    public static final String ZIMBRA_ID_STRUCTURE = "structureId";
+    public static final String ZIMBRA_FORMAT_DATE = "MM/dd/yyyy";
+    public static final String ZIMBRA_STATUT = "statut";
+    public static final String ZIMBRA_USER_ID = "userId";
+    public static final String ZIMBRA_USER_NAME = "userName";
+    public static final String ZIMBRA_USER_MAIL = "userMail";
+    public static final String ZIMBRA_MAIL_ID = "mailId";
+    public static final String ZIMBRA_ID_STRUCTURES = "structureIds";
+    public static final String ZIMBRA_NB_MESSAGES = "nb_messages";
+    public static final String ZIMBRA_MAIL_DATE = "mail_date";
+    public static final String ZIMBRA_COMMENT = "comment";
+    public static final String ZIMBRA_MAIL = "mail";
+    public static final String ZIMBRA_LOGIN = "login";
+
+
 }

@@ -111,16 +111,16 @@ public class NotificationService {
         }));
     }
 
-    public void sendReturnMailNotification(UserInfos user, String subject, List<String> recipient, HttpServerRequest request, Handler<Either<String, JsonObject>> handler) {
+    public void sendReturnMailNotification(UserInfos user, String subject, String idStructure, List<String> recipient, HttpServerRequest request, Handler<Either<String, JsonObject>> handler) {
         JsonObject params = new JsonObject()
                 .put("user", user.getLastName() + " " + user.getFirstName())
                 .put("subject", subject)
-                .put("adminUri", "/admin/" + user.getStructures().get(0) +"/management/zimbra")
+                .put("adminUri", "/admin/" + idStructure +"/management/zimbra")
                 .put("pushNotif", new JsonObject().put("title", "push.notif.zimbra.delete.request").put("body", ""));
 
 
         timelineHelper.notifyTimeline(request, "messagerie.return-message",
-                user, recipient, params);
+                user, recipient, null, null, params, true);
         handler.handle(new Either.Right<>(new JsonObject()));
     }
 
