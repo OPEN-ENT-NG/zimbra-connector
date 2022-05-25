@@ -10,7 +10,11 @@
     "typeRoots": [
       "node-modules/@types"
     ],
-    "types": ["core-js"]
+    "types": [
+      "jquery",
+      "core-js",
+      "jest"
+    ]
   },
   "exclude": [
     "build", "node_modules"
