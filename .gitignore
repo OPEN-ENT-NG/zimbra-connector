@@ -30,3 +30,4 @@ classes
 */rev-manifest.json
 */out
 /coverage/front/cobertura-coverage.xml
+node_modules
