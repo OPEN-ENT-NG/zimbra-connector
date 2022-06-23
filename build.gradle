@@ -62,6 +62,7 @@ subprojects {
   dependencies {
     compileOnly "io.vertx:vertx-core:$vertxVersion"
     compile "io.vertx:vertx-circuit-breaker:$vertxVersion"
+    compile "io.vertx:vertx-web-client:$vertxVersion"
     compile "org.entcore:common:$entCoreVersion"
     testCompile "io.vertx:vertx-unit:$vertxVersion"
     testCompile "org.junit.jupiter:junit-jupiter-engine:$junitVersion"

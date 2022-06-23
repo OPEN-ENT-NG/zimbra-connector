@@ -28,6 +28,7 @@ import fr.wseduc.webutils.email.EmailSender;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.WebClient;
 import org.entcore.common.cache.CacheService;
 import org.entcore.common.cache.RedisCacheService;
 import org.entcore.common.email.EmailFactory;
@@ -72,6 +73,7 @@ public class ServiceManager {
     private SynchroMailerService synchroMailerService;
     private SynchroAddressBookService synchroAddressBookService;
     private Neo4jAddrbookService neo4jAddrbookService;
+    private WebClient webClient;
 
     private SynchroLauncher synchroLauncher;
 
@@ -92,6 +94,8 @@ public class ServiceManager {
         String redisConfig = (String) vertx.sharedData().getLocalMap("server").get("redisConfig");
         CacheService cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient()) : null;
 
+        this.webClient = WebClient.create(vertx, HttpClientHelper.getWebClientOptions());
+
         this.slackService = new SlackService(vertx, appConfig.getSlackConfiguration());
 
         this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
@@ -109,7 +113,7 @@ public class ServiceManager {
         this.signatureService = new SignatureService(userService, soapService);
         this.messageService = new MessageService(soapService, folderService,
                 dbMailServiceApp, userService, synchroUserService);
-        this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig);
+        this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig, webClient);
         this.notificationService = new NotificationService(pathPrefix, timelineHelper);
         this.communicationService = new CommunicationService();
         this.groupService = new GroupService(soapService, dbMailServiceApp, synchroUserService);
@@ -268,4 +272,8 @@ public class ServiceManager {
     public SqlAddressBookService getSqlAddressBookService() { return sqlAddressBookService; }
 
     public ReturnedMailService getReturnedMailService() { return returnedMailService; }
+
+    public WebClient getWebClient() {
+        return webClient;
+    }
 }

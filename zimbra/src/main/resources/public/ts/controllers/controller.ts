@@ -15,11 +15,27 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import {$, _, Document, idiom as lang, moment, ng, notify, skin, template, angular} from "entcore";
-import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, REGEXLIB, RECEIVER_TYPE, Group, Users} from "../model";
+import {$, _, angular, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
+import {
+    Attachment,
+    Group,
+    Mail,
+    quota,
+    RECEIVER_TYPE,
+    REGEXLIB,
+    SCREENS,
+    SystemFolder,
+    User,
+    UserFolder,
+    Users,
+    ViewMode,
+    Zimbra
+} from "../model";
+
 
 import {Preference} from "../model/preferences";
 import http from "../model/http";
+
 
 declare const window: any;
 
@@ -73,6 +89,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.displayLightBox = {
             readMail : false
         };
+        $scope.isFileLoading = false;
         route({
             readMail: async function(params) {
                 await initPreference();
@@ -975,32 +992,22 @@ export let zimbraController = ng.controller("ZimbraController", [
             );
         };
 
-        $scope.postAttachments = async () => {
-            const mail = $scope.state.newItem as Mail;
-            if (!mail.id) {
-                await Zimbra.instance.folders.draft.saveDraft(mail);
-                await mail.postAttachments($scope);
-            } else {
-                await mail.postAttachments($scope);
-            }
-        };
-
-        $scope.deleteAttachment = function(event, attachment, mail) {
-            mail.deleteAttachment(attachment);
+        $scope.deleteAttachment = async function (event, attachment, mail) {
+            await mail.deleteAttachment(attachment);
+            $scope.isFileLoading = false;
+            $scope.$apply();
         };
 
         $scope.quota = quota;
 
         $scope.countDraft = async (folderSource, folderTarget) => {
-            var draft =
-                folderSource.getName() === "DRAFT" ||
+            return folderSource.getName() === "DRAFT" ||
                 folderTarget.getName() === "DRAFT";
-            return draft;
         };
 
         $scope.emptyTrash = async () => {
             $scope.lightbox.show = true;
-            template.open("lightbox", "empty-trash");
+            await template.open("lightbox", "empty-trash");
         };
 
         $scope.removeTrashMessages = async () => {
@@ -1111,6 +1118,24 @@ export let zimbraController = ng.controller("ZimbraController", [
                 $scope.$apply();
             }
         };
+
+        $scope.uploadAttachment = async (attachment) => {
+            $scope.isFileLoading = true;
+            $scope.$apply();
+            const mail = $scope.state.newItem as Mail;
+            if (!mail.id) {
+                await Zimbra.instance.folders.draft.saveDraft(mail);
+            }
+
+            let newAttachment = new Attachment(attachment);
+            mail.attachments.push(newAttachment);
+
+            $scope.displayLightBox.attachment = false;
+            $scope.$apply();
+
+            await mail.postAttachment($scope, newAttachment);
+        }
+
         $scope.cancelDelete = () => {
             $scope.displayLightBox.folder = true;
             Zimbra.instance.currentFolder.deselectAll();

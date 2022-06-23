@@ -164,7 +164,6 @@
                 <i18n>attachments.loading</i18n>
             </h2>
             <hr class="line no-margin" />
-
             <div class="loading-list no-padding vertical-spacingm-twice">
                 <ul>
                     <li class="no-margin" ng-repeat="attachment in state.newItem.loadingAttachments">
@@ -181,7 +180,7 @@
 	</div>
 
     <!-- attachment list loaded -->
-    <div class="loading-list no-padding vertical-spacing-twice" ng-init="columnOrder = 'filename'" drop-files="state.newItem.newAttachments" on-drop="postAttachments()" ng-if="state.newItem.attachments.length">
+    <div class="loading-list no-padding vertical-spacing-twice" ng-init="columnOrder = 'filename'" ng-if="state.newItem.attachments.length">
         <ul>
             <li class="no-margin removable" ng-repeat="attachment in state.newItem.attachments | orderBy: columnOrder">
                 <div class="icon">
@@ -190,27 +189,38 @@
                 <div class="title">
                     [[attachment.filename]]
                 </div>
+
                 <div class="status-infos">
+                    <i ng-class="{
+                            loading: attachment.uploadStatus === 'loading',
+                            loaded: attachment.uploadStatus === 'loaded',
+                            failed: attachment.uploadStatus === 'failed'
+                    }"></i>
                     <span class="small-text reduce-block-four">[[formatSize(attachment.size)]]</span>
                 </div>
-                <a ng-href="[['message/'+state.newItem.id+'/attachment/'+attachment.id]]" class="fade-in-hover large-text reduce-block-four">
+                <a ng-href="[['message/'+state.newItem.id+'/attachment/'+attachment.id]]"
+                   class="fade-in-hover large-text reduce-block-four">
                     <i class="download-disk valid-color" tooltip="download"></i>
                 </a>
                 <i class="close"
                    ng-click="deleteAttachment($event, attachment, state.newItem)"
                    ng-disabled="(state.newItem.loadingAttachments && state.newItem.loadingAttachments.length > 0)"
+                   ng-if="!isFileLoading"
                    tooltip="remove.attachment">
                 </i>
             </li>
         </ul>
     </div>
 
-    <div class="right-magnet select-file nomargin" drop-files="state.newItem.newAttachments" on-drop="postAttachments()">
-        <div class="hidden-content">
-            <input type="file" multiple files-input-change="postAttachments()" ng-model="state.newItem.newAttachments">
-            <input type="text" data-display-file="">
-        </div>
-        <button class="flat-button file-button" translate="" content="add.attachment"></button>
+    <div class="right-magnet select-file ">
+        <button ng-click="showAttachmentLightbox()" ng-disabled="isFileLoading" class="flat-button file-button" translate="" content="add.attachment"></button>
+    </div>
+</article>
+
+<lightbox show="displayLightBox.attachment" on-close="displayLightBox.attachment = false">
+    <div ng-if="displayLightBox.attachment">
+        <media-library ng-model="attachmentOption.display.files"
+                       ng-change="uploadAttachment(attachmentOption.display.files);" file-format="'any'"></media-library>
     </div>
 
-</article>
+</lightbox>

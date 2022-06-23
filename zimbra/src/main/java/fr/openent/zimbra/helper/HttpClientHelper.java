@@ -24,9 +24,39 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.ProxyOptions;
+import io.vertx.ext.web.client.WebClientOptions;
 
 public class HttpClientHelper {
     private static final Logger log = LoggerFactory.getLogger(HttpClientHelper.class);
+
+    /**
+     * get default Proxy options
+     * @return proxyOptions
+     */
+    public static ProxyOptions proxyOptions() {
+        return new ProxyOptions()
+                .setHost(System.getProperty("httpclient.proxyHost"))
+                .setPort(Integer.parseInt(System.getProperty("httpclient.proxyPort")))
+                .setUsername(System.getProperty("httpclient.proxyUsername"))
+                .setPassword(System.getProperty("httpclient.proxyPassword"));
+    }
+
+    /**
+     * Create default WebClientOptions
+     * @return new WebClientOptions
+     */
+    public static WebClientOptions getWebClientOptions() {
+        WebClientOptions options = new WebClientOptions();
+        if (System.getProperty("httpclient.proxyHost") != null) {
+            options.setProxyOptions(HttpClientHelper.proxyOptions());
+        }
+        int maxPoolSize = Zimbra.appConfig.getHttpClientMaxPoolSize();
+        if(maxPoolSize > 0) {
+            options.setMaxPoolSize(maxPoolSize);
+        }
+        return options;
+    }
+
     /**
      * Create default HttpClient
      * @return new HttpClient
@@ -34,11 +64,7 @@ public class HttpClientHelper {
     public static HttpClient createHttpClient(Vertx vertx) {
         final HttpClientOptions options = new HttpClientOptions();
         if (System.getProperty("httpclient.proxyHost") != null) {
-            ProxyOptions proxyOptions = new ProxyOptions()
-                    .setHost(System.getProperty("httpclient.proxyHost"))
-                    .setPort(Integer.parseInt(System.getProperty("httpclient.proxyPort")))
-                    .setUsername(System.getProperty("httpclient.proxyUsername"))
-                    .setPassword(System.getProperty("httpclient.proxyPassword"));
+            ProxyOptions proxyOptions = proxyOptions();
             options.setProxyOptions(proxyOptions);
         }
         int maxPoolSize = Zimbra.appConfig.getHttpClientMaxPoolSize();

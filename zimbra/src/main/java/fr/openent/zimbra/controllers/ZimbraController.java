@@ -19,6 +19,7 @@ package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.filters.DevLevelFilter;
+import fr.openent.zimbra.filters.AccessibleDocFilter;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.ServiceManager;
@@ -47,17 +48,22 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.auth.User;
 import org.entcore.common.cache.Cache;
 import org.entcore.common.cache.CacheOperation;
 import org.entcore.common.cache.CacheScope;
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
+import org.entcore.common.storage.Storage;
+import org.entcore.common.storage.StorageFactory;
+import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.utils.Config;
 import org.vertx.java.core.http.RouteMatcher;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -80,13 +86,13 @@ public class ZimbraController extends BaseController {
     private RedirectionService redirectionService;
     private FrontPageService frontPageService;
     private AddressBookService addressBookService;
-
-
+    private Storage storage;
     private EventStore eventStore;
+
 
     private enum ZimbraEvent {ACCESS, CREATE}
 
-
+    private static final String WORKSPACE_BUS_ADDRESS = "org.entcore.workspace";
     private static final Logger log = LoggerFactory.getLogger(ZimbraController.class);
 
     @Override
@@ -95,6 +101,8 @@ public class ZimbraController extends BaseController {
         super.init(vertx, config, rm, securedActions);
 
         eventStore = EventStoreFactory.getFactory().getEventStore(Zimbra.class.getSimpleName());
+        storage = new StorageFactory(vertx, config).getStorage();
+
 
         ServiceManager serviceManager = ServiceManager.init(vertx, eb, pathPrefix);
 
@@ -506,6 +514,41 @@ public class ZimbraController extends BaseController {
                 });
             } else {
                 unauthorized(request);
+            }
+        });
+    }
+
+    @Post("message/:id/upload/:idAttachment")
+    @SecuredAction(value = "", type = ActionType.RESOURCE)
+    @ResourceFilter(AccessibleDocFilter.class)
+    public void uploadAttachment(final HttpServerRequest request) {
+        final String id = request.params().get("id");
+        final String idAttachment = request.params().get("idAttachment");
+        if (id == null || idAttachment == null) {
+            log.error("[Zimbra] uploadAttachment : Missing parameters");
+            badRequest(request);
+            return;
+        }
+        attachmentService.getDocument(eb, idAttachment, event -> {
+            if (event.isRight()) {
+                JsonObject document = event.right().getValue();
+                String file = document.getString("file");
+                storage.readStreamFile(file, buffer->{
+                    if(buffer==null){
+                        notFound(request);
+                    } else {
+                        UserUtils.getUserInfos(eb, request, user -> {
+                            if (user == null) {
+                                unauthorized(request);
+                                return;
+                            }
+                            attachmentService.addAttachment(id, user, buffer, document, defaultResponseHandler(request));
+                        });
+                    }
+                });
+            } else {
+                badRequest(request);
+                log.error("[Zimbra] uploadAttachment : Failed getDocument - " + event.left().getValue());
             }
         });
     }
@@ -1008,7 +1051,6 @@ public class ZimbraController extends BaseController {
         });
     }
 
-
     /**
      * Post an new attachment to a drafted message.
      * In case of success, return Json Object :
@@ -1031,7 +1073,7 @@ public class ZimbraController extends BaseController {
             }
 
             request.pause();
-            attachmentService.addAttachment(messageId, user, request, defaultResponseHandler(request));
+            attachmentService.addAttachmentBuffer(messageId, user, request, defaultResponseHandler(request));
         });
     }
 

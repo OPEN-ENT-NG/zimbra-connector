@@ -38,24 +38,20 @@ import {MAIL, SERVICE, QUOTA} from "./constantes";
 
 export class Attachment {
     file: File;
-    progress: {
-        total: number;
-        completion: number;
-    };
+    uploadStatus: string;
     id: string;
     filename: string;
     size: number;
     contentType: string;
 
-    constructor(file: File) {
+    constructor(file: any) {
         this.file = file;
-        this.progress = {
-            total: 100,
-            completion: 0
-        };
+        this.uploadStatus = "loading";
+        this.filename = file.metadata.filename;
+        this.size = file.metadata.size;
+        this.id = file._id;
     }
 }
-
 export class Mail implements Selectable {
     id: string;
     date: string;
@@ -403,6 +399,11 @@ export class Mail implements Selectable {
             Zimbra.instance.currentFolder.nbUnread--;
         }
         let response = await http.get("/zimbra/message/" + this.id);
+
+        response.data.attachments.map(attachment => {
+            attachment.filename = decodeURI((attachment.filename));
+        })
+
         Mix.extend(this, response.data);
         this.to = this.to.map(user =>
             Mix.castAs(User, {
@@ -474,66 +475,34 @@ export class Mail implements Selectable {
         await Zimbra.instance.folders.draft.mails.refresh();
     }
 
-    async postAttachments($scope) {
-        for (let i = 0; i < this.newAttachments.length; i++) {
-            const targetAttachment = this.newAttachments[i];
-            const attachmentObj = new Attachment(targetAttachment);
-            this.loadingAttachments.push(attachmentObj);
+    async postAttachment($scope, attachment: Attachment) {
+        attachment.uploadStatus = "loading";
 
-            const promise = http
-                .post(
-                    "message/" + this.id + "/attachment",
-                    attachmentObj.file,
-                    {
-                        headers: {
-                            "Content-Disposition":
-                                'attachment; filename="' +
-                                attachmentObj.file.name.replace(
-                                    /[\u00A0-\u9999<>\&]/gim,
-                                    function (i) {
-                                        return "&#" + i.charCodeAt(0) + ";";
-                                    }
-                                ) +
-                                '"'
-                        },
-                        onUploadProgress: (e: ProgressEvent) => {
-                            if (e.lengthComputable) {
-                                var percentage = Math.round(
-                                    (e.loaded * 100) / e.total
-                                );
-                                attachmentObj.progress.completion = percentage;
-                                $scope.$apply();
-                            }
-                        }
-                    }
-                )
-                .then(async response => {
-                    this.loadingAttachments.splice(
-                        this.loadingAttachments.indexOf(attachmentObj),
-                        1
-                    );
-                    this.attachments = response.data.attachments;
-                    quota.refresh();
-                    $scope.$apply();
-                })
-                .catch(e => {
-                    this.loadingAttachments.splice(
-                        this.loadingAttachments.indexOf(attachmentObj),
-                        1
-                    );
-                    sendNotificationErrorZimbra(e.response.data.error);
+        http
+            .post(`/zimbra/message/${$scope.state.newItem.id}/upload/${attachment.id}`)
+            .then(async response => {
+                this.attachments = response.data.attachments as Attachment[];
+                this.attachments.map(attach => {
+                    attach.filename = decodeURI(attach.filename);
+                    attach.uploadStatus = "loaded";
                 });
-            await Promise.resolve(promise);
-        }
+                $scope.isFileLoading = false;
+                $scope.$apply();
+            })
+            .catch(e => {
+                $scope.isFileLoading = false;
+                $scope.$apply();
+                sendNotificationErrorZimbra(e.response.data.error);
+            });
     }
 
     async deleteAttachment(attachment) {
         this.attachments.splice(this.attachments.indexOf(attachment), 1);
-        const response = await http.delete(
-            "message/" + this.id + "/attachment/" + attachment.id
-        );
+        const response = await http.delete("message/" + this.id + "/attachment/" + attachment.id);
         this.attachments = response.data.attachments;
-        quota.refresh();
+        this.attachments.map(attachment => {
+            attachment.filename = decodeURI(attachment.filename);
+        })
     }
 
     rewriteBody() {
@@ -723,7 +692,6 @@ export class Mails {
             "/zimbra/trash?" +
             toFormData({id: _.pluck(this.selection.selected, "id")})
         );
-        quota.refresh();
         this.selection.removeSelection();
     }
 
