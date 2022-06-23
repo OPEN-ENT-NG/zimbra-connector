@@ -524,6 +524,11 @@ public class ZimbraController extends BaseController {
     public void uploadAttachment(final HttpServerRequest request) {
         final String id = request.params().get("id");
         final String idAttachment = request.params().get("idAttachment");
+        if (id == null || idAttachment == null) {
+            log.error("[Zimbra] uploadAttachment : Missing parameters");
+            badRequest(request);
+            return;
+        }
         attachmentService.getDocument(eb, idAttachment, event -> {
             if (event.isRight()) {
                 JsonObject document = event.right().getValue();
@@ -532,14 +537,18 @@ public class ZimbraController extends BaseController {
                     if(buffer==null){
                         notFound(request);
                     } else {
-
-                        String userId = document.getString("owner");
-                        UserInfos user = new UserInfos();
-                        user.setUserId(userId);
-
-                        attachmentService.addAttachment(id, user, buffer, document, defaultResponseHandler(request));
+                        UserUtils.getUserInfos(eb, request, user -> {
+                            if (user == null) {
+                                unauthorized(request);
+                                return;
+                            }
+                            attachmentService.addAttachment(id, user, buffer, document, defaultResponseHandler(request));
+                        });
                     }
                 });
+            } else {
+                badRequest(request);
+                log.error("[Zimbra] uploadAttachment : Failed getDocument - " + event.left().getValue());
             }
         });
     }

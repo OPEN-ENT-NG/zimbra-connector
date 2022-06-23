@@ -500,6 +500,9 @@ export class Mail implements Selectable {
         this.attachments.splice(this.attachments.indexOf(attachment), 1);
         const response = await http.delete("message/" + this.id + "/attachment/" + attachment.id);
         this.attachments = response.data.attachments;
+        this.attachments.map(attachment => {
+            attachment.filename = decodeURI(attachment.filename);
+        })
     }
 
     rewriteBody() {

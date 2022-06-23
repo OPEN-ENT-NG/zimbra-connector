@@ -15,8 +15,22 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import {$, _, Document, idiom as lang, moment, ng, notify, skin, template, angular, workspace} from "entcore";
-import {ViewMode, Mail, quota, SCREENS, SystemFolder, User, UserFolder, Zimbra, REGEXLIB, RECEIVER_TYPE, Group, Users, Attachment} from "../model";
+import {$, _, angular, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
+import {
+    Attachment,
+    Group,
+    Mail,
+    quota,
+    RECEIVER_TYPE,
+    REGEXLIB,
+    SCREENS,
+    SystemFolder,
+    User,
+    UserFolder,
+    Users,
+    ViewMode,
+    Zimbra
+} from "../model";
 
 
 import {Preference} from "../model/preferences";
@@ -983,13 +997,8 @@ export let zimbraController = ng.controller("ZimbraController", [
             );
         };
 
-        $scope.deleteAttachment = function(event, attachment, mail) {
-            const response = mail.deleteAttachment(attachment);
-
-            this.attachments = response.data.attachments;
-            this.attachments.map(attachment => {
-                attachment.filename = decodeURI(attachment.filename);
-            })
+        $scope.deleteAttachment = async function (event, attachment, mail) {
+            await mail.deleteAttachment(attachment);
             $scope.isFileLoading = false;
             $scope.$apply();
         };
@@ -997,15 +1006,13 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.quota = quota;
 
         $scope.countDraft = async (folderSource, folderTarget) => {
-            var draft =
-                folderSource.getName() === "DRAFT" ||
+            return folderSource.getName() === "DRAFT" ||
                 folderTarget.getName() === "DRAFT";
-            return draft;
         };
 
         $scope.emptyTrash = async () => {
             $scope.lightbox.show = true;
-            template.open("lightbox", "empty-trash");
+            await template.open("lightbox", "empty-trash");
         };
 
         $scope.removeTrashMessages = async () => {
