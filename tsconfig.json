@@ -8,15 +8,21 @@
     "noImplicitAny": false,
     "lib": ["es2015", "dom"],
     "typeRoots": [
-      "node-modules/@types"
+      "node_modules/@types"
     ],
     "types": [
       "jquery",
       "core-js",
       "jest"
-    ]
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@zimbra/*": [
+        "zimbra/src/main/resources/public/ts/*"
+      ]
+    }
   },
   "exclude": [
-    "build", "node_modules"
+    "*/build", "node_modules"
   ]
 }

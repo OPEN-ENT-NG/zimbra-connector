@@ -10,8 +10,10 @@ module.exports = {
     ],
     "testPathIgnorePatterns": [
         "/node_modules/",
-        "<rootDir>/zimbra-connector/build/",
-        "<rootDir>/zimbra-connector/out/"
+        "<rootDir>/apizimbra/build/",
+        "<rootDir>/apizimbra/out/",
+        "<rootDir>/zimbra/build/",
+        "<rootDir>/zimbra/out/"
     ],
     "verbose": true,
     "testURL": "http://localhost/",
@@ -19,5 +21,8 @@ module.exports = {
     "coverageReporters": [
         "text",
         "cobertura"
-    ]
+    ],
+    "moduleNameMapper": {
+        "^@zimbra(.*)$": "<rootDir>/zimbra/src/main/resources/ts$1"
+    }
 };
