@@ -1,5 +1,5 @@
 {
-  "name": "fr.openent~zimbra~2.7.3",
+  "name": "fr.openent~zimbra~2.7-SNAPSHOT",
   "config": {
     "main" : "fr.openent.zimbra.Zimbra",
     "port" : 8104,

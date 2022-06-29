@@ -1,5 +1,5 @@
     {
-      "name": "fr.openent~apizimbra~2.7.3",
+      "name": "fr.openent~apizimbra~2.7-SNAPSHOT",
       "config": {
         "main" : "fr.openent.apizimbra.ApiZimbra",
         "port" : 8201,
