@@ -30,10 +30,7 @@ import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.synchro.AddressBookService;
 import fr.wseduc.bus.BusAddress;
-import fr.wseduc.rs.Delete;
-import fr.wseduc.rs.Get;
-import fr.wseduc.rs.Post;
-import fr.wseduc.rs.Put;
+import fr.wseduc.rs.*;
 import fr.wseduc.security.ActionType;
 import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.I18n;
@@ -48,7 +45,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.auth.User;
 import org.entcore.common.cache.Cache;
 import org.entcore.common.cache.CacheOperation;
 import org.entcore.common.cache.CacheScope;
@@ -57,13 +53,11 @@ import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.storage.Storage;
 import org.entcore.common.storage.StorageFactory;
-import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.utils.Config;
 import org.vertx.java.core.http.RouteMatcher;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -406,13 +400,13 @@ public class ZimbraController extends BaseController {
     public void getReturnedMails(final HttpServerRequest request) {
         String structureId = request.params().get(ZIMBRA_ID_STRUCTURE);
         returnedMailService.getMailReturned(structureId, returnedMails -> {
-                if (returnedMails.isRight()) {
-                    renderJson(request, returnedMails.right().getValue());
-                } else {
-                    badRequest(request);
-                    log.error("[Zimbra]getReturnedMails: Collecting returned mail failed : " + returnedMails.left().getValue());
-                }
-            });
+            if (returnedMails.isRight()) {
+                renderJson(request, returnedMails.right().getValue());
+            } else {
+                badRequest(request);
+                log.error("[Zimbra]getReturnedMails: Collecting returned mail failed : " + returnedMails.left().getValue());
+            }
+        });
     }
 
     @Delete("/return/delete/:id")
@@ -535,8 +529,8 @@ public class ZimbraController extends BaseController {
             if (event.isRight()) {
                 JsonObject document = event.right().getValue();
                 String file = document.getString("file");
-                storage.readStreamFile(file, buffer->{
-                    if(buffer==null){
+                storage.readStreamFile(file, buffer -> {
+                    if (buffer == null) {
                         notFound(request);
                     } else {
                         UserUtils.getUserInfos(eb, request, user -> {
@@ -1349,5 +1343,15 @@ public class ZimbraController extends BaseController {
     public void checkIfIdGroup(HttpServerRequest request) {
         String idToCheck = request.params().get(MESSAGE_ID);
         userService.requestIfIdGroup(idToCheck, defaultResponseHandler(request));
+    }
+
+
+    @Post("/message/:id/deliveryReport")
+    @ApiDoc("Send mail to acknowledge receipt to original sender")
+    public void sendDeliveryReport(HttpServerRequest request) {
+        getUserInfos(eb, request, user ->
+                messageService.sendDeliveryReport(user, request.getParam(MESSAGE_ID))
+                        .onFailure(err -> renderError(request))
+                        .onSuccess(result -> renderJson(request, result)));
     }
 }

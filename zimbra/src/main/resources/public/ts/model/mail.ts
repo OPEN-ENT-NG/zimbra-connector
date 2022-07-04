@@ -62,6 +62,7 @@ export class Mail implements Selectable {
     to: User[];
     cc: User[];
     bcc: User[];
+    isReportRequired: boolean;
     unread: boolean;
     state: string;
     systemFolder: string;
@@ -435,6 +436,10 @@ export class Mail implements Selectable {
         if (!forPrint) {
             await this.updateAllowReply();
         }
+    }
+
+    async sendDeliveryReport() {
+        await http.post(`/zimbra/message/${this.id}/deliveryReport`);
     }
 
     async remove() {

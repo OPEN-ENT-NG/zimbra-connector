@@ -233,5 +233,7 @@ public class ZimbraConstants {
     public static final String ZIMBRA_MAIL = "mail";
     public static final String ZIMBRA_LOGIN = "login";
 
+    //Actions
+    public static final String SEND_DELIVERY_REPORT_REQUEST = "SendDeliveryReportRequest";
 
 }

@@ -37,7 +37,7 @@ public class DbMailServiceFactory {
     public DbMailService getDbMailService(String serviceName) {
         switch (serviceName) {
             case ConfigManager.SYNC_SQL:
-                return new SqlDbMailService(Zimbra.appConfig.getDbSchema());
+                return new SqlDbMailService(Zimbra.appConfig != null ? Zimbra.appConfig.getDbSchema() : "");
             case ConfigManager.SYNC_NEO:
             default:
                 return new NeoDbMailService(vertx, sqlSynchroService);

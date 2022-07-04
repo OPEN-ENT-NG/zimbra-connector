@@ -198,6 +198,17 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
         };
 
+        const sendDeliveryReport = async (mail: Mail): Promise<void> => {
+            if (mail.isReportRequired) {
+                try {
+                    await mail.sendDeliveryReport();
+                    notify.info('send.delivery.report.success');
+                } catch (e) {
+                    notify.error('send.delivery.report.err');
+                }
+            }
+        }
+
         $scope.addUser = user => {
             if (!$scope.state.newItem.to) {
                 $scope.state.newItem.to = [];
@@ -382,6 +393,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             setCurrentMail(mail, true);
             try {
                 await mail.open(false,notMakeItRead);
+                await sendDeliveryReport(mail);
                 $scope.$root.$emit("refreshMails");
             } catch (e) {
                 template.open("page", "errors/e404");

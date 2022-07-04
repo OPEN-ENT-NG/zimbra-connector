@@ -50,7 +50,7 @@ public class HttpClientHelper {
         if (System.getProperty("httpclient.proxyHost") != null) {
             options.setProxyOptions(HttpClientHelper.proxyOptions());
         }
-        int maxPoolSize = Zimbra.appConfig.getHttpClientMaxPoolSize();
+        int maxPoolSize = Zimbra.appConfig != null ? Zimbra.appConfig.getHttpClientMaxPoolSize() : 0;
         if(maxPoolSize > 0) {
             options.setMaxPoolSize(maxPoolSize);
         }

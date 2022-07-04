@@ -19,6 +19,7 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.helper.FutureHelper;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
@@ -35,6 +36,7 @@ import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -238,7 +240,9 @@ public class MessageService {
             processMessageMultipart(msgFront, multiparts);
         }
 
-        translateMaillistToUidlist(msgFront, zimbraMails, addressMap, result);
+
+        translateMaillistToUidlist(msgFront, zimbraMails, addressMap,
+                msgZimbra.getString(MSG_FLAGS, "").contains(MSG_FLAG_NOTIFICATIONSENT), result);
     }
 
     /**
@@ -249,7 +253,7 @@ public class MessageService {
      * @param multiparts Array of multipart structure
      */
     private void processMessageMultipart(JsonObject msgFront, JsonArray multiparts) {
-        Multipart mparts = new Multipart(msgFront.getString(MESSAGE_ID), multiparts);
+        Multipart mparts = new Multipart(msgFront.getString(FrontConstants.MESSAGE_ID), multiparts);
         msgFront.put(MESSAGE_BODY, mparts.getBody());
         msgFront.put(MESSAGE_ATTACHMENTS, mparts.getAttachmentsJson());
     }
@@ -263,7 +267,7 @@ public class MessageService {
      * @param handler     result handler
      */
     private void translateMaillistToUidlist(JsonObject frontMsg, JsonArray zimbraMails, Map<String, String> addressMap,
-                                            Handler<JsonObject> handler) {
+                                            boolean isReported, Handler<JsonObject> handler) {
         if (zimbraMails == null || zimbraMails.isEmpty()) {
             handler.handle(frontMsg);
             return;
@@ -274,16 +278,17 @@ public class MessageService {
         if (!(type.equals(ADDR_TYPE_FROM))
                 && !(type.equals(ADDR_TYPE_CC))
                 && !(type.equals(ADDR_TYPE_TO))
-                && !(type.equals(ADDR_TYPE_BCC))) {
+                && !(type.equals(ADDR_TYPE_BCC))
+                && !(type.equals(ADDR_TYPE_READRECEIPT))) {
             zimbraMails.remove(0);
-            translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, handler);
+            translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, isReported, handler);
             return;
         }
 
         String zimbraMail = zimbraUser.getString(MSG_EMAIL_ADDR, "");
         if (zimbraMail.isEmpty()) {
             zimbraMails.remove(0);
-            translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, handler);
+            translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, isReported, handler);
         } else {
             Handler<String> translatedUuidHandler = userUuid -> {
                 if (userUuid == null) {
@@ -303,13 +308,17 @@ public class MessageService {
                     case ADDR_TYPE_BCC:
                         frontMsg.put("bcc", frontMsg.getJsonArray("bcc").add(userUuid));
                         break;
+                    case ADDR_TYPE_READRECEIPT:
+                        if (!isReported)
+                            frontMsg.put(FrontConstants.IS_REPORT_REQUIRED, true);
+                        break;
                 }
-                frontMsg.put("displayNames", frontMsg.getJsonArray("displayNames")
+                frontMsg.put(MAIL_DISPLAYNAMES, frontMsg.getJsonArray(MAIL_DISPLAYNAMES, new JsonArray())
                         .add(new JsonArray()
                                 .add(userUuid)
                                 .add(zimbraUser.getString(MSG_EMAIL_COMMENT, zimbraMail))));
                 zimbraMails.remove(0);
-                translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, handler);
+                translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, isReported, handler);
             };
 
             if (addressMap.containsKey(zimbraMail)) {
@@ -948,7 +957,7 @@ public class MessageService {
                 log.error("[Zimbra] retrieveMailFromZimbra : Error while checking if user exists in Zimbra :" + userResponse.cause().getMessage());
                 result.handle(new Either.Right<>(new ArrayList<>()));
             } else {
-                if(user.existsInZimbra()) {
+                if (user.existsInZimbra()) {
                     // Etape 3 : On recherche en fonction de l'objet, de l'expéditeur, de la date et de la boite de réception le mail à supprimer
                     String query = "* NOT in:\"" + "Sent" + "\"" + " AND subject:\"" + subject + "\"" + " AND from:\"" + from_mail + "\"" + " AND date:\"" + date + "\"";
                     log.info(query);
@@ -1080,5 +1089,20 @@ public class MessageService {
                 }
             });
         }
+    }
+
+    public Future<JsonObject> sendDeliveryReport(UserInfos user, String messageId) {
+        Promise<JsonObject> promise = Promise.promise();
+        JsonObject convActionRequest = new JsonObject()
+                .put(ACCT_NAME, SEND_DELIVERY_REPORT_REQUEST)
+                .put(MULTIPART_CONTENT, new JsonObject()
+                        .put(SoapConstants.MESSAGE_ID, messageId)
+                        .put(SoapConstants.REQ_NAMESPACE, SoapConstants.NAMESPACE_MAIL));
+
+        soapService.callUserSoapAPI(convActionRequest, user, FutureHelper.handlerJsonObject(promise,
+                String.format("[Zimbra@%s::sendDeliveryReport]: %s",
+                        FutureHelper.class.getSimpleName(), "Failed to send delivery report.")));
+
+        return promise.future();
     }
 }

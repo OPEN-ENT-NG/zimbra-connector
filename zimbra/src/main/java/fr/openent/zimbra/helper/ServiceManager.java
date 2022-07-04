@@ -77,43 +77,49 @@ public class ServiceManager {
 
     private SynchroLauncher synchroLauncher;
 
-    private final AddressBookService addressBookService;
+    private AddressBookService addressBookService;
 
-    private final SqlAddressBookService sqlAddressBookService;
+    private SqlAddressBookService sqlAddressBookService;
 
-    private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix) {
-
+    private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix, ConfigManager config) {
         this.vertx = vertx;
-        ConfigManager appConfig = Zimbra.appConfig;
-        JsonObject rawConfig = appConfig.getRawConfig();
+        JsonObject rawConfig = config != null ? config.getRawConfig() : null;
 
-        timelineHelper = new TimelineHelper(vertx, eb, rawConfig);
-        EmailFactory emailFactory = new EmailFactory(vertx, rawConfig);
-        emailSender = emailFactory.getSender();
+        if (rawConfig != null) {
+            timelineHelper = new TimelineHelper(vertx, eb, rawConfig);
+            EmailFactory emailFactory = new EmailFactory(vertx, rawConfig);
+            emailSender = emailFactory.getSender();
+        }
 
         String redisConfig = (String) vertx.sharedData().getLocalMap("server").get("redisConfig");
         CacheService cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient()) : null;
 
         this.webClient = WebClient.create(vertx, HttpClientHelper.getWebClientOptions());
 
-        this.slackService = new SlackService(vertx, appConfig.getSlackConfiguration());
+        if (config != null) {
+            this.slackService = new SlackService(vertx, config.getSlackConfiguration());
 
-        this.sqlSynchroService = new SqlSynchroService(appConfig.getDbSchema());
-        initDbMailService(appConfig);
+            this.sqlSynchroService = new SqlSynchroService(config.getDbSchema());
+            initDbMailService(config);
+            this.soapService = new SoapZimbraService(vertx, cacheService, slackService, config.getCircuitBreakerOptions());
+            this.sqlAddressBookService = new SqlAddressBookService(config.getDbSchema());
+            this.addressBookService = new AddressBookService(sqlAddressBookService);
+            this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
+                    synchroAddressBookService, addressBookService, eb);
+        }
+
+
+
         this.searchService = new SearchService(vertx);
-        this.soapService = new SoapZimbraService(vertx, cacheService, slackService, appConfig.getCircuitBreakerOptions());
+
         this.neoService = new Neo4jZimbraService();
         this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
         this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
-        this.sqlAddressBookService = new SqlAddressBookService(appConfig.getDbSchema());
-        this.addressBookService = new AddressBookService(sqlAddressBookService);
-        this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
-                synchroAddressBookService, addressBookService, eb);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
         this.messageService = new MessageService(soapService, folderService,
                 dbMailServiceApp, userService, synchroUserService);
-        this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig, webClient);
+        if (rawConfig != null) this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig, webClient);
         this.notificationService = new NotificationService(pathPrefix, timelineHelper);
         this.communicationService = new CommunicationService();
         this.groupService = new GroupService(soapService, dbMailServiceApp, synchroUserService);
@@ -130,14 +136,14 @@ public class ServiceManager {
         this.synchroMailerService = new SynchroMailerService(sqlSynchroService);
         this.neo4jAddrbookService = new Neo4jAddrbookService();
 
-        soapService.setServices(userService, synchroUserService);
+        if(config != null) soapService.setServices(userService, synchroUserService);
         synchroUserService.setUserService(userService);
     }
 
     private void initDbMailService(ConfigManager appConfig) {
         DbMailServiceFactory dbFactory = new DbMailServiceFactory(vertx, sqlSynchroService);
         this.dbMailServiceApp = dbFactory.getDbMailService(appConfig.getAppSynchroType());
-        if(appConfig.getSyncSynchroType().equals(appConfig.getAppSynchroType())) {
+        if (appConfig.getSyncSynchroType().equals(appConfig.getAppSynchroType())) {
             this.dbMailServiceSync = this.dbMailServiceApp;
         } else {
             this.dbMailServiceSync = dbFactory.getDbMailService(appConfig.getAppSynchroType());
@@ -145,8 +151,12 @@ public class ServiceManager {
     }
 
     public static ServiceManager init(Vertx vertx, EventBus eb, String pathPrefix) {
-        if(serviceManager == null) {
-            serviceManager = new ServiceManager(vertx, eb, pathPrefix);
+        return init(vertx, eb, pathPrefix, Zimbra.appConfig);
+    }
+
+    public static ServiceManager init(Vertx vertx, EventBus eb, String pathPrefix, ConfigManager config) {
+        if (serviceManager == null) {
+            serviceManager = new ServiceManager(vertx, eb, pathPrefix, config);
         }
         return serviceManager;
     }
@@ -267,11 +277,17 @@ public class ServiceManager {
         return synchroLauncher;
     }
 
-    public AddressBookService getAddressBookService() { return addressBookService; }
+    public AddressBookService getAddressBookService() {
+        return addressBookService;
+    }
 
-    public SqlAddressBookService getSqlAddressBookService() { return sqlAddressBookService; }
+    public SqlAddressBookService getSqlAddressBookService() {
+        return sqlAddressBookService;
+    }
 
-    public ReturnedMailService getReturnedMailService() { return returnedMailService; }
+    public ReturnedMailService getReturnedMailService() {
+        return returnedMailService;
+    }
 
     public WebClient getWebClient() {
         return webClient;
