@@ -40,6 +40,7 @@ public class SoapConstants {
     public static final String UUID = "uuid";
     public static final String ZIMBRA_ID = "id";
     public static final String ZIMBRA_ZID = "zid";
+    public static final String MESSAGE_ID = "mid";
 
     public static final String OP_TRASH = "trash";
     public static final String OP_RENAME = "rename";

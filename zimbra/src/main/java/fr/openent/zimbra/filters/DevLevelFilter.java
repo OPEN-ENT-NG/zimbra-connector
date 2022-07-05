@@ -38,7 +38,7 @@ public class DevLevelFilter implements ResourcesProvider {
             handler.handle(false);
             log.error("action blocked : " + binding.getUriPattern());
         } else {
-            handler.handle(true);
+            handler.handle(userInfos != null);
         }
     }
 }

@@ -29,6 +29,8 @@ public class FrontConstants {
     public static final String FOLDER_NAME = "folderName";
     public static final String FOLDER_SUB_FOLDERS = "folders";
 
+    public static final String IS_REPORT_REQUIRED = "isReportRequired";
+
     public static final String STATE_DRAFT = "DRAFT";
     public static final String STATE_SENT = "SENT";
 
