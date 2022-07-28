@@ -1148,6 +1148,10 @@ export let zimbraController = ng.controller("ZimbraController", [
             await mail.postAttachment($scope, newAttachment);
         }
 
+        $scope.showAttachmentLightbox = (): void => {
+            $scope.displayLightBox.attachment = true;
+        }
+
         $scope.cancelDelete = () => {
             $scope.displayLightBox.folder = true;
             Zimbra.instance.currentFolder.deselectAll();
