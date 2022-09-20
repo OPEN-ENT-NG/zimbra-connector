@@ -1146,7 +1146,10 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
             $scope.displayLightBox.attachment = false;
             Utils.safeApply($scope);
-            await mail.postAttachments(workspace);
+            for (const attachment of mail.attachments) {
+                attachment.uploadStatus == "loading" ? await mail.postAttachments(attachment, workspace) : null;
+                Utils.safeApply($scope);
+            }
             $scope.isFileLoading = false;
             Utils.safeApply($scope);
         }

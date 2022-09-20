@@ -482,47 +482,44 @@ export class Mail implements Selectable {
         await Zimbra.instance.folders.draft.mails.refresh();
     }
 
-    async postAttachments(workspace : boolean) : Promise<void> {
-        let promesses : Array<Promise<void>> = [];
-        for (const attachment of this.attachments) {
-            if (attachment.uploadStatus == "loading") {
-                let post : Promise<AxiosResponse>;
-                if (workspace) {
-                    post = http.post(`/zimbra/message/${this.id}/upload/${attachment.id}`)
-                } else {
-                    post = http
-                        .post(
-                            "message/" + this.id + "/attachment",
-                            attachment.file,
-                            {
-                                headers: {
-                                    "Content-Disposition":
-                                        'attachment; filename="' +
-                                        attachment.file.name.replace(
-                                            /[\u00A0-\u9999<>\&]/gim,
-                                            function (i) {
-                                                return "&#" + i.charCodeAt(0) + ";";
-                                            }
-                                        ) +
-                                        '"'
-                                }
-                            })
-                }
-                const promise: Promise<void> = post
-                    .then(async (response: AxiosResponse) => {
-                        this.attachments = response.data.attachments as Attachment[];
-                        this.attachments.map((attach: Attachment) => {
-                            attach.filename = decodeURI(attach.filename);
-                            attach.uploadStatus = "loaded";
-                        });
-                    })
-                    .catch((e: AxiosError) => {
-                        sendNotificationErrorZimbra(e.response.data.error);
-                    });
-                promesses.push(promise);
+    async postAttachments(attachmentToUpload : Attachment, workspace : boolean) : Promise<void> {
+            let post : Promise<AxiosResponse>;
+            if (workspace) {
+                post = http.post(`/zimbra/message/${this.id}/upload/${attachmentToUpload.id}`)
+            } else {
+                post = http
+                    .post(
+                        "message/" + this.id + "/attachment",
+                        attachmentToUpload.file,
+                        {
+                            headers: {
+                                "Content-Disposition":
+                                    'attachment; filename="' +
+                                    attachmentToUpload.file.name.replace(
+                                        /[\u00A0-\u9999<>\&]/gim,
+                                        function (i) {
+                                            return "&#" + i.charCodeAt(0) + ";";
+                                        }
+                                    ) +
+                                    '"'
+                            }
+                        })
             }
-        }
-        await Promise.all(promesses);
+            const promise: Promise<void> = post
+                .then(async (response: AxiosResponse) => {
+                    const attachmentWaiting : Attachment[] =
+                        this.attachments.filter((attachment : Attachment) => attachment.uploadStatus && attachment.uploadStatus == "loading" && attachment != attachmentToUpload);
+                    this.attachments = response.data.attachments as Attachment[];
+                    this.attachments.map((attach: Attachment) => {
+                        attach.filename = decodeURI(attach.filename);
+                        attach.uploadStatus = "loaded";
+                    });
+                    this.attachments = this.attachments.concat(attachmentWaiting);
+                })
+                .catch((e: AxiosError) => {
+                    sendNotificationErrorZimbra(e.response.data.error);
+                });
+            await Promise.resolve(promise);
     }
 
     async deleteAttachment(attachment) {
