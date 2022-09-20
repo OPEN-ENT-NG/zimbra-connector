@@ -27,7 +27,7 @@ import {
     SystemFolder,
     User,
     UserFolder,
-    Users,
+    Users, Utils,
     ViewMode,
     Zimbra
 } from "../model";
@@ -35,7 +35,6 @@ import {
 
 import {Preference} from "../model/preferences";
 import http from "../model/http";
-
 
 declare const window: any;
 
@@ -87,7 +86,10 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.displayLightBox = {
-            readMail : false
+            readMail : false,
+            attachment : false,
+            workspaceAttachment : false,
+            computerAttachment : false
         };
         $scope.isFileLoading = false;
         route({
@@ -1131,26 +1133,27 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
         };
 
-        $scope.uploadAttachment = async (attachment) => {
+        $scope.uploadAttachments = async (attachments : File[], workspace : boolean) : Promise<void> => {
             $scope.isFileLoading = true;
-            $scope.$apply();
-            const mail = $scope.state.newItem as Mail;
+            Utils.safeApply($scope);
+            const mail: Mail = $scope.state.newItem as Mail;
             if (!mail.id) {
                 await Zimbra.instance.folders.draft.saveDraft(mail);
             }
-
-            let newAttachment = new Attachment(attachment);
-            mail.attachments.push(newAttachment);
-
+            for (const attachment of attachments) {
+                let newAttachment: Attachment = new Attachment(attachment);
+                mail.attachments.push(newAttachment);
+            }
             $scope.displayLightBox.attachment = false;
-            $scope.$apply();
-
-            await mail.postAttachment($scope, newAttachment);
+            Utils.safeApply($scope);
+            await mail.postAttachments(workspace);
+            $scope.isFileLoading = false;
+            Utils.safeApply($scope);
         }
 
-        $scope.showAttachmentLightbox = (): void => {
-            $scope.displayLightBox.attachment = true;
-        }
+        $scope.deleteAttachment = function(event, attachment, mail) {
+            mail.deleteAttachment(attachment);
+        };
 
         $scope.cancelDelete = () => {
             $scope.displayLightBox.folder = true;
