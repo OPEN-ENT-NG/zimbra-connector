@@ -603,7 +603,7 @@ export let zimbraController = ng.controller("ZimbraController", [
 
         $scope.refreshSignature = async (use: boolean) : Promise<void> => {
             await Zimbra.instance.putPreference();
-            const body = $($scope.state.newItem.body);
+            const body : JQuery = $($scope.state.newItem.body);
             const signature : string = $scope.getSignature();
             if (body.filter(".new-signature").length > 0) {
                 body.filter(".new-signature").text("");
