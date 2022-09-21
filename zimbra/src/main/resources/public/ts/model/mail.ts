@@ -27,7 +27,6 @@ import {
 
 import {User} from "./user";
 import {Zimbra} from "./zimbra";
-import {quota} from "./quota";
 import {SystemFolder, UserFolder, Folder} from "./folder";
 
 import {Mix, Eventer, Selection, Selectable} from "entcore-toolkit";
@@ -36,7 +35,6 @@ import http from './http';
 
 import {MAIL, SERVICE, QUOTA} from "./constantes";
 import {AxiosError, AxiosResponse} from "axios";
-import {attachment} from "entcore/types/src/ts/editor/options";
 
 export class Attachment {
     file: File;
@@ -510,7 +508,7 @@ export class Mail implements Selectable {
                     const attachmentWaiting : Attachment[] =
                         this.attachments.filter((attachment : Attachment) => attachment.uploadStatus && attachment.uploadStatus == "loading" && attachment != attachmentToUpload);
                     this.attachments = response.data.attachments as Attachment[];
-                    this.attachments.map((attach: Attachment) => {
+                    this.attachments.forEach((attach: Attachment) => {
                         attach.filename = decodeURI(attach.filename);
                         attach.uploadStatus = "loaded";
                     });
