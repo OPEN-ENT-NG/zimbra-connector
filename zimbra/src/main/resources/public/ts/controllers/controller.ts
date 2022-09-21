@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import {$, _, angular, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
+import {$, _, angular, Document, idiom as lang, moment, ng, notify, skin, template, workspace} from "entcore";
 import {
     Attachment,
     Group,
@@ -23,7 +23,7 @@ import {
     quota,
     RECEIVER_TYPE,
     REGEXLIB,
-    SCREENS,
+    SCREENS, sendNotificationErrorZimbra,
     SystemFolder,
     User,
     UserFolder,
@@ -35,6 +35,7 @@ import {
 
 import {Preference} from "../model/preferences";
 import http from "../model/http";
+import {AxiosError, AxiosResponse} from "axios";
 
 declare const window: any;
 
@@ -1157,6 +1158,25 @@ export let zimbraController = ng.controller("ZimbraController", [
 
         $scope.deleteAttachment = function(event, attachment, mail) {
             mail.deleteAttachment(attachment);
+        };
+
+        $scope.downloadAttachment = function(attachment : Attachment, mail : Mail) {
+            http.get(`message/${mail.id}/attachment/${attachment.id}`)
+                .then((response : AxiosResponse) => {
+                    let file : File = new File([response.data], attachment.filename, {type: attachment.contentType});
+                    let doc : Document = new Document();
+                    workspace.v2.service.createDocument(file, doc, null,{visibility: "protected", application: "media-library"})
+                        .then(() => {
+                            notify.info("zimbra.attachment.download.workspace.success");
+                        })
+                        .catch((e) => {
+                            console.log(e)
+                            notify.error("zimbra.attachment.download.workspace.error");
+                        });
+                })
+                .catch((e : AxiosError) => {
+                    sendNotificationErrorZimbra(e.response.data.error);
+                });
         };
 
         $scope.cancelDelete = () => {

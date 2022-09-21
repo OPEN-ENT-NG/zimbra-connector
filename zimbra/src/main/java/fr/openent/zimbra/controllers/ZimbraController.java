@@ -18,8 +18,8 @@
 package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.filters.DevLevelFilter;
 import fr.openent.zimbra.filters.AccessibleDocFilter;
+import fr.openent.zimbra.filters.DevLevelFilter;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.ServiceManager;
@@ -61,8 +61,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static fr.openent.zimbra.model.constant.FrontConstants.*;
-import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.FrontConstants.MESSAGE_ID;
+import static fr.openent.zimbra.model.constant.ZimbraConstants.ZIMBRA_ID_STRUCTURE;
+import static fr.openent.zimbra.model.constant.ZimbraConstants.ZIMBRA_MAIL;
 import static fr.wseduc.webutils.request.RequestUtils.bodyToJson;
 import static org.entcore.common.http.response.DefaultResponseHandler.arrayResponseHandler;
 import static org.entcore.common.http.response.DefaultResponseHandler.defaultResponseHandler;

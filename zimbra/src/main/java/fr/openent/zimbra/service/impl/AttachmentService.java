@@ -16,10 +16,9 @@
  */
 
 package fr.openent.zimbra.service.impl;
-import fr.openent.zimbra.Zimbra;
+
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.HttpClientHelper;
-import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Utils;
@@ -27,27 +26,20 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.file.OpenOptions;
-import io.vertx.core.file.impl.FileSystemImpl;
-import io.vertx.core.http.*;
-import io.vertx.core.impl.VertxInternal;
-import io.vertx.core.net.ProxyOptions;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.streams.Pump;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.WriteStream;
-import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 import org.entcore.common.user.UserInfos;
-import io.vertx.core.json.JsonObject;
-
-import io.vertx.core.logging.Logger;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import io.vertx.core.file.FileSystem;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
