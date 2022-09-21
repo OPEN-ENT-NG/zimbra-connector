@@ -1,5 +1,6 @@
 {
-    "add.attachment": "Ajouter une pièce jointe",
+    "add.attachment.workspace": "Ajouter une pièce jointe depuis Espace documentaire",
+    "add.attachment.computer": "Ajouter une pièce jointe depuis Ordinateur",
     "add.signature" : "Ajouter une signature",
     "at": "à",
     "attachments": "Pièces jointes",

@@ -27,7 +27,6 @@ import {
 
 import {User} from "./user";
 import {Zimbra} from "./zimbra";
-import {quota} from "./quota";
 import {SystemFolder, UserFolder, Folder} from "./folder";
 
 import {Mix, Eventer, Selection, Selectable} from "entcore-toolkit";
@@ -35,6 +34,7 @@ import {Mix, Eventer, Selection, Selectable} from "entcore-toolkit";
 import http from './http';
 
 import {MAIL, SERVICE, QUOTA} from "./constantes";
+import {AxiosError, AxiosResponse} from "axios";
 
 export class Attachment {
     file: File;
@@ -47,8 +47,8 @@ export class Attachment {
     constructor(file: any) {
         this.file = file;
         this.uploadStatus = "loading";
-        this.filename = file.metadata.filename;
-        this.size = file.metadata.size;
+        this.filename = file.metadata ? file.metadata.filename : file.name;
+        this.size = file.metadata ? file.metadata.size : file.size;
         this.id = file._id;
     }
 }
@@ -480,25 +480,44 @@ export class Mail implements Selectable {
         await Zimbra.instance.folders.draft.mails.refresh();
     }
 
-    async postAttachment($scope, attachment: Attachment) {
-        attachment.uploadStatus = "loading";
-
-        http
-            .post(`/zimbra/message/${$scope.state.newItem.id}/upload/${attachment.id}`)
-            .then(async response => {
-                this.attachments = response.data.attachments as Attachment[];
-                this.attachments.map(attach => {
-                    attach.filename = decodeURI(attach.filename);
-                    attach.uploadStatus = "loaded";
+    async postAttachments(attachmentToUpload : Attachment, workspace : boolean) : Promise<void> {
+            let post : Promise<AxiosResponse>;
+            if (workspace) {
+                post = http.post(`/zimbra/message/${this.id}/upload/${attachmentToUpload.id}`)
+            } else {
+                post = http
+                    .post(
+                        "message/" + this.id + "/attachment",
+                        attachmentToUpload.file,
+                        {
+                            headers: {
+                                "Content-Disposition":
+                                    'attachment; filename="' +
+                                    attachmentToUpload.file.name.replace(
+                                        /[\u00A0-\u9999<>\&]/gim,
+                                        function (i) {
+                                            return "&#" + i.charCodeAt(0) + ";";
+                                        }
+                                    ) +
+                                    '"'
+                            }
+                        })
+            }
+            const promise: Promise<void> = post
+                .then(async (response: AxiosResponse) => {
+                    const attachmentWaiting : Attachment[] =
+                        this.attachments.filter((attachment : Attachment) => attachment.uploadStatus && attachment.uploadStatus == "loading" && attachment != attachmentToUpload);
+                    this.attachments = response.data.attachments as Attachment[];
+                    this.attachments.forEach((attach: Attachment) => {
+                        attach.filename = decodeURI(attach.filename);
+                        attach.uploadStatus = "loaded";
+                    });
+                    this.attachments = this.attachments.concat(attachmentWaiting);
+                })
+                .catch((e: AxiosError) => {
+                    sendNotificationErrorZimbra(e.response.data.error);
                 });
-                $scope.isFileLoading = false;
-                $scope.$apply();
-            })
-            .catch(e => {
-                $scope.isFileLoading = false;
-                $scope.$apply();
-                sendNotificationErrorZimbra(e.response.data.error);
-            });
+            await Promise.resolve(promise);
     }
 
     async deleteAttachment(attachment) {

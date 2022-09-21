@@ -142,43 +142,6 @@
 		</div>
 	</div>
 
-	<div class="row">
-
-        <!-- attachment list header -->
-        <div ng-if="state.newItem.attachments.length">
-            <h2 class="no-margin">
-                <i18n>attachments</i18n>
-                <!-- todo <a data-ng-if="mail.attachments.length > 1"
-                    class="right-magnet fade-in-hover"
-                    ng-href="[['message/'+mail.id+'/allAttachments']]"
-                    tooltip="download.all.attachment">
-                    <i class="download-disk valid-color horizontal-spacing"></i>
-                </a>-->
-            </h2>
-            <hr class="line no-margin" />
-		</div>
-
-        <!-- attachment list while loading -->
-        <div ng-if="state.newItem.loadingAttachments.length > 0">
-            <h2 class="no-margin">
-                <i18n>attachments.loading</i18n>
-            </h2>
-            <hr class="line no-margin" />
-            <div class="loading-list no-padding vertical-spacingm-twice">
-                <ul>
-                    <li class="no-margin" ng-repeat="attachment in state.newItem.loadingAttachments">
-                        <div class="title">
-                            [[attachment.file.name]]
-                        </div>
-                        <div class="title">
-                            <progress-bar max="attachment.progress.total" filled="attachment.progress.completion" unit="%"></progress-bar>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-	</div>
-
     <!-- attachment list loaded -->
     <div class="loading-list no-padding vertical-spacing-twice" ng-init="columnOrder = 'filename'" ng-if="state.newItem.attachments.length">
         <ul>
@@ -212,15 +175,26 @@
         </ul>
     </div>
 
-    <div class="right-magnet select-file ">
-        <button ng-click="showAttachmentLightbox()" ng-disabled="isFileLoading" class="flat-button file-button" translate="" content="add.attachment"></button>
+    <div class="row">
+        <div class="select-file nomargin right-magnet">
+            <button ng-disabled="isFileLoading" translate="" content="add.attachment.computer" class="nomargin"
+                    drop-files="state.newItem.newAttachments" on-drop="uploadAttachments(state.newItem.newAttachments, false)"></button>
+        </div>
+        <button ng-click="displayLightBox.attachment = true;" ng-disabled="isFileLoading" class="right-magnet"
+                translate="" content="add.attachment.workspace"></button>
+    </div>
+    <div class="hidden-content">
+        <input type="file" multiple files-input-change="uploadAttachments(state.newItem.newAttachments, false)" ng-model="state.newItem.newAttachments">
+        <input type="text" data-display-file="">
     </div>
 </article>
 
 <lightbox show="displayLightBox.attachment" on-close="displayLightBox.attachment = false">
     <div ng-if="displayLightBox.attachment">
         <media-library ng-model="attachmentOption.display.files"
-                       ng-change="uploadAttachment(attachmentOption.display.files);" file-format="'any'"></media-library>
+                       ng-change="uploadAttachments(attachmentOption.display.files, true);"
+                       file-format="'any'"
+                       multiple="true">
+        </media-library>
     </div>
-
 </lightbox>

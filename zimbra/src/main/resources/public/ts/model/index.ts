@@ -22,3 +22,4 @@ export * from "./quota";
 export * from "./zimbra";
 export * from "./constantes";
 export * from "./group";
+export * from "./Utils";
