@@ -76,9 +76,11 @@ Behaviours.register("zimbra", {
           this.$apply();
         },
         openWindow: function() {
-          console.log(this.source);
           this.source = SnipletUtil.getUpdatedSource("openZimbra");
-          console.log(this.source);
+          this.name = encodeURIComponent(
+              this.source.name || this.source.displayName
+          );
+          this.isValid = !!this.source.id && !!this.name && !!this.source.type;
           if (!this.isValid) {
             notify.error("sniplet.openZimbra.invalid");
           } else {
