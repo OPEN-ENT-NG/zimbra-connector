@@ -238,9 +238,9 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.state.newItem.setMailSignature($scope.getSignature());
         };
 
-        $scope.getSignature = () => {
+        $scope.getSignature = () : string => {
             if (Zimbra.instance.preference.useSignature) {
-                let signature = Zimbra.instance.preference.signature.replace(
+                let signature : string = Zimbra.instance.preference.signature.replace(
                     new RegExp("\n", "g"),
                     "<br>"
                 );
@@ -603,16 +603,17 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
         };
 
-        $scope.refreshSignature = async (use: boolean) => {
-            Zimbra.instance.putPreference();
-            var body = $($scope.state.newItem.body);
-            var signature = $scope.getSignature();
+        $scope.refreshSignature = async (use: boolean) : Promise<void> => {
+            await Zimbra.instance.putPreference();
+            const body : JQuery = $($scope.state.newItem.body);
+            const signature : string = $scope.getSignature();
             if (body.filter(".new-signature").length > 0) {
                 body.filter(".new-signature").text("");
                 if (use) body.filter(".new-signature").append(signature);
                 $scope.state.newItem.body = _.map(body, function(el) {
                     return el.outerHTML;
                 }).join("");
+                $scope.$apply();
             } else {
                 $scope.state.newItem.setMailSignature(signature);
             }
