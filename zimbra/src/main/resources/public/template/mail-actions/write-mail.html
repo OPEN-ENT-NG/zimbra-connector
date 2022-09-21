@@ -176,12 +176,12 @@
     </div>
 
     <div class="row">
-        <button ng-click="displayLightBox.attachment = true;" ng-disabled="isFileLoading" class="right-magnet"
-                translate="" content="add.attachment.workspace"></button>
         <div class="select-file nomargin right-magnet">
             <button ng-disabled="isFileLoading" translate="" content="add.attachment.computer" class="nomargin"
                     drop-files="state.newItem.newAttachments" on-drop="uploadAttachments(state.newItem.newAttachments, false)"></button>
         </div>
+        <button ng-click="displayLightBox.attachment = true;" ng-disabled="isFileLoading" class="right-magnet"
+                translate="" content="add.attachment.workspace"></button>
     </div>
     <div class="hidden-content">
         <input type="file" multiple files-input-change="uploadAttachments(state.newItem.newAttachments, false)" ng-model="state.newItem.newAttachments">
