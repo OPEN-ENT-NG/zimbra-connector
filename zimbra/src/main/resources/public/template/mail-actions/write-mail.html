@@ -129,8 +129,9 @@
 
 				<!-- <input type="checkbox" ng-model="zimbra.preference.useSignature"  ng-click="refreshSignature(zimbra.preference.useSignature)"/> -->
 
-                <label class="checkbox" ng-click="refreshSignature(zimbra.preference.useSignature)">
-                    <input type="checkbox" ng-disabled="!zimbra.preference.useSignature && !zimbra.preference.signature" ng-model="zimbra.preference.useSignature">
+                <label class="checkbox">
+                    <input type="checkbox" ng-disabled="!zimbra.preference.useSignature && !zimbra.preference.signature"
+                           ng-model="zimbra.preference.useSignature" ng-change="refreshSignature(zimbra.preference.useSignature)">
                     <span></span>
                 </label>
 
@@ -138,7 +139,8 @@
 		</div>
 
 		<div class="drop-down-content" slide="signatureShow">
-			<textarea ng-if="signatureShow" ng-model="zimbra.preference.signature" ng-blur="zimbra.putPreference()"></textarea>
+			<textarea ng-if="signatureShow" ng-model="zimbra.preference.signature"
+                      ng-blur="refreshSignature(zimbra.preference.useSignature)"></textarea>
 		</div>
 	</div>
 
