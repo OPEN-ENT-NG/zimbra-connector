@@ -161,7 +161,7 @@ public class Neo4jZimbraService {
 
 	public void getUserFilterAndStructuresFromNeo4j(String userId, Handler<AsyncResult<List<Structure>>> handler) {
 		String queryGetAdministrativeAttachment = "MATCH (s:Structure)<-[:ADMINISTRATIVE_ATTACHMENT]-(u:User{id:{userId}})-[:IN]->(pg:ProfileGroup) ";
-		String queryGetFewStructures = "MATCH (s:Structure)<-[:DEPENDS]-(:Group)<-[:IN]-(u:User{id:{userId}})-[:IN]->(pg:ProfileGroup) ";
+		String queryGetFewStructures = "MATCH (s:Structure)<-[:DEPENDS]-(pg:ProfileGroup)<-[:IN]-(u:User{id:{userId}}) ";
 		if(!appConfig.getFilterUserProfileSynchAB().isEmpty()){
 			String profileConditionUser = "WHERE pg.filter IN " + appConfig.getFilterUserProfileSynchAB();
 			queryGetAdministrativeAttachment += profileConditionUser;
