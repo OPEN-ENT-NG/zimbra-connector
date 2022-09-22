@@ -504,7 +504,7 @@ export class Mail implements Selectable {
                         })
             }
             const promise: Promise<void> = post
-                .then(async (response: AxiosResponse) => {
+                .then((response: AxiosResponse) => {
                     const attachmentWaiting : Attachment[] =
                         this.attachments.filter((attachment : Attachment) => attachment.uploadStatus && attachment.uploadStatus == "loading" && attachment != attachmentToUpload);
                     this.attachments = response.data.attachments as Attachment[];
@@ -518,6 +518,16 @@ export class Mail implements Selectable {
                     sendNotificationErrorZimbra(e.response.data.error);
                 });
             await Promise.resolve(promise);
+    }
+
+    downloadAttachmentInWorkspace(attachment : Attachment) : void {
+        http.get(`message/${this.id}/attachment/${attachment.id}/workspace`)
+            .then(() => {
+                notify.info("zimbra.attachment.download.workspace.success");
+            })
+            .catch((e : AxiosError) => {
+                sendNotificationErrorZimbra(e.response.data.error);
+            });
     }
 
     async deleteAttachment(attachment) {

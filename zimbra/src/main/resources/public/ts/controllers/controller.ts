@@ -1160,16 +1160,6 @@ export let zimbraController = ng.controller("ZimbraController", [
             mail.deleteAttachment(attachment);
         };
 
-        $scope.downloadAttachmentInWorkspace = function(attachment : Attachment, mail : Mail) {
-            http.get(`message/${mail.id}/attachment/${attachment.id}/workspace`)
-                .then(() => {
-                    notify.info("zimbra.attachment.download.workspace.success");
-                })
-                .catch((e : AxiosError) => {
-                    sendNotificationErrorZimbra(e.response.data.error);
-                });
-        };
-
         $scope.cancelDelete = () => {
             $scope.displayLightBox.folder = true;
             Zimbra.instance.currentFolder.deselectAll();
