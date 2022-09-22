@@ -1160,19 +1160,10 @@ export let zimbraController = ng.controller("ZimbraController", [
             mail.deleteAttachment(attachment);
         };
 
-        $scope.downloadAttachment = function(attachment : Attachment, mail : Mail) {
-            http.get(`message/${mail.id}/attachment/${attachment.id}`)
-                .then((response : AxiosResponse) => {
-                    let file : File = new File([response.data], attachment.filename, {type: attachment.contentType});
-                    let doc : Document = new Document();
-                    workspace.v2.service.createDocument(file, doc, null,{visibility: "protected", application: "media-library"})
-                        .then(() => {
-                            notify.info("zimbra.attachment.download.workspace.success");
-                        })
-                        .catch((e) => {
-                            console.log(e)
-                            notify.error("zimbra.attachment.download.workspace.error");
-                        });
+        $scope.downloadAttachmentInWorkspace = function(attachment : Attachment, mail : Mail) {
+            http.get(`message/${mail.id}/attachment/${attachment.id}?workspace=true`)
+                .then(() => {
+                    notify.info("zimbra.attachment.download.workspace.success");
                 })
                 .catch((e : AxiosError) => {
                     sendNotificationErrorZimbra(e.response.data.error);

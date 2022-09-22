@@ -18,6 +18,7 @@
 package fr.openent.zimbra.model.synchro;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.EntUser;
@@ -142,7 +143,7 @@ public class SynchroUser extends EntUser {
                     log.error("Error when getting unsynced groups : " + sqlResult.cause().getMessage());
                 } else {
                     try {
-                        List<String> unsyncedGroupIds = JsonHelper.extractValueFromJsonObjects(sqlResult.result(), "id");
+                        List<String> unsyncedGroupIds = JsonHelper.extractValueFromJsonObjects(sqlResult.result(), Field.ID);
                         for(String groupId : unsyncedGroupIds) {
                             SynchroGroup group = new SynchroGroup(groupId);
                             group.synchronize(v -> {

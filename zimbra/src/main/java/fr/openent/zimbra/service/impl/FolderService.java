@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
@@ -56,7 +57,7 @@ public class FolderService {
                 .put("l", folderId);
 
         JsonObject getFolderRequest = new JsonObject()
-                .put("name", "GetFolderRequest")
+                .put(Field.NAME, "GetFolderRequest")
                 .put("content", new JsonObject()
                         .put("depth", 0)
                         .put("folder", folderReq)
@@ -133,7 +134,7 @@ public class FolderService {
         }
 
         JsonObject getFolderRequest = new JsonObject()
-                .put("name", "GetFolderRequest")
+                .put(Field.NAME, "GetFolderRequest")
                 .put("content", new JsonObject()
                         .put("depth", 1)
                         .put("folder", folderReq)
@@ -190,8 +191,8 @@ public class FolderService {
                 resultFolder.put("trashed", (trashed != null));
                 // todo process depth ?
                 resultFolder.put("depth", 1);
-                resultFolder.put("id", sFolder.getString("id"));
-                resultFolder.put("name", sFolder.getString("name"));
+                resultFolder.put(Field.ID, sFolder.getString(Field.ID));
+                resultFolder.put(Field.NAME, sFolder.getString(Field.NAME));
 
                 resultArray.add(resultFolder);
             }
@@ -220,11 +221,11 @@ public class FolderService {
 
         JsonObject actionReq = new JsonObject()
                 .put("l", parentId)
-                .put("name", newFolderName)
+                .put(Field.NAME, newFolderName)
                 .put("view", "message");
 
         JsonObject createFolderRequest = new JsonObject()
-                .put("name", "CreateFolderRequest")
+                .put(Field.NAME, "CreateFolderRequest")
                 .put("content", new JsonObject()
                         .put("folder", actionReq)
                         .put("_jsns", SoapConstants.NAMESPACE_MAIL));
@@ -247,11 +248,11 @@ public class FolderService {
     public void trashFolder(String folderId, UserInfos user,
                             Handler<Either<String,JsonObject>> handler) {
         JsonObject actionReq = new JsonObject()
-                .put("id", folderId)
+                .put(Field.ID, folderId)
                 .put("op", SoapConstants.OP_TRASH);
 
         JsonObject folderActionRequest = new JsonObject()
-                .put("name", "FolderActionRequest")
+                .put(Field.NAME, "FolderActionRequest")
                 .put("content", new JsonObject()
                     .put("action", actionReq)
                     .put("_jsns", SoapConstants.NAMESPACE_MAIL));
@@ -275,12 +276,12 @@ public class FolderService {
     public void updateFolder(String folderId, String name, UserInfos user,
                              Handler<Either<String,JsonObject>> handler) {
         JsonObject actionReq = new JsonObject()
-                .put("id", folderId)
-                .put("name", name)
+                .put(Field.ID, folderId)
+                .put(Field.NAME, name)
                 .put("op", SoapConstants.OP_RENAME);
 
         JsonObject folderActionRequest = new JsonObject()
-                .put("name", "FolderActionRequest")
+                .put(Field.NAME, "FolderActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
                         .put("_jsns", SoapConstants.NAMESPACE_MAIL));
@@ -303,12 +304,12 @@ public class FolderService {
     public void restoreFolder(String folderId, UserInfos user,
                              Handler<Either<String,JsonObject>> handler) {
         JsonObject actionReq = new JsonObject()
-                .put("id", folderId)
+                .put(Field.ID, folderId)
                 .put("l", ZimbraConstants.FOLDER_INBOX_ID)
                 .put("op", SoapConstants.OP_MOVE);
 
         JsonObject folderActionRequest = new JsonObject()
-                .put("name", "FolderActionRequest")
+                .put(Field.NAME, "FolderActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
                         .put("_jsns", SoapConstants.NAMESPACE_MAIL));
@@ -332,11 +333,11 @@ public class FolderService {
     public void deleteFolder(String folderId, UserInfos user,
                             Handler<Either<String,JsonObject>> handler) {
         JsonObject actionReq = new JsonObject()
-                .put("id", folderId)
+                .put(Field.ID, folderId)
                 .put("op", SoapConstants.OP_DELETE);
 
         JsonObject folderActionRequest = new JsonObject()
-                .put("name", "FolderActionRequest")
+                .put(Field.NAME, "FolderActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
                         .put("_jsns", SoapConstants.NAMESPACE_MAIL));
@@ -365,7 +366,7 @@ public class FolderService {
                 .put("l", folderId);
 
         JsonObject getFolderRequest = new JsonObject()
-                .put("name", "GetFolderRequest")
+                .put(Field.NAME, "GetFolderRequest")
                 .put("content", new JsonObject()
                         .put("depth", 0)
                         .put("folder", folderReq)

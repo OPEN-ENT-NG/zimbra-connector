@@ -18,6 +18,7 @@
 package fr.openent.zimbra.service.synchro;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
@@ -110,7 +111,7 @@ public class SynchroGroupService {
                 + "RETURN g.id as id, "
                 + "g.groupDisplayName as groupDisplayName, "
                 + "g.name as groupName";
-        JsonObject params = new JsonObject().put("id", id);
+        JsonObject params = new JsonObject().put(Field.ID, id);
 
         neo.execute(query, params, validUniqueResultHandler(handler));
     }
@@ -127,7 +128,7 @@ public class SynchroGroupService {
         String query = "MATCH (u:User)-[IN]->(g:ManualGroup) "
                 + "WHERE g.id = {id} "
                 + "RETURN u.id as id";
-        JsonObject params = new JsonObject().put("id", groupId);
+        JsonObject params = new JsonObject().put(Field.ID, groupId);
 
         neo.execute(query, params, validResultHandler(handler));
     }
@@ -165,9 +166,9 @@ public class SynchroGroupService {
 
 
         JsonObject createDLRequest = new JsonObject()
-                .put("name", "CreateDistributionListRequest")
+                .put(Field.NAME, "CreateDistributionListRequest")
                 .put("content", new JsonObject()
-                        .put("name", accountName)
+                        .put(Field.NAME, accountName)
                         .put("dynamic", 1)
                         .put("a", attributes)
                         .put("_jsns", SoapConstants.NAMESPACE_ADMIN));

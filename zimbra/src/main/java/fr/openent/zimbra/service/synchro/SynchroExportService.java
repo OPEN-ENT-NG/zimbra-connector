@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.synchro;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -41,7 +42,7 @@ public class SynchroExportService {
      * @param results final handler
      */
     public void listStructures(Handler<Either<String, JsonArray>> results) {
-        JsonArray fields = new JsonArray().add("id").add("externalId").add("name").add("UAI");
+        JsonArray fields = new JsonArray().add(Field.ID).add("externalId").add(Field.NAME).add("UAI");
         StringBuilder query = new StringBuilder();
         query.append("MATCH (s:Structure) RETURN ");
         for (Object field : fields) {
@@ -65,7 +66,7 @@ public class SynchroExportService {
 
         JsonArray fields = new JsonArray().add("externalId").add("lastName").add("firstName").add("login");
         fields.add("email").add("emailAcademy").add("mobile").add("deleteDate").add("functions").add("displayName");
-        fields.add("id").add("blocked").add("emailInternal");
+        fields.add(Field.ID).add("blocked").add("emailInternal");
 
         StringBuilder query = new StringBuilder();
 

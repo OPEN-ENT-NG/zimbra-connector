@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -49,7 +50,7 @@ public class ZimbraAdminService {
                                "    WITH r, a, apps, CASE WHEN g IS NOT NULL THEN COLLECT(DISTINCT{ id: g.id, name: g.name }) ELSE [] END as groups " +
                                "RETURN r.id as id, r.name as name, a.id as appId, groups, COUNT(DISTINCT apps) > 1 as transverse";
                JsonObject params = new JsonObject()
-                       .put("appId", event.right().getValue().getJsonObject("role").getString("id"))
+                       .put("appId", event.right().getValue().getJsonObject("role").getString(Field.ID))
                        .put("structureId", structureId);
                neo.execute(query, params, Neo4jResult.validResultHandler(handler));
            }else{

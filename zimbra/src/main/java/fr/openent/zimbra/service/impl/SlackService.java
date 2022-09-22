@@ -1,5 +1,6 @@
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.HttpClientHelper;
 import fr.openent.zimbra.model.SlackConfiguration;
 import io.vertx.core.Vertx;
@@ -15,8 +16,8 @@ import java.nio.charset.StandardCharsets;
 public class SlackService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SlackService.class);
 
-    private Vertx vertx;
-    private SlackConfiguration config;
+    private final Vertx vertx;
+    private final SlackConfiguration config;
 
     public SlackService(Vertx vertx, SlackConfiguration config) {
         this.vertx = vertx;
@@ -34,7 +35,7 @@ public class SlackService {
             if (response.statusCode() != 200) {
                 LOGGER.error("An error occurred when notify slack");
             }
-        }).putHeader("Content-Type", "application/json");
+        }).putHeader(Field.CONTENT_TYPE, "application/json");
 
         notification.end();
     }

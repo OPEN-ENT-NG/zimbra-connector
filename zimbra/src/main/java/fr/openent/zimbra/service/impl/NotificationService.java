@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.model.MailAddress;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
@@ -104,7 +105,7 @@ public class NotificationService {
             if (result.isRight()) {
                 JsonObject neoData = result.right().getValue();
                 returnUser = new UserInfos();
-                returnUser.setUserId(neoData.getString("id"));
+                returnUser.setUserId(neoData.getString(Field.ID));
                 returnUser.setUsername(neoData.getString("displayName"));
             }
             handler.handle(returnUser);

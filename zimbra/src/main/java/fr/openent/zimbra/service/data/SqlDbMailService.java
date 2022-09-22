@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.data;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.Group;
 import fr.openent.zimbra.model.ZimbraUser;
@@ -156,7 +157,7 @@ public class SqlDbMailService extends DbMailService {
         JsonArray jsonUsers = new JsonArray();
         for (ZimbraUser user : users) {
             JsonObject jsonUser = new JsonObject()
-                    .put("name", user.getName())
+                    .put(Field.NAME, user.getName())
                     .put("aliases", new JsonArray(user.getAliases()));
             jsonUsers.add(jsonUser);
         }
@@ -177,7 +178,7 @@ public class SqlDbMailService extends DbMailService {
         for (Object obj : users) {
             if (!(obj instanceof JsonObject)) continue;
             JsonObject user = (JsonObject) obj;
-            String name = user.getString("name");
+            String name = user.getString(Field.NAME);
             JsonArray aliases = user.getJsonArray("aliases");
             for (Object o : aliases) {
                 if (!(o instanceof String)) continue;
@@ -373,7 +374,7 @@ public class SqlDbMailService extends DbMailService {
                      " WHERE id = ?" +
                      " RETURNING date;";
             params.add(returnedMailsStatut.getJsonObject(i).getString("statut"))
-                  .add(returnedMailsStatut.getJsonObject(i).getLong("id"));
+                  .add(returnedMailsStatut.getJsonObject(i).getLong(Field.ID));
         }
         sql.prepared(query, params, SqlResult.validResultHandler(handler));
     }

@@ -18,6 +18,7 @@
 package fr.openent.zimbra.service.data;
 
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.service.impl.CommunicationService;
@@ -129,7 +130,7 @@ public class Neo4jZimbraService {
 				.append(", pg<-[:IN]-(u:User) ");
 
 		String  filter =  "WHERE u.id = {id} ";
-		JsonObject params = new JsonObject().put("id", id);
+		JsonObject params = new JsonObject().put(Field.ID, id);
 
 		query.append(filter);
 		query.append("OPTIONAL MATCH (g:Group)<-[:IN]-u ");
@@ -153,7 +154,7 @@ public class Neo4jZimbraService {
 				+ "RETURN g.id as " + GROUP_ID + ", "
 				+ "g.groupDisplayName as " + GROUP_DISPLAYNAME + ", "
 				+ "g.name as " + GROUP_NAME;
-		JsonObject params = new JsonObject().put("id", id);
+		JsonObject params = new JsonObject().put(Field.ID, id);
 
 		neo.execute(query, params, validUniqueResultHandler(AsyncHelper.getJsonObjectEitherHandler(handler)));
 	}

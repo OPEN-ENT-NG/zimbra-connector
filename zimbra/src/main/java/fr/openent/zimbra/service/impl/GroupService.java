@@ -19,6 +19,7 @@ package fr.openent.zimbra.service.impl;
 
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
 import fr.openent.zimbra.model.constant.ZimbraErrors;
@@ -100,11 +101,11 @@ public class GroupService {
                         Handler<Either<String, JsonObject>> handler) {
 
         JsonObject acct = new JsonObject()
-                .put("by", "name")
+                .put("by", Field.NAME)
                 .put("_content", account);
 
         JsonObject getInfoRequest = new JsonObject()
-                .put("name", "GetDistributionListRequest")
+                .put(Field.NAME, "GetDistributionListRequest")
                 .put("content", new JsonObject()
                         .put("_jsns", SoapConstants.NAMESPACE_ADMIN)
                         .put("limit", 1)

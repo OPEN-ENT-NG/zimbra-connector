@@ -2,6 +2,7 @@ package fr.openent.zimbra.service.impl;
 
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import io.vertx.core.Handler;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.eventbus.EventBus;
@@ -50,7 +51,7 @@ public class RedirectionService {
                     .put("userIds", new JsonArray().add(userid));
 
             eb.send("userbook.preferences", params, (Handler<AsyncResult<Message<JsonObject>>>) res -> {
-                if (res.failed() || res.result().body().getString("status", "error").equals("error")) {
+                if (res.failed() || res.result().body().getString(Field.STATUS, Field.ERROR).equals(Field.ERROR)) {
                     handler.handle(false);
                 } else {
                     try {

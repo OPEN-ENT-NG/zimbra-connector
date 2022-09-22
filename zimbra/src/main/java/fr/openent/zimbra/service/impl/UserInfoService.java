@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -73,7 +74,7 @@ public class UserInfoService {
      */
     static void processAliases(JsonObject getInfoResponse, JsonObject data) {
         try {
-            String name = getInfoResponse.getString("name");
+            String name = getInfoResponse.getString(Field.NAME);
             JsonObject attrs = getInfoResponse.getJsonObject("attrs")
                     .getJsonObject("_attrs");
             JsonArray aliases = new JsonArray();
@@ -86,7 +87,7 @@ public class UserInfoService {
             }
 
             data.put(ALIAS, new JsonObject()
-                    .put("name", name)
+                    .put(Field.NAME, name)
                     .put("aliases", aliases));
         } catch (NullPointerException|ClassCastException e) {
             data.remove(ALIAS);
@@ -114,11 +115,11 @@ public class UserInfoService {
                 String preferredSignature = attrs.getString("zimbraPrefDefaultSignatureId");
                 JsonObject signaturePreference = new JsonObject()
                         .put("prefered", true)
-                        .put("id", preferredSignature);
+                        .put(Field.ID, preferredSignature);
                 int i = 0;
                 while(i < signatures.size() && !data.containsKey("content")) {
                     JsonObject signature = signatures.getJsonObject(i);
-                    if (signature.getString("id").equals(preferredSignature)) {
+                    if (signature.getString(Field.ID).equals(preferredSignature)) {
                         JsonArray content = signature.getJsonArray("content");
                         if (!content.isEmpty()) {
                             signaturePreference.put("content", escapeJava(content
@@ -134,7 +135,7 @@ public class UserInfoService {
             else {
                 data.put(SIGN_PREF, new JsonObject()
                         .put("prefered", false)
-                        .put("id", ""));
+                        .put(Field.ID, ""));
             }
 
         } catch (NullPointerException|ClassCastException e) {
@@ -163,7 +164,7 @@ public class UserInfoService {
 
         data.put(ZIMBRA_ID, account.getString(ZimbraConstants.ACCT_ID, ""));
 
-        alias.put("name", account.getString(ZimbraConstants.ACCT_NAME, ""));
+        alias.put(Field.NAME, account.getString(ZimbraConstants.ACCT_NAME, ""));
         alias.put("aliases", new JsonArray());
 
         JsonArray attributes = account.getJsonArray(ZimbraConstants.ACCT_ATTRIBUTES, new JsonArray());

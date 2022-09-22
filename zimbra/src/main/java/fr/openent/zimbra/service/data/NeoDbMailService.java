@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.data;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.model.Group;
 import fr.openent.zimbra.model.ZimbraUser;
@@ -136,7 +137,7 @@ public class NeoDbMailService extends DbMailService {
         JsonArray jsonUsers = new JsonArray();
         for(ZimbraUser user : users) {
             JsonObject jsonUser = new JsonObject()
-                    .put("name", user.getName())
+                    .put(Field.NAME, user.getName())
                     .put("aliases", new JsonArray(user.getAliases()));
             jsonUsers.add(jsonUser);
         }
@@ -167,7 +168,7 @@ public class NeoDbMailService extends DbMailService {
         for(Object obj : users) {
             if(!(obj instanceof JsonObject)) continue;
             JsonObject user = (JsonObject)obj;
-            String email = user.getString("name", "");
+            String email = user.getString(Field.NAME, "");
             String userId = getUserNameFromMail(user.getJsonArray("aliases", new JsonArray()).getString(0));
             if(email.isEmpty() || userId.isEmpty()) {
                 log.error("Trying to update user with invalid mail : " + email + " or id : " + userId);
@@ -217,7 +218,7 @@ public class NeoDbMailService extends DbMailService {
             if (res.failed()) {
                 handler.handle(Future.failedFuture(res.cause()));
             } else {
-                if ("ok".equals(res.result().body().getString("status"))) {
+                if ("ok".equals(res.result().body().getString(Field.STATUS))) {
                     handler.handle(Future.succeededFuture(new JsonObject()));
                 } else {
                     handler.handle(Future.failedFuture("update group failure"));
