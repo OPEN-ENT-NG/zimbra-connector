@@ -1090,7 +1090,6 @@ public class ZimbraController extends BaseController {
     public void getAttachment(final HttpServerRequest request) {
         final String messageId = request.params().get(MESSAGE_ID);
         final String attachmentId = request.params().get("attachmentId");
-        final boolean workspace = Boolean.parseBoolean(request.params().get("workspace") != null ? request.params().get("workspace") : Field.FALSE);
         if (messageId == null || messageId.isEmpty() || attachmentId == null || attachmentId.isEmpty()) {
             notFound(request, "invalid.file.id");
             return;
@@ -1100,13 +1099,37 @@ public class ZimbraController extends BaseController {
                 unauthorized(request);
                 return;
             }
-            if (workspace) {
-                attachmentService.getAttachmentToWorkspace(messageId, attachmentId, user, false, storage, workspaceHelper,
-                        defaultResponseHandler(request));
-            } else {
-                attachmentService.getAttachmentToComputer(messageId, attachmentId, user,false, request,
-                        defaultResponseHandler(request));
+            attachmentService.getAttachmentToComputer(messageId, attachmentId, user,false, request,
+                    defaultResponseHandler(request));
+        });
+
+
+    }
+
+    /**
+     * Download an attachment in workspace
+     *
+     * @param request http request containing info
+     *                Users infos
+     *                id : message Id
+     *                attachmentId : attachment Id
+     */
+    @Get("message/:id/attachment/:attachmentId/workspace")
+    @SecuredAction("zimbra.downloadInWorkspace")
+    public void getAttachmentToWorkspace(final HttpServerRequest request) {
+        final String messageId = request.params().get(MESSAGE_ID);
+        final String attachmentId = request.params().get("attachmentId");
+        if (messageId == null || messageId.isEmpty() || attachmentId == null || attachmentId.isEmpty()) {
+            notFound(request, "invalid.file.id");
+            return;
+        }
+        UserUtils.getUserInfos(eb, request, user -> {
+            if (user == null) {
+                unauthorized(request);
+                return;
             }
+            attachmentService.getAttachmentToWorkspace(messageId, attachmentId, user, false, storage, workspaceHelper,
+                    defaultResponseHandler(request));
         });
 
 

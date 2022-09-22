@@ -25,7 +25,8 @@ Behaviours.register("zimbra", {
       read: "fr.openent.zimbra.controllers.ZimbraController|view",
       expert: "fr.openent.zimbra.controllers.ZimbraController|preauth",
       outsideCommunication: "fr.openent.zimbra.controllers.ZimbraController|zimbraOutside",
-      return: "fr.openent.zimbra.controllers.ZimbraController|returnMails"
+      return: "fr.openent.zimbra.controllers.ZimbraController|returnMails",
+      downloadInWorkspace: "fr.openent.zimbra.controllers.ZimbraController|getAttachmentToWorkspace"
     }
   },
   sniplets: {

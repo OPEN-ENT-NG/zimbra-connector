@@ -1161,7 +1161,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.downloadAttachmentInWorkspace = function(attachment : Attachment, mail : Mail) {
-            http.get(`message/${mail.id}/attachment/${attachment.id}?workspace=true`)
+            http.get(`message/${mail.id}/attachment/${attachment.id}/workspace`)
                 .then(() => {
                     notify.info("zimbra.attachment.download.workspace.success");
                 })

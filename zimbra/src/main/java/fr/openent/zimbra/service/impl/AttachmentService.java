@@ -93,7 +93,6 @@ public class AttachmentService {
                                         HttpServerRequest httpServerRequest, Handler<Either<String,JsonObject>> handler) {
         getAttachment(messageId, attachmentPartId, user, inline)
                 .compose(zimbraResponse -> uploadToComputer(httpServerRequest, zimbraResponse))
-                .onSuccess(res -> handler.handle(new Either.Right<>(new JsonObject())))
                 .onFailure(err -> {
                     String messageToFormat = "[Zimbra@getAttachmentToComputer] Error in getAttachmentToComputer : " + err.getMessage();
                     handler.handle(new Either.Left<>(messageToFormat));
