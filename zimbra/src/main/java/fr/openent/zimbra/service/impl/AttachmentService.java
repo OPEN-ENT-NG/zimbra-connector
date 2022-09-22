@@ -367,7 +367,6 @@ public class AttachmentService {
                     .putHeader(Field.COOKIE,"ZM_AUTH_TOKEN=" + authToken);
 
             pumpRequests(httpClient, requestFront, requestZimbra)
-                    .onSuccess(res -> handler.handle(new Either.Right<>(new JsonObject())))
                     .onFailure(error -> {
                         String messageToFormat = "Zimbra@addAttachmentBuffer Error in pumpRequest : " + error.getMessage();
                         log.error(messageToFormat);
