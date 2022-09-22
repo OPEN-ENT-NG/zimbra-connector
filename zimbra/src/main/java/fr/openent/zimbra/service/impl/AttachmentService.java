@@ -175,16 +175,8 @@ public class AttachmentService {
             contentType = contentType.substring(0, contentType.indexOf(";"));
             fileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8.name());
             if (!fileName.isEmpty() && !contentType.isEmpty()) {
-                String finalContentType = contentType;
-                String finalFileName = fileName;
-                zimbraResponse.bodyHandler(buffer ->
-                        FileHelper.writeBuffer(storage, buffer, finalContentType, finalFileName)
-                                .compose(writeInfo -> FileHelper.addFileReference(writeInfo, user, finalFileName, workspaceHelper))
-                                .onSuccess(res -> promise.complete())
-                                .onFailure(err -> {
-                                    String messageToFormat = "[Zimbra@uploadToWorkspace] Error while storing file : " + err.getMessage();
-                                    PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), err, promise);
-                                }));
+                //Todo make the writeBuffer writeReadStream to fileStorage
+                processWriteBuffer(user, storage, workspaceHelper, zimbraResponse, promise, contentType, fileName);
             } else {
                 String messageToFormat = "Zimbra@getAttachment : Missing Infos";
                 PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), new Exception(messageToFormat), promise);
@@ -194,6 +186,18 @@ public class AttachmentService {
             PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), e, promise);
         }
         return promise.future();
+    }
+
+    private static void processWriteBuffer(UserInfos user, Storage storage, WorkspaceHelper workspaceHelper, HttpClientResponse zimbraResponse,
+                                  Promise<Void> promise, String finalContentType, String finalFileName) {
+        zimbraResponse.bodyHandler(buffer ->
+                FileHelper.writeBuffer(storage, buffer, finalContentType, finalFileName)
+                        .compose(writeInfo -> FileHelper.addFileReference(writeInfo, user, finalFileName, workspaceHelper))
+                        .onSuccess(res -> promise.complete())
+                        .onFailure(err -> {
+                            String messageToFormat = "[Zimbra@uploadToWorkspace] Error while storing file : " + err.getMessage();
+                            PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), err, promise);
+                        }));
     }
 
     private Future<Void> uploadToComputer(HttpServerRequest frontRequest, HttpClientResponse zimbraResponse) {
