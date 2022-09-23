@@ -1,5 +1,6 @@
 package fr.openent.zimbra.controllers;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.filters.DevLevelFilter;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.JsonHelper;
@@ -112,7 +113,7 @@ public class ZimbraMobileController extends BaseController {
             if (user != null) {
                 RequestUtils.bodyToJson(request, body -> {
                     try {
-                        List<String> ids = JsonHelper.getStringList(body.getJsonArray("id", new JsonArray()));
+                        List<String> ids = JsonHelper.getStringList(body.getJsonArray(Field.ID, new JsonArray()));
                         boolean unread = body.getBoolean("unread");
                         if (ids.isEmpty()) {
                             badRequest(request);
@@ -148,7 +149,7 @@ public class ZimbraMobileController extends BaseController {
             if (user != null) {
                 RequestUtils.bodyToJson(request, body -> {
                     try {
-                        List<String> threadIds = JsonHelper.getStringList(body.getJsonArray("id", new JsonArray()));
+                        List<String> threadIds = JsonHelper.getStringList(body.getJsonArray(Field.ID, new JsonArray()));
                         if (threadIds.isEmpty()) {
                             badRequest(request);
                             return;

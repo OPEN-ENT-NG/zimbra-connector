@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import {$, _, angular, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
+import {$, _, angular, Document, idiom as lang, moment, ng, notify, skin, template, workspace} from "entcore";
 import {
     Attachment,
     Group,
@@ -23,8 +23,7 @@ import {
     quota,
     RECEIVER_TYPE,
     REGEXLIB,
-    SCREENS,
-    SystemFolder,
+    SCREENS, SystemFolder,
     User,
     UserFolder,
     Users, Utils,

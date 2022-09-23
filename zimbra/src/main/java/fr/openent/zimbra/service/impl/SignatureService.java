@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.wseduc.webutils.Either;
@@ -48,7 +49,7 @@ public class SignatureService {
                              Handler<Either<String,JsonObject>> result) {
 
         JsonObject getSignaturesRequest = new JsonObject()
-                .put("name", "GetSignaturesRequest")
+                .put(Field.NAME, "GetSignaturesRequest")
                 .put("content", new JsonObject()
                         .put("_jsns", NAMESPACE_ACCOUNT));
 
@@ -92,14 +93,14 @@ public class SignatureService {
 
                     if(!(o instanceof JsonObject)) continue;
                     JsonObject signature = (JsonObject)o;
-                    String name = signature.getString("name", "");
+                    String name = signature.getString(Field.NAME, "");
 
                     if (name.equals(DEFAULT_SIGNATURE_NAME)) {
                         String signatureBody = signature
                                 .getJsonArray("content").getJsonObject(0)
                                 .getString("_content");
 
-                        String signatureId = signature.getString("id", "");
+                        String signatureId = signature.getString(Field.ID, "");
 
                         signatureENTExists = true;
 
@@ -110,7 +111,7 @@ public class SignatureService {
                                             .put ("signature", signatureBody)
                                             .toString())
                                     .put("zimbraENTSignatureExists", true)
-                                    .put("id", signatureId);
+                                    .put(Field.ID, signatureId);
                             result.handle(new Either.Right<>(finalResponse));
                         });
                     }
@@ -123,7 +124,7 @@ public class SignatureService {
                                 .put ("signature", "")
                                 .toString())
                         .put("zimbraENTSignatureExists", false)
-                        .put("id", "");
+                        .put(Field.ID, "");
 
                 result.handle(new Either.Right<>(finalResponse));
             }
@@ -147,14 +148,14 @@ public class SignatureService {
                                 Handler<Either<String,JsonObject>> result) {
 
         JsonObject signatureReq = new JsonObject()
-                .put("id", DEFAULT_SIGNATURE_ID)
-                .put("name", DEFAULT_SIGNATURE_NAME)
+                .put(Field.ID, DEFAULT_SIGNATURE_ID)
+                .put(Field.NAME, DEFAULT_SIGNATURE_NAME)
                 .put("content", new JsonObject()
                     .put("type", "text/plain")
                     .put("_content", signatureBody));
 
         JsonObject createSignatureRequest = new JsonObject()
-                .put("name", "CreateSignatureRequest")
+                .put(Field.NAME, "CreateSignatureRequest")
                 .put("content", new JsonObject()
                         .put("_jsns", SoapConstants.NAMESPACE_ACCOUNT)
                         .put("signature", signatureReq));
@@ -181,14 +182,14 @@ public class SignatureService {
                                 Handler<Either<String,JsonObject>> result) {
 
             JsonObject signatureReq = new JsonObject()
-                    .put("id", DEFAULT_SIGNATURE_ID)
-                    .put("name", DEFAULT_SIGNATURE_NAME)
+                    .put(Field.ID, DEFAULT_SIGNATURE_ID)
+                    .put(Field.NAME, DEFAULT_SIGNATURE_NAME)
                     .put("content", new JsonObject()
                             .put("type", "text/plain")
                             .put("_content", signatureBody));
 
             JsonObject modifySignatureRequest = new JsonObject()
-                    .put("name", "ModifySignatureRequest")
+                    .put(Field.NAME, "ModifySignatureRequest")
                     .put("content", new JsonObject()
                             .put("_jsns", SoapConstants.NAMESPACE_ACCOUNT)
                             .put("signature", signatureReq));
@@ -213,11 +214,11 @@ public class SignatureService {
                                 Handler<Either<String,JsonObject>> result) {
 
             JsonObject signatureReq = new JsonObject()
-                    .put("id", DEFAULT_SIGNATURE_ID)
-                    .put("name", DEFAULT_SIGNATURE_NAME);
+                    .put(Field.ID, DEFAULT_SIGNATURE_ID)
+                    .put(Field.NAME, DEFAULT_SIGNATURE_NAME);
 
             JsonObject deleteSignatureRequest = new JsonObject()
-                    .put("name", "DeleteSignatureRequest")
+                    .put(Field.NAME, "DeleteSignatureRequest")
                     .put("content", new JsonObject()
                             .put("_jsns", SoapConstants.NAMESPACE_ACCOUNT)
                             .put("signature", signatureReq));
@@ -252,7 +253,7 @@ public class SignatureService {
 
                     JsonObject jsonPref = jsonResponse.getJsonObject(UserInfoService.SIGN_PREF);
 
-                    handler.handle(DEFAULT_SIGNATURE_ID.equals(jsonPref.getString("id")));
+                    handler.handle(DEFAULT_SIGNATURE_ID.equals(jsonPref.getString(Field.ID)));
                 } else {
                     handler.handle(false);
                 }
@@ -277,7 +278,7 @@ public class SignatureService {
                 : "-zimbraPrefDefaultSignatureId";
 
         JsonObject modifyPrefsRequest = new JsonObject()
-                .put("name", "ModifyPrefsRequest")
+                .put(Field.NAME, "ModifyPrefsRequest")
                 .put("content", new JsonObject()
                         .put("_jsns", SoapConstants.NAMESPACE_ACCOUNT)
                         .put("_attrs", new JsonObject()

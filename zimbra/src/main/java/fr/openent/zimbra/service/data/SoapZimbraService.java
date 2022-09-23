@@ -18,6 +18,7 @@
 package fr.openent.zimbra.service.data;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.HttpClientHelper;
@@ -168,7 +169,7 @@ public class SoapZimbraService {
             context.put("_content", new JsonArray().add(new JsonObject().put("nosession", new JsonObject())));
 
         } else {
-            context.put("authToken", params.getString(PARAM_AUTH_TOKEN));
+            context.put(PARAM_AUTH_TOKEN, params.getString(PARAM_AUTH_TOKEN));
         }
 
         JsonObject header = new JsonObject();
@@ -455,8 +456,8 @@ public class SoapZimbraService {
         } else {
 
             JsonObject authContent = new JsonObject();
-            authContent.put("by", "name");
-            authContent.put("_content", preauthInfos.getString("id"));
+            authContent.put("by", Field.NAME);
+            authContent.put("_content", preauthInfos.getString(Field.ID));
 
             JsonObject preauth = new JsonObject();
             preauth.put("timestamp", preauthInfos.getString("timestamp"));
@@ -497,7 +498,7 @@ public class SoapZimbraService {
                            Handler<Either<String, JsonObject>> handler) {
 
         JsonObject authContent = new JsonObject();
-        authContent.put("by", "name");
+        authContent.put("by", Field.NAME);
         authContent.put("_content", userId);
 
         JsonObject body = new JsonObject();
@@ -551,7 +552,7 @@ public class SoapZimbraService {
                 try  {
                     String authToken = respValue
                             .getJsonObject("Body").getJsonObject("AuthResponse")
-                            .getJsonArray("authToken").getJsonObject(0)
+                            .getJsonArray(PARAM_AUTH_TOKEN).getJsonObject(0)
                             .getString("_content");
                     Long lifetime = respValue
                             .getJsonObject("Body").getJsonObject("AuthResponse")

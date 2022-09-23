@@ -18,6 +18,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
@@ -129,7 +130,7 @@ public class UserService {
     public void getUserInfo(UserInfos user,
                              Handler<Either<String, JsonObject>> handler) {
         JsonObject getInfoRequest = new JsonObject()
-                .put("name", "GetInfoRequest")
+                .put(Field.NAME, "GetInfoRequest")
                 .put("content", new JsonObject()
                         .put("_jsns", SoapConstants.NAMESPACE_ACCOUNT));
 
@@ -227,7 +228,7 @@ public class UserService {
                                    Handler<AsyncResult<String>> handler) {
 
         if(jsonResponse.containsKey(UserInfoService.ALIAS)) {
-            handler.handle(Future.succeededFuture(jsonResponse.getJsonObject(UserInfoService.ALIAS).getString("name")));
+            handler.handle(Future.succeededFuture(jsonResponse.getJsonObject(UserInfoService.ALIAS).getString(Field.NAME)));
         } else {
             handler.handle(Future.failedFuture("Could not get Quota from GetInfoRequest"));
         }
@@ -428,7 +429,7 @@ public class UserService {
             }
             JsonArray idListWithTypes = neoResult.right().getValue();
             for(String mail : emailList) {
-                idListWithTypes.add(new JsonObject().put("id",mail).put("type", TYPE_EXTERNAL));
+                idListWithTypes.add(new JsonObject().put(Field.ID,mail).put("type", TYPE_EXTERNAL));
             }
             final AtomicInteger processedIds = new AtomicInteger(idListWithTypes.size());
             JsonObject addressList = new JsonObject();
@@ -442,7 +443,7 @@ public class UserService {
                     if(!idInfos.getString("displayName", "").isEmpty()) {
                         elemInfos.put("displayName", idInfos.getString("displayName"));
                     }
-                    String elemId = idInfos.getString("id");
+                    String elemId = idInfos.getString(Field.ID);
                     switch (idInfos.getString("type", "")) {
                         case TYPE_USER:
                             getUserAddress(elemId, result -> {

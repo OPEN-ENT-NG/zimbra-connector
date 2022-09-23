@@ -29,11 +29,13 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
+import org.entcore.common.bus.WorkspaceHelper;
 import org.entcore.common.cache.CacheService;
 import org.entcore.common.cache.RedisCacheService;
 import org.entcore.common.email.EmailFactory;
 import org.entcore.common.notification.TimelineHelper;
 import org.entcore.common.redis.Redis;
+import org.entcore.common.storage.StorageFactory;
 
 @SuppressWarnings("unused")
 public class ServiceManager {

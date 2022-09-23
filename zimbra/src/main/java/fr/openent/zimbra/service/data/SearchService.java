@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.data;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.Server;
 import fr.wseduc.webutils.Utils;
@@ -73,12 +74,12 @@ public class SearchService {
                     for (Object o: visibles) {
                         if (!(o instanceof JsonObject)) continue;
                         JsonObject j = (JsonObject) o;
-                        if (j.getString("name") != null) {
+                        if (j.getString(Field.NAME) != null) {
                             j.remove("displayName");
                             UserUtils.groupDisplayName(j, acceptLanguage);
                             groups.add(j);
                         } else {
-                            j.remove("name");
+                            j.remove(Field.NAME);
                             users.add(j);
                         }
                     }

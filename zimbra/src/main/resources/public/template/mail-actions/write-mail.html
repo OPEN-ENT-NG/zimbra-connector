@@ -165,7 +165,10 @@
                 </div>
                 <a ng-href="[['message/'+state.newItem.id+'/attachment/'+attachment.id]]"
                    class="fade-in-hover large-text reduce-block-four">
-                    <i class="download-disk valid-color" tooltip="download"></i>
+                    <i class="download-disk valid-color" tooltip="download.computer"></i>
+                </a>
+                <a workflow="zimbra.downloadInWorkspace" class="fade-in-hover large-text reduce-block-four horizontal-spacing">
+                    <i class="workspace valid-color" tooltip="download.workspace" ng-click="state.newItem.downloadAttachmentInWorkspace(attachment)"></i>
                 </a>
                 <i class="close"
                    ng-click="deleteAttachment($event, attachment, state.newItem)"

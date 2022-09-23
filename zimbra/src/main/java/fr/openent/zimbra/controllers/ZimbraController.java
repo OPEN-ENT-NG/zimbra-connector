@@ -18,8 +18,9 @@
 package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.filters.DevLevelFilter;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.filters.AccessibleDocFilter;
+import fr.openent.zimbra.filters.DevLevelFilter;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.ServiceManager;
@@ -45,6 +46,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.bus.WorkspaceHelper;
 import org.entcore.common.cache.Cache;
 import org.entcore.common.cache.CacheOperation;
 import org.entcore.common.cache.CacheScope;
@@ -61,8 +63,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static fr.openent.zimbra.model.constant.FrontConstants.*;
-import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
+import static fr.openent.zimbra.model.constant.FrontConstants.MESSAGE_ID;
+import static fr.openent.zimbra.model.constant.ZimbraConstants.ZIMBRA_ID_STRUCTURE;
+import static fr.openent.zimbra.model.constant.ZimbraConstants.ZIMBRA_MAIL;
 import static fr.wseduc.webutils.request.RequestUtils.bodyToJson;
 import static org.entcore.common.http.response.DefaultResponseHandler.arrayResponseHandler;
 import static org.entcore.common.http.response.DefaultResponseHandler.defaultResponseHandler;
@@ -84,6 +87,7 @@ public class ZimbraController extends BaseController {
     private AddressBookService addressBookService;
     private Storage storage;
     private EventStore eventStore;
+    private WorkspaceHelper workspaceHelper;
 
 
     private enum ZimbraEvent {ACCESS, CREATE}
@@ -114,6 +118,8 @@ public class ZimbraController extends BaseController {
         this.frontPageService = serviceManager.getFrontPageService();
         this.addressBookService = serviceManager.getAddressBookService();
         this.returnedMailService = serviceManager.getReturnedMailService();
+        this.workspaceHelper = new WorkspaceHelper(eb,storage);
+
     }
 
     @Get("zimbra")
@@ -235,7 +241,7 @@ public class ZimbraController extends BaseController {
     @ResourceFilter(DevLevelFilter.class)
     public void writeTo(final HttpServerRequest request) {
         final String id = request.params().get(MESSAGE_ID);
-        final String name = request.params().get("name");
+        final String name = request.params().get(Field.NAME);
         final String type = request.params().get("type");
         getUserInfos(eb, request, user -> {
             if (user != null) {
@@ -348,17 +354,15 @@ public class ZimbraController extends BaseController {
         final String parentMessageId = request.params().get("In-Reply-To");
         getUserInfos(eb, request, user -> {
             if (user != null) {
-                bodyToJson(request, message -> {
-                    messageService.sendMessage(messageId, message, user, parentMessageId, event -> {
-                        if (event.isRight()) {
-                            eventStore.createAndStoreEvent(ZimbraEvent.CREATE.name(), request);
-                            Renders.renderJson(request, (JsonObject) event.right().getValue(), 200);
-                        } else {
-                            JsonObject error = (new JsonObject()).put("error", (String) event.left().getValue());
-                            Renders.renderJson(request, error, 400);
-                        }
-                    });
-                });
+                bodyToJson(request, message -> messageService.sendMessage(messageId, message, user, parentMessageId, event -> {
+                    if (event.isRight()) {
+                        eventStore.createAndStoreEvent(ZimbraEvent.CREATE.name(), request);
+                        Renders.renderJson(request, event.right().getValue(), 200);
+                    } else {
+                        JsonObject error = (new JsonObject()).put(Field.ERROR, event.left().getValue());
+                        Renders.renderJson(request, error, 400);
+                    }
+                }));
             } else {
                 unauthorized(request);
             }
@@ -518,7 +522,7 @@ public class ZimbraController extends BaseController {
     @SecuredAction(value = "", type = ActionType.RESOURCE)
     @ResourceFilter(AccessibleDocFilter.class)
     public void uploadAttachment(final HttpServerRequest request) {
-        final String id = request.params().get("id");
+        final String id = request.params().get(Field.ID);
         final String idAttachment = request.params().get("idAttachment");
         if (id == null || idAttachment == null) {
             log.error("[Zimbra] uploadAttachment : Missing parameters");
@@ -788,7 +792,7 @@ public class ZimbraController extends BaseController {
         final List<String> ids = request.params().getAll(MESSAGE_ID);
         final String unread = request.params().get("unread");
 
-        if (ids == null || ids.isEmpty() || unread == null || (!unread.equals("true") && !unread.equals("false"))) {
+        if (ids == null || ids.isEmpty() || unread == null || (!unread.equals("true") && !unread.equals(Field.FALSE))) {
             badRequest(request);
             return;
         }
@@ -865,7 +869,7 @@ public class ZimbraController extends BaseController {
                 return;
             }
             RequestUtils.bodyToJson(request, pathPrefix + "createFolder", body -> {
-                final String name = body.getString("name");
+                final String name = body.getString(Field.NAME);
                 final String parentId = body.getString("parentId", null);
 
                 if (name == null || name.trim().length() == 0) {
@@ -899,7 +903,7 @@ public class ZimbraController extends BaseController {
                 return;
             }
             RequestUtils.bodyToJson(request, pathPrefix + "updateFolder", body -> {
-                final String name = body.getString("name");
+                final String name = body.getString(Field.NAME);
 
                 if (name == null || name.trim().length() == 0) {
                     badRequest(request);
@@ -1095,7 +1099,37 @@ public class ZimbraController extends BaseController {
                 unauthorized(request);
                 return;
             }
-            attachmentService.getAttachment(messageId, attachmentId, user, false, request, defaultResponseHandler(request));
+            attachmentService.getAttachmentToComputer(messageId, attachmentId, user,false, request,
+                    defaultResponseHandler(request));
+        });
+
+
+    }
+
+    /**
+     * Download an attachment in workspace
+     *
+     * @param request http request containing info
+     *                Users infos
+     *                id : message Id
+     *                attachmentId : attachment Id
+     */
+    @Get("message/:id/attachment/:attachmentId/workspace")
+    @SecuredAction("zimbra.downloadInWorkspace")
+    public void getAttachmentToWorkspace(final HttpServerRequest request) {
+        final String messageId = request.params().get(MESSAGE_ID);
+        final String attachmentId = request.params().get("attachmentId");
+        if (messageId == null || messageId.isEmpty() || attachmentId == null || attachmentId.isEmpty()) {
+            notFound(request, "invalid.file.id");
+            return;
+        }
+        UserUtils.getUserInfos(eb, request, user -> {
+            if (user == null) {
+                unauthorized(request);
+                return;
+            }
+            attachmentService.getAttachmentToWorkspace(messageId, attachmentId, user, false, storage, workspaceHelper,
+                    defaultResponseHandler(request));
         });
 
 
@@ -1172,16 +1206,16 @@ public class ZimbraController extends BaseController {
                 String userIdOfExpeditor = message.body().getString("userId");
                 UserUtils.getUserInfos(eb, userIdOfExpeditor, user -> {
                     if (user == null) {
-                        message.reply(new JsonObject().put("status", "ko")
+                        message.reply(new JsonObject().put(Field.STATUS, "ko")
                                 .put("message", "userId of expeditor is not defined or doesn't exists in Neo4j"));
                         return;
                     }
                     messageService.sendMessage(null, messageToSend, user, null, res -> {
                                 if (res.isLeft()) {
-                                    message.reply(new JsonObject().put("status", "ko")
+                                    message.reply(new JsonObject().put(Field.STATUS, "ko")
                                             .put("message", res.left().getValue()));
                                 } else {
-                                    message.reply(new JsonObject().put("status", "ok")
+                                    message.reply(new JsonObject().put(Field.STATUS, "ok")
                                             .put("message", res.right().getValue()));
                                 }
                             }
@@ -1189,7 +1223,7 @@ public class ZimbraController extends BaseController {
                 });
                 break;
             default:
-                message.reply(new JsonObject().put("status", "error")
+                message.reply(new JsonObject().put(Field.STATUS, Field.ERROR)
                         .put("message", "invalid.action"));
         }
     }
@@ -1203,7 +1237,7 @@ public class ZimbraController extends BaseController {
             case "getMailUser":
                 JsonArray idList = message.body().getJsonArray("idList", new JsonArray());
                 userService.getMailAddresses(idList, res ->
-                        message.reply(new JsonObject().put("status", "ok")
+                        message.reply(new JsonObject().put(Field.STATUS, "ok")
                                 .put("message", res))
                 );
                 break;

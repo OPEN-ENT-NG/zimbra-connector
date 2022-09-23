@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.helper;
 
+import fr.openent.zimbra.core.constants.Field;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -45,7 +46,7 @@ public class PreauthHelper {
     private static final Logger log = LoggerFactory.getLogger(PreauthHelper.class);
 
     private static  String computeDefaultPreAuth(String id, String timestamp, String key) {
-        return computePreAuth(id, "name", timestamp, "0", "0", key);
+        return computePreAuth(id, Field.NAME, timestamp, "0", "0", key);
     }
 
 
@@ -73,7 +74,7 @@ public class PreauthHelper {
         }
 
         return new JsonObject()
-                .put("id", emailAddress)
+                .put(Field.ID, emailAddress)
                 .put("timestamp", timestamp)
                 .put("preauthkey", computedPreauth);
     }
@@ -85,7 +86,7 @@ public class PreauthHelper {
             throw new IOException("Error when processing preauth url");
         } else {
             return String.format(preauthUrl,
-                    URLEncoder.encode(preauthInfos.getString("id"), "UTF-8"),
+                    URLEncoder.encode(preauthInfos.getString(Field.ID), "UTF-8"),
                     preauthInfos.getString("timestamp"),
                     preauthInfos.getString("preauthkey"));
         }

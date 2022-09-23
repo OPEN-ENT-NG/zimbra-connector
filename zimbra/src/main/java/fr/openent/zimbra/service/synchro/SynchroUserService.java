@@ -18,6 +18,7 @@
 package fr.openent.zimbra.service.synchro;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.soap.SoapRequest;
@@ -141,7 +142,7 @@ public class SynchroUserService {
                 }
                 continue;
             }
-            String userId = ((JsonObject)o).getString("id");
+            String userId = ((JsonObject)o).getString(Field.ID);
 
             Handler<AsyncResult<JsonObject>> addGroupHandler = resAdd -> {
                 if(resAdd.failed()) {

@@ -18,6 +18,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.FutureHelper;
 import fr.openent.zimbra.model.MailAddress;
@@ -105,7 +106,7 @@ public class MessageService {
                 .put("_jsns", SoapConstants.NAMESPACE_MAIL);
 
         JsonObject searchRequest = new JsonObject()
-                .put("name", "SearchRequest")
+                .put(Field.NAME, "SearchRequest")
                 .put("content", searchReq);
 
         soapService.callUserSoapAPI(searchRequest, user, searchResult -> {
@@ -200,7 +201,7 @@ public class MessageService {
      */
     private void transformMessageZimbraToFront(JsonObject msgZimbra, JsonObject msgFront,
                                                Map<String, String> addressMap, Handler<JsonObject> result) {
-        msgFront.put("id", msgZimbra.getString(MSG_ID));
+        msgFront.put(Field.ID, msgZimbra.getString(MSG_ID));
         msgFront.put("date", msgZimbra.getLong(MSG_DATE));
         msgFront.put("subject", msgZimbra.getString(MSG_SUBJECT));
         String folderId = msgZimbra.getString(MSG_LOCATION);
@@ -400,10 +401,10 @@ public class MessageService {
                 .put("read", Zimbra.appConfig.isActionBlocked(ConfigManager.UPDATE_ACTION) ? 0 : 1)
                 .put("needExp", 1)
                 .put("neuter", 0)
-                .put("id", messageId);
+                .put(Field.ID, messageId);
 
         JsonObject getMsgRequest = new JsonObject()
-                .put("name", "GetMsgRequest")
+                .put(Field.NAME, "GetMsgRequest")
                 .put("content", new JsonObject()
                         .put(MSG, messageReq)
                         .put("_jsns", SoapConstants.NAMESPACE_MAIL));
@@ -484,7 +485,7 @@ public class MessageService {
                 .put("recursive", "true");
 
         JsonObject folderActionRequest = new JsonObject()
-                .put("name", "FolderActionRequest")
+                .put(Field.NAME, "FolderActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
                         .put("_jsns", SoapConstants.NAMESPACE_MAIL));
@@ -557,7 +558,7 @@ public class MessageService {
                                     .put(MSG_EMAIL_TYPE, ADDR_TYPE_FROM)
                                     .put(MSG_EMAIL_COMMENT, user.getUsername()));
                     JsonObject sendMsgRequest = new JsonObject()
-                            .put("name", "SendMsgRequest")
+                            .put(Field.NAME, "SendMsgRequest")
                             .put("content", new JsonObject()
                                     .put("_jsns", SoapConstants.NAMESPACE_MAIL)
                                     .put(MSG, mailContent)
@@ -579,7 +580,7 @@ public class MessageService {
                             }
                             JsonObject rightResponse = new JsonObject()
                                     .put("sent", 1)
-                                    .put("id", id)
+                                    .put(Field.ID, id)
                                     .put("thread_id", threadid);
                             result.handle(new Either.Right<>(rightResponse));
                         }
@@ -693,7 +694,7 @@ public class MessageService {
      */
     void execSaveDraftRaw(JsonObject mailContent, UserInfos user, Handler<Either<String, JsonObject>> handler) {
         JsonObject saveDraftRequest = new JsonObject()
-                .put("name", "SaveDraftRequest")
+                .put(Field.NAME, "SaveDraftRequest")
                 .put("content", new JsonObject()
                         .put("_jsns", SoapConstants.NAMESPACE_MAIL)
                         .put(MSG, mailContent));
@@ -749,7 +750,7 @@ public class MessageService {
                             if (!(o instanceof JsonObject)) continue;
                             JsonObject attFront = (JsonObject) o;
                             JsonObject attZimbra = new JsonObject();
-                            attZimbra.put(MULTIPART_PART_ID, attFront.getString("id"));
+                            attZimbra.put(MULTIPART_PART_ID, attFront.getString(Field.ID));
                             attZimbra.put(MULTIPART_MSG_ID, messageId);
                             attsZimbra.add(attZimbra);
                         }
@@ -793,7 +794,7 @@ public class MessageService {
                     .getString(MSG_ID);
 
             JsonObject finalResponse = new JsonObject()
-                    .put("id", idNewDraftEmail);
+                    .put(Field.ID, idNewDraftEmail);
 
             handler.handle(new Either.Right<>(finalResponse));
         } catch (NullPointerException e) {
@@ -866,7 +867,7 @@ public class MessageService {
                 .put(OPERATION, OP_MOVE);
 
         JsonObject convActionRequest = new JsonObject()
-                .put("name", "MsgActionRequest")
+                .put(Field.NAME, "MsgActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
                         .put("_jsns", SoapConstants.NAMESPACE_MAIL));
@@ -925,7 +926,7 @@ public class MessageService {
                 .put(MSG_CONSTRAINTS, MSG_CON_TRASH);
 
         JsonObject convActionRequest = new JsonObject()
-                .put("name", "MsgActionRequest")
+                .put(Field.NAME, "MsgActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
                         .put("_jsns", SoapConstants.NAMESPACE_MAIL));
@@ -950,7 +951,7 @@ public class MessageService {
         String subject = returnedMail.getString("object");
         String from_mail = returnedMail.getString("user_mail");
         String date = returnedMail.getString("mail_date");
-        String to_user_id = to_user_infos.getString("id");
+        String to_user_id = to_user_infos.getString(Field.ID);
         ZimbraUser user = new ZimbraUser(new MailAddress(to_user_infos.getString("mail")));
         user.checkIfExists(userResponse -> {
             if (userResponse.failed()) {
@@ -1063,7 +1064,7 @@ public class MessageService {
                 .put(OPERATION, insertField);
 
         JsonObject msgActionRequest = new JsonObject()
-                .put("name", "MsgActionRequest")
+                .put(Field.NAME, "MsgActionRequest")
                 .put("content", new JsonObject()
                         .put("action", actionReq)
                         .put("_jsns", SoapConstants.NAMESPACE_MAIL));
