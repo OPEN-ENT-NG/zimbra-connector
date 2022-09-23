@@ -23,8 +23,7 @@ import {
     quota,
     RECEIVER_TYPE,
     REGEXLIB,
-    SCREENS, sendNotificationErrorZimbra,
-    SystemFolder,
+    SCREENS, SystemFolder,
     User,
     UserFolder,
     Users, Utils,
@@ -35,7 +34,6 @@ import {
 
 import {Preference} from "../model/preferences";
 import http from "../model/http";
-import {AxiosError, AxiosResponse} from "axios";
 
 declare const window: any;
 

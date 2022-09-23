@@ -35,6 +35,7 @@ import http from './http';
 
 import {MAIL, SERVICE, QUOTA} from "./constantes";
 import {AxiosError, AxiosResponse} from "axios";
+import {attachmentService} from "../services";
 
 export class Attachment {
     file: File;
@@ -483,30 +484,15 @@ export class Mail implements Selectable {
     async postAttachments(attachmentToUpload : Attachment, workspace : boolean) : Promise<void> {
             let post : Promise<AxiosResponse>;
             if (workspace) {
-                post = http.post(`/zimbra/message/${this.id}/upload/${attachmentToUpload.id}`)
+                post = attachmentService.postAttachmentFromWorkspace(attachmentToUpload, this);
             } else {
-                post = http
-                    .post(
-                        "message/" + this.id + "/attachment",
-                        attachmentToUpload.file,
-                        {
-                            headers: {
-                                "Content-Disposition":
-                                    'attachment; filename="' +
-                                    attachmentToUpload.file.name.replace(
-                                        /[\u00A0-\u9999<>\&]/gim,
-                                        function (i) {
-                                            return "&#" + i.charCodeAt(0) + ";";
-                                        }
-                                    ) +
-                                    '"'
-                            }
-                        })
+                post = attachmentService.postAttachmentFromComputer(attachmentToUpload, this)
             }
             const promise: Promise<void> = post
                 .then((response: AxiosResponse) => {
                     const attachmentWaiting : Attachment[] =
-                        this.attachments.filter((attachment : Attachment) => attachment.uploadStatus && attachment.uploadStatus == "loading" && attachment != attachmentToUpload);
+                        this.attachments.filter((attachment : Attachment) =>
+                            attachment.uploadStatus && attachment.uploadStatus == "loading" && attachment != attachmentToUpload);
                     this.attachments = response.data.attachments as Attachment[];
                     this.attachments.forEach((attach: Attachment) => {
                         attach.filename = decodeURI(attach.filename);
@@ -521,7 +507,7 @@ export class Mail implements Selectable {
     }
 
     downloadAttachmentInWorkspace(attachment : Attachment) : void {
-        http.get(`message/${this.id}/attachment/${attachment.id}/workspace`)
+        attachmentService.downloadAttachmentInWorkspace(attachment, this)
             .then(() => {
                 notify.info("zimbra.attachment.download.workspace.success");
             })
@@ -532,7 +518,7 @@ export class Mail implements Selectable {
 
     async deleteAttachment(attachment) {
         this.attachments.splice(this.attachments.indexOf(attachment), 1);
-        const response = await http.delete("message/" + this.id + "/attachment/" + attachment.id);
+        const response = await attachmentService.deleteAttachment(attachment, this);
         this.attachments = response.data.attachments;
         this.attachments.map(attachment => {
             attachment.filename = decodeURI(attachment.filename);
