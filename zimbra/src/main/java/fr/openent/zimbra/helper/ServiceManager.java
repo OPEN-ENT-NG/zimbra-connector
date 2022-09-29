@@ -133,7 +133,7 @@ public class ServiceManager {
         this.neo4jAddrbookService = new Neo4jAddrbookService();
 
         if(config != null) soapService.setServices(userService, synchroUserService);
-        synchroUserService.setUserService(userService);
+        if(synchroUserService != null) synchroUserService.setUserService(userService);
     }
 
     private void initDbMailService(ConfigManager appConfig) {
