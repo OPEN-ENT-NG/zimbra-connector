@@ -23,10 +23,10 @@ import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
-import fr.openent.zimbra.model.constant.ZimbraErrors;
-import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
+import fr.openent.zimbra.model.constant.ZimbraErrors;
+import fr.openent.zimbra.model.soap.SoapRequest;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
@@ -54,22 +54,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static fr.openent.zimbra.service.data.Neo4jZimbraService.*;
 import static fr.wseduc.webutils.Utils.handlerToAsyncHandler;
 import static org.entcore.common.neo4j.Neo4jResult.validResultHandler;
-import static org.entcore.common.neo4j.Neo4jResult.validUniqueResultHandler;
 
 public class UserService {
 
-    private SoapZimbraService soapService;
-    private DbMailService dbMailService;
-    private SynchroUserService synchroUserService;
-    private Neo4jZimbraService neoService;
-    private GroupService groupService;
-    private SynchroAddressBookService synchroAddressBookService;
-    private AddressBookService addressBookService;
+    private final SoapZimbraService soapService;
+    private final DbMailService dbMailService;
+    private final SynchroUserService synchroUserService;
+    private final Neo4jZimbraService neoService;
+    private final GroupService groupService;
+    private final SynchroAddressBookService synchroAddressBookService;
+    private final AddressBookService addressBookService;
 
-    private static Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private static final String DIRECTORY_ADDRESS = "directory";
 
-    private EventBus eb;
+    private final EventBus eb;
 
     public UserService(SoapZimbraService soapService, SynchroUserService synchroUserService,
                        DbMailService dbMailService, SynchroAddressBookService synchroAddressBookService,

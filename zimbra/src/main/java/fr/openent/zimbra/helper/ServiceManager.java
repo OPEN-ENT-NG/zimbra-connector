@@ -29,13 +29,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
-import org.entcore.common.bus.WorkspaceHelper;
 import org.entcore.common.cache.CacheService;
 import org.entcore.common.cache.RedisCacheService;
 import org.entcore.common.email.EmailFactory;
 import org.entcore.common.notification.TimelineHelper;
 import org.entcore.common.redis.Redis;
-import org.entcore.common.storage.StorageFactory;
 
 @SuppressWarnings("unused")
 public class ServiceManager {
@@ -44,40 +42,39 @@ public class ServiceManager {
 
     private TimelineHelper timelineHelper;
     private EmailSender emailSender;
-    private Vertx vertx;
+    private final Vertx vertx;
 
     private SoapZimbraService soapService;
     private UserService userService;
-    private FolderService folderService;
+    private final FolderService folderService;
     private AttachmentService attachmentService;
-    private MessageService messageService;
-    private SignatureService signatureService;
+    private final MessageService messageService;
+    private final SignatureService signatureService;
     private DbMailService dbMailServiceSync;
     private DbMailService dbMailServiceApp;
-    private SearchService searchService;
-    private NotificationService notificationService;
-    private CommunicationService communicationService;
-    private GroupService groupService;
-    private Neo4jZimbraService neoService;
-    private ExpertModeService expertModeService;
-    private MobileThreadService mobileThreadService;
-    private RecipientService recipientService;
-    private RedirectionService redirectionService;
-    private FrontPageService frontPageService;
-    private SlackService slackService;
-    private ReturnedMailService returnedMailService;
+    private final SearchService searchService;
+    private final NotificationService notificationService;
+    private final CommunicationService communicationService;
+    private final GroupService groupService;
+    private final Neo4jZimbraService neoService;
+    private final ExpertModeService expertModeService;
+    private final MobileThreadService mobileThreadService;
+    private final RecipientService recipientService;
+    private final RedirectionService redirectionService;
+    private final FrontPageService frontPageService;
+    private final ReturnedMailService returnedMailService;
 
     private SynchroUserService synchroUserService;
     private SynchroUserService synchroUserServiceApp;
-    private SynchroService synchroService;
+    private final SynchroService synchroService;
     private SqlSynchroService sqlSynchroService;
-    private SynchroGroupService synchroGroupService;
-    private SynchroMailerService synchroMailerService;
+    private final SynchroGroupService synchroGroupService;
+    private final SynchroMailerService synchroMailerService;
     private SynchroAddressBookService synchroAddressBookService;
-    private Neo4jAddrbookService neo4jAddrbookService;
-    private WebClient webClient;
+    private final Neo4jAddrbookService neo4jAddrbookService;
+    private final WebClient webClient;
 
-    private SynchroLauncher synchroLauncher;
+    private final SynchroLauncher synchroLauncher;
 
     private AddressBookService addressBookService;
 
@@ -99,24 +96,21 @@ public class ServiceManager {
         this.webClient = WebClient.create(vertx, HttpClientHelper.getWebClientOptions());
 
         if (config != null) {
-            this.slackService = new SlackService(vertx, config.getSlackConfiguration());
-
+            SlackService slackService = new SlackService(vertx, config.getSlackConfiguration());
             this.sqlSynchroService = new SqlSynchroService(config.getDbSchema());
             initDbMailService(config);
             this.soapService = new SoapZimbraService(vertx, cacheService, slackService, config.getCircuitBreakerOptions());
             this.sqlAddressBookService = new SqlAddressBookService(config.getDbSchema());
             this.addressBookService = new AddressBookService(sqlAddressBookService);
+            this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
+            this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
             this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
                     synchroAddressBookService, addressBookService, eb);
         }
 
-
-
         this.searchService = new SearchService(vertx);
 
         this.neoService = new Neo4jZimbraService();
-        this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
-        this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
         this.messageService = new MessageService(soapService, folderService,
@@ -139,7 +133,7 @@ public class ServiceManager {
         this.neo4jAddrbookService = new Neo4jAddrbookService();
 
         if(config != null) soapService.setServices(userService, synchroUserService);
-        synchroUserService.setUserService(userService);
+        if(synchroUserService != null) synchroUserService.setUserService(userService);
     }
 
     private void initDbMailService(ConfigManager appConfig) {

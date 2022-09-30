@@ -116,17 +116,17 @@ public class ConfigManager {
         this.mailerCron = config.getString("zimbra-mailer-cron", "");
         this.maxRecipients = config.getInteger("max-recipients", 50);
         this.mailConfig = config.getJsonObject("mail-config", new JsonObject());
-        this.sharedFolderName = this.mailConfig.getString("shared-folder-name", "-- Carnets Adresses ENT --");
+        this.sharedFolderName = config.getString("shared-folder-name", "-- Carnets Adresses ENT --");
         this.addressBookAccountName  = config.getString("address-book-account", "");
         this.addressBookSynchroTtl = config.getInteger("abook-sync-ttl-minutes", 1440); // default 24h
         this.structureAddressBookSynchroTtl = config.getString("structure-abook-sync-delay", "1 day");
         this.sqlInsertPaginationSize = config.getInteger("sql-insert-pagination-size", 5000);
         this.invertAltPartInConvMsg = config.getBoolean("invert-alt-part-in-conv-msg", false);
-        this.purgeEmailedContacts = this.mailConfig.getBoolean("purge-emailed-contacts",false);
-        this.forceSyncAdressBook = this.mailConfig.getBoolean("force-synchro-adressbook",false);
-        this.saveDraftAutoTime = this.mailConfig.getInteger("save-draft-auto-time", 60000);
+        this.purgeEmailedContacts = config.getBoolean("purge-emailed-contacts",false);
+        this.forceSyncAdressBook = config.getBoolean("force-synchro-adressbook",false);
+        this.saveDraftAutoTime = config.getInteger("save-draft-auto-time", 60000);
         this.structureToSynchroABLimit = config.getInteger("limit-structures-synchro-ab",5);
-        this.filterUserProfileSynchAB = this.mailConfig.getString("filter-profile-sync-ab","");
+        this.filterUserProfileSynchAB = config.getString("filter-profile-sync-ab","");
 
         // In case of emergency
         this.forceExpertMode = config.getBoolean("force-expert-mode", false);

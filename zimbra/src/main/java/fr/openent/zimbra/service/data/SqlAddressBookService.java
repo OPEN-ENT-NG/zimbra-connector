@@ -52,7 +52,7 @@ public class SqlAddressBookService {
 
         public boolean mustBeSynced() {
             Instant ttlDeadline = lastSync.plus(Zimbra.appConfig.getAddressBookSynchroTtl(), ChronoUnit.MINUTES);
-            return Instant.now().isAfter(ttlDeadline);
+            return LocalDateTime.now().toInstant(ZoneOffset.UTC).isAfter(ttlDeadline);
         }
     }
 
