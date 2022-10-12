@@ -33,14 +33,14 @@
         "http-client-max-pool-size" : {{ zimbraMaxPoolSize | default('50') }},
         "address-book-account" : "{{ zimbraAddressBookAccount }}",
         "shared-folder-name" : "-- Carnets Adresses ENT --",
-        "abook-sync-ttl-minutes": {{ zimbraSyncTTL| default('10080') }},
+        "abook-sync-ttl-minutes": {{ zimbraSyncTTL| default('1440') }},
         "force-expert-mode" : {{ zimbraModeExpert | default('false') }},
-        "force-synchro-adressbook" : {{ zimbraForceSynchroAdressbook | default('true') }},
-        "structure-abook-sync-delay" : "{{ zimbraStructureAbookSyncDelay | default('21 days') }}",
+        "force-synchro-adressbook" : {{ zimbraForceSynchroAdressbook | default('false') }},
+        "structure-abook-sync-delay" : "{{ zimbraStructureAbookSyncDelay | default('1 day') }}",
         "purge-emailed-contacts" : {{ zimbraPurgeEmailedContacts | default('false') }},
         "save-draft-auto-time" : {{ zimbraSaveDraftAutoTime | default('60000') }},
         "enable-addressbook-synchro" : {{ zimbraAdressBookSynchro | default('true') }},
-        "filter-profile-sync-ab" : "['Personnel','Teacher']",
+        "filter-profile-sync-ab" : "{{ zimbraFilterProfileSyncAb | default('') }}",
         "circuit-breaker": {
             "maxFailures": 50,
             "timeout": -1
