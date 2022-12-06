@@ -194,17 +194,16 @@ public class AttachmentService {
         }
         return promise.future();
     }
-
-    private Future<JsonObject> processWriteBuffer(Storage storage, HttpClientResponse zimbraResponse,
+    private Future<JsonObject> processWriteBuffer(Storage storage, ReadStream<Buffer> zimbraResponse,
                                                   String finalContentType, String finalFileName) {
         Promise<JsonObject> promise = Promise.promise();
-        zimbraResponse.bodyHandler(buffer ->
-                FileHelper.writeBuffer(storage, buffer, finalContentType, finalFileName)
-                        .onSuccess(promise::complete)
-                        .onFailure(err -> {
-                            String messageToFormat = "[Zimbra@processWriteBuffer] Error while storing file : " + err.getMessage();
-                            PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), err, promise);
-                        }));
+        zimbraResponse.pause();
+        storage.writeBufferStream(zimbraResponse, finalContentType, finalFileName)
+                .onSuccess(promise::complete)
+                .onFailure(err -> {
+                    String messageToFormat = "[Zimbra@processWriteBuffer] Error while storing file : " + err.getMessage();
+                    PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), err, promise);
+                });
         return promise.future();
     }
 
