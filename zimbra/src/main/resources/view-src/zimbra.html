@@ -21,31 +21,31 @@
 	<title>{{#i18n}}zimbra.title{{/i18n}}</title>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
-    <script>
-        window.user = {
-        {{#quota}}
-        "quota":{
-            "storage": {{storage}},
-            "quota": {{quota}}
-        },
-        {{/quota}}
-        {{#signature}}
-        "signature":{
-            "prefered": {{prefered}},
-            "id": "{{id}}",
-            "content": "{{content}}"
-        },
-        {{/signature}}
-        {{#folders}}
-        "folders": '{{{folders}}}',
-        {{/folders}}
-        {{#configSaveDraftAutoTime}}
-        "configSaveDraftAutoTime": {{configSaveDraftAutoTime}}
-        {{/configSaveDraftAutoTime}}
-        };
-    </script>
-    <script type="text/javascript" src="/zimbra/public/dist/entcore/ng-app.js" id="context"></script>
-    <script type="text/javascript" src="/zimbra/public/dist/application.js"></script>
+  <script>
+      window.user = {
+      {{#quota}}
+      "quota":{
+          "storage": {{storage}},
+          "quota": {{quota}}
+      },
+      {{/quota}}
+      {{#signature}}
+      "signature":{
+          "prefered": {{prefered}},
+          "id": "{{id}}",
+          "content": "{{content}}"
+      },
+      {{/signature}}
+      {{#folders}}
+      "folders": '{{{folders}}}',
+      {{/folders}}
+      {{#configSaveDraftAutoTime}}
+      "configSaveDraftAutoTime": {{configSaveDraftAutoTime}}
+      {{/configSaveDraftAutoTime}}
+      };
+  </script>
+  <script src="/assets/js/entcore/ng-app.js?v=@@VERSION" type="text/javascript" id="context"></script>
+  <script src="/zimbra/public/dist/application.js?v=@@VERSION" type="text/javascript"></script>
 </head>
 <body ng-controller="ZimbraController" class="zimbra">
 <portal>
