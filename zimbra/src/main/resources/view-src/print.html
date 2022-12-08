@@ -18,12 +18,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{#i18n}}zimbra.title{{/i18n}}</title>
-    <meta charset="utf-8" />
-
-    <script type="text/javascript" src="/zimbra/public/dist/entcore/ng-app.js" id="context"></script>
-    <script type="text/javascript" src="/zimbra/public/dist/application.js"></script>
-    <style> header {display : none}</style>
+  <title>{{#i18n}}zimbra.title{{/i18n}}</title>
+  <meta charset="utf-8" />
+  <script src="/assets/js/entcore/ng-app.js?v=@@VERSION" type="text/javascript" id="context"></script>
+  <script src="/zimbra/public/dist/application.js?v=@@VERSION" type="text/javascript"></script>
+  <style> header {display : none}</style>
 </head>
 <body ng-controller="PrintController" class="zimbra">
     <portal>
