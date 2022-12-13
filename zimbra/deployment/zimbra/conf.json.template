@@ -1,5 +1,5 @@
 {
-  "name": "fr.openent~zimbra~2.9.3",
+  "name": "fr.openent~zimbra~2.9-SNAPSHOT",
   "config": {
     "main" : "fr.openent.zimbra.Zimbra",
     "port" : 8104,
@@ -44,7 +44,6 @@
     "purge-emailed-contacts" : $zimbraPurgeEmailedContacts,
     "force-synchro-adressbook" : $zimbraForceSyncAdressBook,
     "save-draft-auto-time" : $saveDraftAutoTime,
-    "send-timeout" : $sendTimeout,
     "filter-profile-sync-ab" : $filterProfileSyncAB,
     "entcore.port" : 8009,
     "slack": {
