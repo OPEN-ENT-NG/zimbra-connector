@@ -216,7 +216,7 @@ export class Mail implements Selectable {
             this.to = origin.to;
         }
 
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             this.body =
                 '<div><br></div><div class="signature new-signature">' +
                 signature +
