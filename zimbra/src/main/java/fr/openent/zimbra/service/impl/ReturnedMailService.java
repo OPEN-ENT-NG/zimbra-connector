@@ -246,7 +246,6 @@ public class ReturnedMailService {
             } else {
                 this.recursiveDeleteMailLoop(returnedMails, returnedMailsStatut, index + 1, result);
             }
-            ;
         });
     }
 

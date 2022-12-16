@@ -30,7 +30,7 @@ public class Relative extends Contact{
         String concatClasses = concatField(neoClasses);
         if(!concatClasses.isEmpty()) {
             classes = concatClasses;
-            displayName = displayName + " (" + concatClasses + ")";
+            displayName = displayName + " (" + getProfileFolderName() + "; " + concatClasses + ")";
         }
     }
 

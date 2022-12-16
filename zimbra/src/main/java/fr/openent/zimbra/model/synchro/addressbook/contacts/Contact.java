@@ -29,17 +29,17 @@ import static fr.openent.zimbra.service.data.Neo4jAddrbookService.*;
 
 public abstract class Contact {
 
-    private String lastName;
+    String lastName;
     private String firstName;
     String displayName;
     String functions = "";
     String classes = "";
 
-    private String email;
-    private String structure;
+    private final String email;
+    private final String structure;
 
     Contact(JsonObject json, String uai) {
-        lastName = json.getString(LASTNAME, "");
+        lastName = json.getString(LASTNAME, "") + " (" + getProfileName() + ")";
         firstName = json.getString(FIRSTNAME, "");
         if(lastName.isEmpty() || firstName.isEmpty()) {
             displayName = lastName + firstName;
@@ -85,6 +85,10 @@ public abstract class Contact {
                 "folder." + profile,
                 "default-domain",
                 Zimbra.appConfig.getSynchroLang());
+    }
+
+    public String getProfileName() {
+        return I18n.getInstance().translate( getProfile(),"default-domain", Zimbra.appConfig.getSynchroLang());
     }
 
     public String getEmail() { return email; }

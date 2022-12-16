@@ -28,6 +28,7 @@ public class GroupContact extends Contact {
     public GroupContact(JsonObject json, String uai) {
         super(json.put(LASTNAME, json.getString(GROUPNAME)), uai);
         profile = json.getString(GROUP_TYPE);
+        lastName = json.getString(LASTNAME, "");
     }
 
     @Override
