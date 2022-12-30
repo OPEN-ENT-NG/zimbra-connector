@@ -771,6 +771,21 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.lightbox.show = true;
             template.open("lightbox", "move-mail");
         };
+        $scope.containsInternal = function(mails: string[]): boolean {
+            for (let mail of mails) {
+                if (!mail.includes("@")){
+                    return true;
+                }
+            }
+            return false;
+        }
+        $scope.isReturnable = function(): boolean {
+            return $scope.zimbra.currentFolder.mails.selection.selectedElements.length < 2 &&
+                $scope.zimbra.currentFolder.mails.selection.selectedElements[0].returned == 'NONE' &&
+                $scope.zimbra.currentFolder.folderName === 'outbox' &&
+                $scope.containsInternal($scope.zimbra.currentFolder.mails.selection.selectedElements[0].to);
+
+        }
 
         $scope.returnSelection = function() {
             $scope.lightbox.show = true;

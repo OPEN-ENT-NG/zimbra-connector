@@ -28,9 +28,7 @@
                 <i18n>move.inside.folder</i18n>
             </button>
             <button ng-click="returnSelection()"
-                    ng-if="zimbra.currentFolder.mails.selection.selectedElements.length < 2 &&
-                    zimbra.currentFolder.mails.selection.selectedElements[0].returned == 'NONE' &&
-                    zimbra.currentFolder.folderName === 'outbox'"
+                    ng-if="isReturnable()"
                     workflow="zimbra.return" >
                 <i18n>return</i18n>
             </button>
