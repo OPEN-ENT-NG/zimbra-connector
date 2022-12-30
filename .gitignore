@@ -31,3 +31,4 @@ classes
 */out
 /coverage/front/cobertura-coverage.xml
 node_modules
+package-lock.json
