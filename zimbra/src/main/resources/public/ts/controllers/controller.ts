@@ -188,7 +188,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             if(group.id){
                 group.isGroup = true;
                 $scope.addUser(group);
-            };
+            }
         };
 
         const initFavoriteTo = async (idGroupFavorite:string):Promise<void> => {
@@ -260,6 +260,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 folderName = (Zimbra.instance.currentFolder as SystemFolder)
                     .folderName;
             }
+            $scope.mail = undefined;
             $scope.state.newItem = new Mail();
             $scope.state.newItem.setMailSignature($scope.getSignature());
             template.open("right-side","right-side");
