@@ -252,6 +252,10 @@ public class ReturnedMailService {
     private void addDeleteFutures(JsonObject returnedMail, Handler<Either<String, JsonObject>> result) {
         JsonArray userIds = new JsonArray(returnedMail.getString(NOTIF_RECIPIENT));
         int j = 0;
+        if (userIds.isEmpty()) {
+            result.handle(new Either.Right<>(new JsonObject()));
+            return;
+        }
         this.recursiveDeleteMail(userIds, j, returnedMail, deleteEvent -> {
             if (deleteEvent.isRight()) {
                 result.handle(new Either.Right<>(deleteEvent.right().getValue()));
@@ -326,11 +330,13 @@ public class ReturnedMailService {
                             if (event.isRight()) {
                                 handler.handle(new Either.Right<>(event.right().getValue()));
                             } else {
-                                handler.handle(new Either.Left<>("[Zimbra] getReturnedMailsInfos : Error while deleting mails : " + event.left().getValue()));
+                                log.error(String.format("[Zimbra@%s::deleteMailFromZimbra] Error when deleting mails: %s", this.getClass().getSimpleName(), event.left().getValue()));
+                                handler.handle(new Either.Left<>(event.left().getValue()));
                             }
                         });
                     } else {
-                        log.error("Erreur lors du déplacement vers la corbeille du mail " + ids.get(0));
+                        log.error(String.format("[Zimbra@%s::deleteMailFromZimbra] Error when moving to trash: %s, %s", this.getClass().getSimpleName(), ids.get(0), moveToTrash.left().getValue()));
+                        handler.handle(new Either.Left<>(moveToTrash.left().getValue()));
                     }
                 });
     }
