@@ -17,6 +17,7 @@
 
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.FileHelper;
 import fr.openent.zimbra.helper.HttpClientHelper;
@@ -302,7 +303,7 @@ public class AttachmentService {
                             if (response.statusCode() == 200) {
                                     if (!(Pattern.compile("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$")).matcher(response.bodyAsString()).find()) {
                                         JsonObject res = new JsonObject()
-                                                .put("code", "mail.INVALID_REQUEST");
+                                                .put("code", Field.MAIL_INVALID_REQUEST);
                                         handler.handle(new Either.Left<>(res.encode()));
                                         return;
                                     }
@@ -344,8 +345,15 @@ public class AttachmentService {
                 if(response.statusCode() == 200) {
                     response.bodyHandler( body -> {
                         if (!(Pattern.compile("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$")).matcher(body.toString()).find()) {
+                            if (body.toString().matches("^413.*\n$")) {
+                                JsonObject res = new JsonObject()
+                                        .put("code", Field.MAIL_ATTACHMENT_TOO_BIG)
+                                        .put("maxFileSize", Zimbra.appConfig.getZimbraFileUploadMaxSize());
+                                handler.handle(new Either.Left<>(res.encode()));
+                                return;
+                            }
                             JsonObject res = new JsonObject()
-                                    .put("code", "mail.INVALID_REQUEST");
+                                    .put("code", Field.MAIL_INVALID_REQUEST);
                             handler.handle(new Either.Left<>(res.encode()));
                             return;
                         }
