@@ -23,4 +23,9 @@ public class Field {
 
     public static final String MAIL_ATTACHMENT_TOO_BIG = "mail.ATTACHMENT_TOO_BIG";
     public static final String MAIL_INVALID_REQUEST = "mail.INVALID_REQUEST";
+
+    public static final String USERID = "userId";
+    public static final String ACTION = "action";
+
+
 }
