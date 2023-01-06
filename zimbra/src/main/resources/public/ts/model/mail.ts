@@ -37,9 +37,16 @@ import {MAIL, SERVICE, QUOTA} from "./constantes";
 import {AxiosError, AxiosResponse} from "axios";
 import {attachmentService} from "../services";
 
+export enum AttachmentUploadStatus {
+    LOADING = "loading",
+    LOADED = "loaded",
+    FAILED = "failed",
+    ABORT = "abort",
+}
+
 export class Attachment {
     file: File;
-    uploadStatus: string;
+    uploadStatus: AttachmentUploadStatus;
     id: string;
     filename: string;
     size: number;
@@ -47,12 +54,13 @@ export class Attachment {
 
     constructor(file: any) {
         this.file = file;
-        this.uploadStatus = "loading";
+        this.uploadStatus = AttachmentUploadStatus.LOADING;
         this.filename = file.metadata ? file.metadata.filename : file.name;
         this.size = file.metadata ? file.metadata.size : file.size;
         this.id = file._id;
     }
 }
+
 export class Mail implements Selectable {
     id: string;
     date: string;
@@ -324,7 +332,7 @@ export class Mail implements Selectable {
             data.to = _.pluck(this.to, "id");
             data.cc = _.pluck(this.cc, "id");
             data.bcc = _.pluck(this.bcc, "id");
-            data.attachments = this.attachments;
+            data.attachments = this.attachments.filter((attachment: Attachment) => attachment.uploadStatus !== AttachmentUploadStatus.LOADING);
 
             var path = "/zimbra/draft";
             if (this.id) {
@@ -402,9 +410,9 @@ export class Mail implements Selectable {
         }
         let response = await http.get("/zimbra/message/" + this.id);
 
-        response.data.attachments.map(attachment => {
+        response.data.attachments.forEach(attachment => {
             attachment.filename = decodeURI((attachment.filename));
-        })
+        });
 
         Mix.extend(this, response.data);
         this.to = this.to.map(user =>
@@ -482,27 +490,33 @@ export class Mail implements Selectable {
         await Zimbra.instance.folders.draft.mails.refresh();
     }
 
-    async postAttachments(attachmentToUpload : Attachment, workspace : boolean) : Promise<void> {
+    async postAttachments(attachmentToUpload: Attachment, workspace: boolean): Promise<void> {
             let post : Promise<AxiosResponse>;
             if (workspace) {
                 post = attachmentService.postAttachmentFromWorkspace(attachmentToUpload, this);
             } else {
-                post = attachmentService.postAttachmentFromComputer(attachmentToUpload, this)
+                post = attachmentService.postAttachmentFromComputer(attachmentToUpload, this);
             }
             const promise: Promise<void> = post
                 .then((response: AxiosResponse) => {
                     const attachmentWaiting : Attachment[] =
-                        this.attachments.filter((attachment : Attachment) =>
-                            attachment.uploadStatus && attachment.uploadStatus == "loading" && attachment != attachmentToUpload);
+                        this.attachments.filter((attachment: Attachment) =>
+                            attachment.uploadStatus && attachment.uploadStatus == AttachmentUploadStatus.LOADING && attachment != attachmentToUpload);
                     this.attachments = response.data.attachments as Attachment[];
                     this.attachments.forEach((attach: Attachment) => {
                         attach.filename = decodeURI(attach.filename);
-                        attach.uploadStatus = "loaded";
+                        attach.uploadStatus = AttachmentUploadStatus.LOADED;
                     });
                     this.attachments = this.attachments.concat(attachmentWaiting);
                 })
                 .catch((e: AxiosError) => {
-                    sendNotificationErrorZimbra(e.response.data.error);
+                    // remove attachment
+                    this.attachments = this.attachments.filter((attachment: Attachment) => {
+                        return attachment.filename !== attachmentToUpload.filename
+                    });
+                    if (e.response && e.response.data && e.response.data.error) {
+                        sendNotificationErrorZimbra(e.response.data.error);
+                    }
                 });
             await Promise.resolve(promise);
     }
@@ -520,9 +534,9 @@ export class Mail implements Selectable {
     async deleteAttachment(attachment) {
         this.attachments.splice(this.attachments.indexOf(attachment), 1);
         const response = await attachmentService.deleteAttachment(attachment, this);
-        this.attachments = response.data.attachments;
-        this.attachments.map(attachment => {
+        this.attachments = response.data.attachments.map(attachment => {
             attachment.filename = decodeURI(attachment.filename);
+            return attachment;
         })
     }
 
@@ -575,6 +589,9 @@ export class Mails {
     }
 
     addRange(arr: Mail[], selectAll: boolean) {
+        if (!arr.length) {
+            return;
+        }
         if (!(arr[0] instanceof Mail)) {
             arr.forEach(d => {
                 var m = Mix.castAs(Mail, d);
@@ -781,9 +798,14 @@ export const sendNotificationErrorZimbra = (errorReturnByZimbra: string): void =
     //TODO extraire la gestion d'erreur du mail
     try {
         console.error("Zimbra returning : ", errorReturnByZimbra);
-        switch (JSON.parse(errorReturnByZimbra).code) {
+        const zimbraError = JSON.parse(errorReturnByZimbra);
+        switch (zimbraError.code) {
             case SERVICE.INVALID_REQUEST:
+            case MAIL.INVALID_REQUEST:
                 notify.error(lang.translate("zimbra.message.error.attachment"));
+                break;
+            case MAIL.ATTACHMENT_TOO_BIG:
+                notify.error(lang.translate("zimbra.message.error.attachment.size").replace("{{maxFileSize}}", zimbraError.maxFileSize));
                 break;
             case MAIL.MESSAGE_TOO_BIG:
                 notify.info(lang.translate("zimbra.message.error.mail.size"));
@@ -792,7 +814,7 @@ export const sendNotificationErrorZimbra = (errorReturnByZimbra: string): void =
                 notify.error(lang.translate("zimbra.quota.info.warning"));
                 break;
             default:
-                notify.error(lang.translate("zimbra.default.intern.error" + errorReturnByZimbra));
+                notify.error(lang.translate("zimbra.default.intern.error") + zimbraError.code);
 
         }
     } catch (error) {
