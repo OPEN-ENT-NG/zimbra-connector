@@ -118,7 +118,7 @@ export class Zimbra {
                 const parentPath = newFolder.path.replace(`/${newFolder.folderName}`, '');
                 const parentFolder = window.folderMap.get(parentPath.trim() !== '' ? parentPath : '/Inbox');
                 if (parentFolder) {
-                    const f = new UserFolder({get: `/zimbra/list?folder=${newFolder.path}`}, newFolder);
+                    const f = new UserFolder({get: `/zimbra/list?folder=${encodeURIComponent(newFolder.path)}`}, newFolder);
                     if (parentFolder.path === '/Inbox') this.userFolders.all.push(f);
                     else parentFolder.userFolders.all.push(f);
                     f.name = newFolder.folderName;
