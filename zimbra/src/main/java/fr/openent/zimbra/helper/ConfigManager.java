@@ -51,6 +51,7 @@ public class ConfigManager {
     private final String zimbraAdminPassword;
     private final String preauthKey;
     private final String zimbraDomain;
+    private final Integer zimbraFileUploadMaxSize;
 
     private final String synchroLang;
     private final String synchroCronDate;
@@ -111,6 +112,7 @@ public class ConfigManager {
         this.synchroLang = config.getString("zimbra-synchro-lang", "fr");
         this.synchroCronDate = config.getString("zimbra-synchro-cron", "");
         this.synchroFromMail = config.getString("zimbra-synchro-frommail", "zimbra-sync@cgi.com");
+        this.zimbraFileUploadMaxSize = config.getInteger("zimbra-file-upload-max-size", 20);
         String appSynchroType = config.getString("app-synctype", SYNC_NEO);
         String syncSynchroType = config.getString("sync-synctype", SYNC_NEO);
         this.appSyncTtl = config.getString("app-sync-ttl", "30 minutes");
@@ -183,6 +185,7 @@ public class ConfigManager {
     public String getZimbraAdminPassword() { return zimbraAdminPassword;}
     public String getPreauthKey() { return preauthKey;}
     public String getZimbraDomain() { return zimbraDomain;}
+    public Integer getZimbraFileUploadMaxSize() { return zimbraFileUploadMaxSize;}
     public String getAppSynchroType() { return appSynchroType;}
     public String getSyncSynchroType() { return syncSynchroType;}
     public String getAppSyncTtl() { return appSyncTtl;}

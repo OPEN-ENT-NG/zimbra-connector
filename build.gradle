@@ -65,6 +65,7 @@ subprojects {
     compile "io.vertx:vertx-web-client:$vertxVersion"
     compile "org.entcore:common:$entCoreVersion"
     testCompile "io.vertx:vertx-unit:$vertxVersion"
+    testCompile "io.vertx:vertx-codegen:$vertxVersion"
     testCompile "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
     testCompile "org.entcore:tests:$entCoreVersion"
     testCompile "org.mockito:mockito-core:$mockitoVersion"

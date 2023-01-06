@@ -24,6 +24,7 @@
         "admin-account" : "{{ zimbraAdminAccount }}",
         "admin-password" : "{{ zimbraAdminPassword }}",
         "max-recipients" : {{ zimbraMaxRecipients }},
+        "zimbra-file-upload-max-size": {{ zimbraFileUploadMaxSize | default('20') }},
         {% if zimbraCron is defined and zimbraCron %}
         "zimbra-synchro-cron" : "0 5/10 * * * ? *",
         "zimbra-mailer-cron" : "0 0/10 * * * ? *",

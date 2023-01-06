@@ -4,6 +4,8 @@ export enum SERVICE {
 }
 
 export enum MAIL {
+    INVALID_REQUEST = "mail.INVALID_REQUEST",
+    ATTACHMENT_TOO_BIG = "mail.ATTACHMENT_TOO_BIG",
     MESSAGE_TOO_BIG = "mail.MESSAGE_TOO_BIG"
 }
 

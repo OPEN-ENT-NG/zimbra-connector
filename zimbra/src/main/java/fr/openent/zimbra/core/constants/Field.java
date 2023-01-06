@@ -21,7 +21,6 @@ public class Field {
     public static  final String HTTPCLIENT = "httpClient";
     public static  final String ZIMBRARESPONSE = "zimbraResponse";
 
-
-
-
+    public static final String MAIL_ATTACHMENT_TOO_BIG = "mail.ATTACHMENT_TOO_BIG";
+    public static final String MAIL_INVALID_REQUEST = "mail.INVALID_REQUEST";
 }
