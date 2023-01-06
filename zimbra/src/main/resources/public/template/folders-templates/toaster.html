@@ -27,8 +27,8 @@
                 <button ng-click="moveSelection()" ng-if="zimbra.currentFolder.mails.selection.length && zimbra.currentFolder.folderName !== 'trash'">
                 <i18n>move.inside.folder</i18n>
             </button>
-            <button ng-click="returnSelection()"
-                    ng-if="isReturnable()"
+            <button ng-click="toggleRecallView()"
+                    ng-if="isRecallable()"
                     workflow="zimbra.return" >
                 <i18n>return</i18n>
             </button>

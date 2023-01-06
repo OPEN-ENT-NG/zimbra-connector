@@ -779,17 +779,23 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
             return false;
         }
-        $scope.isReturnable = function(): boolean {
-            return $scope.zimbra.currentFolder.mails.selection.selectedElements.length < 2 &&
-                $scope.zimbra.currentFolder.mails.selection.selectedElements[0].returned == 'NONE' &&
-                $scope.zimbra.currentFolder.folderName === 'outbox' &&
-                $scope.containsInternal($scope.zimbra.currentFolder.mails.selection.selectedElements[0].to);
-
+        $scope.getCurrentRecall = function(): Mail {
+            if ($scope.zimbra.currentFolder.mails.selection.selectedElements.length > 0)
+                return $scope.zimbra.currentFolder.mails.selection.selectedElements[0]
+            return null;
         }
 
-        $scope.returnSelection = function() {
+        $scope.isRecallable = function(): boolean {
+            return $scope.zimbra.currentFolder.mails.selection.selectedElements.length == 1 &&
+                $scope.zimbra.currentFolder.mails.selection.selectedElements[0].recalled == 'NONE' &&
+                $scope.zimbra.currentFolder.folderName === 'outbox' &&
+                $scope.containsInternal($scope.zimbra.currentFolder.mails.selection.selectedElements[0].to);
+        }
+
+        $scope.toggleRecallView = function() {
             $scope.lightbox.show = true;
-            template.open("lightbox", "return-mail");
+            $scope.mailToRecall = $scope.getCurrentRecall();
+            template.open("lightbox", "recall-mail");
         };
 
         $scope.moveToFolderClick = async (folder, obj) => {
@@ -807,7 +813,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             }, 10);
         };
 
-        $scope.returnMail = async (id, comment) => {
+        $scope.recallMail = async (id, comment) => {
             $scope.lightbox.show = false;
             template.close("lightbox");
             var data: any = {id: id, comment: comment};

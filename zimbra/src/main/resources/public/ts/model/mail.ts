@@ -85,7 +85,7 @@ export class Mail implements Selectable {
     selected: boolean;
     allowReply: boolean;
     allowReplyAll: boolean;
-    returned: string;
+    recalled: string;
 
     constructor(id?: string) {
         this.id = id;
@@ -93,7 +93,7 @@ export class Mail implements Selectable {
         this.attachments = [];
         this.allowReply = true;
         this.allowReplyAll = true;
-        this.returned = "NONE";
+        this.recalled = "NONE";
     }
 
     isUserAuthor(): boolean {
