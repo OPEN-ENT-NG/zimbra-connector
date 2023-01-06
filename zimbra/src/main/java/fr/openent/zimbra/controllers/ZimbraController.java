@@ -1247,6 +1247,17 @@ public class ZimbraController extends BaseController {
                                 .put("message", res))
                 );
                 break;
+            case "get-platform-ics":
+                JsonObject body = message.body();
+                String userId = body.getString(Field.USERID);
+                UserUtils.getUserInfos(eb, userId, user -> {
+                    //TODO check if user has zimbra expert
+                    //TODO get ical
+                    //TODO format ical
+                    //TODO send formatted ical back
+                });
+
+                break;
             default:
                 conversationEventBusHandler(message);
         }
