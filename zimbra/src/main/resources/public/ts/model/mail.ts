@@ -514,6 +514,10 @@ export class Mail implements Selectable {
                     this.attachments = this.attachments.filter((attachment: Attachment) => {
                         return attachment.filename !== attachmentToUpload.filename
                     });
+                    if (e.response.status === 413) {
+                        notify.error(lang.translate("zimbra.message.error.attachment.size2"));
+                        return;
+                    }
                     if (e.response && e.response.data && e.response.data.error) {
                         sendNotificationErrorZimbra(e.response.data.error);
                     }
