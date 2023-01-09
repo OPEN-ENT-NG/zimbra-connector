@@ -507,10 +507,16 @@ public class ZimbraController extends BaseController {
                     b = Boolean.parseBoolean(unread);
                 }
                 messageService.listMessages(folder, b, user, page, search, event -> {
-                    if (!folder.equals("/Sent")) {
+                    if (folder.equals("/Sent")) {
+                        returnedMailService.renderReturnedMail(request, user, event);
+                        return;
+                    }
+
+                    if (event.isRight()) {
                         renderJson(request, event.right().getValue());
                     } else {
-                        returnedMailService.renderReturnedMail(request, user, event);
+                        log.error(String.format("[Zimbra@ZimbraController::listMessages] failed to listMessages: %s", event.left().getValue()));
+                        badRequest(request);
                     }
                 });
             } else {

@@ -133,7 +133,7 @@ export class Trash extends SystemFolder {
 
     constructor({unread, count, folders, path}) {
         super({
-            get: `/zimbra/list?folder=${path}`
+            get: `/zimbra/list?folder=${encodeURIComponent(path)}`
         });
 
         this.folderName = "trash";
@@ -213,7 +213,7 @@ export class Trash extends SystemFolder {
 export class Inbox extends SystemFolder {
     constructor({unread, count, folders, path}) {
         super({
-            get: `/zimbra/list?folder=${path}`
+            get: `/zimbra/list?folder=${encodeURIComponent(path)}`
         });
 
         this.folderName = "inbox";
@@ -245,7 +245,7 @@ export class Draft extends SystemFolder {
 
     constructor({unread, count, folders, path}) {
         super({
-            get: `/zimbra/list?folder=${path}`
+            get: `/zimbra/list?folder=${encodeURIComponent(path)}`
         });
 
         this.folderName = "draft";
@@ -298,7 +298,7 @@ export class Draft extends SystemFolder {
 export class Outbox extends SystemFolder {
     constructor({unread, count, folders, path}) {
         super({
-            get: `/zimbra/list?folder=${path}`
+            get: `/zimbra/list?folder=${encodeURIComponent(path)}`
         });
 
         this.folderName = "outbox";
@@ -329,7 +329,7 @@ export class Outbox extends SystemFolder {
 export class Spams extends SystemFolder {
     constructor({unread, count, folders, path, id}) {
         super({
-            get: `/zimbra/list?folder=${path}`
+            get: `/zimbra/list?folder=${encodeURIComponent(path)}`
         });
 
         this.folderName = "spams";
@@ -460,7 +460,7 @@ export class UserFolders {
     constructor(folders) {
         this.all = [];
         folders.forEach(folder => {
-            const f = new UserFolder({get: `/zimbra/list?folder=${folder.path}`}, folder);
+            const f = new UserFolder({get: `/zimbra/list?folder=${encodeURIComponent(folder.path)}`}, folder);
             f.name = folder.folderName;
             f.id = folder.id;
             f.path = folder.path;

@@ -652,7 +652,7 @@ export class Mails {
         }
         const response = await http.get(
             "/zimbra/list?folder=" +
-            this.userFolder.path +
+            encodeURIComponent(this.userFolder.path) +
             "&restrain=&page=" +
             data.pageNumber +
             "&unread=" +
