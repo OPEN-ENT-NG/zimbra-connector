@@ -797,7 +797,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 $scope.isRecallable($scope.zimbra.currentFolder.mails.selection.selectedElements[0]);
         }
         $scope.isRecallable = function(mail: Mail): boolean {
-            return mail.returned == 'NONE' &&
+            return mail.returned === 'NONE' &&
                 $scope.containsInternal(<any>mail.to);
         }
 
@@ -822,7 +822,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             }, 10);
         };
 
-        $scope.recallMail = async (id, comment) => {
+        $scope.recallMail = async (id: string, comment: string) => {
             $scope.lightbox.show = false;
             template.close("lightbox");
             var data: any = {id: id, comment: comment};
