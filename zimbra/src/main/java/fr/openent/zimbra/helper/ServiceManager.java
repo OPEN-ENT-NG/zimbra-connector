@@ -80,6 +80,8 @@ public class ServiceManager {
 
     private SqlAddressBookService sqlAddressBookService;
 
+    private CalendarServiceImpl calendarService;
+
     private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix, ConfigManager config) {
         this.vertx = vertx;
         JsonObject rawConfig = config != null ? config.getRawConfig() : null;
@@ -131,6 +133,7 @@ public class ServiceManager {
         this.synchroGroupService = new SynchroGroupService(soapService, synchroUserService);
         this.synchroMailerService = new SynchroMailerService(sqlSynchroService);
         this.neo4jAddrbookService = new Neo4jAddrbookService();
+        this.calendarService = new CalendarServiceImpl(soapService);
 
         if(config != null) soapService.setServices(userService, synchroUserService);
         if(synchroUserService != null) synchroUserService.setUserService(userService);
@@ -287,5 +290,9 @@ public class ServiceManager {
 
     public WebClient getWebClient() {
         return webClient;
+    }
+
+    public CalendarServiceImpl getCalendarService() {
+        return calendarService;
     }
 }

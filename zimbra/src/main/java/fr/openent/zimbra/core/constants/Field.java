@@ -27,5 +27,18 @@ public class Field {
     public static final String USERID = "userId";
     public static final String ACTION = "action";
 
+    //ICal request and response
+    public static final String GETICALREQUEST = "GetICalRequest";
+    public static final String GETICALRESPONSE = "GetICalResponse";
+    public static final String CONTENT = "content";
+    public static final String HEADER = "Header";
+    public static final String CONTEXT = "context";
+    public static final String CHANGE = "change";
+    public static final String TOKEN = "token";
+    public static final String _JSNS ="_jsns";
+    public static final String BODY = "Body";
+    public static final String ICAL = "ical";
+    public static final String _CONTENT = "_content";
+
 
 }
