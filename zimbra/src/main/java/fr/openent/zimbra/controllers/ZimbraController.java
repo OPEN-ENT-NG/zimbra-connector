@@ -27,6 +27,8 @@ import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.ModuleConstants;
 import fr.openent.zimbra.security.ExpertAccess;
+import fr.openent.zimbra.security.WorkflowActionUtils;
+import fr.openent.zimbra.security.WorkflowActions;
 import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.synchro.AddressBookService;
@@ -34,6 +36,7 @@ import fr.wseduc.bus.BusAddress;
 import fr.wseduc.rs.*;
 import fr.wseduc.security.ActionType;
 import fr.wseduc.security.SecuredAction;
+import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
@@ -46,6 +49,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.bus.BusResponseHandler;
 import org.entcore.common.bus.WorkspaceHelper;
 import org.entcore.common.cache.Cache;
 import org.entcore.common.cache.CacheOperation;
@@ -55,6 +59,7 @@ import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.storage.Storage;
 import org.entcore.common.storage.StorageFactory;
+import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.utils.Config;
 import org.vertx.java.core.http.RouteMatcher;
@@ -1249,14 +1254,22 @@ public class ZimbraController extends BaseController {
                 break;
             case "get-platform-ics":
                 JsonObject body = message.body();
-                String userId = body.getString(Field.USERID);
-                UserUtils.getUserInfos(eb, userId, user -> {
-                    //TODO check if user has zimbra expert
-                    //TODO get ical
-                    //TODO format ical
-                    //TODO send formatted ical back
-                });
+                String userId = body.getString(Field.USERID, null);
+                if (userId !=  null) {
+                    UserUtils.getUserInfos(eb, userId, user -> {
+                        Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, WorkflowActions.EXPERT_ACCESS_RIGHT.toString());
+                        if (Boolean.TRUE.equals(hasExpertRight)) {
+                            //TODO get ical
 
+                            //TODO format ical
+                            //TODO send formatted ical back
+                        } else {
+                            BusResponseHandler.busArrayHandler(message).handle(new Either.Left<>("zimbra.no.expert.right"));
+                        }
+                    });
+                } else {
+                    BusResponseHandler.busArrayHandler(message).handle(new Either.Left<>("zimbra.user.not.valid"));
+                }
                 break;
             default:
                 conversationEventBusHandler(message);
