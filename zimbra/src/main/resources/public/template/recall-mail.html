@@ -16,13 +16,14 @@
   -->
 <div>
     <h2>
-        <i18n>mailToRecall.return.title</i18n>
+        <i18n>mail.return.title</i18n>
     </h2>
 
     <div class="vertical-spacing-twice horizontal-margin-twice">
         <h5>
-            <i18n>mailToRecall.return.libelle</i18n>
+            <i18n>mail.return.libelle</i18n>
         </h5>
+
         <article>
             <div class="flex-row align-center">
                 <div class="states"  ng-hide="showRightSide()">
@@ -39,14 +40,13 @@
                     </div>
                 </div>
             </div>
-
-
         </article>
+        <span ng-show="containsExternal(mailToRecall.to)">&#9888; <i18n>zimbra.external.user</i18n></span>
     </div>
 
     <div class="vertical-spacing-twice horizontal-margin-twice">
         <h5>
-            <i18n>mailToRecall.return.comment</i18n>
+            <i18n>mail.return.comment</i18n>
         </h5>
         <textarea ng-model="comment"></textarea>
     </div>

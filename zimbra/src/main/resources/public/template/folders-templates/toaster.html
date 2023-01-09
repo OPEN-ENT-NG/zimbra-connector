@@ -28,7 +28,7 @@
                 <i18n>move.inside.folder</i18n>
             </button>
             <button ng-click="toggleRecallView()"
-                    ng-if="isRecallable()"
+                    ng-if="isSelectedRecallable() && zimbra.currentFolder.folderName === 'outbox'"
                     workflow="zimbra.return" >
                 <i18n>return</i18n>
             </button>

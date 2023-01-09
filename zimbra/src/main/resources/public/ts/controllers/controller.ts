@@ -779,17 +779,26 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
             return false;
         }
+        $scope.containsExternal = function(mails: string[]): boolean {
+            for (let mail of mails) {
+                if (mail.includes("@")){
+                    return true;
+                }
+            }
+            return false;
+        }
         $scope.getCurrentRecall = function(): Mail {
             if ($scope.zimbra.currentFolder.mails.selection.selectedElements.length > 0)
                 return $scope.zimbra.currentFolder.mails.selection.selectedElements[0]
-            return null;
+            return $scope.mail;
         }
-
-        $scope.isRecallable = function(): boolean {
+        $scope.isSelectedRecallable = function(): boolean {
             return $scope.zimbra.currentFolder.mails.selection.selectedElements.length == 1 &&
-                $scope.zimbra.currentFolder.mails.selection.selectedElements[0].recalled == 'NONE' &&
-                $scope.zimbra.currentFolder.folderName === 'outbox' &&
-                $scope.containsInternal($scope.zimbra.currentFolder.mails.selection.selectedElements[0].to);
+                $scope.isRecallable($scope.zimbra.currentFolder.mails.selection.selectedElements[0]);
+        }
+        $scope.isRecallable = function(mail: Mail): boolean {
+            return mail.returned == 'NONE' &&
+                $scope.containsInternal(<any>mail.to);
         }
 
         $scope.toggleRecallView = function() {
