@@ -24,7 +24,7 @@
 				<button ng-click="replyAll()" ng-disabled="!mail.allowReplyAll"><i18n>replyall</i18n></button>
 				<a class="button"   target="_blank" ng-href="/zimbra/print#/printMail/[[mail.id]]"><i18n>print</i18n></a>
 				<button ng-click="mail.remove(); openFolder()"><i18n>remove</i18n></button>
-				<button ng-click="returnSelection()" ng-if="mail.returned == 'NONE'">
+				<button ng-click="toggleRecallView()" ng-if="isRecallable(mail)">
 					<i18n>return</i18n>
 				</button>
 			</plus>
