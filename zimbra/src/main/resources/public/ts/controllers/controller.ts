@@ -771,10 +771,40 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.lightbox.show = true;
             template.open("lightbox", "move-mail");
         };
+        $scope.containsInternal = function(mails: string[]): boolean {
+            for (let mail of mails) {
+                if (!mail.includes("@")){
+                    return true;
+                }
+            }
+            return false;
+        }
+        $scope.containsExternal = function(mails: string[]): boolean {
+            for (let mail of mails) {
+                if (mail.includes("@")){
+                    return true;
+                }
+            }
+            return false;
+        }
+        $scope.getCurrentRecall = function(): Mail {
+            if ($scope.zimbra.currentFolder.mails.selection.selectedElements.length > 0)
+                return $scope.zimbra.currentFolder.mails.selection.selectedElements[0]
+            return $scope.mail;
+        }
+        $scope.isSelectedRecallable = function(): boolean {
+            return $scope.zimbra.currentFolder.mails.selection.selectedElements.length == 1 &&
+                $scope.isRecallable($scope.zimbra.currentFolder.mails.selection.selectedElements[0]);
+        }
+        $scope.isRecallable = function(mail: Mail): boolean {
+            return mail.returned === 'NONE' &&
+                $scope.containsInternal(<any>mail.to);
+        }
 
-        $scope.returnSelection = function() {
+        $scope.toggleRecallView = function() {
             $scope.lightbox.show = true;
-            template.open("lightbox", "return-mail");
+            $scope.mailToRecall = $scope.getCurrentRecall();
+            template.open("lightbox", "recall-mail");
         };
 
         $scope.moveToFolderClick = async (folder, obj) => {
@@ -792,7 +822,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             }, 10);
         };
 
-        $scope.returnMail = async (id, comment) => {
+        $scope.recallMail = async (id: string, comment: string) => {
             $scope.lightbox.show = false;
             template.close("lightbox");
             var data: any = {id: id, comment: comment};
