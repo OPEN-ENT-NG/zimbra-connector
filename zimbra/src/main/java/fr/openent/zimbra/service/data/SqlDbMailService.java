@@ -332,12 +332,16 @@ public class SqlDbMailService extends DbMailService {
      * @param ids List of returnedMail ids
      */
     public void getMailReturnedByIds(List<String> ids, Handler<Either<String, JsonArray>> handler) {
+        if (ids.isEmpty()) {
+            handler.handle(new Either.Right<>(new JsonArray()));
+            return;
+        }
         String query = "SELECT *" +
                 " FROM " + this.returnedMailTable +
                 " WHERE id IN " + Sql.listPrepared(ids);
         JsonArray params = new fr.wseduc.webutils.collections.JsonArray();
-        for (int i = 0; i < ids.size(); i++) {
-            params.add(Integer.parseInt(ids.get(i)));
+        for (String id : ids) {
+            params.add(Integer.parseInt(id));
         }
         sql.prepared(query, params, SqlResult.validResultHandler(handler));
     }
@@ -349,13 +353,17 @@ public class SqlDbMailService extends DbMailService {
      * @param user_id Id of the user
      */
     public void getMailReturnedByMailsIdsAndUser(List<String> ids, String user_id, Handler<Either<String, JsonArray>> handler) {
+        if (ids.isEmpty()) {
+            handler.handle(new Either.Right<>(new JsonArray()));
+            return;
+        }
         String query = "SELECT *" +
                 " FROM " + this.returnedMailTable +
                 " WHERE user_id = ? AND mail_id IN " + Sql.listPrepared(ids);
         JsonArray params = new fr.wseduc.webutils.collections.JsonArray();
         params.add(user_id);
-        for (int i = 0; i < ids.size(); i++) {
-            params.add(ids.get(i));
+        for (String id : ids) {
+            params.add(id);
         }
         sql.prepared(query, params, SqlResult.validResultHandler(handler));
     }
