@@ -132,6 +132,7 @@
     "yesterday": "Hier",
     "you.answered": "You answered to this message",
     "zimbra.outside.donotchange": "External Mail [Do Not Change]",
-  "account.myaccount": "My account",
+    "zimbra.external.user": "Only mails sended to internal ENT users will be recalled",
+    "account.myaccount": "My account",
     "zimbra.message.loading": "Error while fetching mails"
 }
