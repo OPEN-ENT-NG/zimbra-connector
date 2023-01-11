@@ -59,7 +59,6 @@ import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
 import org.entcore.common.storage.Storage;
 import org.entcore.common.storage.StorageFactory;
-import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.entcore.common.utils.Config;
 import org.vertx.java.core.http.RouteMatcher;
@@ -94,6 +93,7 @@ public class ZimbraController extends BaseController {
     private Storage storage;
     private EventStore eventStore;
     private WorkspaceHelper workspaceHelper;
+    private CalendarServiceImpl calendarServiceImpl;
 
 
     private enum ZimbraEvent {ACCESS, CREATE}
@@ -125,6 +125,7 @@ public class ZimbraController extends BaseController {
         this.addressBookService = serviceManager.getAddressBookService();
         this.returnedMailService = serviceManager.getReturnedMailService();
         this.workspaceHelper = new WorkspaceHelper(eb,storage);
+        this.calendarServiceImpl = serviceManager.getCalendarService();
 
     }
 
@@ -1266,10 +1267,14 @@ public class ZimbraController extends BaseController {
                     UserUtils.getUserInfos(eb, userId, user -> {
                         Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, WorkflowActions.EXPERT_ACCESS_RIGHT.toString());
                         if (Boolean.TRUE.equals(hasExpertRight)) {
-                            //TODO get ical
-
-                            //TODO format ical
-                            //TODO send formatted ical back
+                            calendarServiceImpl.getICal(user)
+                                    //TODO format ical
+                                    .onSuccess(result -> {
+                                        //TODO send formatted ical back
+                                    })
+                                    .onFailure(error -> {
+                                        BusResponseHandler.busArrayHandler(message).handle(new Either.Left<>(error.getMessage()));;
+                                    });
                         } else {
                             BusResponseHandler.busArrayHandler(message).handle(new Either.Left<>("zimbra.no.expert.right"));
                         }
