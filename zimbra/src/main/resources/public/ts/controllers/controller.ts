@@ -798,7 +798,8 @@ export let zimbraController = ng.controller("ZimbraController", [
         }
         $scope.isRecallable = function(mail: Mail): boolean {
             return mail.returned === 'NONE' &&
-                $scope.containsInternal(<any>mail.to);
+                $scope.containsInternal(<any>mail.to) &&
+                mail.systemFolder === 'OUTBOX';
         }
 
         $scope.toggleRecallView = function() {
