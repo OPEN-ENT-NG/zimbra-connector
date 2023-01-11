@@ -29,19 +29,19 @@
             </button>
             <button ng-click="toggleRecallView()"
                     ng-if="isSelectedRecallable() && zimbra.currentFolder.folderName === 'outbox'"
-                    workflow="zimbra.return" >
+                    workflow="zimbra.return">
                 <i18n>return</i18n>
             </button>
             <button ng-click="removeFromUserFolder()" ng-if="zimbra.currentFolder.mails.selection.length && zimbra.currentFolder.id">
                 <i18n>remove.from.folder</i18n>
             </button>
             <button ng-click="toggleUnreadSelection(false, zimbra.currentFolder)" ng-if="
-                    zimbra.currentFolder.mails.selection.length && (zimbra.currentFolder.folderName === 'inbox' || zimbra.currentFolder.id) &&
+                    zimbra.currentFolder.mails.selection.length && (zimbra.currentFolder.folderName === 'inbox' || zimbra.currentFolder.id) &&
                     canMarkRead() ">
                 <i18n>tag.read</i18n>
             </button>
             <button ng-click="toggleUnreadSelection(true, zimbra.currentFolder)" ng-if="
-                    zimbra.currentFolder.mails.selection.length && (zimbra.currentFolder.folderName === 'inbox' || zimbra.currentFolder.id) &&
+                    zimbra.currentFolder.mails.selection.length && (zimbra.currentFolder.folderName === 'inbox' || zimbra.currentFolder.id) &&
                     canMarkUnread()">
                 <i18n>tag.unread</i18n>
             </button>
