@@ -885,10 +885,10 @@ public class MessageService {
     /**
      * Delete emails from trash
      *
-     * @param listMessageIds Messages ID list selected
-     * @param user           User infos
+     * @param listMessageIds    Messages ID list selected
+     * @param user              User infos
      * @param trashConstraint   boolean constraint that messages should be in trash
-     * @param result         Empty JsonObject returned, no process needed
+     * @param result            Empty JsonObject returned, no process needed
      */
     public void deleteMessages(List<String> listMessageIds, UserInfos user, boolean trashConstraint,
                                Handler<Either<String, JsonObject>> result) {
