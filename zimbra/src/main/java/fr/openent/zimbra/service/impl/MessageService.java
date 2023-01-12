@@ -887,15 +887,16 @@ public class MessageService {
      *
      * @param listMessageIds Messages ID list selected
      * @param user           User infos
+     * @param trashConstraint   boolean constraint that messages should be in trash
      * @param result         Empty JsonObject returned, no process needed
      */
-    public void deleteMessages(List<String> listMessageIds, UserInfos user,
+    public void deleteMessages(List<String> listMessageIds, UserInfos user, boolean trashConstraint,
                                Handler<Either<String, JsonObject>> result) {
 
         final AtomicInteger processedIds = new AtomicInteger(listMessageIds.size());
         final AtomicInteger successMessages = new AtomicInteger(0);
         for (String messageID : listMessageIds) {
-            deleteMessage(messageID, user, resultHandler -> {
+            deleteMessage(messageID, user, trashConstraint, resultHandler -> {
                 if (resultHandler.isRight()) {
                     successMessages.incrementAndGet();
                 }
@@ -914,16 +915,20 @@ public class MessageService {
     /**
      * Delete an email from trash
      *
-     * @param messageID Message ID
-     * @param user      User
-     * @param result    result handler
+     * @param messageID         Message ID
+     * @param user              User
+     * @param trashConstraint   boolean constraint that the message should be in trash
+     * @param result            result handler
      */
-    private void deleteMessage(String messageID, UserInfos user,
+    private void deleteMessage(String messageID, UserInfos user, boolean trashConstraint,
                                Handler<Either<String, JsonObject>> result) {
         JsonObject actionReq = new JsonObject()
                 .put(MSG_ID, messageID)
-                .put(OPERATION, OP_DELETE)
-                .put(MSG_CONSTRAINTS, MSG_CON_TRASH);
+                .put(OPERATION, OP_DELETE);
+
+        if (trashConstraint) {
+            actionReq.put(MSG_CONSTRAINTS, MSG_CON_TRASH);
+        }
 
         JsonObject convActionRequest = new JsonObject()
                 .put(Field.NAME, "MsgActionRequest")
