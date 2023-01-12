@@ -16,13 +16,17 @@
   -->
 
  <!-- Folders - move popup templates -->
+
  <script type="text/ng-template" id="move-folders-content">
+
 	 <a ng-click="destination.folder = folder; moveToFolderClick(folder, obj); folder.selected = !folder.selected"
 		 ng-init="obj = { template: '' }"
 		 ng-class="{ selected: destination.folder.id === folder.id, opened: isOpenedFolder(folder)  }"
 		 class="folder-list-item">
 		<i class="arrow" ng-if="folder.userFolders.all.length"></i>
- 		[[folder.name]]
+		<span ng-if="!folders.list.includes(folder)">[[folder.name]]</span>
+		<span ng-if="folders.list.includes(folder)">[[lang.translate(folder.folderName)]]</span>
+
  	</a>
  	<ul ng-class="{ selected: destination.folder.id === folder.id, closed: isClosedFolder(folder) }"
 		 ng-if="isOpenedFolder(folder)">
@@ -32,15 +36,22 @@
  	</ul>
  </script>
  <script type="text/ng-template" id="move-folders-root">
- 	<ul>
- 		<li ng-repeat="folder in userFolders.all" ng-include="'move-folders-content'"></li>
- 	</ul>
+	 <div ng-if="(!folders.list.includes(zimbra.currentFolder) || zimbra.currentFolder.folderName === 'trash')">
+		 <h3><i18n>messages</i18n></h3>
+		 <ul>
+			 <li ng-repeat="folder in folders.list" ng-include="'move-folders-content'" ng-if="zimbra.currentFolder.id != folder.id"></li>
+		 </ul>
+	 </div>
+
+	 <h3><i18n>user.folders</i18n></h3>
+	 <ul>
+		 <li ng-repeat="folder in userFolders.all" ng-include="'move-folders-content'" ng-if="zimbra.currentFolder.id != folder.id"></li>
+	 </ul>
  </script>
 
 <h2><i18n>mail.move</i18n></h2>
 
 <div class="vertical-spacing-twice horizontal-margin-twice">
-    <h4><i18n>destination.folder</i18n></h4>
     <nav class="vertical vertical-spacing-twice horizontal-margin-twice" ng-include="'move-folders-root'"></nav>
 </div>
 

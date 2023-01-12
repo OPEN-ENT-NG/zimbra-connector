@@ -21,19 +21,16 @@
             <button ng-click="showConfirm()" ng-if="zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length">
                 <i18n>remove</i18n>
             </button>
-            <button ng-click="restore()" ng-if="(zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length) && zimbra.currentFolder.folderName === 'trash'">
-                <i18n>restore</i18n>
+            <button ng-click="moveSelection()" ng-if="(zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length) && (zimbra.currentFolder.folderName === 'trash' || userFolders.all.includes(zimbra.currentFolder))">
+                <i18n>move.first.caps</i18n>
             </button>
-                <button ng-click="moveSelection()" ng-if="zimbra.currentFolder.mails.selection.length && zimbra.currentFolder.folderName !== 'trash'">
+                <button ng-click="moveSelection()" ng-if="zimbra.currentFolder.mails.selection.length && folders.list.includes(zimbra.currentFolder) && zimbra.currentFolder.folderName !== 'trash'">
                 <i18n>move.inside.folder</i18n>
             </button>
             <button ng-click="toggleRecallView()"
                     ng-if="isSelectedRecallable() && zimbra.currentFolder.folderName === 'outbox'"
                     workflow="zimbra.return">
                 <i18n>return</i18n>
-            </button>
-            <button ng-click="removeFromUserFolder()" ng-if="zimbra.currentFolder.mails.selection.length && zimbra.currentFolder.id">
-                <i18n>remove.from.folder</i18n>
             </button>
             <button ng-click="toggleUnreadSelection(false, zimbra.currentFolder)" ng-if="
                     zimbra.currentFolder.mails.selection.length && (zimbra.currentFolder.folderName === 'inbox' || zimbra.currentFolder.id) &&
