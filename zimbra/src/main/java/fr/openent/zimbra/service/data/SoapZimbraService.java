@@ -200,10 +200,10 @@ public class SoapZimbraService {
                 try {
                     result = body.toJsonObject();
                 } catch (DecodeException e) {
-                    log.error("Can't process Zimbra response + " + response.statusMessage());
                     log.debug("Zimbra response details : " + body.toString());
                     handler.fail(response.statusMessage());
-                    log.error(e.getMessage());
+                    String messageToFormat = "[Zimbra@%s::zimbraRequestHandler] An error occurred while processing zimbra response: %s, status: %s";
+                    log.error(String.format(messageToFormat, this.getClass().getSimpleName(), e.getMessage(), response.statusMessage()));
                     return;
                 }
                 if(response.statusCode() == 200) {
