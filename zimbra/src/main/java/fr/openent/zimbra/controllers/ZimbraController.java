@@ -752,7 +752,7 @@ public class ZimbraController extends BaseController {
                 unauthorized(request);
                 return;
             }
-            messageService.deleteMessages(messageIds, user, defaultResponseHandler(request));
+            messageService.deleteMessages(messageIds, user, true, defaultResponseHandler(request));
         });
     }
 
