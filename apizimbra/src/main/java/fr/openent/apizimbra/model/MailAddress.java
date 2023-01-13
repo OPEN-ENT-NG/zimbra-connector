@@ -133,7 +133,7 @@ public class MailAddress {
 
         dbMailService.getNeoIdFromMail(completeCleanAddress, sqlResponse -> {
             if(sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
-                log.debug("no user in database for address : " + completeCleanAddress);
+                log.error("no user in database for address : " + completeCleanAddress);
                 // Do not fetch Zimbra inside apizimbra
                 handler.handle(null);
             } else {
