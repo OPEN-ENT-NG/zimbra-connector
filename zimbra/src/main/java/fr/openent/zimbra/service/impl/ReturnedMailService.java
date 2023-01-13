@@ -321,24 +321,16 @@ public class ReturnedMailService {
     }
 
     private void deleteMailFromZimbra(List<String> ids, UserInfos user, Handler<Either<String, JsonObject>> handler) {
-        // Etape 4 : On déplace le mail à supprimer vers la corbeille
-        messageService.moveMessagesToFolder(ids, FrontConstants.FOLDER_TRASH, user,
-                moveToTrash -> {
-                    if (moveToTrash.isRight()) {
-                        // Etape 5 : On supprime définitivement le message de la boite de réception
-                        messageService.deleteMessages(ids, user, event -> {
-                            if (event.isRight()) {
-                                handler.handle(new Either.Right<>(event.right().getValue()));
-                            } else {
-                                log.error(String.format("[Zimbra@%s::deleteMailFromZimbra] Error when deleting mails: %s", this.getClass().getSimpleName(), event.left().getValue()));
-                                handler.handle(new Either.Left<>(event.left().getValue()));
-                            }
-                        });
-                    } else {
-                        log.error(String.format("[Zimbra@%s::deleteMailFromZimbra] Error when moving to trash: %s, %s", this.getClass().getSimpleName(), ids.get(0), moveToTrash.left().getValue()));
-                        handler.handle(new Either.Left<>(moveToTrash.left().getValue()));
-                    }
-                });
+        // Etape 4 : On supprime définitivement le message de la boite de réception
+        messageService.deleteMessages(ids, user, false, event -> {
+            if (event.isRight()) {
+                handler.handle(new Either.Right<>(event.right().getValue()));
+            } else {
+                log.error(String.format("[Zimbra@%s::deleteMailFromZimbra] Error when deleting mails: %s",
+                        this.getClass().getSimpleName(), event.left().getValue()));
+                handler.handle(new Either.Left<>(event.left().getValue()));
+            }
+        });
     }
 
     private void getReturnedMailsInfos(JsonObject mail, String comment, UserInfos
