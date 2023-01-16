@@ -194,8 +194,8 @@ public class SoapZimbraService {
      * @return default handler
      */
     private Handler<HttpClientResponse> zimbraRequestHandler(final Future<JsonObject> handler) {
-        return response ->
-            response.bodyHandler( body -> {
+        return response -> {
+            response.bodyHandler(body -> {
                 JsonObject result;
                 try {
                     result = body.toJsonObject();
@@ -228,6 +228,12 @@ public class SoapZimbraService {
                     }
                 }
             });
+            response.exceptionHandler(err -> {
+                String messageToFormat = "[Zimbra@%s::zimbraRequestHandler] An error occurred during request: %s";
+                log.error(String.format(messageToFormat, this.getClass().getSimpleName(), err));
+                handler.fail(err.getMessage());
+            });
+        };
     }
 
     /**
