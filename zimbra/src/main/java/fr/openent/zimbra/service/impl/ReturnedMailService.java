@@ -324,6 +324,8 @@ public class ReturnedMailService {
         // Etape 4 : On supprime définitivement le message de la boite de réception
         messageService.deleteMessages(ids, user, false, event -> {
             if (event.isRight()) {
+                log.info(String.format("[Zimbra@%s::deleteMailFromZimbra] Success of deleting mails %s of the user %s",
+                        this.getClass().getSimpleName(), ids, user.getUserId()));
                 handler.handle(new Either.Right<>(event.right().getValue()));
             } else {
                 log.error(String.format("[Zimbra@%s::deleteMailFromZimbra] Error when deleting mails: %s",
