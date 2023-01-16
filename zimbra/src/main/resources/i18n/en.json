@@ -71,7 +71,7 @@
     "mail-in": "Message de la boîte de réception",
     "mail-new": "Message brouillon",
     "mail-out": "Message de la boîte d'envoi",
-    "mail.move": "Déplacer le(s) message(s)",
+    "mail.move": "Move mails to",
     "mail.sent": "Mail sent",
     "me": "Me",
     "message": "message",
@@ -79,7 +79,7 @@
     "ml.sent": "Message envoyé",
     "modify": "Modifier",
     "move": "move",
-    "move.first.caps": "Déplacer",
+    "move.first.caps": "Move",
     "move.inside.folder": "Déplacer dans un dossier",
     "name": "Nom",
     "new.message": "New message",
@@ -135,4 +135,6 @@
     "zimbra.external.user": "Only mails sended to internal ENT users will be recalled",
     "account.myaccount": "My account",
     "zimbra.message.loading": "Error while fetching mails"
+    "message.folder": "Messages folders",
+    "personal.folder": "Personal folders"
 }

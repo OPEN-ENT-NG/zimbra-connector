@@ -131,7 +131,7 @@ export abstract class SystemFolder extends Folder {
 export class Trash extends SystemFolder {
     userFolders: Selection<UserFolder> = new Selection<UserFolder>([]);
 
-    constructor({unread, count, folders, path}) {
+    constructor({unread, count, folders, path, id}) {
         super({
             get: `/zimbra/list?folder=${encodeURIComponent(path)}`
         });
@@ -141,6 +141,7 @@ export class Trash extends SystemFolder {
         this.count = count;
         this.folders = folders;
         this.path = path;
+        this.id = id;
     }
 
     selectAll() {
@@ -211,7 +212,7 @@ export class Trash extends SystemFolder {
 }
 
 export class Inbox extends SystemFolder {
-    constructor({unread, count, folders, path}) {
+    constructor({unread, count, folders, path, id}) {
         super({
             get: `/zimbra/list?folder=${encodeURIComponent(path)}`
         });
@@ -221,6 +222,7 @@ export class Inbox extends SystemFolder {
         this.count = count;
         this.folders = folders;
         this.path = path;
+        this.id = id;
     }
 
     async sync() {
@@ -243,7 +245,7 @@ export class Inbox extends SystemFolder {
 export class Draft extends SystemFolder {
     totalNb: number;
 
-    constructor({unread, count, folders, path}) {
+    constructor({unread, count, folders, path, id}) {
         super({
             get: `/zimbra/list?folder=${encodeURIComponent(path)}`
         });
@@ -254,6 +256,7 @@ export class Draft extends SystemFolder {
         this.folders = folders;
         this.path = path;
         this.totalNb = count;
+        this.id = id;
     }
 
     selectAll() {
@@ -296,7 +299,7 @@ export class Draft extends SystemFolder {
 }
 
 export class Outbox extends SystemFolder {
-    constructor({unread, count, folders, path}) {
+    constructor({unread, count, folders, path, id}) {
         super({
             get: `/zimbra/list?folder=${encodeURIComponent(path)}`
         });
@@ -306,6 +309,7 @@ export class Outbox extends SystemFolder {
         this.count = count;
         this.folders = folders;
         this.path = path;
+        this.id = id;
     }
 
     selectAll() {
@@ -509,6 +513,12 @@ export class SystemFolders {
                     break;
             }
         });
+        this.list.push(this.inbox);
+        this.list.push(this.outbox);
+        this.list.push(this.draft);
+        this.list.push(this.trash);
+        this.list.push(this.spams);
+
     }
 
     async openFolder(folderName) {

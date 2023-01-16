@@ -87,7 +87,7 @@
     "mail-in": "Message de la boîte de réception",
     "mail-new": "Message brouillon",
     "mail-out": "Message de la boîte d'envoi",
-    "mail.move": "Déplacer le(s) message(s)",
+    "mail.move": "Déplacer le(s) message(s) vers",
     "mail.sent": "Message envoyé",
     "me": "Moi",
     "message": "le message",
@@ -226,5 +226,7 @@
     "zimbra.default.intern.error": "Erreur interne: ",
     "zimbra.external.user": "Seuls les mails adressés aux destinataires internes á l'ENT seront rappelés",
     "zimbra.share.search.help": "Ex : Sabine, Dupont, Enseignants...",
+    "message.folder": "Dossiers de messagerie",
+    "personal.folder": "Dossiers personnels",
     "zimbra.message.loading": "Une erreur est survenue lors de la récupération des messages"
 }
