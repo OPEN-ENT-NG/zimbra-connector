@@ -229,7 +229,7 @@ public class SoapZimbraService {
                 }
             });
             response.exceptionHandler(err -> {
-                String messageToFormat = "[Zimbra@%s::zimbraRequestHandler] An error occurred during request: %s";
+                String messageToFormat = "[Zimbra@%s::zimbraRequestHandler] An error has occurred during request: %s";
                 log.error(String.format(messageToFormat, this.getClass().getSimpleName(), err));
                 handler.fail(err.getMessage());
             });
