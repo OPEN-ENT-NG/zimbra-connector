@@ -222,7 +222,7 @@ public class SoapZimbraService {
                                 .getString("Code"));
                         handler.complete(errorJson.put(IS_SUCCESSFUL, false));
                     } catch (Exception e) {
-                        String messageToFormat = "[Zimbra@%s::zimbraRequestHandler] An error occurred during request: %s";
+                        String messageToFormat = "[Zimbra@%s::zimbraRequestHandler] An error has occurred during request: %s";
                         log.error(String.format(messageToFormat, this.getClass().getSimpleName(), e));
                         handler.fail(e.getMessage());
                     }
