@@ -24,6 +24,7 @@ import fr.openent.zimbra.filters.DevLevelFilter;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.RequestHelper;
+import fr.openent.zimbra.helper.EventBusHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.ModuleConstants;
@@ -1331,26 +1332,32 @@ public class ZimbraController extends BaseController {
                         Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, WorkflowActions.EXPERT_ACCESS_RIGHT.toString());
                         if (Boolean.TRUE.equals(hasExpertRight)) {
                             calendarServiceImpl.getICal(user)
-                                    //TODO format ical
-                                    .onSuccess(result -> {
-                                        //TODO send formatted ical back
+                                    .onSuccess(ical -> {
+                                        ical = ical.replaceAll("\\\r\\\n", "\n");
+                                        ical = ical.replaceAll(";TZID\\=.*\\/.*\\\"", "");
+                                        message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject().put(Field.ICS, ical)));
                                     })
                                     .onFailure(error -> {
-                                        BusResponseHandler.busArrayHandler(message).handle(new Either.Left<>(error.getMessage()));;
+                                        String errMessage = String.format("[Zimbra@%s::zimbraEventBusHandler]: get-platform-ics : error during ical retrieval: %s",
+                                                this.getClass().getSimpleName(), error.getMessage());
+                                        EventBusHelper.eventBusError(errMessage, "zimbra.ics.retrieval.error", message);
                                     });
                         } else {
-                            BusResponseHandler.busArrayHandler(message).handle(new Either.Left<>("zimbra.no.expert.right"));
+                            String errMessage = String.format("[Zimbra@%s::zimbraEventBusHandler]: get-platform-ics : error during ical retrieval: " +
+                                            "user does not have zimbra expert", this.getClass().getSimpleName());
+                            EventBusHelper.eventBusError(errMessage, "zimbra.no.expert.right", message);
                         }
                     });
                 } else {
-                    BusResponseHandler.busArrayHandler(message).handle(new Either.Left<>("zimbra.user.not.valid"));
+                    String errMessage = String.format("[Zimbra@%s::zimbraEventBusHandler]: get-platform-ics : error during ical retrieval: " +
+                            "could not find user", this.getClass().getSimpleName());
+                    EventBusHelper.eventBusError(errMessage, "zimbra.no.user", message);
                 }
                 break;
             default:
                 conversationEventBusHandler(message);
         }
     }
-
 
     /**
      * Quota for a user.
