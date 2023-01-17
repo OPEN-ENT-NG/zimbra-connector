@@ -22,11 +22,11 @@ public class CalendarServiceImpl implements CalendarService {
         this.soapService = soapService;
     }
 
-    public Future<Void> getICal(UserInfos user) {
+    public Future<String> getICal(UserInfos user) {
         return getICal(user, null, null);
     }
 
-    public Future<Void> getICal(UserInfos user, Long rangeStart, Long rangeEnd) {
+    public Future<String> getICal(UserInfos user, Long rangeStart, Long rangeEnd) {
         Promise promise = Promise.promise();
 
         JsonObject icalRequest = new JsonObject()

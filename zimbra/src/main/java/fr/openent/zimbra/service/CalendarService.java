@@ -9,7 +9,7 @@ public interface CalendarService {
      * @param user {@link UserInfos} the user
      * @return {@link String} the ICal text
      */
-    Future<Void> getICal(UserInfos user);
+    Future<String> getICal(UserInfos user);
 
     /**
      * Gets ICal text from Zimbra API
@@ -18,6 +18,6 @@ public interface CalendarService {
      * @param rangeEnd {@link Long} the range end in milliseconds to get the events
      * @return {@link String} the ICal text
      */
-    Future<Void> getICal(UserInfos user, Long rangeStart, Long rangeEnd);
+    Future<String> getICal(UserInfos user, Long rangeStart, Long rangeEnd);
 
 }
