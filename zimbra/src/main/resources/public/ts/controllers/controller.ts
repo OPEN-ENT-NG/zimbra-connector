@@ -667,7 +667,7 @@ export let zimbraController = ng.controller("ZimbraController", [
                 removeSelectionFromTrash();
             }
             $scope.state.selectAll = false;
-            $scope.displayLightBox.folder =false;
+            $scope.displayLightBox.folder = false;
             $scope.$apply();
         };
 
@@ -1196,8 +1196,8 @@ export let zimbraController = ng.controller("ZimbraController", [
             mail.deleteAttachment(attachment);
         };
 
-        $scope.cancelDelete = () => {
-            $scope.displayLightBox.folder = true;
+        $scope.cancelDelete = (): void => {
+            $scope.displayLightBox.folder = false;
             Zimbra.instance.currentFolder.deselectAll();
         };
         $scope.searchText = () => $scope.showRightSide() ? $scope.display.searchSmall : $scope.display.searchLong;
