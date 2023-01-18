@@ -63,6 +63,7 @@ import org.vertx.java.core.http.RouteMatcher;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static fr.openent.zimbra.model.constant.FrontConstants.MESSAGE_ID;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.ZIMBRA_ID_STRUCTURE;
@@ -388,10 +389,16 @@ public class ZimbraController extends BaseController {
                     returnedMailService.returnMails(user, body, request, returnMailEvent -> {
                         if (returnMailEvent.isRight()) {
                             renderJson(request, returnMailEvent.right().getValue());
-                        } else {
-                            badRequest(request);
-                            log.error("[Zimbra] returnMails : Failed returning mails");
+                            return;
                         }
+
+                        if (Objects.equals(returnMailEvent.left().getValue(), Field.UNAUTHORIZED)) {
+                            unauthorized(request);
+                            return;
+                        }
+
+                        badRequest(request);
+                        log.error("[Zimbra] returnMails : Failed returning mails");
                     });
                 } else {
                     unauthorized(request);
