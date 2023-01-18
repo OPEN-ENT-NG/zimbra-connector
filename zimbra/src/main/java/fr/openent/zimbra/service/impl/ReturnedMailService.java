@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.service.DbMailService;
@@ -54,6 +55,10 @@ public class ReturnedMailService {
         messageService.getMessage(messagesId, user, getMail -> {
             if (getMail.isRight()) {
                 JsonObject mail = getMail.right().getValue();
+                if (!Objects.equals(mail.getString(MAIL_FROM), user.getUserId())) {
+                    result.handle(new Either.Left<>(Field.UNAUTHORIZED));
+                    return;
+                }
                 this.getReturnedMailsInfos(mail, comment, user, returnedMailsEvent -> {
                     if (returnedMailsEvent.isRight()) {
                         JsonObject returnedMail = returnedMailsEvent.right().getValue();
