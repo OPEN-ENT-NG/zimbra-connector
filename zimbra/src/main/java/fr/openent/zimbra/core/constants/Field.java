@@ -17,10 +17,11 @@ public class Field {
     public static final String SIZE = "size";
     public static final String APP = "zimbra";
     public static final String FALSE = "false";
-    public static  final String INLINE = "inline";
-    public static  final String HTTPCLIENT = "httpClient";
-    public static  final String ZIMBRARESPONSE = "zimbraResponse";
-    public static  final String UNAUTHORIZED = "unauthorized";
+    public static final String INLINE = "inline";
+    public static final String HTTPCLIENT = "httpClient";
+    public static final String ZIMBRARESPONSE = "zimbraResponse";
+    public static final String USERNAME = "username";
+    public static final String UNAUTHORIZED = "unauthorized";
 
     public static final String MAIL_ATTACHMENT_TOO_BIG = "mail.ATTACHMENT_TOO_BIG";
     public static final String MAIL_INVALID_REQUEST = "mail.INVALID_REQUEST";
