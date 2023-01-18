@@ -1,6 +1,7 @@
 package fr.openent.zimbra.helper;
 
 import java.util.List;
+import java.util.UUID;
 
 public class StringHelper {
 
@@ -18,5 +19,14 @@ public class StringHelper {
             sep = separator;
         }
         return sb.toString();
+    }
+
+    public static boolean isUUID(String str) {
+        try {
+            UUID.fromString(str);
+            return true;
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
     }
 }

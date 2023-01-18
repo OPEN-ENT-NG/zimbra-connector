@@ -118,12 +118,12 @@ public class Message {
     }
 
     private void setFrontFolder() {
-        if(ZimbraFlags.isDraft(zimbraFlags)){
-            frontFolder = "DRAFT";
-        }else if (ZimbraFlags.isSentByMe(zimbraFlags)) {
-            frontFolder = "OUTBOX";
-        }else {
-            frontFolder = "INBOX";
+        if (ZimbraFlags.isDraft(zimbraFlags)) {
+            frontFolder = FrontConstants.FOLDER_DRAFT;
+        } else if (ZimbraFlags.isSentByMe(zimbraFlags)) {
+            frontFolder = FrontConstants.FOLDER_OUTBOX;
+        } else {
+            frontFolder = FrontConstants.FOLDER_INBOX;
         }
     }
 
