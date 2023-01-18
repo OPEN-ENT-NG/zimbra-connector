@@ -22,6 +22,7 @@ import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.ArrayHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.FutureHelper;
+import fr.openent.zimbra.helper.StringHelper;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
@@ -42,10 +43,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.user.UserInfos;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -143,6 +141,85 @@ public class MessageService {
     }
 
     /**
+     * Add displayNames to frontMsg response
+     *
+     * @param frontMessages
+     * @return
+     */
+    private Future<Void> addDisplayNames(JsonArray frontMessages) {
+        Promise<Void> promise = Promise.promise();
+
+        List<JsonArray> displayNames = this.getDisplayNames(frontMessages);
+        JsonArray userIds = new JsonArray();
+        displayNames.forEach(displayName -> userIds.add(displayName.getString(0)));
+
+        this.retrieveUsernames(userIds)
+                .onSuccess(usernames -> {
+                    displayNames.forEach(displayName -> {
+                        String username = usernames.get(displayName.getString(0));
+                        displayName.set(1, username);
+                    });
+                    promise.complete();
+                })
+                .onFailure(e -> promise.fail(e.getMessage()));
+
+        return promise.future();
+    }
+
+    /**
+     * Extract displayNames from frontMsg
+     *
+     * @param frontMessages
+     * @return
+     */
+    private List<JsonArray> getDisplayNames(JsonArray frontMessages) {
+        List<JsonArray> response = new ArrayList<>();
+        for (Object obj : frontMessages) {
+            JsonObject mail = (JsonObject) obj;
+            JsonArray displayNames = mail.getJsonArray(FrontConstants.MAIL_DISPLAYNAMES, new JsonArray());
+            for (Object displayName : displayNames) {
+                if (!(displayName instanceof JsonArray) || ((JsonArray) displayName).size() == 0) continue;
+                String userId = ((JsonArray) displayName).getString(0);
+                if (userId != null && StringHelper.isUUID(userId)) {
+                    response.add((JsonArray) displayName);
+                }
+            }
+        }
+        return response;
+    }
+
+    /**
+     * Retrieve username from entcore with JsonArray of userIds
+     *
+     * @param userIds JsonArray of userIds
+     * @return Future of HashMap<String, String>
+     */
+    private Future<HashMap<String, String>> retrieveUsernames(JsonArray userIds) {
+        Promise<HashMap<String, String>> promise = Promise.promise();
+
+        userService.getUsers(userIds, userIds, (response) -> {
+            if (response.isLeft()) {
+                promise.fail(response.left().getValue());
+            } else {
+                List<JsonObject> users = response.right().getValue().getList();
+
+                HashMap<String, String> usernames = new HashMap<>();
+                for (JsonObject user : users) {
+                    String id = user.getString(Field.ID);
+                    String username = user.getString(Field.USERNAME);
+                    if (id != null && username != null) {
+                        usernames.put(id, username);
+                    }
+                }
+
+                promise.complete(usernames);
+            }
+        });
+
+        return promise.future();
+    }
+
+    /**
      * Process recursively a zimbra searchResult and transform it to Front Message
      * Form of Front message returned :
      * {
@@ -172,7 +249,9 @@ public class MessageService {
     private void processSearchResult(JsonArray zimbraMessages, JsonArray frontMessages, Map<String, String> addressMap,
                                      Handler<Either<String, JsonArray>> result) {
         if (zimbraMessages.isEmpty()) {
-            result.handle(new Either.Right<>(frontMessages));
+            this.addDisplayNames(frontMessages)
+                    .onSuccess(res -> result.handle(new Either.Right<>(frontMessages)))
+                    .onFailure(res -> result.handle(new Either.Left<>(res.getMessage())));
             return;
         }
         JsonObject zimbraMsg;
@@ -184,7 +263,6 @@ public class MessageService {
             return;
         }
         final JsonObject frontMsg = new JsonObject();
-
 
         transformMessageZimbraToFront(zimbraMsg, frontMsg, addressMap, response -> {
             zimbraMessages.remove(0);
@@ -213,14 +291,14 @@ public class MessageService {
         }
 
         String flags = msgZimbra.getString(MSG_FLAGS, "");
-        String state = flags.contains(MSG_FLAG_DRAFT) ? "DRAFT" : "SENT";
+        String state = flags.contains(MSG_FLAG_DRAFT) ? STATE_DRAFT : STATE_SENT;
         String folder;
         if (flags.contains(MSG_FLAG_DRAFT)) {
-            folder = "DRAFT";
+            folder = FrontConstants.FOLDER_DRAFT;
         } else if (flags.contains(MSG_FLAG_SENTBYME)) {
-            folder = "OUTBOX";
+            folder = FrontConstants.FOLDER_OUTBOX;
         } else {
-            folder = "INBOX";
+            folder = FrontConstants.FOLDER_INBOX;
         }
 
         msgFront.put("state", state);
@@ -260,6 +338,15 @@ public class MessageService {
         msgFront.put(MESSAGE_ATTACHMENTS, mparts.getAttachmentsJson());
     }
 
+    private boolean displayNamesContainsUserId(JsonArray jsonArray, String userId) {
+        for (Object object : jsonArray) {
+            JsonArray array = (JsonArray) object;
+            if (array.size() > 0 && array.getString(0).equals(userId)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Process list of mail address in a mail and transform it in Front data
@@ -315,10 +402,17 @@ public class MessageService {
                             frontMsg.put(FrontConstants.IS_REPORT_REQUIRED, true);
                         break;
                 }
-                frontMsg.put(MAIL_DISPLAYNAMES, frontMsg.getJsonArray(MAIL_DISPLAYNAMES, new JsonArray())
-                        .add(new JsonArray()
-                                .add(userUuid)
-                                .add(zimbraUser.getString(MSG_EMAIL_COMMENT, zimbraMail))));
+
+                // Get current displayNames
+                JsonArray displayNames = frontMsg.getJsonArray(MAIL_DISPLAYNAMES, new JsonArray());
+
+                // Check if user is already in displayNames
+                if (!displayNamesContainsUserId(displayNames, userUuid)) {
+                    displayNames.add(new JsonArray()
+                            .add(userUuid)
+                            .add(zimbraUser.getString(MSG_EMAIL_COMMENT, zimbraMail)));
+                }
+
                 zimbraMails.remove(0);
                 translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, isReported, handler);
             };
