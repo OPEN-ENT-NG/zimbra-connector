@@ -657,7 +657,7 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.removeSelection = async () => {
             await Zimbra.instance.currentFolder.removeSelection();
             $scope.refreshFolders();
-            if ($scope.zimbra.currentFolder.folderName !== 'trash') {
+            if ($scope.zimbra.currentFolder.folderName === 'trash') {
                 removeSelectionFromTrash();
             }
             $scope.state.selectAll = false;
