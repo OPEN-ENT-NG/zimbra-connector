@@ -370,6 +370,7 @@ public class ReturnedMailService {
                         .put(ZIMBRA_NB_MESSAGES, to.size())
                         .put(MAIL_TO, to)
                         .put(ZIMBRA_MAIL_DATE, mail_date)
+                        .put(MSG_EMAILID, mail.getString(MSG_EMAILID))
                         .put(ZIMBRA_COMMENT, comment);
                 result.handle(new Either.Right<>(returnedMail));
             } else {
