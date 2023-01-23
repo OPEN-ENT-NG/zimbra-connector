@@ -838,8 +838,8 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.lightbox.show = false;
             template.close("lightbox");
             if ($scope.mail != null) {
-                await $scope.mail.move(folderTarget);
                 try {
+                    await $scope.mail.move(folderTarget);
                     $scope.openFolder();
                 } catch (e) {
                     console.error("Error while moving mail: + e")
