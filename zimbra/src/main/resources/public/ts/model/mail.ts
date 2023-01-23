@@ -507,12 +507,14 @@ export class Mail implements Selectable {
                         attach.uploadStatus = AttachmentUploadStatus.LOADED;
                     });
                     this.attachments = this.attachments.concat(attachmentWaiting);
+                    this.newAttachments = null;
                 })
                 .catch((e: AxiosError) => {
                     // remove attachment
                     this.attachments = this.attachments.filter((attachment: Attachment) => {
-                        return attachment.filename !== attachmentToUpload.filename
+                        return attachment.filename !== attachmentToUpload.filename || attachment.id;
                     });
+                    this.newAttachments = null;
                     if (e.response.status === 413) {
                         notify.error(lang.translate("zimbra.message.error.attachment.size2"));
                         return;
