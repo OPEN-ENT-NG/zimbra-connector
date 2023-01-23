@@ -23,6 +23,12 @@
         <div>
             <plus class="right-magnet">
                 <button ng-click="state.newItem.remove(); openFolder()"><i18n>remove</i18n></button>
+                <button ng-click="moveSelection()" ng-if="!folders.list.includes(zimbra.currentFolder)">
+                    <i18n>move.first.caps</i18n>
+                </button>
+                <button ng-click="moveSelection()" ng-if="folders.list.includes(zimbra.currentFolder) && zimbra.currentFolder.folderName !== 'trash'">
+                    <i18n>move.inside.folder</i18n>
+                </button>
             </plus>
             <button class="right-magnet" ng-click="sendMail()" ng-disabled="cantSendMail()">
                 <i18n>submit</i18n>
