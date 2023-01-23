@@ -15,18 +15,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import {$, _, angular, Document, idiom as lang, moment, ng, notify, skin, template, workspace} from "entcore";
+import {$, _, angular, Document, idiom as lang, moment, ng, notify, skin, template} from "entcore";
 import {
     Attachment,
+    AttachmentUploadStatus,
     Group,
     Mail,
     quota,
     RECEIVER_TYPE,
     REGEXLIB,
-    SCREENS, SystemFolder,
+    SCREENS,
+    SystemFolder,
     User,
     UserFolder,
-    Users, Utils,
+    Users,
+    Utils,
     ViewMode,
     Zimbra
 } from "../model";
@@ -1178,7 +1181,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             }
         };
 
-        $scope.uploadAttachments = async (attachments : File[], workspace : boolean) : Promise<void> => {
+        $scope.uploadAttachments = async (attachments: File[], workspace: boolean): Promise<void> => {
             $scope.isFileLoading = true;
             Utils.safeApply($scope);
             const mail: Mail = $scope.state.newItem as Mail;
@@ -1192,14 +1195,16 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.displayLightBox.attachment = false;
             Utils.safeApply($scope);
             for (const attachment of mail.attachments) {
-                attachment.uploadStatus == "loading" ? await mail.postAttachments(attachment, workspace) : null;
-                Utils.safeApply($scope);
+                if (attachment.uploadStatus === AttachmentUploadStatus.LOADING) {
+                    await mail.postAttachments(attachment, workspace);
+                    Utils.safeApply($scope);
+                }
             }
             $scope.isFileLoading = false;
             Utils.safeApply($scope);
         }
 
-        $scope.deleteAttachment = function(event, attachment, mail) {
+        $scope.deleteAttachment = function(event, attachment, mail): void {
             mail.deleteAttachment(attachment);
         };
 
@@ -1207,5 +1212,5 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.displayLightBox.folder = false;
             Zimbra.instance.currentFolder.deselectAll();
         };
-        $scope.searchText = () => $scope.showRightSide() ? $scope.display.searchSmall : $scope.display.searchLong;
+        $scope.searchText = (): string => $scope.showRightSide() ? $scope.display.searchSmall : $scope.display.searchLong;
     }]);
