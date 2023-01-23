@@ -263,8 +263,8 @@ public class SqlDbMailService extends DbMailService {
      */
     public void insertReturnedMail(JsonObject returnedMail, Handler<Either<String, JsonObject>> handler) {
         String query = "INSERT INTO " + this.returnedMailTable +
-                "(user_id, user_name, user_mail, mail_id, structures, object, number_message, recipient, statut, comment, mail_date)" +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) returning id;";
+                "(user_id, user_name, user_mail, mail_id, structures, object, number_message, recipient, statut, comment, mail_date, mid)" +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) returning id;";
         JsonArray params = new fr.wseduc.webutils.collections.JsonArray()
                 .add(returnedMail.getString("userId"))
                 .add(returnedMail.getString("userName"))
@@ -276,7 +276,8 @@ public class SqlDbMailService extends DbMailService {
                 .add(returnedMail.getJsonArray("to"))
                 .add("WAITING")
                 .add(returnedMail.getString("comment"))
-                .add(returnedMail.getString("mail_date"));
+                .add(returnedMail.getString("mail_date"))
+                .add(returnedMail.getString("mid"));
         sql.prepared(query, params, SqlResult.validUniqueResultHandler(handler));
     }
 

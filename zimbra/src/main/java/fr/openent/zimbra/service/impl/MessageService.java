@@ -301,6 +301,11 @@ public class MessageService {
             folder = FrontConstants.FOLDER_INBOX;
         }
 
+        if (msgZimbra.containsKey(MSG_EMAILID) && msgZimbra.getString(MSG_EMAILID) != null && msgZimbra.getString(MSG_EMAILID).length() > 1) {
+            String mid = msgZimbra.getString(MSG_EMAILID).substring(1, msgZimbra.getString(MSG_EMAILID).length() - 1);
+            msgFront.put("mid", mid);
+        }
+
         msgFront.put("state", state);
         msgFront.put("unread", flags.contains(MSG_FLAG_UNREAD));
         msgFront.put("response", flags.contains(MSG_FLAG_REPLIED));
@@ -1172,9 +1177,9 @@ public class MessageService {
      * @param result        result handler
      */
     public void retrieveMailFromZimbra(JsonObject returnedMail, JsonObject to_user_infos, Handler<Either<String, List<String>>> result) {
-        String subject = returnedMail.getString("object");
         String from_mail = returnedMail.getString("user_mail");
-        String date = returnedMail.getString("mail_date");
+        String msgid = returnedMail.getString("mid");
+
         String to_user_id = to_user_infos.getString(Field.ID);
         ZimbraUser user = new ZimbraUser(new MailAddress(to_user_infos.getString("mail")));
         user.checkIfExists(userResponse -> {
@@ -1184,7 +1189,7 @@ public class MessageService {
             } else {
                 if (user.existsInZimbra()) {
                     // Etape 3 : On recherche en fonction de l'objet, de l'expéditeur, de la date et de la boite de réception le mail à supprimer
-                    String query = "* NOT in:\"" + "Sent" + "\"" + " AND subject:\"" + subject + "\"" + " AND from:\"" + from_mail + "\"" + " AND date:\"" + date + "\"";
+                    String query = "* NOT in:\"" + "Sent" + "\"" + " AND from:\"" + from_mail + "\"" + " AND msgid:\"" + msgid + "\"";
                     log.info(query);
                     SoapSearchHelper.searchAllMailedConv(to_user_id, 0, query, event -> {
                         if (event.succeeded()) {
