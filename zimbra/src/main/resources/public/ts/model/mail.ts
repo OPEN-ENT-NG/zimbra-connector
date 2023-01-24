@@ -814,7 +814,7 @@ export const sendNotificationErrorZimbra = (errorReturnByZimbra: string): void =
                 notify.error(lang.translate("zimbra.message.error.attachment.size").replace("{{maxFileSize}}", zimbraError.maxFileSize));
                 break;
             case MAIL.MESSAGE_TOO_BIG:
-                notify.info(lang.translate("zimbra.message.error.mail.size"));
+                notify.error(lang.translate("zimbra.message.error.attachment.size2"));
                 break;
             case QUOTA.QUOTA_EXCEEDED:
                 notify.error(lang.translate("zimbra.quota.info.warning"));
