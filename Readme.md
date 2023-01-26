@@ -101,6 +101,7 @@ zimbraSynchroCron = ${String}
 zimbraPurgeEmailedContacts = boolean
 zimbraForceSyncAdressBook = boolean
 saveDraftAutoTime = ${String}
+sendTimeout = ${String}
 filterProfileSyncAB = ${String}
 zimbraSlackApiUri = ${String}
 zimbraSlackApiToken = ${String}

@@ -30,7 +30,8 @@ public class FrontPageService {
                 JsonObject zUserInfo = userFuture.result();
                 zUserInfo.put(FrontConstants.FRONT_PAGE_FOLDERS,
                         foldersFuture.result().getJsonSubfolders().toString().replaceAll("['|\\\\]", "\\\\$0"));
-                zUserInfo.put(FrontConstants.CONFIG_SAVE_DRAFT_AUTO_TIME,appConfig.getsaveDraftAutoTime());
+                zUserInfo.put(FrontConstants.CONFIG_SAVE_DRAFT_AUTO_TIME, appConfig.getsaveDraftAutoTime());
+                zUserInfo.put(FrontConstants.CONFIG_SEND_TIMEOUT, appConfig.getSendTimeout());
                 handler.handle(Future.succeededFuture(zUserInfo));
             }
         });

@@ -78,6 +78,7 @@ public class ConfigManager {
     private final boolean forceSyncAdressBook;
 
     private final int saveDraftAutoTime;
+    private final int sendTimeout;
 
     private final int structureToSynchroABLimit;
 
@@ -125,6 +126,7 @@ public class ConfigManager {
         this.purgeEmailedContacts = config.getBoolean("purge-emailed-contacts",false);
         this.forceSyncAdressBook = config.getBoolean("force-synchro-adressbook",false);
         this.saveDraftAutoTime = config.getInteger("save-draft-auto-time", 60000);
+        this.sendTimeout = config.getInteger("send-timeout", 5000);
         this.structureToSynchroABLimit = config.getInteger("limit-structures-synchro-ab",5);
         this.filterUserProfileSynchAB = config.getString("filter-profile-sync-ab","");
 
@@ -205,6 +207,7 @@ public class ConfigManager {
     public boolean isForceExpertMode() { return forceExpertMode;}
     public boolean isEnableAddressBookSynchro() { return enableAddressBookSynchro;}
     public int getsaveDraftAutoTime() { return saveDraftAutoTime;}
+    public int getSendTimeout() { return sendTimeout;}
     public int getStructureToSynchroABLimit() { return structureToSynchroABLimit;}
     public String getFilterUserProfileSynchAB() {return this.filterUserProfileSynchAB;}
 

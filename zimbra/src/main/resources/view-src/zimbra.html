@@ -40,8 +40,11 @@
       "folders": '{{{folders}}}',
       {{/folders}}
       {{#configSaveDraftAutoTime}}
-      "configSaveDraftAutoTime": {{configSaveDraftAutoTime}}
+      "configSaveDraftAutoTime": {{configSaveDraftAutoTime}},
       {{/configSaveDraftAutoTime}}
+      {{#configSendTimeout}}
+      "configSendTimeout": {{configSendTimeout}}
+      {{/configSendTimeout}}
       };
   </script>
   <script src="/assets/js/entcore/ng-app.js?v=@@VERSION" type="text/javascript" id="context"></script>

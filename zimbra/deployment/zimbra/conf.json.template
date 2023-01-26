@@ -44,6 +44,7 @@
     "purge-emailed-contacts" : $zimbraPurgeEmailedContacts,
     "force-synchro-adressbook" : $zimbraForceSyncAdressBook,
     "save-draft-auto-time" : $saveDraftAutoTime,
+    "send-timeout" : $sendTimeout,
     "filter-profile-sync-ab" : $filterProfileSyncAB,
     "entcore.port" : 8009,
     "slack": {

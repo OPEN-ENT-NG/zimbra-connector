@@ -39,6 +39,7 @@
         "structure-abook-sync-delay" : "{{ zimbraStructureAbookSyncDelay | default('1 day') }}",
         "purge-emailed-contacts" : {{ zimbraPurgeEmailedContacts | default('false') }},
         "save-draft-auto-time" : {{ zimbraSaveDraftAutoTime | default('60000') }},
+        "sendTimeout" : {{ zimbraSendTimeout | default('5000') }},
         "enable-addressbook-synchro" : {{ zimbraAdressBookSynchro | default('true') }},
         "filter-profile-sync-ab" : "{{ zimbraFilterProfileSyncAb | default('') }}",
         "circuit-breaker": {

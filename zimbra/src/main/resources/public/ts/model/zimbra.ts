@@ -51,6 +51,7 @@ export class Zimbra {
     eventer = new Eventer();
     preference = { useSignature: false, signature: "" };
     configSaveDraftAutoTime = 60000;
+    configSendTimeout = 5000;
 
     static _instance: Zimbra;
     static get instance(): Zimbra {
@@ -73,6 +74,9 @@ export class Zimbra {
         window.folderMap.set(this.folders.inbox.path, this.folders.inbox);
         if(window.user && window.user.configSaveDraftAutoTime) {
             this.configSaveDraftAutoTime = window.user.configSaveDraftAutoTime;
+        }
+        if(window.user && window.user.configSendTimeout) {
+            this.configSendTimeout = window.user.configSendTimeout;
         }
     }
 
