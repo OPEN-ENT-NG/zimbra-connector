@@ -56,7 +56,8 @@ export let zimbraController = ng.controller("ZimbraController", [
             dragFolder: undefined,
             emptyMessage: lang.translate("folder.empty"),
             searchFailed: false,
-            draftSaveDate: null
+            draftSaveDate: null,
+            messagesLoading: false,
         };
         $scope.display = {
             searchLong: 'search.condition',
@@ -327,10 +328,13 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.nextPage = async () => {
-            if (template.containers['main-right-side'].indexOf("folders-templates") > 0) {
+            if (template.containers['right-side'].indexOf("right-side.html") > 0 && !$scope.messagesLoading) {
+                $scope.messagesLoading = true;
+                $scope.$apply();
                 await Zimbra.instance.currentFolder.nextPage(
                     $scope.state.selectAll
                 );
+                $scope.messagesLoading = false;
                 $scope.$apply();
             }
         };
