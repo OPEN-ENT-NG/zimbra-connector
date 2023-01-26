@@ -45,15 +45,20 @@ export class User implements Selectable {
     }
 
     async findData(): Promise<boolean> {
-        let that = this;
-        const response = await http.get("/userbook/api/person?id=" + this.id);
+        if (this.isAMail()) return true;
+
+        const { id } = this;
+        const response = await http.get("/userbook/api/person?id=" + id);
         const userData = response.data;
-        if (!userData.result[0])
-            // If group
+
+        // If group
+        if (!userData.result[0]) {
             return true;
+        }
+
         // If deleted ??
         Mix.extend(this, {
-            id: that.id,
+            id: id,
             displayName: userData.result[0].displayName
         });
 

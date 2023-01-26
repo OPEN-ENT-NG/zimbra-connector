@@ -305,18 +305,21 @@ export class Mail implements Selectable {
         const systemFolder = this.getSystemFolder();
 
         // Reply
-        var id = systemFolder === "INBOX" ? this.from : this.to[0];
-        var exists;
-        if (!id)
+        const id = systemFolder === "INBOX" ? this.from : this.to[0];
+        let exists: boolean;
+        if (!id) {
             // completely deleted user
             exists = false;
-        else exists = await this.map(id).findData();
+        } else {
+            exists = await this.map(id).findData();
+        }
         this.allowReply = exists;
 
         // Reply all
         if (exists) {
             for (let to of this.to) {
-                var receiver = this.map(to);
+                if (to === id || to?.id === id) continue;
+                const receiver = this.map(to);
                 exists = await receiver.findData();
                 if (!exists) break;
             }
