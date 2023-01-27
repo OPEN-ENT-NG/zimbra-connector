@@ -23,7 +23,7 @@ CREATE TABLE zimbra.recalled_mail
     object character varying,
     comment text,
     mail_date character varying,
-    PRIMARY KEY (id),
+    CONSTRAINT recalled_mail_pkey PRIMARY KEY (id),
     CONSTRAINT action_id_fkey FOREIGN KEY (action_id) REFERENCES zimbra.action (id)
 );
 CREATE TABLE zimbra.task_logs(
