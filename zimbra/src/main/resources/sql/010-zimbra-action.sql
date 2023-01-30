@@ -25,7 +25,7 @@ CREATE TABLE zimbra.recall_mails
     structures json,
     object     varchar,
     comment    text,
-    mail_date   timestamp with time zone,
+    mail_date  timestamp with time zone,
     CONSTRAINT recalled_mail_pkey PRIMARY KEY (id),
     CONSTRAINT action_id_fkey FOREIGN KEY (action_id) REFERENCES zimbra.actions (id)
 );
@@ -37,11 +37,16 @@ CREATE TABLE zimbra.task_logs
     CONSTRAINT task_logs_pkey PRIMARY KEY (id),
     CONSTRAINT task_id_fkey FOREIGN KEY (task_id) REFERENCES zimbra.tasks (id)
 );
-CREATE TABLE zimbra.recall_recipient
+CREATE TABLE zimbra.recall_recipients
 (
-    recall_mail_id     bigint,
-    receiver_id uuid,
-    retry       smallint,
+    recall_mail_id bigint,
+    receiver_id    uuid,
+    retry          smallint,
     CONSTRAINT mail_id_fkey FOREIGN KEY (recall_mail_id) REFERENCES zimbra.recall_mails (id)
 ) INHERITS (zimbra.tasks);
-
+CREATE TABLE zimbra.ical_requests
+(
+    id bigserial,
+    jsns varchar(16),
+    body varchar
+) INHERITS (zimbra.tasks);
