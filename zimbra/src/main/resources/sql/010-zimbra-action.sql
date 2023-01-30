@@ -21,7 +21,7 @@ CREATE TABLE zimbra.recall_mails
     action_id  bigint,
     user_name  varchar(64),
     user_mail  varchar,
-    mail_id varchar,
+    message_id varchar,
     structures json,
     object     varchar,
     comment    text,
