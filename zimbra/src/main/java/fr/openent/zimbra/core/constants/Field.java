@@ -46,6 +46,10 @@ public class Field {
     public static final String ICAL = "ical";
     public static final String _CONTENT = "_content";
     public static final String ICS = "ics";
+    public static final String PENDING = "pending";
+
+    public static final String TYPE = "type";
+    public static final String DATA = "data";
 
 
 }

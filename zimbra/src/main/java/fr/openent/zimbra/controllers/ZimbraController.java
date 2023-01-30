@@ -1268,6 +1268,8 @@ public class ZimbraController extends BaseController {
                     UserUtils.getUserInfos(eb, userId, user -> {
                         Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, WorkflowActions.EXPERT_ACCESS_RIGHT.toString());
                         if (Boolean.TRUE.equals(hasExpertRight)) {
+                            //in worker
+                            message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject().put(Field.STATUS, Field.PENDING)));
                             calendarServiceImpl.getICal(user)
                                     .onSuccess(ical -> {
                                         ical = ical.replaceAll("\\\r\\\n", "\n");

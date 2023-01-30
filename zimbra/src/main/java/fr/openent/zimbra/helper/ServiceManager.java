@@ -81,6 +81,7 @@ public class ServiceManager {
     private SqlAddressBookService sqlAddressBookService;
 
     private CalendarServiceImpl calendarService;
+//    private QueueServiceImpl queueService;
 
     private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix, ConfigManager config) {
         this.vertx = vertx;
@@ -108,6 +109,7 @@ public class ServiceManager {
             this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
             this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
                     synchroAddressBookService, addressBookService, eb);
+//            this.queueService = new QueueServiceImpl(config.getDbSchema());
         }
 
         this.searchService = new SearchService(vertx);
