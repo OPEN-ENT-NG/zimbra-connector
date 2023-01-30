@@ -21,6 +21,7 @@ CREATE TABLE zimbra.recall_mails
     action_id  bigint,
     user_name  varchar(64),
     user_mail  varchar,
+    mail_id varchar,
     structures json,
     object     varchar,
     comment    text,
@@ -38,9 +39,9 @@ CREATE TABLE zimbra.task_logs
 );
 CREATE TABLE zimbra.recall_recipient
 (
-    mail_id     bigint,
+    recall_mail_id     bigint,
     receiver_id uuid,
     retry       smallint,
-    CONSTRAINT mail_id_fkey FOREIGN KEY (mail_id) REFERENCES zimbra.recall_mails (id)
+    CONSTRAINT mail_id_fkey FOREIGN KEY (recall_mail_id) REFERENCES zimbra.recall_mails (id)
 ) INHERITS (zimbra.tasks);
 
