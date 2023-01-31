@@ -51,7 +51,12 @@ public class ICalRequest extends RequestQueue implements IModel<ICalRequest> {
     @Override
     public void addTaskToAction() {
         //todo
-        QueueServiceImpl.createTask();
+        RequestQueue.queueService.createTask(this.actionId)
+                .compose(taskId -> {
+                    //create icalrequest
+                })
+                .onSuccess()
+                .onFailure();
     }
 
 

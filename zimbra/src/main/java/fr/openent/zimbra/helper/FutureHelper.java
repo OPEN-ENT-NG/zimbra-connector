@@ -31,10 +31,12 @@ public class FutureHelper {
         };
     }
 
+    @Deprecated
     public static Handler<Either<String, JsonObject>> handlerJsonObject(Promise<JsonObject> future) {
         return handlerJsonObject(future, null);
     }
 
+    @Deprecated
     public static Handler<Either<String, JsonObject>> handlerJsonObject(Promise<JsonObject> future, String errorMessage) {
         return event -> {
             if (event.isRight()) {
@@ -43,6 +45,24 @@ public class FutureHelper {
             }
             LOGGER.error(String.format("%s %s", (errorMessage != null ? errorMessage : ""), event.left().getValue()));
             future.fail(errorMessage != null ? errorMessage : event.left().getValue());
+        };
+    }
+
+    public static <L, R> Handler<Either<L, R>> handlerEitherPromise(Promise<R> promise) {
+        return handlerEitherPromise(promise, null);
+    }
+
+    public static <L, R> Handler<Either<L, R>> handlerEitherPromise(Promise<R> promise, String errorLogMessage) {
+        return event -> {
+            if (event.isRight()) {
+                promise.complete(event.right().getValue());
+            } else {
+                if (errorLogMessage != null) {
+                    String message = String.format("%s: %s", errorLogMessage, event.left().getValue());
+                    LOGGER.error(message);
+                }
+                promise.fail(event.left().getValue() != null ? event.left().getValue().toString() : "null");
+            }
         };
     }
 

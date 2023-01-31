@@ -10,11 +10,11 @@ import org.entcore.common.user.UserInfos;
 public interface QueueService {
     Future<Void> putRequestInQueue(UserInfos user, JsonObject info);
 
-    Future<Void> createActionInQueue(UserInfos user, String type);
+    Future<Integer> createActionInQueue(UserInfos user, String type);
 
     void createActionInQueue(UserInfos user, String type, Handler<Either<String, JsonArray>> handler);
 
-    Future<Void> createTask(String actionId);
+    Future<Integer> createTask(Integer actionId);
 
-    public void createTask(String actionId, Handler<Either<String, JsonArray>> handler);
+    void createTask(Integer actionId, Handler<Either<String, JsonArray>> handler);
 }

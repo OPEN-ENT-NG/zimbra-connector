@@ -56,12 +56,19 @@ public class QueueServiceImpl {
     public Future<Integer> createActionInQueue(UserInfos user, String type) {
         Promise promise = Promise.promise();
 
-        createActionInQueue(user, type, FutureHelper.handlerJsonObject(promise));
+        createActionInQueue(user, type, result -> {
+            if (result.isRight()) {
+                promise.complete(result.right().getValue().getInteger(Field.ID));
+            } else {
+                //todo
+                promise.fail();
+            }
+        });
 
         return promise.future();
     }
 
-    public Integer createActionInQueue(UserInfos user, String type, Handler<Either<String, JsonArray>> handler) {
+    public void createActionInQueue(UserInfos user, String type, Handler<Either<String, JsonObject>> handler) {
         StringBuilder query = new StringBuilder();
 
         query.append("INSERT INTO ").append(actionTable)
@@ -71,27 +78,35 @@ public class QueueServiceImpl {
         JsonArray values = new JsonArray();
         values.add(user.getUserId()).add(new Date().getTime()).add(type);
 
-        Sql.getInstance().prepared(query.toString(), values, SqlResult.validResultHandler(handler));
+        Sql.getInstance().prepared(query.toString(), values, SqlResult.validUniqueResultHandler(handler));
     }
 
-    public Future<Void> createTask(String actionId) {
-        Promise promise = Promise.promise();
+    public Future<Integer> createTask(Integer actionId) {
+        Promise<Integer> promise = Promise.promise();
 
-        createTask(actionId, FutureHelper.handlerJsonObject(promise));
+        createTask(actionId, result -> {
+            if (result.isRight()) {
+                promise.complete(result.right().getValue().getInteger(Field.ID));
+            } else {
+                //todo
+                promise.fail();
+            }
+        });
 
         return promise.future();
     }
 
-    public void createTask(String actionId, Handler<Either<String, JsonArray>> handler) {
+    public void createTask(Integer actionId, Handler<Either<String, JsonObject>> handler) {
         StringBuilder query = new StringBuilder();
 
         query.append("INSERT INTO ").append(taskTable)
-                .append(" (action_id, status) ").append( "VALUES (?, ?)");
+                .append(" (action_id, status) ").append( "VALUES (?, ?)")
+                .append("RETURN id");
 
         JsonArray values = new JsonArray();
         values.add(actionId).add("pending");
 
-        Sql.getInstance().prepared(query.toString(), values, SqlResult.validResultHandler(handler));
+        Sql.getInstance().prepared(query.toString(), values, SqlResult.validUniqueResultHandler(handler));
     }
 
 

@@ -23,6 +23,7 @@ import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.BusConstants;
+import fr.openent.zimbra.model.requestQueue.RequestQueue;
 import fr.openent.zimbra.service.impl.ReturnedMailService;
 import fr.openent.zimbra.service.impl.ZimbraRepositoryEvents;
 import fr.openent.zimbra.service.synchro.SynchroTask;
@@ -64,6 +65,7 @@ public class Zimbra extends BaseServer {
         addController(new ZimbraAdminController());
         addFilter(new RequestErrorFilter());
         ServiceManager serviceManager = ServiceManager.init(vertx, vertx.eventBus(), "");
+        RequestQueue.init(serviceManager);
         this.returnedMailService = serviceManager.getReturnedMailService();
         // Repository Events
         setRepositoryEvents(new ZimbraRepositoryEvents());

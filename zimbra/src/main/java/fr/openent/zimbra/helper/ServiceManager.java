@@ -20,6 +20,7 @@ package fr.openent.zimbra.helper;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.DbMailServiceFactory;
+import fr.openent.zimbra.service.QueueService;
 import fr.openent.zimbra.service.data.*;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.messages.MobileThreadService;
@@ -80,6 +81,8 @@ public class ServiceManager {
 
     private SqlAddressBookService sqlAddressBookService;
 
+    private QueueServiceImpl queueService;
+
     private CalendarServiceImpl calendarService;
 //    private QueueServiceImpl queueService;
 
@@ -109,7 +112,7 @@ public class ServiceManager {
             this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
             this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
                     synchroAddressBookService, addressBookService, eb);
-//            this.queueService = new QueueServiceImpl(config.getDbSchema());
+            this.queueService = new QueueServiceImpl(config.getDbSchema());
         }
 
         this.searchService = new SearchService(vertx);
@@ -296,5 +299,9 @@ public class ServiceManager {
 
     public CalendarServiceImpl getCalendarService() {
         return calendarService;
+    }
+
+    public QueueServiceImpl getQueueService() {
+        return queueService;
     }
 }
