@@ -1,8 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.core.constants.Field;
-import fr.openent.zimbra.helper.FutureHelper;
-import fr.openent.zimbra.model.requestQueue.RequestQueue;
+import fr.openent.zimbra.model.task.Task;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.http.Renders;
 import io.vertx.core.Future;
@@ -38,7 +37,7 @@ public class QueueServiceImpl {
         if (type != null) {
             createActionInQueue(user, info.getString(Field.TYPE))
                     .onSuccess(result -> {
-                        RequestQueue tasks = RequestQueue.requestObjectFactory(info);
+                        Task tasks = Task.requestObjectFactory(info);
                         tasks.addTaskToAction();
                         promise.complete(result);
                     })

@@ -1,13 +1,11 @@
-package fr.openent.zimbra.model.requestQueue;
+package fr.openent.zimbra.model.task;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.model.IModel;
-import fr.openent.zimbra.service.impl.QueueServiceImpl;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class ICalRequest extends RequestQueue implements IModel<ICalRequest> {
+public class TaskICal extends Task implements IModel<TaskICal> {
     public String type;
     public JsonObject data;
     public Integer actionId;
@@ -15,7 +13,7 @@ public class ICalRequest extends RequestQueue implements IModel<ICalRequest> {
     public JsonObject content;
     public String jsns;
 
-    public ICalRequest(JsonObject icalRequest) {
+    public TaskICal(JsonObject icalRequest) {
         this.type = icalRequest.getString(type, null);
         this.data = icalRequest.getJsonObject(Field.DATA, new JsonObject());
         this.actionId = icalRequest.getInteger(Field.ACTIONID, null);
@@ -51,7 +49,7 @@ public class ICalRequest extends RequestQueue implements IModel<ICalRequest> {
     @Override
     public void addTaskToAction() {
         //todo
-        RequestQueue.queueService.createTask(this.actionId)
+        Task.queueService.createTask(this.actionId)
                 .compose(taskId -> {
                     //create icalrequest
                 })
