@@ -3,9 +3,15 @@ package fr.openent.zimbra.model.task;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.model.IModel;
+import fr.wseduc.webutils.http.Renders;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.user.UserInfos;
 
 public class TaskICal extends Task implements IModel<TaskICal> {
+    protected static final Logger log = LoggerFactory.getLogger(Renders.class);
+    public UserInfos user;
     public String type;
     public JsonObject data;
     public Integer actionId;
@@ -13,7 +19,8 @@ public class TaskICal extends Task implements IModel<TaskICal> {
     public JsonObject content;
     public String jsns;
 
-    public TaskICal(JsonObject icalRequest) {
+    public TaskICal(UserInfos user, JsonObject icalRequest) {
+        this.user = user;
         this.type = icalRequest.getString(type, null);
         this.data = icalRequest.getJsonObject(Field.DATA, new JsonObject());
         this.actionId = icalRequest.getInteger(Field.ACTIONID, null);
@@ -48,13 +55,17 @@ public class TaskICal extends Task implements IModel<TaskICal> {
 
     @Override
     public void addTaskToAction() {
-        //todo
         Task.queueService.createTask(this.actionId)
-                .compose(taskId -> {
-                    //create icalrequest
+                .compose(taskId -> Task.queueService.createICalTask(user, this.data))
+                .onSuccess(result -> {
+                    //todo response eb to calendar
                 })
-                .onSuccess()
-                .onFailure();
+                .onFailure(error -> {
+                    String errMessage = String.format("[Zimbra@%s::createTask]:  " +
+                                    "an error has occurred while creating task for queue action: %s",
+                            this.getClass().getSimpleName(), error.getMessage());
+                    log.error(errMessage);
+                });
     }
 
 

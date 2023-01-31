@@ -33,49 +33,61 @@ public class QueueServiceImpl {
     public Future<Void> putRequestInQueue(UserInfos user, JsonObject info) {
         Promise promise = Promise.promise();
         String type = info.getString(Field.TYPE, null);
+        Boolean approved = info.getBoolean(Field.APPROVED, null);
 
         if (type != null) {
-            createActionInQueue(user, info.getString(Field.TYPE))
+            createActionInQueue(user, info.getString(Field.TYPE), approved)
                     .onSuccess(result -> {
-                        Task tasks = Task.requestObjectFactory(info);
+                        info.put(Field.USER, user);
+                        Task tasks = Task.requestObjectFactory(user, info);
                         tasks.addTaskToAction();
                         promise.complete(result);
                     })
                     .onFailure(error -> {
-                        //todo
+                        String errMessage = String.format("[Zimbra@%s::putRequestInQueue]:  " +
+                                        "an error has occurred while putting request in queue: %s",
+                                this.getClass().getSimpleName(), error.getMessage());
+                        log.error(errMessage);
+                        promise.fail("zimbra.error.queue");
                     });
         } else {
-            //todo
-            promise.fail("");
+            String errMessage = String.format("[Zimbra@%s::putRequestInQueue]:  " +
+                            "an error has occurred while putting request in queue: request type is not defined",
+                    this.getClass().getSimpleName());
+            log.error(errMessage);
+            promise.fail("zimbra.error.queue.no.type");
         }
 
         return promise.future();
     }
 
-    public Future<Integer> createActionInQueue(UserInfos user, String type) {
+    public Future<Integer> createActionInQueue(UserInfos user, String type, Boolean approved) {
         Promise promise = Promise.promise();
 
-        createActionInQueue(user, type, result -> {
+        createActionInQueue(user, type, approved, result -> {
             if (result.isRight()) {
                 promise.complete(result.right().getValue().getInteger(Field.ID));
             } else {
-                //todo
-                promise.fail();
+                String errMessage = String.format("[Zimbra@%s::createActionInQueue]:  " +
+                                "an error has occurred while creating action in queue: %s",
+                        this.getClass().getSimpleName(), result.left().getValue());
+                log.error(errMessage);
+                promise.fail("zimbra.error.queue.action");
             }
         });
 
         return promise.future();
     }
 
-    public void createActionInQueue(UserInfos user, String type, Handler<Either<String, JsonObject>> handler) {
+    public void createActionInQueue(UserInfos user, String type, Boolean approved, Handler<Either<String, JsonObject>> handler) {
         StringBuilder query = new StringBuilder();
 
         query.append("INSERT INTO ").append(actionTable)
-                .append(" (user_id, date, type) ").append( "VALUES (?, ?, ?)")
+                .append(" (user_id, date, type, approved) ").append( "VALUES (?, ?, ?, ?)")
                 .append("RETURN id");
 
         JsonArray values = new JsonArray();
-        values.add(user.getUserId()).add(new Date().getTime()).add(type);
+        values.add(Integer.parseInt(user.getUserId())).add(new Date().getTime()).add(type).add(approved);
 
         Sql.getInstance().prepared(query.toString(), values, SqlResult.validUniqueResultHandler(handler));
     }
@@ -87,8 +99,11 @@ public class QueueServiceImpl {
             if (result.isRight()) {
                 promise.complete(result.right().getValue().getInteger(Field.ID));
             } else {
-                //todo
-                promise.fail();
+                String errMessage = String.format("[Zimbra@%s::createTask]:  " +
+                                "an error has occurred while creating task for queue action: %s",
+                        this.getClass().getSimpleName(), result.left().getValue());
+                log.error(errMessage);
+                promise.fail("zimbra.error.queue.action.task");
             }
         });
 
@@ -104,6 +119,37 @@ public class QueueServiceImpl {
 
         JsonArray values = new JsonArray();
         values.add(actionId).add("pending");
+
+        Sql.getInstance().prepared(query.toString(), values, SqlResult.validUniqueResultHandler(handler));
+    }
+
+    public Future<Integer> createICalTask(UserInfos user, JsonObject requestInfo) {
+        Promise<Integer> promise = Promise.promise();
+
+        createICalTask(user, requestInfo, result -> {
+            if (result.isRight()) {
+                promise.complete(result.right().getValue().getInteger(Field.ID));
+            } else {
+                String errMessage = String.format("[Zimbra@%s::createICalTask]:  " +
+                                "an error has occurred while creating ical task for queue action: %s",
+                        this.getClass().getSimpleName(), result.left().getValue());
+                log.error(errMessage);
+                promise.fail("zimbra.error.queue.action.task.ical");
+            }
+        });
+
+        return promise.future();
+    }
+
+    public void createICalTask(UserInfos user, JsonObject requestInfo, Handler<Either<String, JsonObject>> handler) {
+        StringBuilder query = new StringBuilder();
+
+        query.append("INSERT INTO ").append(taskTable)
+                .append(" (id_user, body) ").append( "VALUES (?, ?)")
+                .append("RETURN id");
+
+        JsonArray values = new JsonArray();
+        values.add(Integer.parseInt(user.getUserId())).add(requestInfo);
 
         Sql.getInstance().prepared(query.toString(), values, SqlResult.validUniqueResultHandler(handler));
     }
