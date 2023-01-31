@@ -6,8 +6,8 @@ import fr.openent.zimbra.service.impl.QueueServiceImpl;
 import io.vertx.core.json.JsonObject;
 
 public abstract class Task {
-    public static final String ICAL = "ICal";
-    public static final String RECALL = "Recall";
+    public static final String ICAL = "ical";
+    public static final String RECALL = "recall";
     protected static QueueServiceImpl queueService;
 
     public static void init(ServiceManager serviceManager) {
