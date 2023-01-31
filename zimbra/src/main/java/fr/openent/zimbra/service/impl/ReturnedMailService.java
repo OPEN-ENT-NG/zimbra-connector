@@ -403,15 +403,19 @@ public class ReturnedMailService {
     public void deleteMailsProgress(Handler<Either<String, JsonObject>> handler) {
         this.getMailReturnedByStatut("PROGRESS", returnedMailsIdsEvent -> {
             if (returnedMailsIdsEvent.isRight()) {
-                List<String> returnedMailsIds = JsonHelper.extractValueFromJsonObjects(returnedMailsIdsEvent.right().getValue(), MESSAGE_ID);
-                this.deleteMessages(returnedMailsIds, deleteMailEvent -> {
-                    if (deleteMailEvent.isRight()) {
-                        handler.handle(new Either.Right(deleteMailEvent.right().getValue()));
-                    } else {
-                        handler.handle(new Either.Left("[Zimbra] deleteMailsProgress : Failed deleting mails"));
-                        log.error("[Zimbra] deleteMailsProgress : Failed deleting mails");
-                    }
-                });
+                if (returnedMailsIdsEvent.right().getValue().size() > 0) {
+                    List<String> returnedMailsIds = JsonHelper.extractValueFromJsonObjects(returnedMailsIdsEvent.right().getValue(), MESSAGE_ID);
+                    this.deleteMessages(returnedMailsIds, deleteMailEvent -> {
+                        if (deleteMailEvent.isRight()) {
+                            handler.handle(new Either.Right(deleteMailEvent.right().getValue()));
+                        } else {
+                            handler.handle(new Either.Left("[Zimbra] deleteMailsProgress : Failed deleting mails"));
+                            log.error("[Zimbra] deleteMailsProgress : Failed deleting mails");
+                        }
+                    });
+                } else {
+                    handler.handle(new Either.Right(new JsonObject()));
+                }
             } else {
                 handler.handle(new Either.Left("[Zimbra] deleteMailsProgress : Failed to retrieve mail in progress"));
                 log.error("[Zimbra] deleteMailsProgress : Failed to retrieve mail in progress");
