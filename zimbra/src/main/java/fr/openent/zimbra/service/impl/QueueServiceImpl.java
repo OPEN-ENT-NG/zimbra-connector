@@ -1,29 +1,34 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.helper.FutureHelper;
 import fr.openent.zimbra.model.requestQueue.RequestQueue;
-import fr.openent.zimbra.service.QueueService;
+import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.http.Renders;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.sql.Sql;
+import org.entcore.common.sql.SqlResult;
 import org.entcore.common.user.UserInfos;
+
+import java.util.Date;
 
 import static org.entcore.common.sql.SqlResult.validUniqueResultHandler;
 
 public class QueueServiceImpl {
     protected static final Logger log = LoggerFactory.getLogger(Renders.class);
 
-    private final String icalRequestTable;
-    private final String icalBodyRequestTable;
+    private final String actionTable;
+    private final String taskTable;
 
     public QueueServiceImpl(String schema) {
-        this.icalRequestTable = schema + ".ical_request";
-        this.icalBodyRequestTable = schema + ".ical_body";
+        this.actionTable = schema + ".action";
+        this.taskTable = schema + ".task";
     }
 
     public Future<Void> putRequestInQueue(UserInfos user, JsonObject info) {
@@ -31,13 +36,15 @@ public class QueueServiceImpl {
         String type = info.getString(Field.TYPE, null);
 
         if (type != null) {
-            //create action
             createActionInQueue(user, info.getString(Field.TYPE))
                     .onSuccess(result -> {
                         RequestQueue tasks = RequestQueue.requestObjectFactory(info);
                         tasks.addTaskToAction();
+                        promise.complete(result);
                     })
-                    .onFailure();
+                    .onFailure(error -> {
+                        //todo
+                    });
         } else {
             //todo
             promise.fail("");
@@ -46,20 +53,46 @@ public class QueueServiceImpl {
         return promise.future();
     }
 
+    public Future<Integer> createActionInQueue(UserInfos user, String type) {
+        Promise promise = Promise.promise();
 
+        createActionInQueue(user, type, FutureHelper.handlerJsonObject(promise));
 
+        return promise.future();
+    }
 
-    public Future<Void> createActionInQueue(UserInfos user, String type) {
+    public Integer createActionInQueue(UserInfos user, String type, Handler<Either<String, JsonArray>> handler) {
         StringBuilder query = new StringBuilder();
 
-        //todo
-        query.append("INSERT INTO ").append(icalRequestTable)
-                .append(" (user_id, date, type) ").append( "VALUES (?, ?, ?)");
+        query.append("INSERT INTO ").append(actionTable)
+                .append(" (user_id, date, type) ").append( "VALUES (?, ?, ?)")
+                .append("RETURN id");
 
         JsonArray values = new JsonArray();
-        values.add(user.getUserId()).add().add(type);
+        values.add(user.getUserId()).add(new Date().getTime()).add(type);
 
-        Sql.getInstance().prepared(query.toString(), values, validUniqueResultHandler(null));
+        Sql.getInstance().prepared(query.toString(), values, SqlResult.validResultHandler(handler));
     }
+
+    public Future<Void> createTask(String actionId) {
+        Promise promise = Promise.promise();
+
+        createTask(actionId, FutureHelper.handlerJsonObject(promise));
+
+        return promise.future();
+    }
+
+    public void createTask(String actionId, Handler<Either<String, JsonArray>> handler) {
+        StringBuilder query = new StringBuilder();
+
+        query.append("INSERT INTO ").append(taskTable)
+                .append(" (action_id, status) ").append( "VALUES (?, ?)");
+
+        JsonArray values = new JsonArray();
+        values.add(actionId).add("pending");
+
+        Sql.getInstance().prepared(query.toString(), values, SqlResult.validResultHandler(handler));
+    }
+
 
 }

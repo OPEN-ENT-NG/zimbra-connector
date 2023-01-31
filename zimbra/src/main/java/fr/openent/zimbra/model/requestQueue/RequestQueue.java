@@ -14,15 +14,15 @@ public abstract class RequestQueue {
         }
 
         switch (requestObject.getString(Field.TYPE, "")) {
-            case ICAL: {
-                return new ICalRequest(requestObject.getJsonObject(Field.DATA, new JsonObject()));
-            }
-            case RECALL: {
+            case ICAL:
+                return new ICalRequest(requestObject);
+
+            case RECALL:
                 return null;
-            }
-            default: {
+
+            default:
                 return null;
-            }
+
         }
     }
 
