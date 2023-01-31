@@ -15,4 +15,3 @@ CREATE TABLE zimbra.mail_returned
     date timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (mail_id, user_id)
 )
-
