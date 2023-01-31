@@ -6,10 +6,14 @@ import fr.openent.zimbra.service.QueueService;
 import fr.wseduc.webutils.http.Renders;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.sql.Sql;
 import org.entcore.common.user.UserInfos;
+
+import static org.entcore.common.sql.SqlResult.validUniqueResultHandler;
 
 public class QueueServiceImpl {
     protected static final Logger log = LoggerFactory.getLogger(Renders.class);
@@ -24,14 +28,20 @@ public class QueueServiceImpl {
 
     public Future<Void> putRequestInQueue(UserInfos user, JsonObject info) {
         Promise promise = Promise.promise();
+        String type = info.getString(Field.TYPE, null);
 
-        //create action
-        createActionInQueue(user)
-                .onSuccess(result -> {
-                    RequestQueue tasks = RequestQueue.requestObjectFactory(info);
-                    tasks.addTaskToAction();
-                })
-                .onFailure();
+        if (type != null) {
+            //create action
+            createActionInQueue(user, info.getString(Field.TYPE))
+                    .onSuccess(result -> {
+                        RequestQueue tasks = RequestQueue.requestObjectFactory(info);
+                        tasks.addTaskToAction();
+                    })
+                    .onFailure();
+        } else {
+            //todo
+            promise.fail("");
+        }
 
         return promise.future();
     }
@@ -39,25 +49,17 @@ public class QueueServiceImpl {
 
 
 
-    public Future<Void> createActionInQueue(UserInfos user) {
+    public Future<Void> createActionInQueue(UserInfos user, String type) {
         StringBuilder query = new StringBuilder();
 
         //todo
         query.append("INSERT INTO ").append(icalRequestTable)
+                .append(" (user_id, date, type) ").append( "VALUES (?, ?, ?)");
 
+        JsonArray values = new JsonArray();
+        values.add(user.getUserId()).add().add(type);
 
-
-                .append("( ")
-                .append(ZIMBRA_NAME).append(", ")
-                .append(NEO4J_UID).append(") ");
-        query.append("SELECT d.name, d.alias ");
-        query.append("FROM data d ");
-        query.append("WHERE NOT EXISTS (SELECT 1 FROM ").append(userTable)
-                .append(" u WHERE u.").append(ZIMBRA_NAME).append(" = d.name ")
-                .append("AND u.").append(NEO4J_UID).append(" = d.alias ")
-                .append(")");
-
-
+        Sql.getInstance().prepared(query.toString(), values, validUniqueResultHandler(null));
     }
 
 }
