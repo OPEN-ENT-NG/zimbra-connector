@@ -1268,19 +1268,21 @@ public class ZimbraController extends BaseController {
                     UserUtils.getUserInfos(eb, userId, user -> {
                         Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, WorkflowActions.EXPERT_ACCESS_RIGHT.toString());
                         if (Boolean.TRUE.equals(hasExpertRight)) {
+                            //todo QueueHelper create request object
+                            //todo call putRequestInQueue(user, object)
                             //in worker
                             message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject().put(Field.STATUS, Field.PENDING)));
-                            calendarServiceImpl.getICal(user)
-                                    .onSuccess(ical -> {
-                                        ical = ical.replaceAll("\\\r\\\n", "\n");
-                                        ical = ical.replaceAll(";TZID\\=.*\\/.*\\\"", "");
-                                        message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject().put(Field.ICS, ical)));
-                                    })
-                                    .onFailure(error -> {
-                                        String errMessage = String.format("[Zimbra@%s::zimbraEventBusHandler]: get-platform-ics : error during ical retrieval: %s",
-                                                this.getClass().getSimpleName(), error.getMessage());
-                                        EventBusHelper.eventBusError(errMessage, "zimbra.ics.retrieval.error", message);
-                                    });
+//                            calendarServiceImpl.getICal(user)
+//                                    .onSuccess(ical -> {
+//                                        ical = ical.replaceAll("\\\r\\\n", "\n");
+//                                        ical = ical.replaceAll(";TZID\\=.*\\/.*\\\"", "");
+//                                        message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject().put(Field.ICS, ical)));
+//                                    })
+//                                    .onFailure(error -> {
+//                                        String errMessage = String.format("[Zimbra@%s::zimbraEventBusHandler]: get-platform-ics : error during ical retrieval: %s",
+//                                                this.getClass().getSimpleName(), error.getMessage());
+//                                        EventBusHelper.eventBusError(errMessage, "zimbra.ics.retrieval.error", message);
+//                                    });
                         } else {
                             String errMessage = String.format("[Zimbra@%s::zimbraEventBusHandler]: get-platform-ics : error during ical retrieval: " +
                                             "user does not have zimbra expert", this.getClass().getSimpleName());
