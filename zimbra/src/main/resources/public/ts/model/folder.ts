@@ -191,20 +191,16 @@ export class Trash extends SystemFolder {
             return;
         }
         await http.put(
-            "/zimbra/restore?" +
-                toFormData({
-                    id: _.pluck(this.mails.selection.selected, "id")
-                })
+            "/zimbra/restore" +
+            { data: { id: this.mails.selection.selected.map(mail => mail.id) } },
         );
         this.mails.removeSelection();
     }
 
     async removeMails() {
         const response = await http.delete(
-            "/zimbra/delete?" +
-                toFormData({
-                    id: _.pluck(this.mails.selection.selected, "id")
-                })
+            "/zimbra/delete",
+            { data: { id: this.mails.selection.selected.map(mail => mail.id) } },
         );
         this.mails.removeSelection();
     }

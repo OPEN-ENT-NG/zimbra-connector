@@ -449,34 +449,35 @@ export class Mail implements Selectable {
             (Zimbra.instance.currentFolder as SystemFolder).folderName !==
             "trash"
         ) {
-            await http.put("/zimbra/trash?id=" + this.id);
+            await http.put("/zimbra/trash", { id: [this.id] });
             Zimbra.instance.currentFolder.mails.refresh();
             Zimbra.instance.folders["trash"].mails.refresh();
         } else {
-            await http.delete("/zimbra/delete?id=" + this.id);
+            await http.delete("/zimbra/delete", { data: { id: [this.id]} });
             Zimbra.instance.folders["trash"].mails.refresh();
         }
     }
 
     async removeFromFolder() {
-        return http.put("move/root?id=" + this.id);
+        return http.put("move/root", { id: [this.id] });
     }
 
     async restore() {
-        await http.put("/zimbra/restore?id=" + this.id);
+        await http.put("/zimbra/restore", { id: [this.id] });
         Zimbra.instance.folders["trash"].mails.refresh();
     }
 
     async move(destinationFolder) {
         await http.put(
-            "move/userfolder/" + destinationFolder.id + "?id=" + this.id
+            "move/userfolder/" + destinationFolder.id,
+            { id: [this.id] },
         );
         await Zimbra.instance.currentFolder.mails.refresh();
         await Zimbra.instance.folders.draft.mails.refresh();
     }
 
     async trash() {
-        await http.put("/zimbra/trash?id=" + this.id);
+        await http.put("/zimbra/trash", { id: [this.id] });
         await Zimbra.instance.currentFolder.mails.refresh();
         await Zimbra.instance.folders.draft.mails.refresh();
     }
@@ -568,8 +569,8 @@ export class Mails {
 
     async removeFromFolder() {
         await http.put(
-            "move/root?" +
-            toFormData({id: _.pluck(this.selection.selected, "id")})
+            "move/root",
+            { id: this.selection.selected.map(mail => mail.id) },
         );
     }
 
@@ -709,8 +710,8 @@ export class Mails {
 
     async toTrash() {
         await http.put(
-            "/zimbra/trash?" +
-            toFormData({id: _.pluck(this.selection.selected, "id")})
+            "/zimbra/trash",
+            { id: this.selection.selected.map(mail => mail.id) },
         );
         this.selection.removeSelection();
     }
@@ -722,9 +723,8 @@ export class Mails {
     async moveSelection(destinationFolder) {
         await http.put(
             "move/userfolder/" +
-            destinationFolder.id +
-            "?" +
-            toFormData({id: _.pluck(this.selection.selected, "id")})
+            destinationFolder.id,
+            { id: this.selection.selected.map(mail => mail.id) },
         );
     }
 

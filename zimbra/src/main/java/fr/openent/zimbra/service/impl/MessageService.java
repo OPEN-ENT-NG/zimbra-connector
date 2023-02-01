@@ -19,6 +19,7 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.helper.ArrayHelper;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.FutureHelper;
 import fr.openent.zimbra.model.MailAddress;
@@ -34,10 +35,7 @@ import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
+import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -64,7 +62,10 @@ public class MessageService {
     private final DbMailService dbMailService;
     private final UserService userService;
     private final GroupService groupService;
+
     private static final Logger log = LoggerFactory.getLogger(MessageService.class);
+
+    private final int BATCH_SIZE = 100;
 
     public MessageService(SoapZimbraService soapService, FolderService folderService,
                           DbMailService dbMailService, UserService userService, SynchroUserService synchroUserService) {
@@ -827,7 +828,9 @@ public class MessageService {
      * @param folderId       Folder ID destination
      * @param user           User infos
      * @param result         Empty JsonObject returned, no process needed
+     * @deprecated           Use {@link #moveMessagesToFolder(List, String, UserInfos)} instead
      */
+    @Deprecated
     public void moveMessagesToFolder(List<String> listMessageIds, String folderId, UserInfos user,
                                      Handler<Either<String, JsonObject>> result) {
 
@@ -850,6 +853,63 @@ public class MessageService {
         }
     }
 
+    /**
+     * Move emails to Folder
+     *
+     * @param messageIDs     List of Message IDs
+     * @param folderId       Folder ID destination
+     * @param user           User infos
+     */
+    public Future<Void> moveMessagesToFolder(List<String> messageIDs, String folderId, UserInfos user) {
+        Promise<Void> promise = Promise.promise();
+        List<Future<Void>> futures = new ArrayList<>();
+        String zimbraFolderId = folderService.getZimbraFolderId(folderId);
+
+        List<List<String>> batchMessageIds = ArrayHelper.split(messageIDs, BATCH_SIZE);
+        for (List<String> ids : batchMessageIds) {
+            futures.add(this.moveBatchMessageToFolder(ids, zimbraFolderId, user));
+        }
+
+        FutureHelper.all(futures)
+                .onSuccess(res -> promise.complete())
+                .onFailure(err -> promise.fail(err.getMessage()));
+
+        return promise.future();
+    }
+
+    /**
+     * Move a batch of emails to Folder
+     *
+     * @param messageIDs List of Message IDs
+     * @param folderId   Folder ID destination
+     * @param user       User
+     */
+    private Future<Void> moveBatchMessageToFolder(List<String> messageIDs, String folderId, UserInfos user) {
+        Promise<Void> promise = Promise.promise();
+
+        JsonObject actionReq = new JsonObject()
+                .put(MSG_ID, String.join(",", messageIDs))
+                .put(MSG_LOCATION, folderId)
+                .put(OPERATION, OP_MOVE);
+
+        JsonObject convActionRequest = new JsonObject()
+                .put(Field.NAME, "MsgActionRequest")
+                .put(SoapConstants.REQ_CONTENT, new JsonObject()
+                        .put(SoapConstants.ACTION, actionReq)
+                        .put(SoapConstants.REQ_NAMESPACE, SoapConstants.NAMESPACE_MAIL));
+
+        soapService.callUserSoapAPI(convActionRequest, user, response -> {
+            if (response.isLeft()) {
+                log.error(String.format("[Zimbra@MessageService::moveBatchMessageToFolder] failed to callUserSoapAPI: %s", response.left().getValue()));
+                promise.fail(response.left().getValue());
+            } else {
+                promise.complete();
+            }
+        });
+
+        return promise.future();
+    }
+
 
     /**
      * Move an email to Folder
@@ -858,7 +918,9 @@ public class MessageService {
      * @param folderId  Folder ID destination
      * @param user      User
      * @param result    result handler
+     * @deprecated      Use {@link #moveMessagesToFolder(List, String, UserInfos)} instead
      */
+    @Deprecated
     private void moveMessageToFolder(String messageID, String folderId, UserInfos user,
                                      Handler<Either<String, JsonObject>> result) {
         JsonObject actionReq = new JsonObject()
@@ -885,12 +947,13 @@ public class MessageService {
     /**
      * Delete emails from trash
      *
-     * @param listMessageIds Messages ID list selected
-     * @param user           User infos
-     * @param result         Empty JsonObject returned, no process needed
+     * @param listMessageIds    Messages ID list selected
+     * @param user              User infos
+     * @param result            Empty JsonObject returned, no process needed
+     * @deprecated              Use {@link #deleteMessages(List, UserInfos, boolean)} instead
      */
-    public void deleteMessages(List<String> listMessageIds, UserInfos user,
-                               Handler<Either<String, JsonObject>> result) {
+    @Deprecated
+    public void deleteMessages(List<String> listMessageIds, UserInfos user, Handler<Either<String, JsonObject>> result) {
 
         final AtomicInteger processedIds = new AtomicInteger(listMessageIds.size());
         final AtomicInteger successMessages = new AtomicInteger(0);
@@ -910,6 +973,65 @@ public class MessageService {
         }
     }
 
+    /**
+     * Delete list of message Ids from trash
+     *
+     * @param messageIDs        List of Message ID
+     * @param user              User infos
+     * @param trashConstraint   boolean constraint that the message should be in trash
+     */
+    public Future<Void> deleteMessages(List<String> messageIDs, UserInfos user, boolean trashConstraint) {
+        Promise<Void> promise = Promise.promise();
+        List<Future<Void>> futures = new ArrayList<>();
+
+        List<List<String>> batchMessageIds = ArrayHelper.split(messageIDs, BATCH_SIZE);
+        for (List<String> ids : batchMessageIds) {
+            futures.add(this.deleteBatchMessages(ids, user, trashConstraint));
+        }
+
+        FutureHelper.all(futures)
+                .onSuccess(res -> promise.complete())
+                .onFailure(err -> promise.fail(err.getMessage()));
+
+        return promise.future();
+    }
+
+    /**
+     * Delete a batch of messages
+     *
+     * @param messageIDs        List of Message ID
+     * @param user              User infos
+     * @param trashConstraint   boolean constraint that the message should be in trash
+     */
+    private Future<Void> deleteBatchMessages(List<String> messageIDs, UserInfos user, boolean trashConstraint) {
+        Promise<Void> promise = Promise.promise();
+
+        JsonObject actionReq = new JsonObject()
+                .put(MSG_ID, String.join(",", messageIDs))
+                .put(OPERATION, OP_DELETE);
+
+        if (trashConstraint) {
+            actionReq.put(MSG_CONSTRAINTS, MSG_CON_TRASH);
+        }
+
+        JsonObject convActionRequest = new JsonObject()
+                .put(Field.NAME, "MsgActionRequest")
+                .put(SoapConstants.REQ_CONTENT, new JsonObject()
+                        .put(SoapConstants.ACTION, actionReq)
+                        .put(SoapConstants.REQ_NAMESPACE, SoapConstants.NAMESPACE_MAIL));
+
+        soapService.callUserSoapAPI(convActionRequest, user, response -> {
+            if (response.isLeft()) {
+                log.error(String.format("[Zimbra@MessageService::deleteBatchMessages] failed to callUserSoapAPI: %s", response.left().getValue()));
+                promise.fail(response.left().getValue());
+            } else {
+                promise.complete();
+            }
+        });
+
+        return promise.future();
+    }
+
 
     /**
      * Delete an email from trash
@@ -917,7 +1039,9 @@ public class MessageService {
      * @param messageID Message ID
      * @param user      User
      * @param result    result handler
+     * @deprecated      Use {@link #deleteMessages(List, UserInfos, boolean)} instead
      */
+    @Deprecated
     private void deleteMessage(String messageID, UserInfos user,
                                Handler<Either<String, JsonObject>> result) {
         JsonObject actionReq = new JsonObject()

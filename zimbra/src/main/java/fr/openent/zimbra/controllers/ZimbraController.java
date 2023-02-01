@@ -672,18 +672,30 @@ public class ZimbraController extends BaseController {
     @SecuredAction(value = "", type = ActionType.RESOURCE)
     @ResourceFilter(DevLevelFilter.class)
     public void trash(final HttpServerRequest request) {
-        final List<String> messageIds = request.params().getAll(MESSAGE_ID);
-        if (messageIds == null || messageIds.size() == 0) {
-            badRequest(request);
-            return;
-        }
         UserUtils.getUserInfos(eb, request, user -> {
             if (user == null) {
                 unauthorized(request);
                 return;
             }
-            messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_TRASH, user,
-                    defaultResponseHandler(request));
+
+            RequestUtils.bodyToJson(request, body -> {
+                final List<String> messageIds = body.getJsonArray(Field.ID, new JsonArray()).getList().isEmpty() ?
+                        request.params().getAll(MESSAGE_ID) :
+                        body.getJsonArray(Field.ID, new JsonArray()).getList();
+
+                if (messageIds == null || messageIds.isEmpty()) {
+                    badRequest(request);
+                    return;
+                }
+
+                messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_TRASH, user)
+                        .onSuccess(res -> Renders.renderJson(request, new JsonObject(), 200))
+                        .onFailure(err -> {
+                            JsonObject error = (new JsonObject()).put(Field.ERROR, err.getMessage());
+                            log.error(String.format("[Zimbra@ZimbraController::moveMessagesToFolder] failed to moveMessagesToFolder: %s", err.getMessage()));
+                            Renders.renderJson(request, error, 400);
+                        });
+            });
         });
     }
 
@@ -704,18 +716,30 @@ public class ZimbraController extends BaseController {
     @SecuredAction(value = "", type = ActionType.RESOURCE)
     @ResourceFilter(DevLevelFilter.class)
     public void restore(final HttpServerRequest request) {
-        final List<String> messageIds = request.params().getAll(MESSAGE_ID);
-        if (messageIds == null || messageIds.size() == 0) {
-            badRequest(request);
-            return;
-        }
         UserUtils.getUserInfos(eb, request, user -> {
             if (user == null) {
                 unauthorized(request);
                 return;
             }
-            messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_INBOX, user,
-                    defaultResponseHandler(request));
+
+            RequestUtils.bodyToJson(request, body -> {
+                final List<String> messageIds = body.getJsonArray(Field.ID, new JsonArray()).getList().isEmpty() ?
+                        request.params().getAll(MESSAGE_ID) :
+                        body.getJsonArray(Field.ID, new JsonArray()).getList();
+
+                if (messageIds == null || messageIds.isEmpty()) {
+                    badRequest(request);
+                    return;
+                }
+
+                messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_INBOX, user)
+                        .onSuccess(res -> Renders.renderJson(request, new JsonObject(), 200))
+                        .onFailure(err -> {
+                            JsonObject error = (new JsonObject()).put(Field.ERROR, err.getMessage());
+                            log.error(String.format("[Zimbra@ZimbraController::moveMessagesToFolder] failed to moveMessagesToFolder: %s", err.getMessage()));
+                            Renders.renderJson(request, error, 400);
+                        });
+            });
         });
     }
 
@@ -736,17 +760,30 @@ public class ZimbraController extends BaseController {
     @SecuredAction(value = "", type = ActionType.RESOURCE)
     @ResourceFilter(DevLevelFilter.class)
     public void delete(final HttpServerRequest request) {
-        final List<String> messageIds = request.params().getAll(MESSAGE_ID);
-        if (messageIds == null || messageIds.isEmpty()) {
-            badRequest(request);
-            return;
-        }
         UserUtils.getUserInfos(eb, request, user -> {
             if (user == null) {
                 unauthorized(request);
                 return;
             }
-            messageService.deleteMessages(messageIds, user, defaultResponseHandler(request));
+
+            RequestUtils.bodyToJson(request, body -> {
+                final List<String> messageIds = body.getJsonArray(Field.ID, new JsonArray()).getList().isEmpty() ?
+                        request.params().getAll(MESSAGE_ID) :
+                        body.getJsonArray(Field.ID, new JsonArray()).getList();
+
+                if (messageIds == null || messageIds.isEmpty()) {
+                    badRequest(request);
+                    return;
+                }
+
+                messageService.deleteMessages(messageIds, user, true)
+                        .onSuccess(res -> Renders.renderJson(request, new JsonObject(),200))
+                        .onFailure(err -> {
+                            JsonObject error = (new JsonObject()).put(Field.ERROR, err.getMessage());
+                            log.error(String.format("[Zimbra@ZimbraController::deleteMessages] failed to deleteMessages: %s", err.getMessage()));
+                            Renders.renderJson(request, error, 400);
+                        });
+            });
         });
     }
 
@@ -933,18 +970,31 @@ public class ZimbraController extends BaseController {
     @SecuredAction(value = "", type = ActionType.RESOURCE)
     @ResourceFilter(DevLevelFilter.class)
     public void move(final HttpServerRequest request) {
-        final String folderId = request.params().get("folderId");
-        final List<String> messageIds = request.params().getAll(MESSAGE_ID);
-        if (messageIds == null || messageIds.size() == 0) {
-            badRequest(request);
-            return;
-        }
         UserUtils.getUserInfos(eb, request, user -> {
             if (user == null) {
                 unauthorized(request);
                 return;
             }
-            messageService.moveMessagesToFolder(messageIds, folderId, user, defaultResponseHandler(request));
+
+            RequestUtils.bodyToJson(request, body -> {
+                final String folderId = request.params().get("folderId");
+                final List<String> messageIds = body.getJsonArray(Field.ID, new JsonArray()).getList().isEmpty() ?
+                        request.params().getAll(MESSAGE_ID) :
+                        body.getJsonArray(Field.ID, new JsonArray()).getList();
+
+                if (messageIds == null || messageIds.isEmpty()) {
+                    badRequest(request);
+                    return;
+                }
+
+                messageService.moveMessagesToFolder(messageIds, folderId, user)
+                        .onSuccess(res -> Renders.renderJson(request, new JsonObject(), 200))
+                        .onFailure(err -> {
+                            JsonObject error = (new JsonObject()).put(Field.ERROR, err.getMessage());
+                            log.error(String.format("[Zimbra@ZimbraController::moveMessagesToFolder] failed to moveMessagesToFolder: %s", err.getMessage()));
+                            Renders.renderJson(request, error, 400);
+                        });
+            });
         });
     }
 
@@ -966,18 +1016,30 @@ public class ZimbraController extends BaseController {
     @SecuredAction(value = "", type = ActionType.RESOURCE)
     @ResourceFilter(DevLevelFilter.class)
     public void rootMove(final HttpServerRequest request) {
-        final List<String> messageIds = request.params().getAll(MESSAGE_ID);
-        if (messageIds == null || messageIds.size() == 0) {
-            badRequest(request);
-            return;
-        }
         UserUtils.getUserInfos(eb, request, user -> {
             if (user == null) {
                 unauthorized(request);
                 return;
             }
-            messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_INBOX, user,
-                    defaultResponseHandler(request));
+
+            RequestUtils.bodyToJson(request, body -> {
+                final List<String> messageIds = body.getJsonArray(Field.ID, new JsonArray()).getList().isEmpty() ?
+                        request.params().getAll(MESSAGE_ID) :
+                        body.getJsonArray(Field.ID, new JsonArray()).getList();
+
+                if (messageIds == null || messageIds.isEmpty()) {
+                    badRequest(request);
+                    return;
+                }
+
+                messageService.moveMessagesToFolder(messageIds, FrontConstants.FOLDER_INBOX, user)
+                        .onSuccess(res -> Renders.renderJson(request, new JsonObject(), 200))
+                        .onFailure(err -> {
+                            JsonObject error = (new JsonObject()).put(Field.ERROR, err.getMessage());
+                            log.error(String.format("[Zimbra@ZimbraController::moveMessagesToFolder] failed to moveMessagesToFolder: %s", err.getMessage()));
+                            Renders.renderJson(request, error, 400);
+                        });
+            });
         });
     }
 
