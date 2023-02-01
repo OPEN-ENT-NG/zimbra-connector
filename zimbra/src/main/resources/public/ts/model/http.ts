@@ -1,5 +1,5 @@
-import {toasts, idiom} from 'entcore';
-import http from 'axios';
+import {idiom, toasts} from 'entcore';
+import http, {AxiosRequestConfig} from 'axios';
 import {SERVICE} from './constantes/codeZimbra';
 
 class Http {
@@ -13,34 +13,30 @@ class Http {
             throw e;
         }
     }
-    async get(url, config?) {
+    async get(url: string, config?: AxiosRequestConfig) {
         try {
-            const response = await http.get(url, config);
-            return response;
+            return http.get(url, config);
         } catch (e) {
            Http.parseError(e);
         }
     }
-    async delete(url, config?) {
+    async delete(url: string, config?: AxiosRequestConfig) {
         try {
-            const response =  await http.delete(url, config);
-            return response;
+            return http.delete(url, config);
         } catch (e) {
             Http.parseError(e);
         }
     }
-    async post(url, data?, config?) {
+    async post(url: string, data?: any, config?: AxiosRequestConfig) {
         try {
-            const response =  await http.post(url, data, config);
-            return response;
+            return http.post(url, data, config);
         } catch (e) {
             Http.parseError(e);
         }
     }
-    async put(url, data?, config?) {
+    async put(url: string, data?: any, config?: AxiosRequestConfig) {
         try {
-            const response =  await http.put(url, data, config);
-            return response;
+            return http.put(url, data, config);
         } catch (e) {
             Http.parseError(e);
         }
