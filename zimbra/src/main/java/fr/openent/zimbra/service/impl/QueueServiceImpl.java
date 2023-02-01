@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.task.Task;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.http.Renders;
@@ -30,7 +31,7 @@ public class QueueServiceImpl {
         this.taskTable = schema + ".task";
     }
 
-    public Future<Void> putRequestInQueue(UserInfos user, JsonObject info) {
+    public Future<Void> putRequestInQueue(UserInfos user, JsonObject info) throws Exception {
         Promise promise = Promise.promise();
         String type = info.getString(Field.TYPE, null);
         Boolean approved = info.getBoolean(Field.APPROVED, null);
@@ -39,9 +40,14 @@ public class QueueServiceImpl {
             createActionInQueue(user, info.getString(Field.TYPE), approved)
                     .onSuccess(result -> {
                         info.put(Field.USER, user);
-                        Task tasks = Task.requestObjectFactory(user, info);
-                        tasks.addTaskToAction();
-                        promise.complete(result);
+                        try {
+                            Action action = new Action(result);
+                            Task tasks = Task.requestObjectFactory(user, info);
+                            tasks.addTaskToAction();
+                            promise.complete(result);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     })
                     .onFailure(error -> {
                         String errMessage = String.format("[Zimbra@%s::putRequestInQueue]:  " +
@@ -61,7 +67,7 @@ public class QueueServiceImpl {
         return promise.future();
     }
 
-    public Future<Integer> createActionInQueue(UserInfos user, String type, Boolean approved) {
+    public Future<JsonObject> createActionInQueue(UserInfos user, String type, Boolean approved) {
         Promise promise = Promise.promise();
 
         createActionInQueue(user, type, approved, result -> {
@@ -83,8 +89,8 @@ public class QueueServiceImpl {
         StringBuilder query = new StringBuilder();
 
         query.append("INSERT INTO ").append(actionTable)
-                .append(" (user_id, date, type, approved) ").append( "VALUES (?, ?, ?, ?)")
-                .append("RETURN id");
+                .append(" (" + Field.USER_ID + "," + Field.USER_ID + "," + Field.TYPE + "," + Field.APPROVED + ") ").append("VALUES (?, ?, ?, ?)")
+                .append("RETURN *;");
 
         JsonArray values = new JsonArray();
         values.add(Integer.parseInt(user.getUserId())).add(new Date().getTime()).add(type).add(approved);

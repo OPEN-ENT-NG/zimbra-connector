@@ -2,6 +2,7 @@ package fr.openent.zimbra.core.constants;
 
 public class Field {
 
+
     private Field() {
         throw new IllegalStateException("Utility class");
     }
@@ -51,7 +52,10 @@ public class Field {
     public static final String TYPE = "type";
     public static final String DATA = "data";
     public static final String ACTIONID = "actionId";
+    public static final String ACTION_ID = "action_id";
+    public static final String USER_ID = "user_id";
     public static final String APPROVED = "approved";
     public static final String USER = "user";
+    public static final String CREATED_AT = "created_at";
 
 }
