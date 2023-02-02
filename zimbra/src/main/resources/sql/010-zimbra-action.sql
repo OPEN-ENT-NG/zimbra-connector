@@ -37,14 +37,14 @@ CREATE TABLE zimbra.task_logs
     CONSTRAINT task_logs_pkey PRIMARY KEY (id),
     CONSTRAINT task_id_fkey FOREIGN KEY (task_id) REFERENCES zimbra.tasks (id)
 );
-CREATE TABLE zimbra.recall_recipient_tasks
+CREATE TABLE zimbra.recall_recipients
 (
     recall_mail_id bigint,
     receiver_id    uuid,
     retry          smallint,
     CONSTRAINT mail_id_fkey FOREIGN KEY (recall_mail_id) REFERENCES zimbra.recall_mails (id)
 ) INHERITS (zimbra.tasks);
-CREATE TABLE zimbra.ical_request_tasks
+CREATE TABLE zimbra.ical_requests
 (
     id   bigserial,
     jsns varchar(16),
