@@ -57,5 +57,7 @@ public class Field {
     public static final String APPROVED = "approved";
     public static final String USER = "user";
     public static final String CREATED_AT = "created_at";
+    public static final String TASK_ID = "task_id";
+    public static final String TASK_STATUS = "task_status";
 
 }

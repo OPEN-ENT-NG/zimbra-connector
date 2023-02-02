@@ -9,8 +9,6 @@ import io.vertx.core.json.JsonObject;
 import org.entcore.common.user.UserInfos;
 
 public abstract class Task {
-    public static final String ICAL = "ical";
-    public static final String RECALL = "recall";
     protected static QueueServiceImpl queueService;
 
     protected long id;
@@ -23,22 +21,28 @@ public abstract class Task {
         this.action = action;
     }
 
+    public Task (JsonObject dbData, Action action) throws Exception {
+        try {
+            this.id = dbData.getInteger(Field.TASK_ID);
+            this.status = TaskStatus.fromString(dbData.getString(Field.TASK_STATUS));
+            this.action = action;
+
+        } catch (Exception e) {
+            throw new Exception(String.format("[Zimbra@%s::Task] JSON does not match Task model", Task.class));
+        }
+    }
+
     public static void init(ServiceManager serviceManager) {
         Task.queueService = serviceManager.getQueueService();
     }
 
-    public static Task createFromJson (JsonObject dbData) {
-
-    }
-
-    public static Task requestObjectFactory(UserInfos user, JsonObject requestObject) {
-
+    public static Task requestObjectFactory(UserInfos user, JsonObject requestObject, Action action) throws Exception {
         if (requestObject == null) {
             return null;
         }
-        switch (requestObject.getString(Field.TYPE, "")) {
+        switch (action.getActionType()) {
             case ICAL:
-                return new TaskICal(user, requestObject);
+                return new TaskICal(user, requestObject, action);
             case RECALL:
                 return null;
             default:

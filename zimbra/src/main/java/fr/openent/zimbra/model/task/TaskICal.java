@@ -3,6 +3,7 @@ package fr.openent.zimbra.model.task;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.model.IModel;
+import fr.openent.zimbra.model.action.Action;
 import fr.wseduc.webutils.http.Renders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -19,7 +20,8 @@ public class TaskICal extends Task implements IModel<TaskICal> {
     public JsonObject content;
     public String jsns;
 
-    public TaskICal(UserInfos user, JsonObject icalRequest) {
+    public TaskICal(UserInfos user, JsonObject icalRequest, Action action) throws Exception {
+        super(icalRequest, action);
         this.user = user;
         this.type = icalRequest.getString(type, null);
         this.data = icalRequest.getJsonObject(Field.DATA, new JsonObject());

@@ -34,7 +34,7 @@ public class Action {
 
     public Action(JsonObject actionData) throws Exception {
         if (!JSONContainsActionData(actionData)) {
-            throw new Exception(String.format("[Zimbra@%s::createActionFromJson] Bad answer from database", Action.class));
+            throw new Exception(String.format("[Zimbra@%s::Action] Json does not match Action model", Action.class));
         }
         long id = actionData.getInteger(Field.ACTION_ID);
         try {
@@ -48,7 +48,7 @@ public class Action {
             this.actionType = actionType;
             this.approved = approved;
         } catch (Exception e) {
-            throw new Exception(String.format("[Zimbra@%s::createActionFromJson] Bad field format", Action.class));
+            throw new Exception(String.format("[Zimbra@%s::Action] Bad field format", Action.class));
         }
     }
 
