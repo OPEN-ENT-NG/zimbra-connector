@@ -14,7 +14,7 @@ public class Action {
     protected ActionType actionType;
     protected boolean approved;
 
-    Set<Task> tasks;
+    protected Set<Task> tasks;
 
     public Action(long id, UUID userId, Date createdAt, ActionType actionType, boolean approved) {
         this.id = id;
@@ -36,17 +36,12 @@ public class Action {
         if (!JSONContainsActionData(actionData)) {
             throw new Exception(String.format("[Zimbra@%s::Action] Json does not match Action model", Action.class));
         }
-        long id = actionData.getInteger(Field.ACTION_ID);
         try {
-            UUID userId = UUID.fromString(actionData.getString(Field.USER_ID));
-            Date created_at = Date.from(Instant.parse(actionData.getString(Field.CREATED_AT)));
-            ActionType actionType = ActionType.fromString(actionData.getString(Field.TYPE));
-            boolean approved = actionData.getBoolean(Field.APPROVED);
-            this.id = id;
-            this.userId = userId;
-            this.createdAt = created_at;
-            this.actionType = actionType;
-            this.approved = approved;
+            this.id = actionData.getInteger(Field.ACTION_ID);
+            this.userId = UUID.fromString(actionData.getString(Field.USER_ID));
+            this.createdAt = Date.from(Instant.parse(actionData.getString(Field.CREATED_AT)));
+            this.actionType = ActionType.fromString(actionData.getString(Field.TYPE));
+            this.approved = actionData.getBoolean(Field.APPROVED);
         } catch (Exception e) {
             throw new Exception(String.format("[Zimbra@%s::Action] Bad field format", Action.class));
         }

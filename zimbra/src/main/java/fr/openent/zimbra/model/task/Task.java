@@ -13,7 +13,7 @@ public abstract class Task {
 
     protected long id;
     protected TaskStatus status;
-    Action action;
+    protected Action action;
 
     public Task(long id, TaskStatus status, Action action) {
         this.id = id;
