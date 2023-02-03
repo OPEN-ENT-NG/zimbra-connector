@@ -48,5 +48,4 @@ CREATE TABLE zimbra.ical_request_tasks
 (
     jsns varchar(16),
     body varchar
-
 ) INHERITS (zimbra.tasks);
