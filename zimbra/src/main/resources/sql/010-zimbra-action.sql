@@ -2,7 +2,7 @@ CREATE TABLE zimbra.actions
 (
     id         bigserial NOT NULL,
     user_id    uuid,
-    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     type       varchar(32),
     approved   boolean,
     CONSTRAINT action_pkey PRIMARY KEY (id)
@@ -46,7 +46,6 @@ CREATE TABLE zimbra.recall_recipient_tasks
 ) INHERITS (zimbra.tasks);
 CREATE TABLE zimbra.ical_request_tasks
 (
-    id   bigserial,
     jsns varchar(16),
     body varchar
 
