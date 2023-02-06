@@ -42,8 +42,8 @@ public class QueueServiceImpl {
                         info.put(Field.USER, user);
                         try {
                             Action action = new Action(result);
-                            Task tasks = Task.requestObjectFactory(user, info);
-                            tasks.addTaskToAction();
+//                            Task tasks = Task.requestObjectFactory(user, info);
+//                            tasks.addTaskToAction();
                             promise.complete(result);
                         } catch (Exception e) {
                             e.printStackTrace();
