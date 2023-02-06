@@ -75,6 +75,7 @@ subprojects {
     testCompile "org.powermock:powermock-module-testng:$powerMockVersion"
     testCompile 'io.gatling.highcharts:gatling-charts-highcharts:2.2.2'
     testCompile "io.vertx:testtools:$toolsVersion"
+    testCompile "org.reflections:reflections:$reflectionsVersion"
     compile "fr.wseduc:vertx-cron-timer:$vertxCronTimer"
     compile "org.apache.commons:commons-text:1.6"
   }
