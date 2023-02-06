@@ -20,20 +20,18 @@ package fr.openent.zimbra;
 import fr.openent.zimbra.controllers.*;
 import fr.openent.zimbra.filters.RequestErrorFilter;
 import fr.openent.zimbra.helper.ConfigManager;
-import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.BusConstants;
+import fr.openent.zimbra.model.task.Task;
 import fr.openent.zimbra.service.impl.ReturnedMailService;
 import fr.openent.zimbra.service.impl.ZimbraRepositoryEvents;
 import fr.openent.zimbra.service.synchro.SynchroTask;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.BaseServer;
 import fr.wseduc.cron.CronTrigger;
 
 import java.text.ParseException;
-import java.util.List;
 
 
 public class Zimbra extends BaseServer {
@@ -64,6 +62,7 @@ public class Zimbra extends BaseServer {
         addController(new ZimbraAdminController());
         addFilter(new RequestErrorFilter());
         ServiceManager serviceManager = ServiceManager.init(vertx, vertx.eventBus(), "");
+        Task.init(serviceManager);
         this.returnedMailService = serviceManager.getReturnedMailService();
         // Repository Events
         setRepositoryEvents(new ZimbraRepositoryEvents());
