@@ -27,7 +27,7 @@ public class CalendarServiceImpl implements CalendarService {
     }
 
     public Future<String> getICal(UserInfos user, Long rangeStart, Long rangeEnd) {
-        Promise promise = Promise.promise();
+        Promise<String> promise = Promise.promise();
 
         JsonObject icalRequest = new JsonObject()
                 .put(Field._JSNS, SoapConstants.NAMESPACE_MAIL);
