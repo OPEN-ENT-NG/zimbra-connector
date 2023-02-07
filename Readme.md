@@ -1,4 +1,4 @@
-# About Zimbra Connetor
+# About Zimbra Connector
 * Licence : [AGPL v3](http://www.gnu.org/licenses/agpl.txt) - Copyright CGI
 * Développer(s) : CGI
 * Financer(s) : Région Ile de France, CGI
@@ -60,6 +60,7 @@ zimbraLang = ${String}
     "address-book-account" : "$zimbraAddressBookAccount",
     "admin-password" : "$zimbraAdminPassword",
     "zimbra-synchro-cron" : "$zimbraSynchroCron",
+    "zimbra-ical-cron" : "$zimbraICalCron",
     "zimbra-file-upload-max-size": $zimbraFileUploadMaxSize,
     "mail-config" : {
       "imaps":{
@@ -99,6 +100,7 @@ zimbraAdminAccount = ${String}
 zimbraAddressBookAccount = ${String}
 zimbraAdminPassword = ${String}
 zimbraSynchroCron = ${String}
+zimbraICalCron = ${String}
 zimbraFileUploadMaxSize= ${Integer}
 zimbraPurgeEmailedContacts = boolean
 zimbraForceSyncAdressBook = boolean
@@ -122,3 +124,10 @@ you can add the following properties depending on your use of zimbra :
   assets-path: ${String}
 }
 </pre>
+
+Explanation of the previous parameters :
+
+    mod parameter           :  conf.properties variable         ,   usage
+    -------------------------------------------------------------------------------------------------------------------
+    -------------------------------------------------------------------------------------------------------------------
+    "zimbra-ical-cron"      : "${zimbraICalCron}"               , updating frequency for ical queue
