@@ -31,6 +31,7 @@
         {% else %}
         "zimbra-mailer-cron" : "0 0/10 * * * ? 2099",
         {% endif %}
+        "zimbra-ical-cron": {{zimbraICalCron | default(' 0 * * * * ? *')}},
         "http-client-max-pool-size" : {{ zimbraMaxPoolSize | default('50') }},
         "address-book-account" : "{{ zimbraAddressBookAccount }}",
         "shared-folder-name" : "-- Carnets Adresses ENT --",

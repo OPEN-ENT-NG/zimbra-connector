@@ -18,6 +18,7 @@
 package fr.openent.zimbra;
 
 import fr.openent.zimbra.controllers.*;
+import fr.openent.zimbra.cron.ICalRequestCron;
 import fr.openent.zimbra.filters.RequestErrorFilter;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.ServiceManager;
@@ -70,6 +71,7 @@ public class Zimbra extends BaseServer {
         try {
             SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
             new CronTrigger(vertx, appConfig.getSynchroCronDate()).schedule(syncLauncherTask);
+            new CronTrigger(vertx, appConfig.getZimbraICalCron()).schedule(new ICalRequestCron());
             log.info("Cron launched with date : " + appConfig.getSynchroCronDate());
             returnedMailService.deleteMailsProgress(event -> {
                 if(event.isLeft()) {
