@@ -1,8 +1,11 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.enums.TaskType;
+import fr.openent.zimbra.model.task.Action;
 import fr.openent.zimbra.model.task.Task;
 import fr.wseduc.webutils.Either;
+import fr.openent.zimbra.service.QueueService;
 import fr.wseduc.webutils.http.Renders;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -11,15 +14,15 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.commons.lang3.NotImplementedException;
 import org.entcore.common.sql.Sql;
 import org.entcore.common.sql.SqlResult;
 import org.entcore.common.user.UserInfos;
 
+import java.util.List;
 import java.util.Date;
 
-import static org.entcore.common.sql.SqlResult.validUniqueResultHandler;
-
-public class QueueServiceImpl {
+public class QueueServiceImpl implements QueueService {
     protected static final Logger log = LoggerFactory.getLogger(Renders.class);
 
     private final String actionTable;
@@ -31,7 +34,7 @@ public class QueueServiceImpl {
     }
 
     public Future<Void> putRequestInQueue(UserInfos user, JsonObject info) {
-        Promise promise = Promise.promise();
+        Promise<Void> promise = Promise.promise();
         String type = info.getString(Field.TYPE, null);
         Boolean approved = info.getBoolean(Field.APPROVED, null);
 
@@ -41,7 +44,7 @@ public class QueueServiceImpl {
                         info.put(Field.USER, user);
                         Task tasks = Task.requestObjectFactory(user, info);
                         tasks.addTaskToAction();
-                        promise.complete(result);
+                        promise.complete();
                     })
                     .onFailure(error -> {
                         String errMessage = String.format("[Zimbra@%s::putRequestInQueue]:  " +
@@ -61,12 +64,28 @@ public class QueueServiceImpl {
         return promise.future();
     }
 
-    public Future<Integer> createActionInQueue(UserInfos user, String type, Boolean approved) {
-        Promise promise = Promise.promise();
+    @Override
+    public Future<Void> createActionInQueue(UserInfos user, String type) {
+        return null;
+    }
+
+    @Override
+    public void createActionInQueue(UserInfos user, String type, Handler<Either<String, JsonObject>> handler) {
+
+    }
+
+    @Override
+    public void createTask(Integer actionId, Boolean approved, Handler<Either<String, JsonObject>> handler) {
+
+    }
+
+    public Future<Void> createActionInQueue(UserInfos user, String type, Boolean approved) {
+        Promise<Void> promise = Promise.promise();
 
         createActionInQueue(user, type, approved, result -> {
             if (result.isRight()) {
-                promise.complete(result.right().getValue().getInteger(Field.ID));
+                // promise.complete(result.right().getValue().getInteger(Field.ID));
+                promise.complete();
             } else {
                 String errMessage = String.format("[Zimbra@%s::createActionInQueue]:  " +
                                 "an error has occurred while creating action in queue: %s",
@@ -155,4 +174,20 @@ public class QueueServiceImpl {
     }
 
 
+    public Future<List<Task>> getTasksInProgress(TaskType taskType) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public Future<Task> getTask(long taskId) {
+        return null;
+    }
+
+    public Future<Task> getTask(String taskId) {
+        throw new NotImplementedException();
+    }
+
+    public Future<Task> createTask(Action action, TaskType taskType) {
+        throw new NotImplementedException();
+    }
 }

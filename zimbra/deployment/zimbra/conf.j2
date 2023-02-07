@@ -21,8 +21,8 @@
         "zimbra-domain" : "{{ zimbraDomain }}",
         "zimbra-synchro-lang" : "{{ zimbraLang }}",
         "zimbra-admin-uri" : "{{ zimbraAdminUri }}",
-        "admin-account" : "{{ zimbraAdminAccount }}",
-        "admin-password" : "{{ zimbraAdminPassword }}",
+        "admin-account" : "{{ zimbraAdminAccount }}",
+        "admin-password" : "{{ zimbraAdminPassword }}",
         "max-recipients" : {{ zimbraMaxRecipients }},
         "zimbra-file-upload-max-size": {{ zimbraFileUploadMaxSize | default('20') }},
         {% if zimbraCron is defined and zimbraCron %}
@@ -31,6 +31,8 @@
         {% else %}
         "zimbra-mailer-cron" : "0 0/10 * * * ? 2099",
         {% endif %}
+        "recall-cron": {{ recallCron | default(' 0 */2 * * * ? *') }},
+        "recall-worker-max-queue": {{ $recallWorkerMaxQueue | default(10000) }},
         "http-client-max-pool-size" : {{ zimbraMaxPoolSize | default('50') }},
         "address-book-account" : "{{ zimbraAddressBookAccount }}",
         "shared-folder-name" : "-- Carnets Adresses ENT --",

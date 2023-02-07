@@ -61,6 +61,8 @@ public class ConfigManager {
     private final String syncSynchroType;
     private final String appSyncTtl;
 
+    private final int recallWorkerMaxQueue;
+    private final String recallCron;
     private final String mailerCron;
     private final Integer maxRecipients;
     private final int devLevel;
@@ -117,6 +119,8 @@ public class ConfigManager {
         String syncSynchroType = config.getString("sync-synctype", SYNC_NEO);
         this.appSyncTtl = config.getString("app-sync-ttl", "30 minutes");
         this.mailerCron = config.getString("zimbra-mailer-cron", "");
+        this.recallCron = config.getString("recall-cron", "");
+        this.recallWorkerMaxQueue = config.getInteger("recall-worker-max-queue", 10000);
         this.maxRecipients = config.getInteger("max-recipients", 50);
         this.mailConfig = config.getJsonObject("mail-config", new JsonObject());
         this.sharedFolderName = config.getString("shared-folder-name", "-- Carnets Adresses ENT --");
@@ -193,6 +197,8 @@ public class ConfigManager {
     public String getSynchroCronDate() { return synchroCronDate;}
     public String getSynchroFromMail() { return synchroFromMail;}
     public String getMailerCron() { return mailerCron;}
+    public String getRecallCron() { return recallCron; }
+    public int getRecallWorkerMaxQueue() { return recallWorkerMaxQueue; }
     public Integer getMaxRecipients() { return maxRecipients;}
     public JsonObject getMailConfig() { return mailConfig;}
     public String getSharedFolderName() { return sharedFolderName;}
