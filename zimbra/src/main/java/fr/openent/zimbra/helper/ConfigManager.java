@@ -92,6 +92,8 @@ public class ConfigManager {
 
     private SlackConfiguration slackConfiguration;
 
+    private String zimbraICalCron;
+
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
     public ConfigManager(JsonObject config) {
@@ -131,6 +133,7 @@ public class ConfigManager {
         this.sendTimeout = config.getInteger("send-timeout", 5000);
         this.structureToSynchroABLimit = config.getInteger("limit-structures-synchro-ab",5);
         this.filterUserProfileSynchAB = config.getString("filter-profile-sync-ab","");
+        this.zimbraICalCron = config.getString("zimbra-ical-cron", "0 * * * * ? *");
 
         // In case of emergency
         this.forceExpertMode = config.getBoolean("force-expert-mode", false);
@@ -213,6 +216,7 @@ public class ConfigManager {
     public int getSendTimeout() { return sendTimeout;}
     public int getStructureToSynchroABLimit() { return structureToSynchroABLimit;}
     public String getFilterUserProfileSynchAB() {return this.filterUserProfileSynchAB;}
+    public String getZimbraICalCron() {return zimbraICalCron;}
 
     private void initPublicConfig() {
         publicConfig.put("admin-password", hidePasswd(rawConfig.getString("admin-password","")));
