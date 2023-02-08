@@ -83,7 +83,7 @@ public class ServiceManager {
 
     private SqlAddressBookService sqlAddressBookService;
 
-    private QueueService queueService;
+    private QueueService recallQueueService;
 
     private CalendarServiceImpl calendarService;
 
@@ -113,7 +113,7 @@ public class ServiceManager {
             this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
             this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
                     synchroAddressBookService, addressBookService, eb);
-            this.queueService = new QueueServiceImpl(config.getDbSchema());
+            this.recallQueueService = new RecallQueueServiceImpl(config.getDbSchema());
         }
 
         this.searchService = new SearchService(vertx);
@@ -306,7 +306,7 @@ public class ServiceManager {
         return calendarService;
     }
 
-    public QueueService getQueueService() {
-        return queueService;
+    public QueueService getRecallQueueService() {
+        return recallQueueService;
     }
 }

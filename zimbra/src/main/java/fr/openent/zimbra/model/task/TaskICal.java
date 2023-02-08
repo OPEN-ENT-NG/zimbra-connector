@@ -3,6 +3,7 @@ package fr.openent.zimbra.model.task;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.model.IModel;
+import fr.openent.zimbra.model.action.Action;
 import fr.wseduc.webutils.http.Renders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -11,6 +12,7 @@ import org.entcore.common.user.UserInfos;
 
 public class TaskICal extends Task implements IModel<TaskICal> {
     protected static final Logger log = LoggerFactory.getLogger(Renders.class);
+
     public UserInfos user;
     public String type;
     public JsonObject data;
@@ -20,17 +22,8 @@ public class TaskICal extends Task implements IModel<TaskICal> {
     public String jsns;
 
     public TaskICal(JsonObject icalRequest) {
-        this.type = icalRequest.getString(type, null);
-        this.data = icalRequest.getJsonObject(Field.DATA, new JsonObject());
-        this.actionId = icalRequest.getInteger(Field.ACTIONID, null);
-        this.name = data.getString(Field.NAME,null);
-        this.content = data.getJsonObject(Field.CONTENT, new JsonObject());
-        this.jsns = data.getString(Field._JSNS, null);
-    }
-
-    public TaskICal(UserInfos user, JsonObject icalRequest) {
-        this.user = user;
-        this.type = icalRequest.getString(type, null);
+        super(icalRequest);
+        this.type = icalRequest.getString(Field.TYPE, null);
         this.data = icalRequest.getJsonObject(Field.DATA, new JsonObject());
         this.actionId = icalRequest.getInteger(Field.ACTIONID, null);
         this.name = data.getString(Field.NAME,null);
@@ -61,22 +54,6 @@ public class TaskICal extends Task implements IModel<TaskICal> {
     public String getJsns() {
         return jsns;
     }
-
-    @Override
-    public void addTaskToAction() {
-//        Task.queueService.createTask(this.actionId)
-//                .compose(taskId -> Task.queueService.createICalTask(user, this.data))
-//                .onSuccess(result -> {
-//                    //todo response eb to calendar
-//                })
-//                .onFailure(error -> {
-//                    String errMessage = String.format("[Zimbra@%s::createTask]:  " +
-//                                    "an error has occurred while creating task for queue action: %s",
-//                            this.getClass().getSimpleName(), error.getMessage());
-//                    log.error(errMessage);
-//                });
-    }
-
 
     @Override
     public JsonObject toJson() {
