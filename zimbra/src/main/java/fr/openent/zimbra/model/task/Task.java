@@ -1,42 +1,36 @@
 package fr.openent.zimbra.model.task;
 
 import fr.openent.zimbra.core.constants.Field;
-import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.service.QueueService;
-import io.vertx.core.Future;
+import fr.openent.zimbra.core.enums.TaskStatus;
+import fr.openent.zimbra.model.action.Action;
 import io.vertx.core.json.JsonObject;
 
 public abstract class Task {
-    public static final String ICAL = "ical";
-    public static final String RECALL = "recall";
-    protected static QueueService queueService;
+    protected long id;
+    protected TaskStatus status;
 
-    public static void init(ServiceManager serviceManager) {
-        Task.queueService = serviceManager.getQueueService();
+    public Action action;
+
+    public Task(JsonObject jsonObject) {
+        this.id = jsonObject.getLong(Field.ID, null);
+        this.status = TaskStatus.fromString(jsonObject.getString(Field.STATUS, null));
+        // this.action = jsonObject.getString(Field.ACTION, null);
     }
 
-    public static Task requestObjectFactory(JsonObject requestObject) {
-        if (requestObject == null) {
-            return null;
-        }
-
-        switch (requestObject.getString(Field.TYPE, "")) {
-            case ICAL:
-                return new TaskICal(requestObject);
-
-            case RECALL:
-                return null;
-
-            default:
-                throw new IllegalStateException("Unknown task");
-
-        }
+    public Task(long id, TaskStatus status, Action action) {
+        this.id = id;
+        this.status = status;
+        this.action = action;
     }
 
-    /**
-     * Cretes action + task(s) in database for que queue
-     * @return {@link Future<Void>}
-     */
-    public abstract Future<Void> addTaskToAction();
+    public Task(JsonObject dbData, Action action) throws Exception {
+        try {
+            this.id = dbData.getLong(Field.TASK_ID);
+            this.status = TaskStatus.fromString(dbData.getString(Field.TASK_STATUS));
+            this.action = action;
 
+        } catch (Exception e) {
+            throw new Exception(String.format("[Zimbra@%s::Task] JSON does not match Task model", Task.class));
+        }
+    }
 }
