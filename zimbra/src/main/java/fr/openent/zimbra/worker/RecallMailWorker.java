@@ -1,7 +1,6 @@
 package fr.openent.zimbra.worker;
 
 import fr.openent.zimbra.core.constants.Field;
-import fr.openent.zimbra.core.enums.TaskType;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.model.task.Task;
 import io.vertx.core.Handler;
@@ -93,15 +92,15 @@ public class RecallMailWorker extends QueueWorker implements Handler<Message<Jso
     }
 
     public void syncQueue() {
-        this.queueService.getTasksInProgress(TaskType.RECALL)
-                .onComplete(result -> {
-                    if (result.succeeded()) {
-                        this.queue.addAll(result.result().subList(0, this.remainingSize() - 1));
-                        if (!this.running) this.startQueue();
-                    } else {
-                        log.error("[ZimbraConnector@RecallMailWorker:refillQueue] Cannot retrieve tasks in progress %s", result.cause().getMessage());
-                    }
-                });
+//        this.queueService.getTasksInProgress(TaskType.RECALL)
+//                .onComplete(result -> {
+//                    if (result.succeeded()) {
+//                        this.queue.addAll(result.result().subList(0, this.remainingSize() - 1));
+//                        if (!this.running) this.startQueue();
+//                    } else {
+//                        log.error("[ZimbraConnector@RecallMailWorker:refillQueue] Cannot retrieve tasks in progress %s", result.cause().getMessage());
+//                    }
+//                });
     }
 
     @Override
@@ -123,13 +122,13 @@ public class RecallMailWorker extends QueueWorker implements Handler<Message<Jso
             log.error("[ZimbraConnector@RecallMailWorker:addTask] Queue is full");
             return;
         }
-        this.queueService.getTask(taskId).onComplete(result -> {
-            if (result.succeeded()) {
-                this.queue.add(result.result());
-            } else {
-                log.error("[ZimbraConnector@RecallMailWorker:addTask] Cannot retrieve task %s, %s", taskId, result.cause().getMessage());
-            }
-        });
+//        this.queueService.getTask(taskId).onComplete(result -> {
+//            if (result.succeeded()) {
+//                this.queue.add(result.result());
+//            } else {
+//                log.error("[ZimbraConnector@RecallMailWorker:addTask] Cannot retrieve task %s, %s", taskId, result.cause().getMessage());
+//            }
+//        });
     }
 
     @Override
