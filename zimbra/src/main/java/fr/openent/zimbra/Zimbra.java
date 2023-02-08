@@ -50,7 +50,6 @@ public class Zimbra extends BaseServer {
     private ReturnedMailService returnedMailService;
     private RecallMailService recallMailService;
 
-
     private static Logger log = LoggerFactory.getLogger(Zimbra.class);
 
     @Override
@@ -68,8 +67,8 @@ public class Zimbra extends BaseServer {
         addController(new ZimbraAdminController());
         addFilter(new RequestErrorFilter());
         ServiceManager serviceManager = ServiceManager.init(vertx, vertx.eventBus(), "");
-        Task.init(serviceManager);
         this.returnedMailService = serviceManager.getReturnedMailService();
+
         this.recallMailService = serviceManager.getRecallMailService();
 
         // Repository Events
