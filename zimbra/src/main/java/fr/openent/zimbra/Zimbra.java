@@ -19,14 +19,18 @@ package fr.openent.zimbra;
 
 import fr.openent.zimbra.controllers.*;
 import fr.openent.zimbra.cron.ICalRequestCron;
+import fr.openent.zimbra.cron.RecallMailCron;
 import fr.openent.zimbra.filters.RequestErrorFilter;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.BusConstants;
+import fr.openent.zimbra.service.RecallMailService;
 import fr.openent.zimbra.model.task.Task;
 import fr.openent.zimbra.service.impl.ReturnedMailService;
 import fr.openent.zimbra.service.impl.ZimbraRepositoryEvents;
 import fr.openent.zimbra.service.synchro.SynchroTask;
+import fr.openent.zimbra.worker.RecallMailWorker;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.BaseServer;
@@ -44,6 +48,7 @@ public class Zimbra extends BaseServer {
     public static ConfigManager appConfig;
     public static String zimbraSchema;
     private ReturnedMailService returnedMailService;
+    private RecallMailService recallMailService;
 
 
     private static Logger log = LoggerFactory.getLogger(Zimbra.class);
@@ -65,8 +70,17 @@ public class Zimbra extends BaseServer {
         ServiceManager serviceManager = ServiceManager.init(vertx, vertx.eventBus(), "");
         Task.init(serviceManager);
         this.returnedMailService = serviceManager.getReturnedMailService();
+        this.recallMailService = serviceManager.getRecallMailService();
+
         // Repository Events
         setRepositoryEvents(new ZimbraRepositoryEvents());
+
+        // Workers
+        vertx.deployVerticle(RecallMailWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config));
+
+        // Recall cron
+        RecallMailCron recallMailCron = new RecallMailCron(recallMailService, vertx.eventBus());
+        new CronTrigger(vertx, appConfig.getRecallCron()).schedule(recallMailCron);
 
         try {
             SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);

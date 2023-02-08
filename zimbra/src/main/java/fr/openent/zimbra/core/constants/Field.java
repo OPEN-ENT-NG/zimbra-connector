@@ -18,6 +18,7 @@ public class Field {
     public static final String MESSAGE = "message";
     public static final String OK = "ok";
     public static final String RESULT = "result";
+    public static final String RESULTS = "results";
 
     public static final String APP = "zimbra";
     public static final String FALSE = "false";
