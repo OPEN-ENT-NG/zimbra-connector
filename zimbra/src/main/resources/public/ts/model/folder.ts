@@ -191,8 +191,8 @@ export class Trash extends SystemFolder {
             return;
         }
         await http.put(
-            "/zimbra/restore" +
-            { data: { id: this.mails.selection.selected.map(mail => mail.id) } },
+            "/zimbra/restore",
+            { id: this.mails.selection.selected.map(mail => mail.id) },
         );
         this.mails.removeSelection();
     }

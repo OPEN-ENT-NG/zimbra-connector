@@ -23,6 +23,7 @@ import fr.openent.zimbra.filters.AccessibleDocFilter;
 import fr.openent.zimbra.filters.DevLevelFilter;
 import fr.openent.zimbra.helper.AsyncHelper;
 import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.helper.RequestHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.ModuleConstants;
@@ -678,7 +679,7 @@ public class ZimbraController extends BaseController {
                 return;
             }
 
-            RequestUtils.bodyToJson(request, body -> {
+            RequestHelper.bodyToJson(request, body -> {
                 final List<String> messageIds = body.getJsonArray(Field.ID, new JsonArray()).getList().isEmpty() ?
                         request.params().getAll(MESSAGE_ID) :
                         body.getJsonArray(Field.ID, new JsonArray()).getList();
@@ -722,7 +723,7 @@ public class ZimbraController extends BaseController {
                 return;
             }
 
-            RequestUtils.bodyToJson(request, body -> {
+            RequestHelper.bodyToJson(request, body -> {
                 final List<String> messageIds = body.getJsonArray(Field.ID, new JsonArray()).getList().isEmpty() ?
                         request.params().getAll(MESSAGE_ID) :
                         body.getJsonArray(Field.ID, new JsonArray()).getList();
@@ -766,7 +767,7 @@ public class ZimbraController extends BaseController {
                 return;
             }
 
-            RequestUtils.bodyToJson(request, body -> {
+            RequestHelper.bodyToJson(request, body -> {
                 final List<String> messageIds = body.getJsonArray(Field.ID, new JsonArray()).getList().isEmpty() ?
                         request.params().getAll(MESSAGE_ID) :
                         body.getJsonArray(Field.ID, new JsonArray()).getList();
@@ -976,7 +977,7 @@ public class ZimbraController extends BaseController {
                 return;
             }
 
-            RequestUtils.bodyToJson(request, body -> {
+            RequestHelper.bodyToJson(request, body -> {
                 final String folderId = request.params().get("folderId");
                 final List<String> messageIds = body.getJsonArray(Field.ID, new JsonArray()).getList().isEmpty() ?
                         request.params().getAll(MESSAGE_ID) :
@@ -1022,7 +1023,7 @@ public class ZimbraController extends BaseController {
                 return;
             }
 
-            RequestUtils.bodyToJson(request, body -> {
+            RequestHelper.bodyToJson(request, body -> {
                 final List<String> messageIds = body.getJsonArray(Field.ID, new JsonArray()).getList().isEmpty() ?
                         request.params().getAll(MESSAGE_ID) :
                         body.getJsonArray(Field.ID, new JsonArray()).getList();
