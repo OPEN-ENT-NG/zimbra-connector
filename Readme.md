@@ -60,6 +60,8 @@ zimbraLang = ${String}
     "address-book-account" : "$zimbraAddressBookAccount",
     "admin-password" : "$zimbraAdminPassword",
     "zimbra-synchro-cron" : "$zimbraSynchroCron",
+    "recall-cron": "$recallCron",
+    "recall-worker-max-queue": $recallWorkerMaxQueue,
     "zimbra-file-upload-max-size": $zimbraFileUploadMaxSize,
     "mail-config" : {
       "imaps":{
@@ -99,6 +101,7 @@ zimbraAdminAccount = ${String}
 zimbraAddressBookAccount = ${String}
 zimbraAdminPassword = ${String}
 zimbraSynchroCron = ${String}
+zimbraRecallCron = ${String}
 zimbraFileUploadMaxSize= ${Integer}
 zimbraPurgeEmailedContacts = boolean
 zimbraForceSyncAdressBook = boolean

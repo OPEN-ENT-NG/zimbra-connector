@@ -21,6 +21,7 @@ import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.DbMailServiceFactory;
 import fr.openent.zimbra.service.QueueService;
+import fr.openent.zimbra.service.RecallMailService;
 import fr.openent.zimbra.service.data.*;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.messages.MobileThreadService;
@@ -64,6 +65,7 @@ public class ServiceManager {
     private final RedirectionService redirectionService;
     private final FrontPageService frontPageService;
     private final ReturnedMailService returnedMailService;
+    private final RecallMailService recallMailService;
 
     private SynchroUserService synchroUserService;
     private SynchroUserService synchroUserServiceApp;
@@ -81,10 +83,9 @@ public class ServiceManager {
 
     private SqlAddressBookService sqlAddressBookService;
 
-    private QueueServiceImpl queueService;
+    private QueueService queueService;
 
     private CalendarServiceImpl calendarService;
-//    private QueueServiceImpl queueService;
 
     private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix, ConfigManager config) {
         this.vertx = vertx;
@@ -132,6 +133,7 @@ public class ServiceManager {
         this.redirectionService = new RedirectionService(eb, userService);
         this.frontPageService = new FrontPageService(folderService, userService);
         this.returnedMailService = new ReturnedMailService(new DbMailServiceFactory(vertx, sqlSynchroService).getDbMailService("postgres"), messageService, userService, notificationService, eb);
+        this.recallMailService = new RecallMailServiceImpl(new DbMailServiceFactory(vertx, sqlSynchroService).getDbMailService("postgres"), eb);
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
@@ -293,6 +295,9 @@ public class ServiceManager {
         return returnedMailService;
     }
 
+    public RecallMailService getRecallMailService() {
+        return recallMailService;
+    }
     public WebClient getWebClient() {
         return webClient;
     }
@@ -301,7 +306,7 @@ public class ServiceManager {
         return calendarService;
     }
 
-    public QueueServiceImpl getQueueService() {
+    public QueueService getQueueService() {
         return queueService;
     }
 }
