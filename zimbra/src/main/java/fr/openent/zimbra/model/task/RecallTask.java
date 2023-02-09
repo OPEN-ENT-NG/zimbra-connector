@@ -47,6 +47,18 @@ public class RecallTask extends Task implements IModel<RecallTask> {
         return  data.containsKey(Field.RECEIVER_ID) && data.containsKey(Field.RETRY);
     }
 
+    public RecallMail getRecallMessage() {
+        return recallMessage;
+    }
+
+    public UUID getReceiverId() {
+        return receiverId;
+    }
+
+    public int getRetry() {
+        return retry;
+    }
+
     @Override
     public JsonObject toJson() {
         return IModelHelper.toJson(this, false, true);
