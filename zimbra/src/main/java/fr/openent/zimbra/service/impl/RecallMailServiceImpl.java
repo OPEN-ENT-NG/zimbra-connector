@@ -11,6 +11,7 @@ import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.List;
+import java.util.UUID;
 
 public class RecallMailServiceImpl implements RecallMailService {
     public static ConfigManager appConfig;
@@ -37,7 +38,10 @@ public class RecallMailServiceImpl implements RecallMailService {
         throw new NotImplementedException();
     }
 
-    public Future<List<Object>> getMessages (String recallMailId) {
+    public Future<List<UUID>> getUsers (String recallMailId) {
+        // todo: get recall_mail from db
+        // todo: call zimbra to retrieve user ids
+        // todo: return user ids
         throw new NotImplementedException();
     }
 
