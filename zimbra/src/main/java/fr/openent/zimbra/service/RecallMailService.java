@@ -4,6 +4,7 @@ import fr.openent.zimbra.model.RecallMail;
 import io.vertx.core.Future;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface RecallMailService {
 
@@ -35,7 +36,7 @@ public interface RecallMailService {
      * @param recallMailId
      * @return
      */
-    public Future<List<Object>> getMessages (String recallMailId);
+    public Future<List<UUID>> getUsers (String recallMailId);
 
     /**
      *
