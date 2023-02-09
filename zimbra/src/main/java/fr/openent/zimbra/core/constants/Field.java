@@ -64,6 +64,8 @@ public class Field {
     public static final String RECEIVER_ID = "receiver_id";
     public static final String RECEIVERS_ID = "receivers_id";
     public static final String RETRY = "retry";
+    public static final String JSNS = "jsns";
+    public static final String BODY_LOWER_CASE = "body";
 
 
 }

@@ -5,6 +5,7 @@ import java.util.Objects;
 public enum TaskStatus {
     ERROR("error"),
     CANCELLED("cancelled"),
+    IN_PROGRESS("inProgress"),
     UNKNOWN("unknown");
 
     private final String actionStatus;

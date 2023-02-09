@@ -3,6 +3,7 @@ package fr.openent.zimbra.service;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
 import fr.openent.zimbra.model.action.Action;
+import fr.openent.zimbra.model.task.Task;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
@@ -20,9 +21,8 @@ import java.util.UUID;
  * Abstract queue service
  *
  * @param <T> Task
- * @param <V> TaskInfo
  */
-public abstract class QueueService<T, V> {
+public abstract class QueueService<T extends Task> {
     protected static final Logger log = LoggerFactory.getLogger(QueueService.class);
 
     protected final String schema;
@@ -44,14 +44,9 @@ public abstract class QueueService<T, V> {
      */
     public abstract Future<List<T>> insertTasksInQueue(List<T> tasks);
 
-    /**
-     * Method to create Tasks
-     *
-     * @param action Action
-     * @param taskInfo Task info
-     * @return
-     */
-    protected abstract Future<List<T>> createTasks(Action action, V taskInfo);
+    public abstract Future<T> createTask(Action action, T task);
+
+    public abstract Future<List<T>> createTasks(Action action, List<T> tasks);
 
     /**
      * Create an Action
@@ -61,7 +56,7 @@ public abstract class QueueService<T, V> {
      * @param approved
      * @return
      */
-    protected Future<Action> createAction(UUID userId, ActionType actionType, boolean approved) {
+    public Future<Action> createAction(UUID userId, ActionType actionType, boolean approved) {
         Promise<Action> promise = Promise.promise();
 
         StringBuilder query = new StringBuilder();
@@ -96,15 +91,17 @@ public abstract class QueueService<T, V> {
     /**
      * Create and insert tasks in the worker queue
      *
-     * @param userId User id
-     * @param taskInfo Task data
+     * @param action Action
      * @return
      */
-    public Future<List<T>> createAndInsertTasksInQueue(UUID userId, V taskInfo) {
+    public Future<List<T>> createAndInsertTasksInQueue(Action action, List<T> tasks) {
         Promise<List<T>> promise = Promise.promise();
 
-        this.createAction(userId, this.actionType, false)
-                .compose(action -> this.createTasks(action, taskInfo))
+        this.createTasks(action, tasks)
+                 .compose((t) -> {
+                     action.addTasks((List<Task>) t);
+                     return Future.succeededFuture(t);
+                 })
                 .compose(this::insertTasksInQueue)
                 .onSuccess(promise::complete)
                 .onFailure(promise::fail);

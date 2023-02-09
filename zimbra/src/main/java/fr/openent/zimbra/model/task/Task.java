@@ -9,12 +9,32 @@ public abstract class Task {
     protected long id;
     protected TaskStatus status;
 
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public TaskStatus getStatus() {
+        return status;
+    }
+
+    public Action getAction() {
+        return action;
+    }
+
     public Action action;
 
     public Task(JsonObject jsonObject) {
         this.id = jsonObject.getLong(Field.ID, null);
         this.status = TaskStatus.fromString(jsonObject.getString(Field.STATUS, null));
-        // this.action = jsonObject.getString(Field.ACTION, null);
+    }
+
+    public Task(TaskStatus status, Action action) {
+        this.status = status;
+        this.action = action;
     }
 
     public Task(long id, TaskStatus status, Action action) {

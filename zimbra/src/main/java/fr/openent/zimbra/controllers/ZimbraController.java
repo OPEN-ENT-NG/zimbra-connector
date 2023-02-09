@@ -29,10 +29,10 @@ import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.helper.*;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.ModuleConstants;
+import fr.openent.zimbra.model.task.ICalTask;
 import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.security.WorkflowActionUtils;
 import fr.openent.zimbra.security.WorkflowActions;
-import fr.openent.zimbra.service.QueueService;
 import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.synchro.AddressBookService;
@@ -66,9 +66,7 @@ import org.entcore.common.utils.Config;
 import org.vertx.java.core.http.RouteMatcher;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static fr.openent.zimbra.model.constant.FrontConstants.MESSAGE_ID;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.ZIMBRA_ID_STRUCTURE;
@@ -95,8 +93,7 @@ public class ZimbraController extends BaseController {
     private Storage storage;
     private EventStore eventStore;
     private WorkspaceHelper workspaceHelper;
-    private QueueService queueService;
-
+    private ICalQueueServiceImpl icalQueueServiceImpl;
 
     private enum ZimbraEvent {ACCESS, CREATE}
 
@@ -127,7 +124,7 @@ public class ZimbraController extends BaseController {
         this.addressBookService = serviceManager.getAddressBookService();
         this.returnedMailService = serviceManager.getReturnedMailService();
         this.workspaceHelper = new WorkspaceHelper(eb,storage);
-        this.queueService = serviceManager.getQueueService();
+        this.icalQueueServiceImpl = serviceManager.getICalQueueService();
     }
 
     @Get("zimbra")
@@ -1330,14 +1327,20 @@ public class ZimbraController extends BaseController {
                     UserUtils.getUserInfos(eb, userId, user -> {
                         Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, WorkflowActions.EXPERT_ACCESS_RIGHT.toString());
                         if (Boolean.TRUE.equals(hasExpertRight)) {
-                            JsonObject icalRequest = QueueRequestHelper.createICalRequest();
-                            this.queueService.putRequestInQueue(user, icalRequest)
+                            Action icalAction = new Action(UUID.fromString(userId), fr.openent.zimbra.core.enums.ActionType.ICAL, false);
+
+                            this.icalQueueServiceImpl.createAction(icalAction)
+                                    .compose(zimbraAction -> this.icalQueueServiceImpl.createAndInsertTasksInQueue(
+                                            zimbraAction,
+                                            Collections.singletonList(new ICalTask(zimbraAction, TaskStatus.IN_PROGRESS, null, null))
+                                    ))
                                     .onSuccess(result -> message.reply(new JsonObject().put(Field.STATUS, Field.OK)))
                                     .onFailure(error -> {
                                         String errMessage = String.format("[Zimbra@%s::zimbraEventBusHandler]: get-platform-ics : error when putting " +
                                                         "ical request in queue: %s", this.getClass().getSimpleName(), error.getMessage());
                                         EventBusHelper.eventBusError(errMessage, "zimbra.ical.request.queue.error", message);
                                     });
+
                             //todo to be used in ical worker
 //                            message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject().put(Field.STATUS, Field.PENDING)));
 //                            calendarServiceImpl.getICal(user)

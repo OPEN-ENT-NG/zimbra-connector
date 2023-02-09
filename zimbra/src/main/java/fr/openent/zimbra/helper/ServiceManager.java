@@ -20,7 +20,6 @@ package fr.openent.zimbra.helper;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.DbMailServiceFactory;
-import fr.openent.zimbra.service.QueueService;
 import fr.openent.zimbra.service.RecallMailService;
 import fr.openent.zimbra.service.data.*;
 import fr.openent.zimbra.service.impl.*;
@@ -83,7 +82,8 @@ public class ServiceManager {
 
     private SqlAddressBookService sqlAddressBookService;
 
-    private QueueService recallQueueService;
+    private RecallQueueServiceImpl recallQueueService;
+    private ICalQueueServiceImpl icalQueueServiceImpl;
 
     private CalendarServiceImpl calendarService;
 
@@ -114,6 +114,7 @@ public class ServiceManager {
             this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
                     synchroAddressBookService, addressBookService, eb);
             this.recallQueueService = new RecallQueueServiceImpl(config.getDbSchema());
+            this.icalQueueServiceImpl = new ICalQueueServiceImpl(config.getDbSchema());
         }
 
         this.searchService = new SearchService(vertx);
@@ -306,7 +307,11 @@ public class ServiceManager {
         return calendarService;
     }
 
-    public QueueService getRecallQueueService() {
+    public RecallQueueServiceImpl getRecallQueueService() {
         return recallQueueService;
+    }
+
+    public ICalQueueServiceImpl getICalQueueService() {
+        return icalQueueServiceImpl;
     }
 }
