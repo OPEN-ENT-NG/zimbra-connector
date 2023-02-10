@@ -31,7 +31,7 @@ public class ICalTask extends Task implements IModel<ICalTask> {
         this.jsns = data.getString(Field._JSNS, null);
     }
 
-    public ICalTask (Action action, TaskStatus status, Long rangeStart, Long rangeEnd) {
+    public ICalTask (Action<ICalTask> action, TaskStatus status, Long rangeStart, Long rangeEnd) {
         super(status, action);
         this.jsns = SoapConstants.NAMESPACE_MAIL;
         this.body = new JsonObject();
