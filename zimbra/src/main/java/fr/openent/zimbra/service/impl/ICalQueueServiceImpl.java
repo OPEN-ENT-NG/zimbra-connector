@@ -4,6 +4,7 @@ import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.task.ICalTask;
+import fr.openent.zimbra.model.task.RecallTask;
 import fr.openent.zimbra.service.QueueService;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -30,15 +31,15 @@ public class ICalQueueServiceImpl extends QueueService<ICalTask> {
     }
 
     @Override
-    public Future<ICalTask> createTask(Action action, ICalTask task) {
+    public Future<ICalTask> createTask(Action<ICalTask> action, ICalTask task) {
         Promise<ICalTask> promise = Promise.promise();
 
         StringBuilder query = new StringBuilder();
 
         query.append("INSERT INTO ")
                 .append(this.taskTable)
-                .append(" (" + Field.ACTION_ID + "," + Field.STATUS + "," + Field.JSNS + "," + Field.BODY + ") ")
-                .append("VALUES (?, ?, ?, ?)")
+                .append(" (" + Field.ACTION_ID + ", " + Field.STATUS + ", " + Field.JSNS + ", " + Field.BODY + ") ")
+                .append("VALUES (?, ?, ?, ?) ")
                 .append("RETURNING *");
 
         JsonArray values = new JsonArray();
@@ -63,7 +64,7 @@ public class ICalQueueServiceImpl extends QueueService<ICalTask> {
     }
 
     @Override
-    public Future<List<ICalTask>> createTasks(Action action, List<ICalTask> tasks) {
+    public Future<List<ICalTask>> createTasks(Action<ICalTask> action, List<ICalTask> tasks) {
         throw new NotImplementedException();
     }
 
