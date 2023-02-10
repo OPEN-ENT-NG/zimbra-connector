@@ -22,14 +22,14 @@ public class RecallTask extends Task implements IModel<RecallTask> {
         // this.recallMessage = recallMessage;
     }
 
-    public RecallTask(long id, TaskStatus status, Action action, RecallMail recallMessage, UUID receiverId, int retry) {
+    public RecallTask(long id, TaskStatus status, Action<RecallTask> action, RecallMail recallMessage, UUID receiverId, int retry) {
         super(id, status, action);
         this.recallMessage = recallMessage;
         this.receiverId = receiverId;
         this.retry = retry;
     }
 
-    public RecallTask(JsonObject dbData, Action action, RecallMail recallMessage) throws Exception {
+    public RecallTask(JsonObject dbData, Action<RecallTask> action, RecallMail recallMessage) throws Exception {
         super(dbData, action);
         if (!JSONContainsRecallData(dbData)) {
             throw new Exception(String.format("[Zimbra@%s::RecallTask] Json does not match RecallTask model", this.getClass().getSimpleName()));

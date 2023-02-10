@@ -19,6 +19,7 @@ package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.filters.AccessibleDocFilter;
 import fr.openent.zimbra.filters.DevLevelFilter;
 import fr.openent.zimbra.helper.AsyncHelper;
@@ -27,6 +28,7 @@ import fr.openent.zimbra.helper.RequestHelper;
 import fr.openent.zimbra.helper.EventBusHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.helper.*;
+import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.ModuleConstants;
 import fr.openent.zimbra.model.task.ICalTask;
@@ -1327,7 +1329,7 @@ public class ZimbraController extends BaseController {
                     UserUtils.getUserInfos(eb, userId, user -> {
                         Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, WorkflowActions.EXPERT_ACCESS_RIGHT.toString());
                         if (Boolean.TRUE.equals(hasExpertRight)) {
-                            Action icalAction = new Action(UUID.fromString(userId), fr.openent.zimbra.core.enums.ActionType.ICAL, false);
+                            Action<ICalTask> icalAction = new Action<>(UUID.fromString(userId), fr.openent.zimbra.core.enums.ActionType.ICAL, false);
 
                             this.icalQueueServiceImpl.createAction(icalAction)
                                     .compose(zimbraAction -> this.icalQueueServiceImpl.createAndInsertTasksInQueue(

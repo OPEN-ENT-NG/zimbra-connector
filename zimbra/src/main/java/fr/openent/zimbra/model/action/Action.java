@@ -7,14 +7,14 @@ import io.vertx.core.json.JsonObject;
 import java.time.Instant;
 import java.util.*;
 
-public class Action {
+public class Action<T extends Task> {
     protected long id;
     protected UUID userId;
     protected Date createdAt;
     protected ActionType actionType;
     protected boolean approved;
 
-    protected Set<Task> tasks;
+    protected Set<T> tasks;
 
     public Action(UUID userId, ActionType actionType, boolean approved) {
         this.userId = userId;
@@ -58,7 +58,7 @@ public class Action {
         }
     }
 
-    public Set<Task> getTasks() {
+    public Set<T> getTasks() {
         return tasks;
     }
 
@@ -90,15 +90,15 @@ public class Action {
         this.createdAt = createdAt;
     }
 
-    public void addTasks(List<Task> tasks) {
+    public void addTasks(List<T> tasks) {
         this.tasks.addAll(tasks);
     }
 
-    public void addTask(Task task) {
+    public void addTask(T task) {
         this.tasks.add(task);
     }
 
-    public void removeTask(Task task) {
+    public void removeTask(T task) {
         this.tasks.remove(task);
     }
 }

@@ -32,7 +32,7 @@ public abstract class QueueService<T extends Task> {
 
     public QueueService(String schema) {
         this.schema = schema;
-        this.actionTable = schema + ".action";
+        this.actionTable = schema + ".actions";
         this.taskTable = schema + ".task";
     }
 
@@ -44,9 +44,9 @@ public abstract class QueueService<T extends Task> {
      */
     public abstract Future<List<T>> insertTasksInQueue(List<T> tasks);
 
-    public abstract Future<T> createTask(Action action, T task);
+    public abstract Future<T> createTask(Action<T> action, T task);
 
-    public abstract Future<List<T>> createTasks(Action action, List<T> tasks);
+    public abstract Future<List<T>> createTasks(Action<T> action, List<T> tasks);
 
     /**
      * Create an Action
@@ -56,16 +56,16 @@ public abstract class QueueService<T extends Task> {
      * @param approved
      * @return
      */
-    public Future<Action> createAction(UUID userId, ActionType actionType, boolean approved) {
-        Promise<Action> promise = Promise.promise();
+    public Future<Action<T>> createAction(UUID userId, ActionType actionType, boolean approved) {
+        Promise<Action<T>> promise = Promise.promise();
 
         StringBuilder query = new StringBuilder();
 
         query.append("INSERT INTO ")
                 .append(actionTable)
-                .append(" (" + Field.USER_ID + "," + Field.TYPE + "," + Field.APPROVED + ") ")
-                .append("VALUES (?, ?, ?)")
-                .append("RETURNING " + Field.ACTION_ID + "," + Field.USER_ID + "," + Field.CREATED_AT + "," + Field.TYPE + "," + Field.APPROVED);
+                .append(" (" + Field.USER_ID + ", " + Field.TYPE + ", " + Field.APPROVED + ") ")
+                .append("VALUES (?, ?, ?) ")
+                .append("RETURNING " + Field.ID + ", " + Field.USER_ID + ", " + Field.CREATED_AT + ", " + Field.TYPE + ", " + Field.APPROVED);
 
         JsonArray values = new JsonArray();
         values.add(userId.toString()).add(actionType.method()).add(approved);
@@ -74,7 +74,7 @@ public abstract class QueueService<T extends Task> {
             if (handler.isRight()) {
                 long id = handler.right().getValue().getLong(Field.ID);
                 Date createdAt = Date.from(Instant.parse(handler.right().getValue().getString(Field.CREATED_AT)));
-                Action action = new Action(id, userId, createdAt, actionType, approved);
+                Action<T> action = new Action<T>(id, userId, createdAt, actionType, approved);
                 promise.complete(action);
             } else {
                 String errMessage = String.format("[Zimbra@%s::createAction]:  " +
@@ -88,18 +88,22 @@ public abstract class QueueService<T extends Task> {
         return promise.future();
     }
 
+    public Future<Action<T>> createAction(Action<T> action) {
+        return createAction(action.getUserId(), action.getActionType(), action.getApproved());
+    }
+
     /**
      * Create and insert tasks in the worker queue
      *
      * @param action Action
      * @return
      */
-    public Future<List<T>> createAndInsertTasksInQueue(Action action, List<T> tasks) {
+    public Future<List<T>> createAndInsertTasksInQueue(Action<T> action, List<T> tasks) {
         Promise<List<T>> promise = Promise.promise();
 
         this.createTasks(action, tasks)
                  .compose((t) -> {
-                     action.addTasks((List<Task>) t);
+                     action.addTasks(t);
                      return Future.succeededFuture(t);
                  })
                 .compose(this::insertTasksInQueue)
