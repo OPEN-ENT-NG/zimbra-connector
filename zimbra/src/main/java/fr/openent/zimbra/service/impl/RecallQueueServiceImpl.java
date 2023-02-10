@@ -34,7 +34,7 @@ public class RecallQueueServiceImpl extends QueueService<RecallTask> {
     }
 
     @Override
-    public Future<RecallTask> createTask(Action action, RecallTask task) {
+    public Future<RecallTask> createTask(Action<RecallTask> action, RecallTask task) {
         Promise<RecallTask> promise = Promise.promise();
 
         StringBuilder query = new StringBuilder();
@@ -70,7 +70,7 @@ public class RecallQueueServiceImpl extends QueueService<RecallTask> {
     }
 
     @Override
-    public Future<List<RecallTask>> createTasks(Action action, List<RecallTask> tasks) {
+    public Future<List<RecallTask>> createTasks(Action<RecallTask> action, List<RecallTask> tasks) {
         Promise<List<RecallTask>> promise = Promise.promise();
 
         List<Future<RecallTask>> futures = new ArrayList<>();

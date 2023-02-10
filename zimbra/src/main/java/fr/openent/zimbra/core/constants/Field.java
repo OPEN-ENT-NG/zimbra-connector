@@ -44,7 +44,7 @@ public class Field {
     public static final String CHANGE = "change";
     public static final String TOKEN = "token";
     public static final String _JSNS ="_jsns";
-    public static final String BODY = "Body";
+    public static final String BODY = "body";
     public static final String ICAL = "ical";
     public static final String _CONTENT = "_content";
     public static final String ICS = "ics";
