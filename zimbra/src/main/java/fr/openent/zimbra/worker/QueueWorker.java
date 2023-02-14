@@ -1,5 +1,6 @@
 package fr.openent.zimbra.worker;
 
+import fr.openent.zimbra.core.enums.QueueWorkerStatus;
 import fr.openent.zimbra.model.task.Task;
 import fr.openent.zimbra.service.QueueService;
 import io.vertx.core.AbstractVerticle;
@@ -17,7 +18,7 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle {
     protected QueueService<T> queueService;
     protected EventBus eb;
 
-    protected Queue<Task<T>> queue = new PriorityQueue<>();
+    protected Queue<T> queue = new LinkedList<>();
     protected int maxQueueSize = 1000;
 
     @Override
@@ -39,11 +40,11 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle {
 
     public abstract void syncQueue();
 
-    public abstract void addTasks(List<Long> taskIds);
+    public abstract void addTasks(List<T> tasks);
 
-    public abstract void addTask(long taskId);
+    public abstract void addTask(T task);
 
-    public abstract void removeTask(long taskId);
+    public abstract void removeTask(T task);
 
     public void setMaxQueueSize (int maxQueueSize) {
         this.maxQueueSize = maxQueueSize;

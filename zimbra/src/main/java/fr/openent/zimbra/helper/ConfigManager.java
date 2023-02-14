@@ -61,8 +61,8 @@ public class ConfigManager {
     private final String syncSynchroType;
     private final String appSyncTtl;
 
-    private final int recallWorkerMaxQueue;
-    private final String recallCron;
+    private final int zimbraRecallWorkerMaxQueue;
+    private final String zimbraRecallCron;
     private final String mailerCron;
     private final Integer maxRecipients;
     private final int devLevel;
@@ -87,14 +87,16 @@ public class ConfigManager {
 
     private final String filterUserProfileSynchAB;
 
+    private final String zimbraICalCron;
+
+    private final Integer zimbraICalWorkerMaxQueue;
+
     // Bug in Zimbra : when getting messages in conversations, alternative parts are inverted
     private boolean invertAltPartInConvMsg;
 
     private CircuitBreakerOptions circuitBreakerOptions;
 
     private SlackConfiguration slackConfiguration;
-
-    private String zimbraICalCron;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -121,8 +123,8 @@ public class ConfigManager {
         String syncSynchroType = config.getString("sync-synctype", SYNC_NEO);
         this.appSyncTtl = config.getString("app-sync-ttl", "30 minutes");
         this.mailerCron = config.getString("zimbra-mailer-cron", "");
-        this.recallCron = config.getString("recall-cron", "");
-        this.recallWorkerMaxQueue = config.getInteger("recall-worker-max-queue", 10000);
+        this.zimbraRecallCron = config.getString("zimbra-recall-cron", "");
+        this.zimbraRecallWorkerMaxQueue = config.getInteger("zimbra-recall-worker-max-queue", 10000);
         this.maxRecipients = config.getInteger("max-recipients", 50);
         this.mailConfig = config.getJsonObject("mail-config", new JsonObject());
         this.sharedFolderName = config.getString("shared-folder-name", "-- Carnets Adresses ENT --");
@@ -138,6 +140,7 @@ public class ConfigManager {
         this.structureToSynchroABLimit = config.getInteger("limit-structures-synchro-ab",5);
         this.filterUserProfileSynchAB = config.getString("filter-profile-sync-ab","");
         this.zimbraICalCron = config.getString("zimbra-ical-cron", "0 * * * * ? *");
+        this.zimbraICalWorkerMaxQueue = config.getInteger("zimbra-max-queue-size", 10000);
 
         // In case of emergency
         this.forceExpertMode = config.getBoolean("force-expert-mode", false);
@@ -200,8 +203,8 @@ public class ConfigManager {
     public String getSynchroCronDate() { return synchroCronDate;}
     public String getSynchroFromMail() { return synchroFromMail;}
     public String getMailerCron() { return mailerCron;}
-    public String getRecallCron() { return recallCron; }
-    public int getRecallWorkerMaxQueue() { return recallWorkerMaxQueue; }
+    public String getZimbraRecallCron() { return zimbraRecallCron; }
+    public int getZimbraRecallWorkerMaxQueue() { return zimbraRecallWorkerMaxQueue; }
     public Integer getMaxRecipients() { return maxRecipients;}
     public JsonObject getMailConfig() { return mailConfig;}
     public String getSharedFolderName() { return sharedFolderName;}
@@ -223,6 +226,7 @@ public class ConfigManager {
     public int getStructureToSynchroABLimit() { return structureToSynchroABLimit;}
     public String getFilterUserProfileSynchAB() {return this.filterUserProfileSynchAB;}
     public String getZimbraICalCron() {return zimbraICalCron;}
+    public Integer getZimbraICalWorkerMaxQueue() {return zimbraICalWorkerMaxQueue;}
 
     private void initPublicConfig() {
         publicConfig.put("admin-password", hidePasswd(rawConfig.getString("admin-password","")));
