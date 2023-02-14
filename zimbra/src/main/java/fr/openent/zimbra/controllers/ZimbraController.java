@@ -1334,7 +1334,7 @@ public class ZimbraController extends BaseController {
                             this.icalQueueServiceImpl.createAction(icalAction)
                                     .compose(zimbraAction -> this.icalQueueServiceImpl.createAndInsertTasksInQueue(
                                             zimbraAction,
-                                            Collections.singletonList(new ICalTask(zimbraAction, TaskStatus.IN_PROGRESS, null, null))
+                                            Collections.singletonList(new ICalTask(zimbraAction, TaskStatus.PENDING, null, null))
                                     ))
                                     .onSuccess(result -> message.reply(new JsonObject().put(Field.STATUS, Field.OK)))
                                     .onFailure(error -> {

@@ -89,7 +89,7 @@ public class ICalQueueServiceImplTest {
         //Arguments
         Action<ICalTask> action = new Action<ICalTask>(USER_ID, ActionType.ICAL, false);
         action.setId(111);
-        ICalTask task = new ICalTask(action, TaskStatus.IN_PROGRESS, null, null);
+        ICalTask task = new ICalTask(action, TaskStatus.PENDING, null, null);
 
         JsonObject queryData = new JsonObject()
                 .put("name", "requestName")

@@ -10,17 +10,10 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.UUID;
 
-public class RecallTask extends Task implements IModel<RecallTask> {
-    private RecallMail recallMessage;
-    private UUID receiverId;
-    private int retry;
-
-    public RecallTask(JsonObject jsonObject) {
-        super(jsonObject);
-        this.receiverId = UUID.fromString(jsonObject.getString(Field.RECEIVER_ID));
-        this.retry = jsonObject.getInteger(Field.RETRY);
-        // this.recallMessage = recallMessage;
-    }
+public class RecallTask extends Task<RecallTask> implements IModel<RecallTask> {
+    private final RecallMail recallMessage;
+    private final UUID receiverId;
+    private final int retry;
 
     public RecallTask(long id, TaskStatus status, Action<RecallTask> action, RecallMail recallMessage, UUID receiverId, int retry) {
         super(id, status, action);
