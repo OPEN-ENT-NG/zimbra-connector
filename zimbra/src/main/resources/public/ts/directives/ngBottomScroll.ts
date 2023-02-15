@@ -22,7 +22,7 @@ export const ngBottomScroll = ng.directive('ngBottomScroll',  () => {
         link: function (scope, element, attrs) {
             let MyElement = element[0];
             element.bind('scroll', function () {
-                if (MyElement.scrollTop + MyElement.offsetHeight >= MyElement.scrollHeight) {
+                if (MyElement.scrollTop + MyElement.offsetHeight >= MyElement.scrollHeight - 1) {
                     scope.$apply(attrs.ngBottomScroll)
                 }
             })

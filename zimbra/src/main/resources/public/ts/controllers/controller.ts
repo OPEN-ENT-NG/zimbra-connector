@@ -34,6 +34,7 @@ import {
 
 import {Preference} from "../model/preferences";
 import http from "../model/http";
+import {setTimeout} from "core-js";
 
 declare const window: any;
 
@@ -330,10 +331,11 @@ export let zimbraController = ng.controller("ZimbraController", [
         $scope.nextPage = async () => {
             if (template.containers['right-side'].indexOf("right-side.html") > 0 && !$scope.messagesLoading) {
                 $scope.messagesLoading = true;
-                $scope.$apply();
-                await Zimbra.instance.currentFolder.nextPage(
-                    $scope.state.selectAll
-                );
+                try {
+                    await Zimbra.instance.currentFolder.nextPage($scope.state.selectAll);
+                } catch (err) {
+                    notify.error(lang.translate("zimbra.message.loading"));
+                }
                 $scope.messagesLoading = false;
                 $scope.$apply();
             }
