@@ -23,7 +23,7 @@
             <i18n></i18n>
         </label>
     </div>
-    <div class="status-filter" ng-class="{column: showRightSide() }">
+    <div class="status-filter" ng-class="{column: showRightSide()}">
 
     </div>
     <div class="flex-all-remains cell horizontal-margin">
@@ -41,7 +41,7 @@
 </div>
 
 
-<div class="mailbox simple-notifications" ng-class="{'scroll-list' : showRightSide()}">
+<div class="mailbox simple-notifications scroll-list" ng-bottom-scroll="nextPage()">
     <div ng-if="isLoading()">
         <div class="info fade-in"><i18n>loading</i18n></div>
     </div>

@@ -40,7 +40,7 @@
 	</div>
 </div>
 
-<div class="mailbox simple-notifications" ng-class="{'scroll-list' : showRightSide()}">
+<div class="mailbox simple-notifications scroll-list" ng-bottom-scroll="nextPage()">
 
 	<div ng-if="isLoading()">
 		<div class="info fade-in"><i18n>loading</i18n></div>

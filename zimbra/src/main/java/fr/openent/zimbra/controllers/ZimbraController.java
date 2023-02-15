@@ -507,11 +507,17 @@ public class ZimbraController extends BaseController {
                     b = Boolean.parseBoolean(unread);
                 }
                 messageService.listMessages(folder, b, user, page, search, event -> {
-                    if (!folder.equals("/Sent")) {
-                        renderJson(request, event.right().getValue());
+                    if (event.isRight()) {
+                        if (!folder.equals("/Sent")) {
+                            renderJson(request, event.right().getValue());
+                        } else {
+                            returnedMailService.renderReturnedMail(request, user, event);
+                        }
                     } else {
-                        returnedMailService.renderReturnedMail(request, user, event);
+                        JsonObject error = (new JsonObject()).put("error", event.left().getValue());
+                        Renders.renderJson(request, error, 400);
                     }
+
                 });
             } else {
                 unauthorized(request);
