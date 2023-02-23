@@ -36,7 +36,7 @@
  	</ul>
  </script>
  <script type="text/ng-template" id="move-folders-root">
-	 <div ng-if="(!folders.list.includes(zimbra.currentFolder) || zimbra.currentFolder.folderName === 'trash')">
+	 <div ng-if="(!folders.list.includes(zimbra.currentFolder) || zimbra.currentFolder.folderName === 'trash' || zimbra.currentFolder.folderName === 'spams')">
 		 <h3><i18n>messages</i18n></h3>
 		 <ul>
 			 <li ng-repeat="folder in folders.list" ng-include="'move-folders-content'" ng-if="zimbra.currentFolder.id != folder.id"></li>
