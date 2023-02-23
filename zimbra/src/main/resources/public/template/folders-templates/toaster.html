@@ -21,10 +21,10 @@
             <button ng-click="showConfirm()" ng-if="zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length">
                 <i18n>remove</i18n>
             </button>
-            <button ng-click="moveSelection()" ng-if="(zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length) && (zimbra.currentFolder.folderName === 'trash' || !folders.list.includes(zimbra.currentFolder))">
+            <button ng-click="moveSelection()" ng-if="(zimbra.currentFolder.mails.selection.length || zimbra.currentFolder.userFolders.selected.length) && (zimbra.currentFolder.folderName === 'trash' || zimbra.currentFolder.folderName === 'spams' || !folders.list.includes(zimbra.currentFolder))">
                 <i18n>move.first.caps</i18n>
             </button>
-                <button ng-click="moveSelection()" ng-if="zimbra.currentFolder.mails.selection.length && folders.list.includes(zimbra.currentFolder) && zimbra.currentFolder.folderName !== 'trash'">
+                <button ng-click="moveSelection()" ng-if="zimbra.currentFolder.mails.selection.length && folders.list.includes(zimbra.currentFolder) && zimbra.currentFolder.folderName !== 'trash' && zimbra.currentFolder.folderName !== 'spams'">
                 <i18n>move.inside.folder</i18n>
             </button>
             <button ng-click="toggleRecallView()"
