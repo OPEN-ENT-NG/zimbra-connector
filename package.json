@@ -1,6 +1,6 @@
 {
   "name": "Zimbra",
-  "version": "2.9.7",
+  "version": "2.9-SNAPSHOT",
   "description": "Zimbra",
   "main": "gulpfile.js",
   "scripts": {
