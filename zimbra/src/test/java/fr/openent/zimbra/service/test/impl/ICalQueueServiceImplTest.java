@@ -97,7 +97,7 @@ public class ICalQueueServiceImplTest {
 
         //Expected query
         String expectedQuery = "INSERT INTO schema.ical_request_tasks (action_id, status, jsns, body) VALUES (?, ?, ?, ?) RETURNING *";
-        JsonArray expectedValues = new JsonArray().add(111).add("IN_PROGRESS").add(SoapConstants.NAMESPACE_MAIL).add(new JsonObject());
+        JsonArray expectedValues = new JsonArray().add(111).add("PENDING").add(SoapConstants.NAMESPACE_MAIL).add(new JsonObject());
 
         Mockito.doAnswer(invocation -> {
             String query = invocation.getArgument(0);
