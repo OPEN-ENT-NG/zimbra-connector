@@ -9,6 +9,7 @@ import fr.openent.zimbra.service.data.sqlTaskServices.SqlRecallTaskService;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.NotImplementedException;
 import org.entcore.common.sql.Sql;
 import org.entcore.common.sql.SqlResult;
@@ -74,7 +75,7 @@ public class ICalQueueServiceImpl extends QueueService<ICalTask> {
     }
 
     @Override
-    public Future<List<ICalTask>> getPendingTask() {
+    protected ICalTask createTaskFromData(JsonObject taskData, Action<ICalTask> action) throws Exception {
         return null;
     }
 

@@ -11,7 +11,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-public class ICalTask extends Task implements IModel<ICalTask> {
+public class ICalTask extends Task<ICalTask> implements IModel<ICalTask> {
     protected static final Logger log = LoggerFactory.getLogger(Renders.class);
 
     public String type;
