@@ -10,7 +10,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.UUID;
 
-public class RecallTask extends Task<RecallTask> implements IModel<RecallTask> {
+public class RecallTask extends Task<RecallTask> {
     private final RecallMail recallMessage;
     private final UUID receiverId;
     private final int retry;
@@ -52,8 +52,4 @@ public class RecallTask extends Task<RecallTask> implements IModel<RecallTask> {
         return retry;
     }
 
-    @Override
-    public JsonObject toJson() {
-        return IModelHelper.toJson(this, false, true);
-    }
 }
