@@ -2,6 +2,7 @@ package fr.openent.zimbra.worker;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.model.task.RecallTask;
 import fr.openent.zimbra.model.task.Task;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
@@ -14,7 +15,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import java.util.Iterator;
 import java.util.List;
 
-public class RecallMailWorker extends QueueWorker implements Handler<Message<JsonObject>> {
+public class RecallMailWorker extends QueueWorker<RecallTask> implements Handler<Message<JsonObject>> {
 
     public static final String RECALL_MAIL_HANDLER_ADDRESS = "zimbra.handler";
 
@@ -77,9 +78,9 @@ public class RecallMailWorker extends QueueWorker implements Handler<Message<Jso
     @Override
     public void startQueue() {
         super.startQueue();
-        Iterator<Task> itr = queue.iterator();
+        Iterator<Task<RecallTask>> itr = queue.iterator();
         while (this.running && itr.hasNext()) {
-            Task currentTask = itr.next();
+            Task<RecallTask> currentTask = itr.next();
             // todo: execute task
             this.queue.poll();
             // or this.queue.remove(currentTask);
@@ -120,7 +121,6 @@ public class RecallMailWorker extends QueueWorker implements Handler<Message<Jso
     public void addTask(long taskId) {
         if (this.queue.size() + 1 > this.maxQueueSize) {
             log.error("[ZimbraConnector@RecallMailWorker:addTask] Queue is full");
-            return;
         }
 //        this.queueService.getTask(taskId).onComplete(result -> {
 //            if (result.succeeded()) {
@@ -133,7 +133,7 @@ public class RecallMailWorker extends QueueWorker implements Handler<Message<Jso
 
     @Override
     public void removeTask(long taskId) {
-        for (Task task : this.queue) {
+        for (Task<RecallTask> task : this.queue) {
 //            if (task.getId() == taskId) {
 //                this.queue.remove(task);
 //            }
