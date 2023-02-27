@@ -66,6 +66,8 @@ public class Field {
     public static final String RETRY = "retry";
     public static final String JSNS = "jsns";
     public static final String BODY_LOWER_CASE = "body";
+    public static final String MESSAGE_ID = "message_id";
+    public static final String RECEIVERID = "receiverId";
 
 
 }
