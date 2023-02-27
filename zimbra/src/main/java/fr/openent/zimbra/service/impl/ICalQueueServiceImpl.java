@@ -4,11 +4,12 @@ import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.task.ICalTask;
-import fr.openent.zimbra.model.task.RecallTask;
 import fr.openent.zimbra.service.QueueService;
+import fr.openent.zimbra.service.data.sqlTaskServices.SqlRecallTaskService;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.NotImplementedException;
 import org.entcore.common.sql.Sql;
 import org.entcore.common.sql.SqlResult;
@@ -64,8 +65,18 @@ public class ICalQueueServiceImpl extends QueueService<ICalTask> {
     }
 
     @Override
+    protected List<ICalTask> createTasksFromData(JsonArray taskData) throws Exception {
+        return null;
+    }
+
+    @Override
     public Future<List<ICalTask>> createTasks(Action<ICalTask> action, List<ICalTask> tasks) {
         throw new NotImplementedException();
+    }
+
+    @Override
+    protected ICalTask createTaskFromData(JsonObject taskData, Action<ICalTask> action) throws Exception {
+        return null;
     }
 
 }
