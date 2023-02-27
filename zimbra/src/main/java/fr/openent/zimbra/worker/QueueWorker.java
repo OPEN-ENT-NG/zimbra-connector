@@ -9,15 +9,15 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.*;
 
-abstract class QueueWorker extends AbstractVerticle {
+abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle {
 
     protected boolean running = false;
     protected QueueWorkerStatus workerStatus = QueueWorkerStatus.NOT_STARTED;
 
-    protected QueueService queueService;
+    protected QueueService<T> queueService;
     protected EventBus eb;
 
-    protected Queue<Task> queue = new PriorityQueue<>();
+    protected Queue<Task<T>> queue = new PriorityQueue<>();
     protected int maxQueueSize = 1000;
 
     @Override

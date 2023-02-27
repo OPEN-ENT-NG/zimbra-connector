@@ -22,6 +22,7 @@ import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.DbMailServiceFactory;
 import fr.openent.zimbra.service.RecallMailService;
 import fr.openent.zimbra.service.data.*;
+import fr.openent.zimbra.service.data.sqlTaskServices.SqlRecallTaskService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.messages.MobileThreadService;
 import fr.openent.zimbra.service.synchro.*;
@@ -70,6 +71,7 @@ public class ServiceManager {
     private SynchroUserService synchroUserServiceApp;
     private final SynchroService synchroService;
     private SqlSynchroService sqlSynchroService;
+    private SqlRecallTaskService sqlRecallTaskService;
     private final SynchroGroupService synchroGroupService;
     private final SynchroMailerService synchroMailerService;
     private SynchroAddressBookService synchroAddressBookService;
@@ -115,6 +117,7 @@ public class ServiceManager {
                     synchroAddressBookService, addressBookService, eb);
             this.recallQueueService = new RecallQueueServiceImpl(config.getDbSchema());
             this.icalQueueServiceImpl = new ICalQueueServiceImpl(config.getDbSchema());
+            this.sqlRecallTaskService = new SqlRecallTaskService(config.getDbSchema());
         }
 
         this.searchService = new SearchService(vertx);
@@ -186,6 +189,9 @@ public class ServiceManager {
 
     public DbMailService getDbMailServiceSync() {
         return dbMailServiceSync;
+    }
+    public SqlRecallTaskService getSqlRecallTaskService() {
+        return sqlRecallTaskService;
     }
 
     public DbMailService getDbMailServiceApp() {
