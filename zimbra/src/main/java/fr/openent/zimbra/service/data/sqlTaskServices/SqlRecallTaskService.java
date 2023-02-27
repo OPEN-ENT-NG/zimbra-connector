@@ -22,16 +22,15 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
     @Override
     public Future<JsonArray> retrieveTasksDataFromDB(TaskStatus status) {
         Promise<JsonArray> promise = Promise.promise();
-        StringBuilder query = new StringBuilder();
 
-        query.append("SELECT * ")
-                .append(this.taskTable + " as recall_tasks ")
-                .append("JOIN " + this.actionTable + " as actions" + " on actions.id = recall_tasks.action_id")
-                .append("JOIN " + this.recallMailTable + " as recall_mails" + " on actions.id = recall_mails.action_id ")
-                .append("WHERE recall_tasks.status = ?;");
+        String query = "SELECT * " +
+                this.taskTable + " as recall_tasks " +
+                "JOIN " + this.actionTable + " as actions" + " on actions.id = recall_tasks.action_id" +
+                "JOIN " + this.recallMailTable + " as recall_mails" + " on actions.id = recall_mails.action_id " +
+                "WHERE recall_tasks.status = ?;";
         JsonArray params = new JsonArray().add(status.method());
 
-        Sql.getInstance().prepared(query.toString(), params, SqlResult.validResultHandler(PromiseHelper.handlerJsonArray(promise)));
+        Sql.getInstance().prepared(query, params, SqlResult.validResultHandler(PromiseHelper.handlerJsonArray(promise)));
 
         return promise.future();
     }
@@ -40,17 +39,15 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
     public Future<JsonObject> createTask(Action<RecallTask> action, RecallTask task) {
         Promise<JsonObject> promise = Promise.promise();
 
-        StringBuilder query = new StringBuilder();
-
-        query.append("INSERT INTO ")
-                .append(this.taskTable)
-                .append(" (" + Field.ACTION_ID + "," + Field.STATUS + "," + Field.RECALL_MAIL_ID + "," + Field.RECEIVER_ID + ") ")
-                .append("VALUES (?, ?, ?, ?)")
-                .append("RETURNING *");
+        String query = "INSERT INTO " +
+                this.taskTable +
+                " (" + Field.ACTION_ID + "," + Field.STATUS + "," + Field.RECALL_MAIL_ID + "," + Field.RECEIVER_ID + ") " +
+                "VALUES (?, ?, ?, ?)" +
+                "RETURNING *";
 
         JsonArray values = new JsonArray();
         values.add(action.getId()).add(task.getStatus()).add(task.getRecallMessage().getRecallId()).add(task.getReceiverId());
-        Sql.getInstance().prepared(query.toString(), values, SqlResult.validUniqueResultHandler(PromiseHelper.handlerJsonObject(promise)));
+        Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(PromiseHelper.handlerJsonObject(promise)));
 
         return promise.future();
     }
