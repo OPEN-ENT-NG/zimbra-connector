@@ -18,9 +18,11 @@
 package fr.openent.zimbra.model;
 
 import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.SoapConstants;
+import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import io.vertx.core.AsyncResult;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static fr.openent.zimbra.model.constant.SynchroConstants.*;
 
@@ -55,7 +58,7 @@ public class EntUser {
     private String emailAcademy = "";
     private List<Group> groups = new ArrayList<>();
     private String profile = "";
-    private List<String> structuresUai = new ArrayList<>();
+    private List<Structure> structures;
     private MailAddress userZimbraAddress;
 
 
@@ -124,7 +127,11 @@ public class EntUser {
         email = neoUser.getString("email", "");
         profile = neoUser.getString("profiles", "");
         groups = Group.processJsonGroups(neoUser.getJsonArray("groups", new JsonArray()));
-        structuresUai = JsonHelper.getStringList(neoUser.getJsonArray("structures", new JsonArray()));
+        structures = neoUser
+                .getJsonArray(Field.STRUCTURES, new JsonArray()).stream()
+                .filter(structUai -> structUai instanceof String)
+                .map(structUai -> new Structure(null, null, (String) structUai))
+                .collect(Collectors.toList());
 
         if(login.isEmpty()) {
             throw new IllegalArgumentException("Login is mandatory for user : " + userId);
@@ -138,10 +145,9 @@ public class EntUser {
     }
 
     private JsonArray getSoapData(boolean delete) {
-
-        Collections.sort(structuresUai);
+        List<String> uaiList = structures.stream().map(Structure::getUai).sorted().collect(Collectors.toList());
         StringBuilder structuresStr = new StringBuilder();
-        for(String uai : structuresUai) {
+        for(String uai : uaiList) {
             structuresStr.append(uai);
             structuresStr.append(" ");
         }
@@ -191,6 +197,14 @@ public class EntUser {
         }
 
         return attributes;
+    }
+
+    public List<Structure> getStructures() {
+        return structures;
+    }
+
+    public void setStructures(List<Structure> structures) {
+        this.structures = structures;
     }
 
     @SuppressWarnings("WeakerAccess")

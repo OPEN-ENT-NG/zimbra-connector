@@ -19,7 +19,10 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.helper.EntUserHelper;
 import fr.openent.zimbra.helper.JsonHelper;
+import fr.openent.zimbra.helper.PromiseHelper;
+import fr.openent.zimbra.model.EntUser;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
@@ -38,6 +41,7 @@ import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
@@ -50,6 +54,7 @@ import org.entcore.common.user.UserUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static fr.openent.zimbra.service.data.Neo4jZimbraService.*;
 import static fr.wseduc.webutils.Utils.handlerToAsyncHandler;
@@ -539,6 +544,14 @@ public class UserService {
         eb.send(DIRECTORY_ADDRESS, action, handlerToAsyncHandler(validResultHandler(handler)));
     }
 
+    public Future<JsonArray> getLocalAdministrators(String structure) {
+        Promise<JsonArray> promise = Promise.promise();
+
+        getLocalAdministrators(structure, PromiseHelper.handlerJsonArray(promise));
+
+        return promise.future();
+    }
+
     public void getLocalAdministrators(String structure, Handler<Either<String, JsonArray>> handler) {
         JsonObject action = new JsonObject()
                 .put("action", "list-adml")
@@ -549,5 +562,30 @@ public class UserService {
                 handler.handle(new Either.Right<>(res.result().body()));
             }
         });
+    }
+
+    public Future<List<EntUser>> getUserLocalAdministrators(UserInfos user) {
+        Promise<List<EntUser>> promise = Promise.promise();
+
+        neoService.listAdml(user.getStructures())
+                .onSuccess(admls -> {
+                    promise.complete(admls
+                            .stream().filter(adml -> (adml instanceof JsonObject) && EntUserHelper.JSONContainsADMLData((JsonObject) adml))
+                            .map(adml -> {
+                                JsonObject data = (JsonObject) adml;
+                                JsonHelper.getStringList(data.getJsonArray(Field.STRUCTURES));
+                                return new EntUser(data.getString(Field.ID));
+                            }).collect(Collectors.toList()));
+
+                })
+                .onFailure(err -> {
+                    String errMessage = String.format("[Zimbra@%s::getUserLocalAdministrators]:  " +
+                                    "error while retrieving admls: %s",
+                            this.getClass().getSimpleName(), err);
+                    log.error(errMessage);
+                    promise.fail("error.retrieving.admls");
+                });
+
+        return promise.future();
     }
 }

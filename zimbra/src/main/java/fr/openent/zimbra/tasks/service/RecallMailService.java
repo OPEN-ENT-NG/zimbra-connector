@@ -1,7 +1,9 @@
-package fr.openent.zimbra.service;
+package fr.openent.zimbra.tasks.service;
 
-import fr.openent.zimbra.model.RecallMail;
+
+import fr.openent.zimbra.model.message.RecallMail;
 import io.vertx.core.Future;
+import org.entcore.common.user.UserInfos;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +22,7 @@ public interface RecallMailService {
      * @param comment
      * @return
      */
-    public Future<RecallMail> createRecallMail (String messageId, String comment);
+    public Future<RecallMail> createRecallMail (UserInfos user, String messageId, String comment);
 
     /**
      *
@@ -43,5 +45,5 @@ public interface RecallMailService {
      * @param recallMailId
      * @return
      */
-    public Future<Void> deleteMessages (String recallMailId);
+    public Future<Void> deleteMessage (String recallMailId);
 }

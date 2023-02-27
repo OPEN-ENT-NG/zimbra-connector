@@ -10,8 +10,8 @@ import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.helper.StringHelper;
 import fr.openent.zimbra.model.task.ICalTask;
 import fr.openent.zimbra.service.CalendarService;
-import fr.openent.zimbra.service.DbTaskService;
-import fr.openent.zimbra.service.QueueService;
+import fr.openent.zimbra.tasks.service.DbTaskService;
+import fr.openent.zimbra.tasks.service.QueueService;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -37,6 +37,11 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
     private QueueService<ICalTask> queueService;
     private DbTaskService<ICalTask> dbTaskService;
     private Message<JsonObject> message;
+
+    @Override
+    protected void execute(ICalTask task) {
+        //todo
+    }
 
     @Override
     public void start() throws Exception {
@@ -166,7 +171,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
             calendarService.getICal(user)
                 .compose(ical -> sendICalToCalendarModule(ical, task))
                 .onSuccess(result -> {
-                    this.dbTaskService.editTaskStatus(task, TaskStatus.FINISHED)
+                    queueService.editTaskStatus(task, TaskStatus.FINISHED)
                             .onFailure(err -> {
                                 String errMessage = String.format("[Zimbra@%s::getICal]: error task status change: %s",
                                         this.getClass().getSimpleName(), err.getMessage());
@@ -177,7 +182,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
                     String errMessage = String.format("[Zimbra@%s::getICal]: error during ical retrieval: %s",
                             this.getClass().getSimpleName(), error.getMessage());
                     EventBusHelper.eventBusError(errMessage, "zimbra.ics.retrieval.error", message);
-                    this.dbTaskService.editTaskStatus(task, TaskStatus.ERROR)
+                    queueService.editTaskStatus(task, TaskStatus.ERROR)
                             .onSuccess(res -> {
                                 log.info("[Zimbra@%s::getICal]: task status changed to error");
                             })

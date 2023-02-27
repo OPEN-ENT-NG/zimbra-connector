@@ -5,6 +5,7 @@ import fr.openent.zimbra.model.message.Message;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -50,5 +51,26 @@ public class SoapMessageHelper {
                 }
             }
         };
+    }
+
+    private static Handler<AsyncResult<Message>> messageRequestHandler(Promise<Message> promise) {
+        return message -> {
+            if (message.succeeded()) {
+                promise.complete(message.result());
+            } else {
+                String errMessage = String.format("[Zimbra@%s::messageRequestHandler]:  " +
+                                "error while getting mail from zimbra: %s",
+                        SoapMessageHelper.class.getSimpleName(), message.cause().getMessage());
+                log.error(errMessage);
+            }
+        };
+    }
+
+    public static Future<Message> getMessageById(String userId, String messageId) {
+        Promise<Message> promise = Promise.promise();
+
+        getMessageById(userId, messageId, messageRequestHandler(promise));
+
+        return promise.future();
     }
 }

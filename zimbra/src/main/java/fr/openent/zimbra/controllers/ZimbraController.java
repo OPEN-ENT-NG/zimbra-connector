@@ -22,7 +22,11 @@ import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.filters.AccessibleDocFilter;
 import fr.openent.zimbra.filters.DevLevelFilter;
-import fr.openent.zimbra.helper.*;
+import fr.openent.zimbra.helper.AsyncHelper;
+import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.helper.RequestHelper;
+import fr.openent.zimbra.helper.EventBusHelper;
+import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.ModuleConstants;
@@ -30,8 +34,10 @@ import fr.openent.zimbra.model.task.ICalTask;
 import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.security.WorkflowActionUtils;
 import fr.openent.zimbra.security.WorkflowActions;
+import fr.openent.zimbra.tasks.service.RecallMailService;
 import fr.openent.zimbra.service.data.SearchService;
-import fr.openent.zimbra.service.data.sql_task_services.SqlICalTaskService;
+import fr.openent.zimbra.tasks.service.impl.ICalQueueServiceImpl;
+import fr.openent.zimbra.tasks.service.impl.data.SqlICalTaskService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.synchro.AddressBookService;
 import fr.wseduc.bus.BusAddress;
@@ -66,11 +72,9 @@ import org.vertx.java.core.http.RouteMatcher;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 import static fr.openent.zimbra.model.constant.FrontConstants.MESSAGE_ID;
-import static fr.openent.zimbra.model.constant.ZimbraConstants.ZIMBRA_ID_STRUCTURE;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.ZIMBRA_MAIL;
 import static fr.wseduc.webutils.request.RequestUtils.bodyToJson;
 import static org.entcore.common.http.response.DefaultResponseHandler.arrayResponseHandler;
@@ -84,7 +88,7 @@ public class ZimbraController extends BaseController {
     private FolderService folderService;
     private AttachmentService attachmentService;
     private MessageService messageService;
-    private ReturnedMailService returnedMailService;
+    private RecallMailService recallMailService;
     private SignatureService signatureService;
     private SearchService searchService;
     private ExpertModeService expertModeService;
@@ -124,7 +128,7 @@ public class ZimbraController extends BaseController {
         this.redirectionService = serviceManager.getRedirectionService();
         this.frontPageService = serviceManager.getFrontPageService();
         this.addressBookService = serviceManager.getAddressBookService();
-        this.returnedMailService = serviceManager.getReturnedMailService();
+        this.recallMailService = serviceManager.getRecallMailService();
         this.workspaceHelper = new WorkspaceHelper(eb,storage);
         this.icalQueueServiceImpl = serviceManager.getICalQueueService();
         this.sqlICalTaskService = serviceManager.getSqlICalTaskService();
@@ -386,91 +390,33 @@ public class ZimbraController extends BaseController {
      *                id : message id to remove
      *                comment : comment of the removal
      */
-    @Put("/return")
-    @SecuredAction("zimbra.return.mail")
-    public void returnMails(final HttpServerRequest request) {
-        RequestUtils.bodyToJson(request, body -> {
-            getUserInfos(eb, request, user -> {
-                if (user != null) {
-                    returnedMailService.returnMails(user, body, request, returnMailEvent -> {
-                        if (returnMailEvent.isRight()) {
-                            renderJson(request, returnMailEvent.right().getValue());
-                            return;
-                        }
-
-                        if (Objects.equals(returnMailEvent.left().getValue(), Field.UNAUTHORIZED)) {
-                            unauthorized(request);
-                            return;
-                        }
-
-                        badRequest(request);
-                        log.error("[Zimbra] returnMails : Failed returning mails");
-                    });
-                } else {
-                    unauthorized(request);
-                }
+    @Put("/recall")
+    @SecuredAction(value = "zimbra.recall.right", type = ActionType.WORKFLOW)
+    public void recallMail(final HttpServerRequest request) {
+        try {
+            RequestUtils.bodyToJson(request, body -> {
+                getUserInfos(eb, request, user -> {
+                    recallMailService.createRecallMail(user, body.getString(Field.ID), body.getString(Field.COMMENT))
+                            .onSuccess(res -> renderJson(request, new JsonObject().put(Field.STATUS, "SUCCESS")))
+                            .onFailure(err -> {
+                                String errMessage = String.format("[Zimbra@%s::recallMail]:  " +
+                                                "fail to create recall mail: %s",
+                                        this.getClass().getSimpleName(), err.getMessage());
+                                log.error(errMessage);
+                                badRequest(request);
+                            });
+                });
             });
-        });
+        } catch (Exception e) {
+            String errMessage = String.format("[Zimbra@%s::recallMails]:  " +
+                            "fail to recall mail: %s",
+                    this.getClass().getSimpleName(), e.getMessage());
+            log.error(errMessage);
+            badRequest(request);
+        }
     }
 
-    @Get("/return/list")
-    @SecuredAction("zimbra.return.list")
-    public void getReturnedMails(final HttpServerRequest request) {
-        String structureId = request.params().get(ZIMBRA_ID_STRUCTURE);
-        returnedMailService.getMailReturned(structureId, returnedMails -> {
-            if (returnedMails.isRight()) {
-                renderJson(request, returnedMails.right().getValue());
-            } else {
-                badRequest(request);
-                log.error("[Zimbra]getReturnedMails: Collecting returned mail failed : " + returnedMails.left().getValue());
-            }
-        });
-    }
 
-    @Delete("/return/delete/:id")
-    @SecuredAction("zimbra.return.delete")
-    public void deleteReturnedMails(final HttpServerRequest request) {
-        final String returnedMailId = request.params().get(MESSAGE_ID);
-        returnedMailService.deleteMailReturned(returnedMailId, deleteEvent -> {
-            if (deleteEvent.isRight()) {
-                renderJson(request, deleteEvent.right().getValue().getJsonObject(0));
-            } else {
-                badRequest(request);
-                log.error("[Zimbra]deleteReturnedMails: Deleting returned mail failed : " + deleteEvent.left().getValue());
-            }
-        });
-    }
-
-    /**
-     * Delete definitively messages by Subject, Date, and User
-     * In case of success, return empty Json Object.
-     *
-     * @param request http request containing info
-     *                Users infos
-     *                Body :
-     *                [
-     *                {MESSAGE_ID : "idReturnedMail"},
-     *                {MESSAGE_ID : "idReturnedMail"},
-     *                {MESSAGE_ID : "idReturnedMail"}
-     *                ]
-     */
-    @Delete("delete/sent")
-    @SecuredAction("zimbra.return.mail.delete")
-    public void deleteSentEmail(final HttpServerRequest request) {
-        final List<String> returnedMailsIds = request.params().getAll(MESSAGE_ID);
-        deleteMailByIds(request, returnedMailsIds);
-    }
-
-    public void deleteMailByIds(HttpServerRequest request, List<String> returnedMailsIds) {
-        returnedMailService.deleteMessages(returnedMailsIds, deleteMailEvent -> {
-            if (deleteMailEvent.isRight()) {
-                renderJson(request, deleteMailEvent.right().getValue());
-            } else {
-                badRequest(request);
-                log.error("[Zimbra] returnMails : Failed deleting mails");
-            }
-        });
-    }
 
     @Get("root-folder")
     @SecuredAction(value = "", type = ActionType.AUTHENTICATED)
@@ -524,7 +470,7 @@ public class ZimbraController extends BaseController {
                         if (!folder.equals("/Sent")) {
                             renderJson(request, event.right().getValue());
                         } else {
-                            returnedMailService.renderReturnedMail(request, user, event);
+//                            returnedMailService.renderReturnedMail(request, user, event);
                         }
                     } else {
                         log.error(String.format("[Zimbra@ZimbraController::listMessages] failed to listMessages: %s", event.left().getValue()));

@@ -1,4 +1,4 @@
-package fr.openent.zimbra.cron;
+package fr.openent.zimbra.tasks.cron;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.QueueWorkerAction;

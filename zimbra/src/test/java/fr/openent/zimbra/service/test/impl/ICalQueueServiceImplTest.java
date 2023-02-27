@@ -6,10 +6,12 @@ import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.task.ICalTask;
-import fr.openent.zimbra.service.DbTaskService;
-import fr.openent.zimbra.service.QueueService;
-import fr.openent.zimbra.service.data.sql_task_services.SqlICalTaskService;
-import fr.openent.zimbra.service.impl.ICalQueueServiceImpl;
+import fr.openent.zimbra.tasks.service.DbActionService;
+import fr.openent.zimbra.tasks.service.DbTaskService;
+import fr.openent.zimbra.tasks.service.QueueService;
+import fr.openent.zimbra.tasks.service.impl.data.SqlActionService;
+import fr.openent.zimbra.tasks.service.impl.data.SqlICalTaskService;
+import fr.openent.zimbra.tasks.service.impl.ICalQueueServiceImpl;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -42,6 +44,7 @@ public class ICalQueueServiceImplTest {
     Sql sql = mock(Sql.class);
     private DbTaskService<ICalTask> dbTaskService;
     private QueueService<ICalTask> queueServiceImpl;
+    private DbActionService dbActionService;
 
     private static final UUID USER_ID = UUID.randomUUID();
 
@@ -59,7 +62,8 @@ public class ICalQueueServiceImplTest {
         PowerMockito.when(Sql.getInstance()).thenReturn(sql);
 
         dbTaskService = new SqlICalTaskService("zimbra");
-        queueServiceImpl = new ICalQueueServiceImpl("zimbra.ical_request_tasks", dbTaskService);
+        dbActionService = new SqlActionService("zimbra");
+        queueServiceImpl = new ICalQueueServiceImpl("zimbra.ical_request_tasks", dbTaskService, dbActionService);
 
     }
 
@@ -77,7 +81,7 @@ public class ICalQueueServiceImplTest {
         ActionType actionType = ActionType.ICAL;
 
         //Expected query
-        String expectedQuery = "INSERT INTO zimbra.ical_request_tasks.actions (user_id, type, approved) VALUES (?, ?, ?) " +
+        String expectedQuery = "INSERT INTO zimbra.actions (user_id, type, approved) VALUES (?, ?, ?) " +
                 "RETURNING id, user_id, created_at, type, approved";
         JsonArray expectedValues = new JsonArray().add(user.getUserId()).add("ical").add(false);
 

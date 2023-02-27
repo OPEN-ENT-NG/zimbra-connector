@@ -18,14 +18,13 @@
 package fr.openent.zimbra;
 
 import fr.openent.zimbra.controllers.*;
-import fr.openent.zimbra.cron.ICalRequestCron;
-import fr.openent.zimbra.cron.RecallMailCron;
+import fr.openent.zimbra.tasks.cron.ICalRequestCron;
+import fr.openent.zimbra.tasks.cron.RecallMailCron;
 import fr.openent.zimbra.filters.RequestErrorFilter;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.BusConstants;
-import fr.openent.zimbra.service.RecallMailService;
-import fr.openent.zimbra.service.impl.CalendarServiceImpl;
+import fr.openent.zimbra.tasks.service.RecallMailService;
 import fr.openent.zimbra.service.impl.ReturnedMailService;
 import fr.openent.zimbra.service.impl.ZimbraRepositoryEvents;
 import fr.openent.zimbra.service.synchro.SynchroTask;
@@ -76,6 +75,11 @@ public class Zimbra extends BaseServer {
         setRepositoryEvents(new ZimbraRepositoryEvents());
 
         // Workers
+//        vertx.deployVerticle(RecallMailWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config));
+
+        // Recall cron
+        RecallMailCron recallMailCron = new RecallMailCron(recallMailService, vertx.eventBus());
+//        new CronTrigger(vertx, appConfig.getRecallCron()).schedule(recallMailCron);
         vertx.deployVerticle(RecallMailWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config));
         vertx.deployVerticle(ICalRequestWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config));
 
@@ -83,7 +87,7 @@ public class Zimbra extends BaseServer {
             SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
             new CronTrigger(vertx, appConfig.getSynchroCronDate()).schedule(syncLauncherTask);
             new CronTrigger(vertx, appConfig.getZimbraICalCron()).schedule(new ICalRequestCron(vertx.eventBus()));
-            RecallMailCron recallMailCron = new RecallMailCron(recallMailService, vertx.eventBus());
+//            RecallMailCron recallMailCron = new RecallMailCron(recallMailService, vertx.eventBus());
             new CronTrigger(vertx, appConfig.getZimbraRecallCron()).schedule(recallMailCron);
             log.info("Cron launched with date : " + appConfig.getSynchroCronDate());
             returnedMailService.deleteMailsProgress(event -> {
