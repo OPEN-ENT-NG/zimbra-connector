@@ -46,6 +46,6 @@ CREATE TABLE zimbra.recall_recipient_tasks
 ) INHERITS (zimbra.tasks);
 CREATE TABLE zimbra.ical_request_tasks
 (
-    jsns varchar(16),
+    name varchar(64),
     body varchar
 ) INHERITS (zimbra.tasks);
