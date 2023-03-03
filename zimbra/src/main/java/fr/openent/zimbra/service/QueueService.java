@@ -6,6 +6,7 @@ import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.task.Task;
+import fr.openent.zimbra.utils.DateUtils;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
@@ -15,7 +16,12 @@ import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.sql.Sql;
 import org.entcore.common.sql.SqlResult;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import java.util.*;
 
 /**
@@ -34,10 +40,12 @@ public abstract class QueueService<T extends Task<T>> {
     protected ServiceManager serviceManager = ServiceManager.getServiceManager();
     protected DbTaskService<T> dbTaskService;
 
-    public QueueService(String schema) {
+    protected QueueService(String schema, DbTaskService<T> dbTaskService) {
         this.schema = schema;
         this.actionTable = schema + ".actions";
         this.taskTable = schema + ".task";
+        this.actionList = new HashSet<>();
+        this.dbTaskService = dbTaskService;
     }
 
     /**
@@ -115,9 +123,17 @@ public abstract class QueueService<T extends Task<T>> {
         Sql.getInstance().prepared(query.toString(), values, SqlResult.validUniqueResultHandler(handler -> {
             if (handler.isRight()) {
                 long id = handler.right().getValue().getLong(Field.ID);
-                Date createdAt = Date.from(Instant.parse(handler.right().getValue().getString(Field.CREATED_AT)));
-                Action<T> action = new Action<T>(id, userId, createdAt, actionType, approved);
-                promise.complete(action);
+                try {
+                    Date createdAt = new SimpleDateFormat(DateUtils.DATE_FORMAT_SQL).parse(handler.right().getValue().getString(Field.CREATED_AT));
+                    Action<T> action = new Action<>(id, userId, createdAt, actionType, approved);
+                    promise.complete(action);
+                } catch (ParseException e) {
+                    String errMessage = String.format("[Zimbra@%s::createAction]:  " +
+                                    "an error has occurred while getting creation date: %s",
+                            this.getClass().getSimpleName(), handler.left().getValue());
+                    log.error(errMessage);
+                    promise.fail("zimbra.error.queue.action.date");
+                }
             } else {
                 String errMessage = String.format("[Zimbra@%s::createAction]:  " +
                                 "an error has occurred while creating action in queue: %s",
@@ -164,9 +180,10 @@ public abstract class QueueService<T extends Task<T>> {
             }
             JsonObject taskData = (JsonObject) o;
             Action<T> action;
-            action = getActionById(taskData.getInteger(Field.ACTION_ID));
+            action = getActionById(taskData.getInteger(Field.ACTION_ID, null));
             if (action == null) {
                 action = new Action<>(taskData);
+                this.actionList.add(action);
             }
             T newTask = createTaskFromData(taskData, action);
             action.addTask(newTask);

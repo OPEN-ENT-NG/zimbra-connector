@@ -22,11 +22,6 @@ import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.filters.AccessibleDocFilter;
 import fr.openent.zimbra.filters.DevLevelFilter;
-import fr.openent.zimbra.helper.AsyncHelper;
-import fr.openent.zimbra.helper.ConfigManager;
-import fr.openent.zimbra.helper.RequestHelper;
-import fr.openent.zimbra.helper.EventBusHelper;
-import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.helper.*;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.constant.FrontConstants;
@@ -36,6 +31,7 @@ import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.security.WorkflowActionUtils;
 import fr.openent.zimbra.security.WorkflowActions;
 import fr.openent.zimbra.service.data.SearchService;
+import fr.openent.zimbra.service.data.sql_task_services.SqlICalTaskService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.synchro.AddressBookService;
 import fr.wseduc.bus.BusAddress;
@@ -68,7 +64,10 @@ import org.entcore.common.utils.Config;
 import org.vertx.java.core.http.RouteMatcher;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 import static fr.openent.zimbra.model.constant.FrontConstants.MESSAGE_ID;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.ZIMBRA_ID_STRUCTURE;
@@ -96,6 +95,7 @@ public class ZimbraController extends BaseController {
     private EventStore eventStore;
     private WorkspaceHelper workspaceHelper;
     private ICalQueueServiceImpl icalQueueServiceImpl;
+    private SqlICalTaskService sqlICalTaskService;
 
     private enum ZimbraEvent {ACCESS, CREATE}
 
@@ -127,6 +127,7 @@ public class ZimbraController extends BaseController {
         this.returnedMailService = serviceManager.getReturnedMailService();
         this.workspaceHelper = new WorkspaceHelper(eb,storage);
         this.icalQueueServiceImpl = serviceManager.getICalQueueService();
+        this.sqlICalTaskService = serviceManager.getSqlICalTaskService();
     }
 
     @Get("zimbra")
@@ -1332,30 +1333,17 @@ public class ZimbraController extends BaseController {
                             Action<ICalTask> icalAction = new Action<>(UUID.fromString(userId), fr.openent.zimbra.core.enums.ActionType.ICAL, false);
 
                             this.icalQueueServiceImpl.createAction(icalAction)
-                                    .compose(zimbraAction -> this.icalQueueServiceImpl.createAndInsertTasksInQueue(
+                                    .compose(zimbraAction -> this.sqlICalTaskService.createTask(
                                             zimbraAction,
-                                            Collections.singletonList(new ICalTask(zimbraAction, TaskStatus.PENDING, null, null))
+                                            new ICalTask(zimbraAction, TaskStatus.PENDING, null, null)
                                     ))
-                                    .onSuccess(result -> message.reply(new JsonObject().put(Field.STATUS, Field.OK)))
+                                    .onSuccess(result -> message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject()
+                                                    .put(Field.MESSAGE, "ical.request.ok"))))
                                     .onFailure(error -> {
                                         String errMessage = String.format("[Zimbra@%s::zimbraEventBusHandler]: get-platform-ics : error when putting " +
                                                         "ical request in queue: %s", this.getClass().getSimpleName(), error.getMessage());
                                         EventBusHelper.eventBusError(errMessage, "zimbra.ical.request.queue.error", message);
                                     });
-
-                            //todo to be used in ical worker
-//                            message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject().put(Field.STATUS, Field.PENDING)));
-//                            calendarServiceImpl.getICal(user)
-//                                    .onSuccess(ical -> {
-//                                        ical = ical.replaceAll("\\\r\\\n", "\n");
-//                                        ical = ical.replaceAll(";TZID\\=.*\\/.*\\\"", "");
-//                                        message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject().put(Field.ICS, ical)));
-//                                    })
-//                                    .onFailure(error -> {
-//                                        String errMessage = String.format("[Zimbra@%s::zimbraEventBusHandler]: get-platform-ics : error during ical retrieval: %s",
-//                                                this.getClass().getSimpleName(), error.getMessage());
-//                                        EventBusHelper.eventBusError(errMessage, "zimbra.ics.retrieval.error", message);
-//                                    });
                         } else {
                             String errMessage = String.format("[Zimbra@%s::zimbraEventBusHandler]: get-platform-ics : error during ical retrieval: " +
                                             "user does not have zimbra expert", this.getClass().getSimpleName());

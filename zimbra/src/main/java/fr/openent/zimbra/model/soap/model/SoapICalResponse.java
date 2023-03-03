@@ -1,6 +1,7 @@
 package fr.openent.zimbra.model.soap.model;
 
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.enums.SoapRequestFields;
 import fr.openent.zimbra.model.IModel;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -26,7 +27,7 @@ public class SoapICalResponse implements IModel<SoapICalResponse> {
         this.token = this.change.getLong(Field.TOKEN, null);
         this.jsnsContext = this.context.getString(Field._JSNS, null);
 
-        this.body = icalSoapResponse.getJsonObject(Field.BODY, new JsonObject());
+        this.body = icalSoapResponse.getJsonObject(SoapRequestFields.BODY.method(), new JsonObject());
         this.getICalResponse = this.body.getJsonObject(Field.GETICALRESPONSE, new JsonObject());
         this.ical = this.getICalResponse.getJsonArray(Field.ICAL, new JsonArray());
         this.content = this.ical.size() != 0 ? this.ical.getJsonObject(0).getString(Field._CONTENT, "") : "";

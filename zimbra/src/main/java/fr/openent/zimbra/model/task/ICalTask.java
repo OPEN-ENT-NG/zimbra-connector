@@ -14,27 +14,34 @@ import io.vertx.core.logging.LoggerFactory;
 public class ICalTask extends Task<ICalTask> implements IModel<ICalTask> {
     protected static final Logger log = LoggerFactory.getLogger(Renders.class);
 
-    public String type;
-    public JsonObject data;
+    public long id;
     public long actionId;
     public String name;
     public JsonObject body;
-    public String jsns;
 
-    public ICalTask(JsonObject icalRequest) {
+    public ICalTask(JsonObject icalRequest) throws Exception {
         super(icalRequest);
-        this.type = icalRequest.getString(Field.TYPE, null);
-        this.data = icalRequest.getJsonObject(Field.DATA, new JsonObject());
-        this.actionId = icalRequest.getLong(Field.ACTIONID, null);
-        this.name = data.getString(Field.NAME, null);
-        this.body = data.getJsonObject(Field.CONTENT, new JsonObject());
-        this.jsns = data.getString(Field._JSNS, null);
+
+        try {
+            this.id = icalRequest.getLong(Field.ID, null);
+            this.actionId = icalRequest.getLong(Field.ACTION_ID, null);
+            this.status = TaskStatus.fromString(icalRequest.getString(Field.STATUS, null));
+            this.name = icalRequest.getString(Field.NAME, null);
+            this.body = new JsonObject(icalRequest.getString(Field.BODY, "{}"));
+        } catch (Exception e) {
+            throw new Exception(String.format("[Zimbra@%s::ICalTask] Bad field format", this.getClass().getSimpleName()));
+        }
     }
 
-    public ICalTask (Action<ICalTask> action, TaskStatus status, Long rangeStart, Long rangeEnd) {
+    public ICalTask(Action<ICalTask> action, JsonObject icalRequest) throws Exception {
+        super(icalRequest, action);
+        new ICalTask(icalRequest);
+    }
+
+    public ICalTask(Action<ICalTask> action, TaskStatus status, Long rangeStart, Long rangeEnd) {
         super(status, action);
-        this.jsns = SoapConstants.NAMESPACE_MAIL;
-        this.body = new JsonObject();
+        this.name = Field.GETICALREQUEST;
+        this.body = new JsonObject().put(Field._JSNS, SoapConstants.NAMESPACE_MAIL);
 
         if (rangeStart != null) { // start timestamp for ICal retrieval
             this.body.put("s", rangeStart);
@@ -45,16 +52,22 @@ public class ICalTask extends Task<ICalTask> implements IModel<ICalTask> {
         }
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public JsonObject getData() {
-        return data;
+    @Override
+    public long getId() {
+        return id;
     }
 
     public long getActionId() {
         return actionId;
+    }
+
+    public void setActionId(long actionId) {
+        this.actionId = actionId;
+    }
+
+    @Override
+    public TaskStatus getStatus() {
+        return status;
     }
 
     public String getName() {
@@ -65,9 +78,6 @@ public class ICalTask extends Task<ICalTask> implements IModel<ICalTask> {
         return body;
     }
 
-    public String getJsns() {
-        return jsns;
-    }
 
     @Override
     public JsonObject toJson() {

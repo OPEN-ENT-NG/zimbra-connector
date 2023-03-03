@@ -1,12 +1,18 @@
 package fr.openent.zimbra.service.test.impl;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.task.ICalTask;
+import fr.openent.zimbra.service.DbTaskService;
+import fr.openent.zimbra.service.QueueService;
+import fr.openent.zimbra.service.data.sql_task_services.SqlICalTaskService;
 import fr.openent.zimbra.service.impl.ICalQueueServiceImpl;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -30,26 +36,35 @@ import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class) //Using the PowerMock runner
 @PowerMockRunnerDelegate(VertxUnitRunner.class) //And the Vertx runner
-@PrepareForTest({Sql.class}) //Prepare the static class you want to test
+@PrepareForTest({Sql.class, Vertx.class, Context.class}) //Prepare the static class you want to test
 public class ICalQueueServiceImplTest {
 
     Sql sql = mock(Sql.class);
-
-    private ICalQueueServiceImpl queueServiceImpl;
+    private DbTaskService<ICalTask> dbTaskService;
+    private QueueService<ICalTask> queueServiceImpl;
 
     private static final UUID USER_ID = UUID.randomUUID();
 
     @Before
     public void setUp() throws Exception {
         this.sql = Mockito.spy(Sql.getInstance());
+        PowerMockito.spy(Context.class);
+        Context context = PowerMockito.mock(Context.class);
+        PowerMockito.doReturn(new JsonObject().put("zimbraICalWorkerMaxQueue", 10000)).when(context).config();
+
+        PowerMockito.spy(Vertx.class);
+        PowerMockito.when(Vertx.class, "currentContext").thenReturn(context);
+
         PowerMockito.spy(Sql.class);
         PowerMockito.when(Sql.getInstance()).thenReturn(sql);
-        queueServiceImpl = new ICalQueueServiceImpl("schema");
+
+        dbTaskService = new SqlICalTaskService("zimbra");
+        queueServiceImpl = new ICalQueueServiceImpl("zimbra.ical_request_tasks", dbTaskService);
+
     }
 
     @Test
     public void createActionInQueue_normalUse(TestContext context) {
-        //todo
         Async async = context.async();
 
         //Arguments
@@ -62,8 +77,8 @@ public class ICalQueueServiceImplTest {
         ActionType actionType = ActionType.ICAL;
 
         //Expected query
-        String expectedQuery = "INSERT INTO schema.actions (user_id, type, approved) VALUES (?, ?, ?) RETURNING " +
-                "id, user_id, created_at, type, approved";
+        String expectedQuery = "INSERT INTO zimbra.ical_request_tasks.actions (user_id, type, approved) VALUES (?, ?, ?) " +
+                "RETURNING id, user_id, created_at, type, approved";
         JsonArray expectedValues = new JsonArray().add(user.getUserId()).add("ical").add(false);
 
         Mockito.doAnswer(invocation -> {
@@ -90,14 +105,12 @@ public class ICalQueueServiceImplTest {
         Action<ICalTask> action = new Action<ICalTask>(USER_ID, ActionType.ICAL, false);
         action.setId(111);
         ICalTask task = new ICalTask(action, TaskStatus.PENDING, null, null);
-
-        JsonObject queryData = new JsonObject()
-                .put("name", "requestName")
-                .put("content", new JsonObject());
+        task.setActionId(111);
 
         //Expected query
-        String expectedQuery = "INSERT INTO schema.ical_request_tasks (action_id, status, jsns, body) VALUES (?, ?, ?, ?) RETURNING *";
-        JsonArray expectedValues = new JsonArray().add(111).add("PENDING").add(SoapConstants.NAMESPACE_MAIL).add(new JsonObject());
+        String expectedQuery = "INSERT INTO zimbra.ical_request_tasks (action_id, status, name, body) VALUES (?, ?, ?, ?) RETURNING *";
+        JsonArray expectedValues = new JsonArray().add(111).add(TaskStatus.PENDING.method())
+                .add(Field.GETICALREQUEST).add(new JsonObject().put(Field._JSNS, SoapConstants.NAMESPACE_MAIL));
 
         Mockito.doAnswer(invocation -> {
             String query = invocation.getArgument(0);
@@ -109,6 +122,7 @@ public class ICalQueueServiceImplTest {
 
             return Future.succeededFuture();
         }).when(this.sql).prepared(Mockito.any(), Mockito.any(), Mockito.any());
+
         queueServiceImpl.createTask(action, task);
         async.awaitSuccess(10000);
     }
