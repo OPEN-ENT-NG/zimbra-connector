@@ -65,9 +65,11 @@ public class Field {
     public static final String RECEIVERS_ID = "receivers_id";
     public static final String RETRY = "retry";
     public static final String JSNS = "jsns";
-    public static final String BODY_LOWER_CASE = "body";
     public static final String MESSAGE_ID = "message_id";
+    public static final String ZIMBRA = "zimbra";
     public static final String RECEIVERID = "receiverId";
-
+    public static final String PLATFORM = "platform";
+    public static final String ZIMBRAUC = "Zimbra";
+    public static final String MAXQUEUESIZE = "maxQueueSize";
 
 }

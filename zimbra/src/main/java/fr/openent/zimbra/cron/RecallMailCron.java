@@ -3,7 +3,7 @@ package fr.openent.zimbra.cron;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.EventBusHelper;
 import fr.openent.zimbra.service.RecallMailService;
-import fr.openent.zimbra.worker.QueueWorkerAction;
+import fr.openent.zimbra.core.enums.QueueWorkerAction;
 import fr.openent.zimbra.worker.RecallMailWorker;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.EventBus;

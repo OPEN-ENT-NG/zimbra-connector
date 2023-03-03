@@ -31,9 +31,10 @@
         {% else %}
         "zimbra-mailer-cron" : "0 0/10 * * * ? 2099",
         {% endif %}
-        "recall-cron": {{ recallCron | default(' 0 */2 * * * ? *') }},
-        "recall-worker-max-queue": {{ $recallWorkerMaxQueue | default(10000) }},
+        "zimbra-recall-cron": {{ zimbraRecallCron | default(' 0 */2 * * * ? *') }},
+        "zimbra-recall-worker-max-queue": {{ $zimbraRecallWorkerMaxQueue | default(10000) }},
         "zimbra-ical-cron": {{zimbraICalCron | default(' 0 * * * * ? *')}},
+        "zimbra-ical-worker-max-queue" : {{zimbraICalWorkerMaxQueue | default(10000)}},
         "http-client-max-pool-size" : {{ zimbraMaxPoolSize | default('50') }},
         "address-book-account" : "{{ zimbraAddressBookAccount }}",
         "shared-folder-name" : "-- Carnets Adresses ENT --",

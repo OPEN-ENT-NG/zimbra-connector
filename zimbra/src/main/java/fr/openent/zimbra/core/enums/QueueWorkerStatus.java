@@ -1,4 +1,4 @@
-package fr.openent.zimbra.worker;
+package fr.openent.zimbra.core.enums;
 
 public enum QueueWorkerStatus {
     NOT_STARTED("notStarted"),

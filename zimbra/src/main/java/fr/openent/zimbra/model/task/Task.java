@@ -7,9 +7,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-public abstract class Task<T extends Task<T>> {
+public abstract class Task<T extends Task<T>>{
     protected long id;
+
     protected TaskStatus status;
+    public Action<T> action;
 
     public void setId(long id) {
         this.id = id;
@@ -23,7 +25,9 @@ public abstract class Task<T extends Task<T>> {
         return status;
     }
 
-    public Action<T> action;
+    public void setStatus(TaskStatus status) {
+        this.status = status;
+    }
 
     public Action<T> getAction() {
         return action;
@@ -49,8 +53,8 @@ public abstract class Task<T extends Task<T>> {
 
     public Task(JsonObject dbData, Action<T> action) throws Exception {
         try {
-            this.id = dbData.getLong(Field.TASK_ID);
-            this.status = TaskStatus.fromString(dbData.getString(Field.TASK_STATUS));
+            this.id = dbData.getLong(Field.ID);
+            this.status = TaskStatus.fromString(dbData.getString(Field.STATUS));
             this.action = action;
         } catch (Exception e) {
             throw new Exception(String.format("[Zimbra@%s::Task] JSON does not match Task model", Task.class));

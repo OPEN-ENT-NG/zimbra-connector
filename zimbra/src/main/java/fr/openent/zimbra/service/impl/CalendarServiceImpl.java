@@ -1,6 +1,7 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.enums.SoapRequestFields;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.soap.model.SoapICalResponse;
 import fr.openent.zimbra.service.CalendarService;
@@ -33,11 +34,11 @@ public class CalendarServiceImpl implements CalendarService {
                 .put(Field._JSNS, SoapConstants.NAMESPACE_MAIL);
 
         if (rangeStart != null) {
-            icalRequest.put("s", rangeStart);
+            icalRequest.put(SoapRequestFields.START.method(), rangeStart);
         }
 
         if (rangeEnd != null) {
-            icalRequest.put("e", rangeEnd);
+            icalRequest.put(SoapRequestFields.END.method(), rangeEnd);
         }
 
         JsonObject searchRequest = new JsonObject()
