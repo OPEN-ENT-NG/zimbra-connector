@@ -60,9 +60,10 @@ zimbraLang = ${String}
     "address-book-account" : "$zimbraAddressBookAccount",
     "admin-password" : "$zimbraAdminPassword",
     "zimbra-synchro-cron" : "$zimbraSynchroCron",
-    "recall-cron": "$recallCron",
-    "recall-worker-max-queue": $recallWorkerMaxQueue,
+    "zimbra-recall-cron": "$zimbraRecallCron",
     "zimbra-ical-cron" : "$zimbraICalCron",
+    "zimbra-recall-worker-max-queue": $zimbraRecallWorkerMaxQueue,
+    "zimbra-ical-worker-max-queue" : $zimbraICalWorkerMaxQueue,
     "zimbra-file-upload-max-size": $zimbraFileUploadMaxSize,
     "mail-config" : {
       "imaps":{
@@ -102,7 +103,7 @@ zimbraAdminAccount = ${String}
 zimbraAddressBookAccount = ${String}
 zimbraAdminPassword = ${String}
 zimbraSynchroCron = ${String}
-recallCron = ${String}
+zimbraRecallCron = ${String}
 zimbraICalCron = ${String}
 zimbraFileUploadMaxSize= ${Integer}
 zimbraPurgeEmailedContacts = boolean
@@ -130,7 +131,10 @@ you can add the following properties depending on your use of zimbra :
 
 Explanation of the previous parameters :
 
-    mod parameter           :  conf.properties variable         ,   usage
+    mod parameter                   :  conf.properties variable         ,   usage
     -------------------------------------------------------------------------------------------------------------------
     -------------------------------------------------------------------------------------------------------------------
-    "zimbra-ical-cron"      : "${zimbraICalCron}"               , updating frequency for ical queue
+    "zimbra-ical-cron"              : "${zimbraICalCron}"               , update frequency for ical queue
+    "zimbra-recall-cron"            : "${zimbraRecallCron}"             , update frequency for recall queue
+    "zimbra-ical-worker-max-queue"  : "${zimbraICalWorkerMaxQueue}"     , max queue size for ical request worker
+    "zimbra-recall-worker-max-queue": "${$zimbraRecallWorkerMaxQueue}"  , max queue size for recall request worker

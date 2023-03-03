@@ -3,7 +3,10 @@ package fr.openent.zimbra.model.action;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
 import fr.openent.zimbra.model.task.Task;
+import fr.openent.zimbra.utils.DateUtils;
 import io.vertx.core.json.JsonObject;
+
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
 
@@ -28,7 +31,7 @@ public class Action<T extends Task> {
         this.createdAt = createdAt;
         this.actionType = actionType;
         this.approved = approved;
-        tasks = new HashSet<>();
+        this.tasks = new HashSet<>();
     }
     private static boolean JSONContainsActionData (JsonObject actionData) {
         return  actionData.containsKey(Field.ACTION_ID) &&
@@ -45,7 +48,7 @@ public class Action<T extends Task> {
         long id = actionData.getInteger(Field.ACTION_ID);
         try {
             UUID userId = UUID.fromString(actionData.getString(Field.USER_ID));
-            Date created_at = Date.from(Instant.parse(actionData.getString(Field.CREATED_AT)));
+            Date created_at = DateUtils.parseDate(actionData.getString(Field.CREATED_AT), DateUtils.DATE_FORMAT_SQL);
             ActionType actionType = ActionType.fromString(actionData.getString(Field.TYPE));
             boolean approved = actionData.getBoolean(Field.APPROVED);
             this.id = id;
@@ -53,6 +56,7 @@ public class Action<T extends Task> {
             this.createdAt = created_at;
             this.actionType = actionType;
             this.approved = approved;
+            this.tasks = new HashSet<>();
         } catch (Exception e) {
             throw new Exception(String.format("[Zimbra@%s::Action] Bad field format", Action.class));
         }

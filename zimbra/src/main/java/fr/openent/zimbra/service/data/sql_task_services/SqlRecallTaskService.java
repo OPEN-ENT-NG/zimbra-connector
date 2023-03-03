@@ -1,4 +1,4 @@
-package fr.openent.zimbra.service.data.sqlTaskServices;
+package fr.openent.zimbra.service.data.sql_task_services;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.TaskStatus;
@@ -10,6 +10,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.NotImplementedException;
 import org.entcore.common.sql.Sql;
 import org.entcore.common.sql.SqlResult;
 
@@ -50,5 +51,10 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
         Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(PromiseHelper.handlerJsonObject(promise)));
 
         return promise.future();
+    }
+
+    @Override
+    public Future<Void> editTaskStatus(RecallTask task, TaskStatus status) {
+        throw new NotImplementedException();
     }
 }

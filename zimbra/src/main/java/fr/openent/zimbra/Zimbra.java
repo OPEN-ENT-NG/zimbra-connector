@@ -25,16 +25,17 @@ import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.constant.BusConstants;
 import fr.openent.zimbra.service.RecallMailService;
-import fr.openent.zimbra.model.task.Task;
+import fr.openent.zimbra.service.impl.CalendarServiceImpl;
 import fr.openent.zimbra.service.impl.ReturnedMailService;
 import fr.openent.zimbra.service.impl.ZimbraRepositoryEvents;
 import fr.openent.zimbra.service.synchro.SynchroTask;
+import fr.openent.zimbra.worker.ICalRequestWorker;
 import fr.openent.zimbra.worker.RecallMailWorker;
+import fr.wseduc.cron.CronTrigger;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.BaseServer;
-import fr.wseduc.cron.CronTrigger;
 
 import java.text.ParseException;
 
@@ -76,15 +77,14 @@ public class Zimbra extends BaseServer {
 
         // Workers
         vertx.deployVerticle(RecallMailWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config));
-
-        // Recall cron
-        RecallMailCron recallMailCron = new RecallMailCron(recallMailService, vertx.eventBus());
-        new CronTrigger(vertx, appConfig.getRecallCron()).schedule(recallMailCron);
+        vertx.deployVerticle(ICalRequestWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config));
 
         try {
             SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
             new CronTrigger(vertx, appConfig.getSynchroCronDate()).schedule(syncLauncherTask);
-            new CronTrigger(vertx, appConfig.getZimbraICalCron()).schedule(new ICalRequestCron());
+            new CronTrigger(vertx, appConfig.getZimbraICalCron()).schedule(new ICalRequestCron(vertx.eventBus()));
+            RecallMailCron recallMailCron = new RecallMailCron(recallMailService, vertx.eventBus());
+            new CronTrigger(vertx, appConfig.getZimbraRecallCron()).schedule(recallMailCron);
             log.info("Cron launched with date : " + appConfig.getSynchroCronDate());
             returnedMailService.deleteMailsProgress(event -> {
                 if(event.isLeft()) {

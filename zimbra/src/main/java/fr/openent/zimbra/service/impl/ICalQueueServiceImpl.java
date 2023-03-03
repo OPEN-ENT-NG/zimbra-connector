@@ -2,10 +2,13 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
+import fr.openent.zimbra.helper.FutureHelper;
+import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.task.ICalTask;
+import fr.openent.zimbra.service.DbTaskService;
 import fr.openent.zimbra.service.QueueService;
-import fr.openent.zimbra.service.data.sqlTaskServices.SqlRecallTaskService;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
@@ -14,15 +17,16 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.entcore.common.sql.Sql;
 import org.entcore.common.sql.SqlResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ICalQueueServiceImpl extends QueueService<ICalTask> {
     private final String icalTable = "ical_request_tasks";
 
-    public ICalQueueServiceImpl(String schema) {
-        super(schema);
+    public ICalQueueServiceImpl(String schema, DbTaskService<ICalTask> dbTaskService) {
+        super(schema, dbTaskService);
         this.taskTable = this.schema + "." + icalTable;
-        this.actionType = ActionType.RECALL;
+        this.actionType = ActionType.ICAL;
     }
 
     @Override
@@ -35,29 +39,99 @@ public class ICalQueueServiceImpl extends QueueService<ICalTask> {
     public Future<ICalTask> createTask(Action<ICalTask> action, ICalTask task) {
         Promise<ICalTask> promise = Promise.promise();
 
-        StringBuilder query = new StringBuilder();
+        dbTaskService.createTask(action, task)
+                .onSuccess(taskData -> {
+                    ICalTask icalTask = null;
+                    try {
+                        icalTask = new ICalTask(taskData);
+                        promise.complete(icalTask);
+                    } catch (Exception e) {
+                        String errMessage = String.format("[Zimbra@%s::createTask]:  " +
+                                        "an error has occurred while creating task model: %s",
+                                this.getClass().getSimpleName(), e.getMessage());
+                        log.error(errMessage);
+                        promise.fail("zimbra.error.task.model");
+                    }
+                })
+                .onFailure(error -> {
+                    String errMessage = String.format("[Zimbra@%s::createTask]:  " +
+                                    "an error has occurred while creating task: %s",
+                            this.getClass().getSimpleName(),error.getMessage());
+                    log.error(errMessage);
+                    promise.fail("zimbra.error.queue.task");
+                });
 
-        query.append("INSERT INTO ")
-                .append(this.taskTable)
-                .append(" (" + Field.ACTION_ID + ", " + Field.STATUS + ", " + Field.JSNS + ", " + Field.BODY + ") ")
-                .append("VALUES (?, ?, ?, ?) ")
-                .append("RETURNING *");
+        return promise.future();
+    }
+
+    @Override
+    protected List<ICalTask> createTasksFromData(JsonArray taskData) {
+        return IModelHelper.toList(taskData, ICalTask.class);
+    }
+
+    @Override
+    public Future<List<ICalTask>> createTasks(Action<ICalTask> action, List<ICalTask> tasks) {
+        Promise<List<ICalTask>> promise = Promise.promise();
+
+         this.createICalTasks(action.getId(), tasks)
+                .onSuccess(promise::complete)
+                .onFailure(error -> {
+                    String errMessage = String.format("[Zimbra@%s::putRequestInQueue]:  " +
+                                    "an error has occurred while putting request in queue: %s",
+                            this.getClass().getSimpleName(), error.getMessage());
+                    log.error(errMessage);
+                    promise.fail("zimbra.error.queue");
+                });
+
+        return promise.future();
+    }
+
+    private Future<List<ICalTask>> createICalTasks(long actionId, List<ICalTask> tasks) {
+        Promise<List<ICalTask>> promise = Promise.promise();
+
+        List<Future<ICalTask>> icalTaskFutures = new ArrayList<>();
+        tasks.forEach(task -> icalTaskFutures.add(this.createICalTask(actionId, task)));
+
+        FutureHelper.all(icalTaskFutures)
+                .onSuccess(result -> promise.complete(result.list()))
+                .onFailure(error -> {
+                    String errMessage = String.format("[Zimbra@%s::createICalTask]:  " +
+                                    "an error has occurred while creating ical task for queue action: %s",
+                            this.getClass().getSimpleName(), error.getMessage());
+                    log.error(errMessage);
+                    promise.fail("zimbra.error.queue.action.task.ical");
+                });
+
+        return promise.future();
+    }
+
+    private Future<ICalTask> createICalTask(long actionId, ICalTask task) {
+        Promise<ICalTask> promise = Promise.promise();
+        String query = "INSERT INTO " + this.taskTable + " (action_id, status, name, body) VALUES (?, ?, ?, ?)";
 
         JsonArray values = new JsonArray();
-        values.add(action.getId()).add(task.getStatus()).add(task.getJsns()).add(task.getBody());
+        values.add(actionId)
+                .add(Field.PENDING)
+                .add(task.getName())
+                .add(task.getBody());
 
-        Sql.getInstance().prepared(query.toString(), values, SqlResult.validUniqueResultHandler(handler -> {
-            if (handler.isRight()) {
-                long id = handler.right().getValue().getLong(Field.ID);
-
-                task.setId(id);
-                promise.complete(task);
+        Sql.getInstance().prepared(query.toString(), values, SqlResult.validUniqueResultHandler(result -> {
+            if (result.isRight()) {
+                try {
+                    promise.complete(new ICalTask(result.right().getValue()));
+                } catch (Exception e) {
+                    String errMessage = String.format("[Zimbra@%s::createICalTask]:  " +
+                                    "an error has occurred while creating task model: %s",
+                            this.getClass().getSimpleName(), e.getMessage());
+                    log.error(errMessage);
+                    promise.fail("zimbra.error.task.model");
+                }
             } else {
-                String errMessage = String.format("[Zimbra@%s::createTask]:  " +
-                                "an error has occurred while creating task: %s",
-                        this.getClass().getSimpleName(), handler.left().getValue());
+                String errMessage = String.format("[Zimbra@%s::createICalTask]:  " +
+                                "an error has occurred while creating ical task for queue action: %s",
+                        this.getClass().getSimpleName(), result.left().getValue());
                 log.error(errMessage);
-                promise.fail("zimbra.error.queue.task");
+                promise.fail("zimbra.error.queue.action.task.ical");
             }
         }));
 
@@ -65,18 +139,8 @@ public class ICalQueueServiceImpl extends QueueService<ICalTask> {
     }
 
     @Override
-    protected List<ICalTask> createTasksFromData(JsonArray taskData) throws Exception {
-        return null;
-    }
-
-    @Override
-    public Future<List<ICalTask>> createTasks(Action<ICalTask> action, List<ICalTask> tasks) {
-        throw new NotImplementedException();
-    }
-
-    @Override
     protected ICalTask createTaskFromData(JsonObject taskData, Action<ICalTask> action) throws Exception {
-        return null;
+        return new ICalTask(action, taskData);
     }
 
 }

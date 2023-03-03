@@ -18,11 +18,10 @@
 package fr.openent.zimbra.helper;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.service.DbMailService;
-import fr.openent.zimbra.service.DbMailServiceFactory;
-import fr.openent.zimbra.service.RecallMailService;
+import fr.openent.zimbra.service.*;
 import fr.openent.zimbra.service.data.*;
-import fr.openent.zimbra.service.data.sqlTaskServices.SqlRecallTaskService;
+import fr.openent.zimbra.service.data.sql_task_services.SqlICalTaskService;
+import fr.openent.zimbra.service.data.sql_task_services.SqlRecallTaskService;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.messages.MobileThreadService;
 import fr.openent.zimbra.service.synchro.*;
@@ -87,6 +86,8 @@ public class ServiceManager {
     private RecallQueueServiceImpl recallQueueService;
     private ICalQueueServiceImpl icalQueueServiceImpl;
 
+    private SqlICalTaskService sqlICalTaskService;
+
     private CalendarServiceImpl calendarService;
 
     private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix, ConfigManager config) {
@@ -115,9 +116,11 @@ public class ServiceManager {
             this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
             this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
                     synchroAddressBookService, addressBookService, eb);
-            this.recallQueueService = new RecallQueueServiceImpl(config.getDbSchema());
-            this.icalQueueServiceImpl = new ICalQueueServiceImpl(config.getDbSchema());
             this.sqlRecallTaskService = new SqlRecallTaskService(config.getDbSchema());
+            this.recallQueueService = new RecallQueueServiceImpl(config.getDbSchema(), this.sqlRecallTaskService);
+            this.sqlICalTaskService = new SqlICalTaskService(config.getDbSchema());
+            this.icalQueueServiceImpl = new ICalQueueServiceImpl(config.getDbSchema(), this.sqlICalTaskService);
+
         }
 
         this.searchService = new SearchService(vertx);
@@ -319,5 +322,9 @@ public class ServiceManager {
 
     public ICalQueueServiceImpl getICalQueueService() {
         return icalQueueServiceImpl;
+    }
+
+    public SqlICalTaskService getSqlICalTaskService() {
+        return sqlICalTaskService;
     }
 }

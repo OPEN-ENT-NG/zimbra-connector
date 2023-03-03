@@ -7,6 +7,7 @@ import fr.openent.zimbra.helper.FutureHelper;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.message.RecallMail;
 import fr.openent.zimbra.model.task.RecallTask;
+import fr.openent.zimbra.service.DbTaskService;
 import fr.openent.zimbra.service.QueueService;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -19,9 +20,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class RecallQueueServiceImpl extends QueueService<RecallTask> {
-    public RecallQueueServiceImpl(String schema) {
-        super(schema);
-        this.dbTaskService = serviceManager.getSqlRecallTaskService();
+     public RecallQueueServiceImpl(String schema,  DbTaskService<RecallTask> dbTaskService) {
+        super(schema, dbTaskService);
         this.taskTable = this.schema + "." + "recall_recipient_tasks";
         this.actionType = ActionType.RECALL;
     }
@@ -70,6 +70,7 @@ public class RecallQueueServiceImpl extends QueueService<RecallTask> {
         for (RecallTask task : tasks) {
             futures.add(this.createTask(action, task));
         }
+
         FutureHelper.all(futures)
                 .onSuccess(res -> promise.complete(res.list()))
                 .onFailure(promise::fail);
