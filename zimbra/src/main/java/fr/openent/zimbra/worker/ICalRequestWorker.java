@@ -166,11 +166,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
                     return sendICalToCalendarModule(ical, task);
                 })
                 .onSuccess(result -> {
-                    log.info("[Zimbra@%s::getICal]: ical successfully retrieved and transmitted to Calendar");
                     this.dbTaskService.editTaskStatus(task, TaskStatus.FINISHED)
-                            .onSuccess(res -> {
-                                log.info("[Zimbra@%s::getICal]: task status changed to finished");
-                            })
                             .onFailure(err -> {
                                 String errMessage = String.format("[Zimbra@%s::getICal]: error task status change: %s",
                                         this.getClass().getSimpleName(), err.getMessage());
@@ -198,7 +194,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
         Promise<Void> promise = Promise.promise();
 
         JsonObject icalMessage = new JsonObject()
-                .put(Field.ACTION, "platform-ics")
+                .put(Field.ACTION, "zimbra-platform-ics")
                 .put(Field.STATUS, Field.OK)
                 .put(Field.RESULT, new JsonObject()
                         .put(Field.ICS, ical)
