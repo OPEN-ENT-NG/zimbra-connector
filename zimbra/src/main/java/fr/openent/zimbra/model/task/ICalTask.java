@@ -22,20 +22,13 @@ public class ICalTask extends Task<ICalTask> implements IModel<ICalTask> {
     public ICalTask(JsonObject icalRequest) throws Exception {
         super(icalRequest);
 
-        try {
-            this.id = icalRequest.getLong(Field.ID, null);
-            this.actionId = icalRequest.getLong(Field.ACTION_ID, null);
-            this.status = TaskStatus.fromString(icalRequest.getString(Field.STATUS, null));
-            this.name = icalRequest.getString(Field.NAME, null);
-            this.body = new JsonObject(icalRequest.getString(Field.BODY, "{}"));
-        } catch (Exception e) {
-            throw new Exception(String.format("[Zimbra@%s::ICalTask] Bad field format", this.getClass().getSimpleName()));
-        }
+        initICalTask(icalRequest);
     }
 
     public ICalTask(Action<ICalTask> action, JsonObject icalRequest) throws Exception {
         super(icalRequest, action);
-        new ICalTask(icalRequest);
+
+        initICalTask(icalRequest);
     }
 
     public ICalTask(Action<ICalTask> action, TaskStatus status, Long rangeStart, Long rangeEnd) {
@@ -82,6 +75,18 @@ public class ICalTask extends Task<ICalTask> implements IModel<ICalTask> {
     @Override
     public JsonObject toJson() {
         return IModelHelper.toJson(this, false, true);
+    }
+
+    private void initICalTask(JsonObject icalRequest) throws Exception {
+        try {
+            this.id = icalRequest.getLong(Field.ID, null);
+            this.actionId = icalRequest.getLong(Field.ACTION_ID, null);
+            this.status = TaskStatus.fromString(icalRequest.getString(Field.STATUS, null));
+            this.name = icalRequest.getString(Field.NAME, null);
+            this.body = new JsonObject(icalRequest.getString(Field.BODY, new JsonObject().toString()));
+        } catch (Exception e) {
+            throw new Exception(String.format("[Zimbra@%s::ICalTask] Bad field format", this.getClass().getSimpleName()));
+        }
     }
 }
 

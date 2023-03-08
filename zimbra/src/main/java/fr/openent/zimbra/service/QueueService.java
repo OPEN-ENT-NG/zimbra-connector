@@ -2,6 +2,7 @@ package fr.openent.zimbra.service;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.action.Action;
@@ -83,7 +84,6 @@ public abstract class QueueService<T extends Task<T>> {
                         String errMessage = String.format("[Zimbra@%s::getPendingTasks]: fail fetching model from data: %s",
                                 this.getClass().getSimpleName(), e.getMessage());
                         log.error(errMessage);
-                        promise.fail("zimbra.error.fetching.task");
                     }
                 })
                 .onFailure(err -> {
@@ -91,7 +91,7 @@ public abstract class QueueService<T extends Task<T>> {
                                     "an error has occurred while retrieving tasks: %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
-                    promise.fail("zimbra.error.retrieve.task");
+                    promise.fail(ErrorEnum.TASKS_NOT_RETRIEVED.method());
                 });
 
         return promise.future();
