@@ -134,7 +134,7 @@
     "zimbra.outside.donotchange": "External Mail [Do Not Change]",
     "zimbra.external.user": "Only mails sended to internal ENT users will be recalled",
     "account.myaccount": "My account",
-    "zimbra.message.loading": "Error while fetching mails"
+    "zimbra.message.loading": "Error while fetching mails",
     "message.folder": "Messages folders",
     "personal.folder": "Personal folders"
 }
