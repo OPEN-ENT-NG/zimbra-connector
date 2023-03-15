@@ -41,6 +41,8 @@ public class RecallMailWorker extends QueueWorker<RecallTask> implements Handler
 //            throw new RuntimeException(e);
 //        }
         int maxQueueSize = event.body().getInteger(Field.MAXQUEUESIZE, configManager.getZimbraRecallWorkerMaxQueue());
+        event.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject()
+                .put(Field.MESSAGE, Field.OK)));
 
         switch (action) {
             case SYNC_QUEUE:
