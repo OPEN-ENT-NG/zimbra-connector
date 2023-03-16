@@ -106,11 +106,15 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
                 .onSuccess(pendingTasks -> {
                     this.addTasks(pendingTasks);
                     this.startQueue();
+                    this.message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject()
+                            .put(Field.MESSAGE, Field.OK)));
                 })
                 .onFailure(error -> {
                     String errMessage = String.format("[Zimbra@%s::syncQueue]: error during queue synchronization: %s",
                             this.getClass().getSimpleName(), error.getMessage());
                     log.error(errMessage);
+                    this.message.reply(new JsonObject().put(Field.STATUS, Field.ERROR).put(Field.RESULT, new JsonObject()
+                            .put(Field.MESSAGE, error.getMessage())));
                 });
 
     }
@@ -160,11 +164,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
 
         UserUtils.getUserInfos(this.eb, userId, user -> {
             calendarService.getICal(user)
-                .compose(ical -> {
-                    ical = ical.replaceAll("\\\r\\\n", "\n");
-//                    ical = ical.replaceAll(";TZID\\=.*\\/.*\\\"", "");
-                    return sendICalToCalendarModule(ical, task);
-                })
+                .compose(ical -> sendICalToCalendarModule(ical, task))
                 .onSuccess(result -> {
                     this.dbTaskService.editTaskStatus(task, TaskStatus.FINISHED)
                             .onFailure(err -> {
