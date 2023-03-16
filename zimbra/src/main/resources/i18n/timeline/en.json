@@ -1,6 +1,14 @@
 {
     "timeline.zimbra.sent.message": "sent you a message",
-    "timeline.zimbra.storage.size.alert": "Votre espace de stockage est bientôt plein.",
+    "timeline.zimbra.storage.size.alert": "Your storage space is almost full.",
     "timeline.no.subject": "no subject",
-    "timeline.no.sender": "Unknown sender"
+    "timeline.no.sender": "Unknown sender",
+    "messagerie": "Messaging",
+    "messagerie.send-message": "New message",
+    "messagerie.return-message": "Returning a message",
+    "push.notif.zimbra.delete.request": "Request a return message",
+    "messagerie.storage": "Storage space almost full",
+    "timeline.zimbra.return.label": " sent an email recall request with the subject :",
+    "timeline.zimbra.return.message": " sent you a request for a message recall",
+    "push.notif.new.message": "New message"
 }
