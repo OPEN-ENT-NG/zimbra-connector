@@ -25,14 +25,20 @@
         "admin-password" : "{{ zimbraAdminPassword }}",
         "max-recipients" : {{ zimbraMaxRecipients }},
         "zimbra-file-upload-max-size": {{ zimbraFileUploadMaxSize | default('20') }},
-        {% if zimbraCron is defined and zimbraCron %}
-        "zimbra-synchro-cron" : "0 5/10 * * * ? *",
-        "zimbra-mailer-cron" : "0 0/10 * * * ? *",
+        {% if item == 'jobs' %}
+			"zimbra-synchro-cron" : "0 5/10 * * * ? *",
+			"zimbra-mailer-cron" : "0 0/10 * * * ? *",
+			"zimbra-recall-cron": "0 */2 * * * ? *",
+			"zimbra-ical-cron": "0 * * * * ? *",
         {% else %}
-        "zimbra-mailer-cron" : "0 0/10 * * * ? 2099",
+			"zimbra-mailer-cron" : "0 0/10 * * * ? 2099",
+			"zimbra-recall-cron": "0 */2 * * * ? 2099",
+			"zimbra-ical-cron": "0 * * * * ? 2099",
         {% endif %}
+        "zimbra-recall-worker-max-queue": {{ zimbraRecallWorkerMaxQueue | default('10000') }},
+        "zimbra-ical-worker-max-queue" : {{zimbraICalWorkerMaxQueue | default('10000')}},
         "zimbra-recall-cron": {{ zimbraRecallCron | default(' 0 */2 * * * ? *') }},
-        "zimbra-recall-worker-max-queue": {{ $zimbraRecallWorkerMaxQueue | default(10000) }},
+        "zimbra-recall-worker-max-queue": {{ zimbraRecallWorkerMaxQueue | default(10000) }},
         "zimbra-ical-cron": {{zimbraICalCron | default(' 0 * * * * ? *')}},
         "zimbra-ical-worker-max-queue" : {{zimbraICalWorkerMaxQueue | default(10000)}},
         "http-client-max-pool-size" : {{ zimbraMaxPoolSize | default('50') }},
