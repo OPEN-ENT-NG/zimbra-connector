@@ -129,8 +129,9 @@ public class EntUser {
         groups = Group.processJsonGroups(neoUser.getJsonArray("groups", new JsonArray()));
         structures = neoUser
                 .getJsonArray(Field.STRUCTURES, new JsonArray()).stream()
-                .filter(structUai -> structUai instanceof String)
-                .map(structUai -> new Structure(null, null, (String) structUai))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .map(structUai -> new Structure(null, null, structUai))
                 .collect(Collectors.toList());
 
         if(login.isEmpty()) {

@@ -222,7 +222,7 @@ public class Neo4jZimbraService {
 						"OPTIONAL MATCH u-[:IN]->(pg:ProfileGroup)-[:HAS_PROFILE]->(profile:Profile) " +
 						"RETURN collect(distinct u.id) as admls, n.id  as structure;";
 		JsonObject params = new JsonObject();
-		params.put("structuresId", structuresId);
+		params.put(Field.STRUCTURESID, structuresId);
 		neo.execute(query, params, validResultHandler(result));
 	}
 }

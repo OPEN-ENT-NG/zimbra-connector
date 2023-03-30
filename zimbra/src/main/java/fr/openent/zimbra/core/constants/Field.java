@@ -81,6 +81,7 @@ public class Field {
     public static final String STRUCTURES = "structures";
     public static final String STRUCTURE = "structure";
     public static final String ADMLS = "admls";
+    public static final String STRUCTURESID = "structuresId";
     public static final String OBJECT = "object";
 
     public static final String PLATFORM = "platform";

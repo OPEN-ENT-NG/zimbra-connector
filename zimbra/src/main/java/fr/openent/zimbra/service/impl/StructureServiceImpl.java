@@ -38,7 +38,7 @@ public class StructureServiceImpl implements StructureService {
                                     }).collect(Collectors.toList()))
                                 )
                         .onFailure(err -> {
-                            String errMessage = String.format("[Zimbra@%s::creasetStructureADMLteRecallMailTasks]:  " +
+                            String errMessage = String.format("[Zimbra@%s::getStructuresAndAdmls]:  " +
                                             "error while fetching structures ADMLs: %s",
                                     this.getClass().getSimpleName(), err.getMessage());
                             log.error(errMessage);

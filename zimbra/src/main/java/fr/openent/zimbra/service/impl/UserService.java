@@ -570,11 +570,13 @@ public class UserService {
         neoService.listAdml(user.getStructures())
                 .onSuccess(admls -> {
                     promise.complete(admls
-                            .stream().filter(adml -> (adml instanceof JsonObject) && EntUserHelper.JSONContainsADMLData((JsonObject) adml))
+                            .stream()
+                            .filter(JsonObject.class::isInstance)
+                            .map(JsonObject.class::cast)
+                            .filter(EntUserHelper::JSONContainsADMLData)
                             .map(adml -> {
-                                JsonObject data = (JsonObject) adml;
-                                JsonHelper.getStringList(data.getJsonArray(Field.STRUCTURES));
-                                return new EntUser(data.getString(Field.ID));
+                                JsonHelper.getStringList(adml.getJsonArray(Field.STRUCTURES));
+                                return new EntUser(adml.getString(Field.ID));
                             }).collect(Collectors.toList()));
 
                 })
