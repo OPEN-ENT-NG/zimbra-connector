@@ -391,12 +391,12 @@ public class ZimbraController extends BaseController {
      *                comment : comment of the removal
      */
     @Put("/recall")
-    @SecuredAction(value = "zimbra.recall.right", type = ActionType.WORKFLOW)
+    @SecuredAction(value = "zimbra.recall", type = ActionType.WORKFLOW)
     public void recallMail(final HttpServerRequest request) {
         try {
-            RequestUtils.bodyToJson(request, body -> {
+            RequestUtils.bodyToJson(request, pathPrefix + "recallMail", body -> {
                 getUserInfos(eb, request, user -> {
-                    recallMailService.createRecallMail(user, body.getString(Field.ID), body.getString(Field.COMMENT))
+                    recallMailService.createRecallMail(user, body.getString(Field.ID), body.getString(Field.COMMENT, ""))
                             .onSuccess(res -> renderJson(request, new JsonObject().put(Field.STATUS, "SUCCESS")))
                             .onFailure(err -> {
                                 String errMessage = String.format("[Zimbra@%s::recallMail]:  " +

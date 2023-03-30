@@ -1,6 +1,7 @@
 package fr.openent.zimbra.tasks.service.impl;
 
 import fr.openent.zimbra.core.enums.ActionType;
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.MessageHelper;
@@ -66,7 +67,7 @@ public class RecallMailServiceImpl implements RecallMailService {
                                     "Error fetching recipients id",
                             this.getClass().getSimpleName());
                     log.error(errMessage);
-                    promise.fail("error.fetching.ids");
+                    promise.fail(ErrorEnum.ERROR_FETCHING_IDS.method());
                 });
 
         return promise.future();
@@ -85,7 +86,7 @@ public class RecallMailServiceImpl implements RecallMailService {
                                         "User is not the mail's sender.",
                                 this.getClass().getSimpleName());
                         log.error(errMessage);
-                        promise.fail("wrong.mail.owner");
+                        promise.fail(ErrorEnum.WRONG_MAIL_OWNER.method());
                     }
                 })
                 .onFailure(err -> {
@@ -93,7 +94,7 @@ public class RecallMailServiceImpl implements RecallMailService {
                                     "error while retrieving mail: %s",
                             this.getClass().getSimpleName(), err);
                     log.error(errMessage);
-                    promise.fail("error.retrieving.mail");
+                    promise.fail(ErrorEnum.ERROR_RETRIEVING_MAIL.method());
                 });
 
         return promise.future();
@@ -137,7 +138,7 @@ public class RecallMailServiceImpl implements RecallMailService {
                                     "error while creating recall tasks: %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
-                    promise.fail("error.creating.tasks");
+                    promise.fail(ErrorEnum.ERROR_CREATING_TASKS.method());
                 });
 
         return promise.future();
@@ -165,7 +166,7 @@ public class RecallMailServiceImpl implements RecallMailService {
                                     "notification to adml failed : %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
-                    promise.fail("fail.notify.admls");
+                    promise.fail(ErrorEnum.FAIL_NOTIFY_ADML.method());
                 });
 
         return promise.future();
@@ -185,7 +186,7 @@ public class RecallMailServiceImpl implements RecallMailService {
                                     "error while creating recall mail data: %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
-                    promise.fail("error.creating.recall.mail");
+                    promise.fail(ErrorEnum.ERROR_CREATING_RECALL_MAIL.method());
                 });
 
         return promise.future();

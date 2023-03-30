@@ -1,6 +1,8 @@
 package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.enums.ErrorEnum;
+import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.helper.StructureHelper;
@@ -29,20 +31,28 @@ public class StructureServiceImpl implements StructureService {
         Promise<List<Structure>> promise = Promise.promise();
 
         neoService.listAdml(structuresId)
-                        .onSuccess(structData -> promise.complete(
-                                structData.stream()
-                                    .filter(data -> data instanceof JsonObject && StructureHelper.JSONContainsStructAndADMLData((JsonObject) data))
-                                    .map(data -> {
-                                        JsonObject struct = (JsonObject) data;
-                                        return new Structure(struct.getString(Field.STRUCTURE)).setADMLS(JsonHelper.getStringList(struct.getJsonArray(Field.ADMLS)));
-                                    }).collect(Collectors.toList()))
-                                )
+                        .onSuccess(structData -> {
+                            try {
+                                promise.complete(
+                                        IModelHelper.toList(
+                                                structData,
+                                                struct -> new Structure(struct
+                                                        .getString(Field.STRUCTURE))
+                                                        .setADMLS(JsonHelper.getStringList(struct.getJsonArray(Field.ADMLS))))
+                                );
+                            } catch (Exception e) {
+                                String errMessage = String.format("[Zimbra@%s::getStructuresAndAdmls]:  " +
+                                                "error while fetching structures model: %s",
+                                        this.getClass().getSimpleName(), e.getMessage());
+                                log.error(errMessage);
+                                promise.fail(ErrorEnum.ERROR_FETCHING_STRUCTURE.method());
+                            }})
                         .onFailure(err -> {
                             String errMessage = String.format("[Zimbra@%s::getStructuresAndAdmls]:  " +
                                             "error while fetching structures ADMLs: %s",
                                     this.getClass().getSimpleName(), err.getMessage());
                             log.error(errMessage);
-                            promise.fail("error.fetching.admls");
+                            promise.fail(ErrorEnum.FAIL_NOTIFY_ADML.method());
                         });
 
         return promise.future();

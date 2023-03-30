@@ -73,7 +73,7 @@ public abstract class QueueService<T extends Task<T>> {
                                         "error while fetching model: %s",
                                 this.getClass().getSimpleName(), e.getMessage());
                         log.error(errMessage);
-                        promise.fail("zimbra.error.queue.task");
+                        promise.fail(ErrorEnum.ERROR_QUEUE_TASK.method());
                     }
                 })
                 .onFailure(err -> {
@@ -81,7 +81,7 @@ public abstract class QueueService<T extends Task<T>> {
                                     "an error has occurred while creating task: %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
-                    promise.fail("zimbra.error.queue.task");
+                    promise.fail(ErrorEnum.ERROR_QUEUE_TASK.method());
                 });
 
         return promise.future();
@@ -92,7 +92,7 @@ public abstract class QueueService<T extends Task<T>> {
     public Future<List<T>> createTasksByBatch(Action<T> action, List<RecallTask> tasks, int batchSize) {
         Promise<List<T>> promise = Promise.promise();
         if (tasks.isEmpty())
-            return Future.failedFuture("no.mail.to.recall");
+            return Future.failedFuture(ErrorEnum.NO_MAIL_TO_RECALL.method());
 
         dbTaskService.createTasksByBatch(action, tasks, batchSize)
                 .onSuccess(tasksData -> {
@@ -109,7 +109,7 @@ public abstract class QueueService<T extends Task<T>> {
                                         "error while fetching model",
                                 this.getClass().getSimpleName());
                         log.error(errMessage);
-                        promise.fail("zimbra.error.queue.task");
+                        promise.fail(ErrorEnum.ERROR_QUEUE_TASK.method());
                     }
 
                 })
@@ -118,7 +118,7 @@ public abstract class QueueService<T extends Task<T>> {
                                     "error retrieving data from database: %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
-                    promise.fail("zimbra.error.task.retrieve");
+                    promise.fail(ErrorEnum.ERROR_TASK_RETRIEVE.method());
                 });
 
         return promise.future();
@@ -139,20 +139,20 @@ public abstract class QueueService<T extends Task<T>> {
                             String errMessage = String.format("[Zimbra@%s::editTaskStatus]: wrong status format: %s",
                                     this.getClass().getSimpleName(), e.getMessage());
                             log.error(errMessage);
-                            promise.fail("zimbra.error.editing.task");
+                            promise.fail(ErrorEnum.ERROR_EDITING_TASK.method());
                         }
                     } else {
                         String errMessage = String.format("[Zimbra@%s::editTaskStatus]: missing updated status",
                                 this.getClass().getSimpleName());
                         log.error(errMessage);
-                        promise.fail("zimbra.error.editing.task");
+                        promise.fail(ErrorEnum.ERROR_EDITING_TASK.method());
                     }
                 })
                 .onFailure(err -> {
                     String errMessage = String.format("[Zimbra@%s::editTaskStatus]: fail to call db for task status update: %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
-                    promise.fail("zimbra.error.updating.task");
+                    promise.fail(ErrorEnum.ERROR_UPDATING_TASK.method());
                 });
 
         return promise.future();
@@ -175,7 +175,7 @@ public abstract class QueueService<T extends Task<T>> {
                         String errMessage = String.format("[Zimbra@%s::getPendingTasks]: fail fetching model from data: %s",
                                 this.getClass().getSimpleName(), e.getMessage());
                         log.error(errMessage);
-                        promise.fail("zimbra.error.fetching.task");
+                        promise.fail(ErrorEnum.ERROR_FETCHING_TASK.method());
                     }
                 })
                 .onFailure(err -> {
@@ -213,7 +213,7 @@ public abstract class QueueService<T extends Task<T>> {
                                         "an error has occurred while getting creation date: %s",
                                 this.getClass().getSimpleName(), e.getMessage());
                         log.error(errMessage);
-                        promise.fail("zimbra.error.queue.action.date");
+                        promise.fail(ErrorEnum.ERROR_FETCHING_ACTION.method());
                     }
                 })
                 .onFailure(err -> {
@@ -221,7 +221,7 @@ public abstract class QueueService<T extends Task<T>> {
                                         "an error has occurred while creating action in queue: %s",
                                 this.getClass().getSimpleName(), err.getMessage());
                         log.error(errMessage);
-                        promise.fail("zimbra.error.queue.action");
+                        promise.fail(ErrorEnum.ERROR_RETRIEVING_ACTION.method());
                     });
         return promise.future();
     }

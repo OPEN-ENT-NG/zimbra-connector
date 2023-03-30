@@ -30,6 +30,7 @@ import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
 import fr.openent.zimbra.model.constant.ZimbraErrors;
 import fr.openent.zimbra.model.soap.SoapRequest;
+import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
@@ -562,32 +563,5 @@ public class UserService {
                 handler.handle(new Either.Right<>(res.result().body()));
             }
         });
-    }
-
-    public Future<List<EntUser>> getUserLocalAdministrators(UserInfos user) {
-        Promise<List<EntUser>> promise = Promise.promise();
-
-        neoService.listAdml(user.getStructures())
-                .onSuccess(admls -> {
-                    promise.complete(admls
-                            .stream()
-                            .filter(JsonObject.class::isInstance)
-                            .map(JsonObject.class::cast)
-                            .filter(EntUserHelper::JSONContainsADMLData)
-                            .map(adml -> {
-                                JsonHelper.getStringList(adml.getJsonArray(Field.STRUCTURES));
-                                return new EntUser(adml.getString(Field.ID));
-                            }).collect(Collectors.toList()));
-
-                })
-                .onFailure(err -> {
-                    String errMessage = String.format("[Zimbra@%s::getUserLocalAdministrators]:  " +
-                                    "error while retrieving admls: %s",
-                            this.getClass().getSimpleName(), err);
-                    log.error(errMessage);
-                    promise.fail("error.retrieving.admls");
-                });
-
-        return promise.future();
     }
 }

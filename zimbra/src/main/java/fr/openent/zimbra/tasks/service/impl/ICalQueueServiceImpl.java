@@ -2,6 +2,7 @@ package fr.openent.zimbra.tasks.service.impl;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.helper.FutureHelper;
 import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.model.action.Action;
@@ -51,7 +52,7 @@ public class ICalQueueServiceImpl extends QueueService<ICalTask> {
                                     "an error has occurred while putting request in queue: %s",
                             this.getClass().getSimpleName(), error.getMessage());
                     log.error(errMessage);
-                    promise.fail("zimbra.error.queue");
+                    promise.fail(ErrorEnum.ZIMBRA_ERROR_QUEUE.method());
                 });
 
         return promise.future();
@@ -70,7 +71,7 @@ public class ICalQueueServiceImpl extends QueueService<ICalTask> {
                                     "an error has occurred while creating ical task for queue action: %s",
                             this.getClass().getSimpleName(), error.getMessage());
                     log.error(errMessage);
-                    promise.fail("zimbra.error.queue.action.task.ical");
+                    promise.fail(ErrorEnum.ZIMBRA_ERROR_QUEUE.method());
                 });
 
         return promise.future();
@@ -95,14 +96,14 @@ public class ICalQueueServiceImpl extends QueueService<ICalTask> {
                                     "an error has occurred while creating task model: %s",
                             this.getClass().getSimpleName(), e.getMessage());
                     log.error(errMessage);
-                    promise.fail("zimbra.error.task.model");
+                    promise.fail(ErrorEnum.ERROR_TASK_MODEL.method());
                 }
             } else {
                 String errMessage = String.format("[Zimbra@%s::createICalTask]:  " +
                                 "an error has occurred while creating ical task for queue action: %s",
                         this.getClass().getSimpleName(), result.left().getValue());
                 log.error(errMessage);
-                promise.fail("zimbra.error.queue.action.task.ical");
+                promise.fail(ErrorEnum.ZIMBRA_ERROR_QUEUE.method());
             }
         }));
 

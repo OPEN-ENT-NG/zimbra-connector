@@ -1,6 +1,7 @@
 package fr.openent.zimbra.tasks.service;
 
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.task.ICalTask;
@@ -46,7 +47,7 @@ public abstract class DbTaskService<T extends Task<T>> {
                                 "an error has occurred while creating task: %s",
                         this.getClass().getSimpleName(), handler.left().getValue());
                 log.error(errMessage);
-                promise.fail("zimbra.error.queue.task");
+                promise.fail(ErrorEnum.ERROR_QUEUE_TASK.method());
             } else {
                 promise.complete(handler.right().getValue());
             }

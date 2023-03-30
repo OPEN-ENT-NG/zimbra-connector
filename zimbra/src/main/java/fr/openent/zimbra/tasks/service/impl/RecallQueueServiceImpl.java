@@ -2,6 +2,7 @@ package fr.openent.zimbra.tasks.service.impl;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.helper.FutureHelper;
 import fr.openent.zimbra.helper.TaskHelper;
 import fr.openent.zimbra.model.action.Action;
@@ -42,7 +43,7 @@ public class RecallQueueServiceImpl extends QueueService<RecallTask> {
     public Future<List<RecallTask>> createTasks(Action<RecallTask> action, List<RecallTask> tasks) {
         Promise<List<RecallTask>> promise = Promise.promise();
         if (tasks.isEmpty())
-            return Future.failedFuture("no.mail.to.recall");
+            return Future.failedFuture(ErrorEnum.NO_MAIL_TO_RECALL.method());
 
         List<Future<RecallTask>> futures = new ArrayList<>();
         for (RecallTask task : tasks) {

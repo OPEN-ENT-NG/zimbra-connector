@@ -23,7 +23,7 @@ public class TaskHelper {
      */
     public static List<RecallTask> convertJsonListToTask(Action<RecallTask> action, JsonArray tasksData) throws Exception {
         List<RecallTask> recallTaskList = new ArrayList<>();
-        Iterator<JsonObject> recallTaskIterator = tasksData.stream().filter(taskData -> taskData instanceof JsonObject).map(JsonObject.class::cast).iterator();
+        Iterator<JsonObject> recallTaskIterator = tasksData.stream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast).iterator();
 
         while (recallTaskIterator.hasNext()) {
             try {
@@ -33,7 +33,7 @@ public class TaskHelper {
                                 "error while fetching model: %s",
                         TaskHelper.class.getSimpleName(), e.getMessage());
                 log.error(errMessage);
-                return null;
+                throw new Exception("error while fetching task model");
             }
         }
         return recallTaskList;
