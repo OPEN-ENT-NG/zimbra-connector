@@ -157,7 +157,7 @@ public class RecallMailServiceImpl implements RecallMailService {
         structureService.getStructuresAndAdmls(user.getStructures())
                 .onSuccess(structs -> {
                     structs.forEach(structure ->
-                                notificationService.sendReturnMailNotification(user, mail.getMessage().getSubject(), structure.getId(), structure.getADMLS(), null, event -> {})
+                                notificationService.sendReturnMailNotification(user, mail.getMessage().getSubject(), structure.getId(), structure.getADMLS(), null)
                             );
                     promise.complete(mail);
                 })

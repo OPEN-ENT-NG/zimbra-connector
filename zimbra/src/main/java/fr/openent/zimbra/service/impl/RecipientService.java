@@ -1,5 +1,6 @@
 package fr.openent.zimbra.service.impl;
 
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.helper.AsyncContainer;
 import fr.openent.zimbra.model.message.Message;
 import fr.openent.zimbra.model.message.Recipient;
@@ -32,7 +33,7 @@ public class RecipientService {
                                 "Error while retrieving ids",
                         this.getClass().getSimpleName());
                 log.error(errMessage);
-                promise.fail("error.retrieving.ids");
+                promise.fail(ErrorEnum.ERROR_FETCHING_IDS.method());
             }
         });
 

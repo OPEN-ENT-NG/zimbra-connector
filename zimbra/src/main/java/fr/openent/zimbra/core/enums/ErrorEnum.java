@@ -5,6 +5,7 @@ public enum ErrorEnum {
     TASKS_NOT_RETRIEVED("zimbra.error.retrieving.task"),
     ERROR_RETRIEVING_MAIL("error.retrieving.mail"),
     ERROR_CREATING_TASKS("error.creating.tasks"),
+    ERROR_CREATING_TASKS_TRANSACTION("error.creating.tasks.transaction"),
     FAIL_NOTIFY_ADML("fail.notify.admls"),
     ERROR_CREATING_RECALL_MAIL("error.creating.recall.mail"),
     ERROR_FETCHING_IDS("error.fetching.ids"),

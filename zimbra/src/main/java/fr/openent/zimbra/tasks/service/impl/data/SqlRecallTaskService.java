@@ -1,6 +1,7 @@
 package fr.openent.zimbra.tasks.service.impl.data;
 
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.helper.PromiseHelper;
 import fr.openent.zimbra.helper.TransactionHelper;
@@ -111,7 +112,7 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
                                     "an error has occurred during create tasks transaction: %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
-                    promise.fail("zimbra.error.queue.task");
+                    promise.fail(ErrorEnum.ERROR_CREATING_TASKS_TRANSACTION.method());
                 });
 
         return promise.future();

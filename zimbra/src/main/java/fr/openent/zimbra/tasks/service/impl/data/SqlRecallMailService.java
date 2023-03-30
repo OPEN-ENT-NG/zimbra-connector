@@ -1,6 +1,7 @@
 package fr.openent.zimbra.tasks.service.impl.data;
 
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.helper.PromiseHelper;
 import fr.openent.zimbra.model.message.RecallMail;
 import fr.openent.zimbra.tasks.service.DbRecallMail;
@@ -62,7 +63,7 @@ public class SqlRecallMailService extends DbRecallMail {
                                         "fail create recall mail",
                                 this.getClass().getSimpleName());
                         log.error(errMessage);
-                        promise.fail("zimbra.fail.create.recall");
+                        promise.fail(ErrorEnum.ERROR_CREATING_RECALL_MAIL.method());
                     }
                 })
                 .onFailure(err -> {
@@ -70,7 +71,7 @@ public class SqlRecallMailService extends DbRecallMail {
                                     "fail : %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
-                    promise.fail("zimbra.fail.create.recall");
+                    promise.fail(ErrorEnum.ERROR_CREATING_RECALL_MAIL.method());
                 });
 
         return promise.future();
