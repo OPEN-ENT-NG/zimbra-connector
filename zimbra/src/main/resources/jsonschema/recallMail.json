@@ -3,7 +3,7 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "name": {
+    "id": {
       "type": "string"
     },
     "comment": {
@@ -11,6 +11,6 @@
     }
   },
   "required": [
-    "name", "comment"
+    "id", "comment"
   ]
 }
