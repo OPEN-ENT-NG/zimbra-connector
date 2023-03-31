@@ -87,6 +87,13 @@ public abstract class QueueService<T extends Task<T>> {
         return promise.future();
     }
 
+    /**
+     * Used to create tasks depending on data retrieved from the db.
+     * @param action        Action linked to the task.
+     * @param taskData      Data about the specific task.
+     * @return              List of tasks instances.
+     * @throws Exception    If data does not match the model.
+     */
     protected abstract List<T> createTasksFromData(Action<T> action, JsonArray taskData) throws Exception;
 
     public Future<List<T>> createTasksByBatch(Action<T> action, List<RecallTask> tasks, int batchSize) {

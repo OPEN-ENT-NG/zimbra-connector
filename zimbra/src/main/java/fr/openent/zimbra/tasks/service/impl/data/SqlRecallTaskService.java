@@ -68,7 +68,13 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
         return promise.future();
     }
 
-
+    /**
+     * Create a transaction for a batch of task. Useful if you need to insert multiple batch of tasks in the db and
+     * don't want to persist any if one of the batch fails.
+     * @param action    The action linked to the tasks.
+     * @param tasks     The batch list of tasks.
+     * @return          Transaction element.
+     */
     private TransactionElement createTransactionForTasks(Action<RecallTask> action, List<RecallTask> tasks) {
         StringBuilder query = new StringBuilder();
         JsonArray params = new JsonArray();

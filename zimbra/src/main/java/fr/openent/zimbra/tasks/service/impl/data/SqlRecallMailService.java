@@ -55,13 +55,13 @@ public class SqlRecallMailService extends DbRecallMail {
 
         insertRecallMailDb(recallMail, user)
                 .onSuccess(recallData -> {
-                    if (recallData.containsKey(Field.ID)) {
+                    try {
                         recallMail.setId(recallData.getInteger(Field.ID));
                         promise.complete(recallMail);
-                    } else {
+                    } catch (Exception e){
                         String errMessage = String.format("[Zimbra@%s::createRecallMail]:  " +
-                                        "fail create recall mail",
-                                this.getClass().getSimpleName());
+                                        "fail create recall mail: %s",
+                                this.getClass().getSimpleName(), e.getMessage());
                         log.error(errMessage);
                         promise.fail(ErrorEnum.ERROR_CREATING_RECALL_MAIL.method());
                     }

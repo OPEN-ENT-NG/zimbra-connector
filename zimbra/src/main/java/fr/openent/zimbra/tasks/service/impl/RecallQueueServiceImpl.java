@@ -3,8 +3,9 @@ package fr.openent.zimbra.tasks.service.impl;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
 import fr.openent.zimbra.core.enums.ErrorEnum;
+import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.helper.FutureHelper;
-import fr.openent.zimbra.helper.TaskHelper;
+import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.message.Message;
 import fr.openent.zimbra.model.message.RecallMail;
@@ -20,6 +21,7 @@ import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class RecallQueueServiceImpl extends QueueService<RecallTask> {
     public RecallQueueServiceImpl(String schema, DbTaskService<RecallTask> dbTaskService, DbActionService dbActionService) {
@@ -36,7 +38,13 @@ public class RecallQueueServiceImpl extends QueueService<RecallTask> {
 
     @Override
     protected List<RecallTask> createTasksFromData(Action<RecallTask> action, JsonArray taskData) throws Exception {
-        return TaskHelper.convertJsonListToTask(action, taskData);
+        return IModelHelper.toList(taskData, data -> new RecallTask(
+                data.getInteger(Field.ID),
+                TaskStatus.PENDING,
+                action,
+                null,
+                UUID.fromString(data.getString(Field.RECEIVER_ID)),
+                data.getInteger(Field.RETRY)));
     }
 
     @Override
