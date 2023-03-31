@@ -14,7 +14,9 @@ public class Field {
     public static final String NAME = "name";
     public static final String ERROR = "error";
     public static final String STATUS = "status";
+    public static final String SUCCESS = "success";
     public static final String ID = "id";
+    public static final String IDS = "ids";
     public static final String SIZE = "size";
     public static final String MESSAGE = "message";
     public static final String OK = "ok";
@@ -27,6 +29,8 @@ public class Field {
     public static final String HTTPCLIENT = "httpClient";
     public static final String ZIMBRARESPONSE = "zimbraResponse";
     public static final String USERNAME = "username";
+    public static final String USER_NAME = "user_name";
+    public static final String USER_MAIL = "user_mail";
     public static final String UNAUTHORIZED = "unauthorized";
 
     public static final String MAIL_ATTACHMENT_TOO_BIG = "mail.ATTACHMENT_TOO_BIG";
@@ -61,15 +65,27 @@ public class Field {
     public static final String TASK_ID = "task_id";
     public static final String TASK_STATUS = "task_status";
     public static final String RECALL_MAIL_ID = "recall_mail_id";
+    public static final String MAIL_DATE = "mail_date";
     public static final String RECEIVER_ID = "receiver_id";
     public static final String RECEIVERS_ID = "receivers_id";
     public static final String RETRY = "retry";
     public static final String JSNS = "jsns";
+    public static final String BODY_LOWER_CASE = "body";
     public static final String MESSAGE_ID = "message_id";
     public static final String ZIMBRA = "zimbra";
     public static final String RECEIVERID = "receiverId";
+    public static final String TASKS = "tasks";
+    public static final String MAXQUEUESIZE = "maxQueueSize";
+    public static final String REMAININGSIZE = "remainingSize";
+    public static final String WORKERSTATUS = "workerStatus";
+    public static final String COMMENT = "comment";
+    public static final String STRUCTURES = "structures";
+    public static final String STRUCTURE = "structure";
+    public static final String ADMLS = "admls";
+    public static final String STRUCTURESID = "structuresId";
+    public static final String OBJECT = "object";
+
     public static final String PLATFORM = "platform";
     public static final String ZIMBRAUC = "Zimbra";
-    public static final String MAXQUEUESIZE = "maxQueueSize";
 
 }

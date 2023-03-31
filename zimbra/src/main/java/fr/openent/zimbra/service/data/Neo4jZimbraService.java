@@ -20,12 +20,14 @@ package fr.openent.zimbra.service.data;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.AsyncHelper;
+import fr.openent.zimbra.helper.PromiseHelper;
 import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.service.impl.CommunicationService;
 import fr.openent.zimbra.service.impl.ZimbraAdminService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import org.entcore.common.neo4j.Neo4j;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -203,5 +205,24 @@ public class Neo4jZimbraService {
 		JsonObject params = new JsonObject().put("idToCheck", idToCheck);
 
 		neo.execute(query, params, validUniqueResultHandler(handler));
+	}
+
+	public Future<JsonArray> listAdml(List<String> structuresId) {
+		Promise<JsonArray> promise = Promise.promise();
+
+		listAdml(structuresId, PromiseHelper.handlerJsonArray(promise));
+
+		return promise.future();
+	}
+
+	public void listAdml(List<String> structuresId, Handler<Either<String, JsonArray>> result) {
+		String query =
+				"MATCH (n)<-[:DEPENDS]-(g:FunctionGroup)<-[:IN]-(u:User) " +
+						"WHERE (n:Structure OR n:Class) AND n.id in {structuresId} AND g.name =~ '^.*-AdminLocal$' " +
+						"OPTIONAL MATCH u-[:IN]->(pg:ProfileGroup)-[:HAS_PROFILE]->(profile:Profile) " +
+						"RETURN collect(distinct u.id) as admls, n.id  as structure;";
+		JsonObject params = new JsonObject();
+		params.put(Field.STRUCTURESID, structuresId);
+		neo.execute(query, params, validResultHandler(result));
 	}
 }

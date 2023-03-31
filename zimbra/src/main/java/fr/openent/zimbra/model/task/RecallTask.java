@@ -2,8 +2,6 @@ package fr.openent.zimbra.model.task;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.TaskStatus;
-import fr.openent.zimbra.helper.IModelHelper;
-import fr.openent.zimbra.model.IModel;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.message.RecallMail;
 import io.vertx.core.json.JsonObject;
@@ -28,6 +26,7 @@ public class RecallTask extends Task<RecallTask> {
             throw new Exception(String.format("[Zimbra@%s::RecallTask] Json does not match RecallTask model", this.getClass().getSimpleName()));
         }
         try {
+            this.id = dbData.getInteger(Field.ID, -1);
             this.receiverId = UUID.fromString(dbData.getString(Field.RECEIVER_ID));
             this.retry = dbData.getInteger(Field.RETRY);
             this.recallMessage = recallMessage;
