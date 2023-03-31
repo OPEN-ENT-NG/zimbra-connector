@@ -30,8 +30,8 @@ public class RecipientService {
                 promise.complete(list.result());
             } else {
                 String errMessage = String.format("[Zimbra@%s::getUseridsFromEmails]:  " +
-                                "Error while retrieving ids",
-                        this.getClass().getSimpleName());
+                                "Error while retrieving ids: %s",
+                        this.getClass().getSimpleName(), list.cause().getMessage());
                 log.error(errMessage);
                 promise.fail(ErrorEnum.ERROR_FETCHING_IDS.method());
             }

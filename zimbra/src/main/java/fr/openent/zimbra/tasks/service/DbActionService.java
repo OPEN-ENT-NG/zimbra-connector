@@ -9,7 +9,7 @@ import java.util.UUID;
 public abstract class DbActionService {
     protected String schema;
     protected String actionTable;
-    public DbActionService(String schema) {
+    protected DbActionService(String schema) {
         this.schema = schema;
         this.actionTable = schema + "." + "actions";
     }

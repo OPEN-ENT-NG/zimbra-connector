@@ -4,19 +4,15 @@ import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.helper.JsonHelper;
-import fr.openent.zimbra.helper.ServiceManager;
-import fr.openent.zimbra.helper.StructureHelper;
 import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.service.StructureService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class StructureServiceImpl implements StructureService {
     private final Neo4jZimbraService neoService;

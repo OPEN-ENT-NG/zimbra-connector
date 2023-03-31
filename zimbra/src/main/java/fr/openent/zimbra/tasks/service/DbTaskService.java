@@ -4,7 +4,6 @@ import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.model.action.Action;
-import fr.openent.zimbra.model.task.ICalTask;
 import fr.openent.zimbra.model.task.RecallTask;
 import fr.openent.zimbra.model.task.Task;
 import io.vertx.core.Future;
@@ -25,7 +24,7 @@ public abstract class DbTaskService<T extends Task<T>> {
     private final String taskTable;
 
 
-    public DbTaskService(String schema) {
+    protected DbTaskService(String schema) {
         this.schema = schema;
         this.actionTable = schema + ".actions";
         this.taskTable = schema + ".tasks";

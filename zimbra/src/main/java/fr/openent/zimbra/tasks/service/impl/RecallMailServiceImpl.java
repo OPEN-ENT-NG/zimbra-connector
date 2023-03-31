@@ -29,21 +29,18 @@ import java.util.stream.Collectors;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.ADDR_TYPE_FROM;
 
 public class RecallMailServiceImpl implements RecallMailService {
-    public static ConfigManager appConfig;
     private final RecallQueueServiceImpl recallQueueService;
     private final NotificationService notificationService;
     private final StructureService structureService;
     private final DbRecallMail dbMailService;
     private final RecipientService recipientService;
-    private final Neo4jZimbraService neo4jService;
 
-    private final static int BATCH_SIZE = 100;
+    private static final int BATCH_SIZE = 100;
     private static final Logger log = LoggerFactory.getLogger(RecallMailServiceImpl.class);
 
     public RecallMailServiceImpl(DbRecallMail dbMailService, Neo4jZimbraService neo4jZimbraService, RecallQueueServiceImpl recallQueueService,
                                  NotificationService notificationService, StructureService structureService, RecipientService recipientService) {
         this.dbMailService = dbMailService;
-        this.neo4jService = neo4jZimbraService;
         this.recallQueueService = recallQueueService;
         this.notificationService = notificationService;
         this.structureService = structureService;

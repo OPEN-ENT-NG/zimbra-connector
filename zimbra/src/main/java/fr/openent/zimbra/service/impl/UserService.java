@@ -19,10 +19,8 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
-import fr.openent.zimbra.helper.EntUserHelper;
 import fr.openent.zimbra.helper.JsonHelper;
 import fr.openent.zimbra.helper.PromiseHelper;
-import fr.openent.zimbra.model.EntUser;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
@@ -30,7 +28,6 @@ import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.constant.ZimbraConstants;
 import fr.openent.zimbra.model.constant.ZimbraErrors;
 import fr.openent.zimbra.model.soap.SoapRequest;
-import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.service.DbMailService;
 import fr.openent.zimbra.service.data.Neo4jZimbraService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
@@ -55,7 +52,6 @@ import org.entcore.common.user.UserUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static fr.openent.zimbra.service.data.Neo4jZimbraService.*;
 import static fr.wseduc.webutils.Utils.handlerToAsyncHandler;

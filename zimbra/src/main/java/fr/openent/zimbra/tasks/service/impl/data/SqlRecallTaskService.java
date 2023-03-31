@@ -24,7 +24,7 @@ import java.util.List;
 public class SqlRecallTaskService extends DbTaskService<RecallTask> {
     private final String recallMailTable = schema + "." + "recall_mails";
     private final String taskTable = schema + "." + "recall_recipient_tasks";
-    private static Logger log = LoggerFactory.getLogger(SqlRecallTaskService.class);
+    private static final Logger log = LoggerFactory.getLogger(SqlRecallTaskService.class);
 
     public SqlRecallTaskService(String schema) {
         super(schema);

@@ -22,18 +22,16 @@ public class SqlActionService extends DbActionService {
     protected Future<JsonObject> createAction(UUID userId, ActionType actionType, boolean approved) {
         Promise<JsonObject> promise = Promise.promise();
 
-        StringBuilder query = new StringBuilder();
-
-        query.append("INSERT INTO ")
-                .append(actionTable)
-                .append(" (" + Field.USER_ID + ", " + Field.TYPE + ", " + Field.APPROVED + ") ")
-                .append("VALUES (?, ?, ?) ")
-                .append("RETURNING " + Field.ID + ", " + Field.USER_ID + ", " + Field.CREATED_AT + ", " + Field.TYPE + ", " + Field.APPROVED);
+        String query = "INSERT INTO " +
+                actionTable +
+                " (" + Field.USER_ID + ", " + Field.TYPE + ", " + Field.APPROVED + ") " +
+                "VALUES (?, ?, ?) " +
+                "RETURNING " + Field.ID + ", " + Field.USER_ID + ", " + Field.CREATED_AT + ", " + Field.TYPE + ", " + Field.APPROVED;
 
         JsonArray values = new JsonArray();
         values.add(userId.toString()).add(actionType.method()).add(approved);
 
-        Sql.getInstance().prepared(query.toString(), values, SqlResult.validUniqueResultHandler(PromiseHelper.handlerJsonObject(promise)));
+        Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(PromiseHelper.handlerJsonObject(promise)));
 
         return promise.future();
     }

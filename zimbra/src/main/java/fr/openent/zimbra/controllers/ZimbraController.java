@@ -397,7 +397,7 @@ public class ZimbraController extends BaseController {
             RequestUtils.bodyToJson(request, pathPrefix + "recallMail", body -> {
                 getUserInfos(eb, request, user -> {
                     recallMailService.createRecallMail(user, body.getString(Field.ID), body.getString(Field.COMMENT, ""))
-                            .onSuccess(res -> renderJson(request, new JsonObject().put(Field.STATUS, "SUCCESS")))
+                            .onSuccess(res -> renderJson(request, new JsonObject().put(Field.STATUS, Field.SUCCESS)))
                             .onFailure(err -> {
                                 String errMessage = String.format("[Zimbra@%s::recallMail]:  " +
                                                 "fail to create recall mail: %s",

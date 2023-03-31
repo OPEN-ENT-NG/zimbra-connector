@@ -48,7 +48,7 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
     @Override
     public void handle(Message<JsonObject> event) {
         QueueWorkerAction action = QueueWorkerAction.valueOf(event.body().getString(Field.ACTION));
-        int maxQueueSize = event.body().getInteger(Field.MAXQUEUESIZE, configManager.getZimbraRecallWorkerMaxQueue());
+        int newMaxQueueSize = event.body().getInteger(Field.MAXQUEUESIZE, configManager.getZimbraRecallWorkerMaxQueue());
 
         switch (action) {
             case REMOVE_TASK:
@@ -61,6 +61,7 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
                             this.getClass().getSimpleName(), e.getMessage());
                     log.error(errMessage);
                 }
+                break;
             case SYNC_QUEUE:
                 this.syncQueue();
                 break;
@@ -74,7 +75,7 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
                 this.pauseQueue();
                 break;
             case SET_MAX_QUEUE_SIZE:
-                this.setMaxQueueSize(maxQueueSize);
+                this.setMaxQueueSize(newMaxQueueSize);
                 break;
             case GET_STATUS:
                 this.sendWorkerStatus(event);
@@ -129,7 +130,7 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
                 });
-    };
+    }
 
 
     public void setMaxQueueSize (int maxQueueSize) {

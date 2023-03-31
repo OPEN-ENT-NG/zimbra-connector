@@ -19,7 +19,7 @@ import java.util.Date;
 
 public class SqlRecallMailService extends DbRecallMail {
     private final String recallMailTable;
-    private static Logger log = LoggerFactory.getLogger(SqlRecallMailService.class);
+    private static final Logger log = LoggerFactory.getLogger(SqlRecallMailService.class);
 
     public SqlRecallMailService(String schema) {
         super(schema);
