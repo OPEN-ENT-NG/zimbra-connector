@@ -2,14 +2,14 @@ package fr.openent.zimbra.model.task;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.TaskStatus;
+import fr.openent.zimbra.model.IModel;
 import fr.openent.zimbra.model.action.Action;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-public abstract class Task<T extends Task<T>>{
+public abstract class Task<T extends Task<T>> implements IModel<T> {
     protected long id;
-
     protected TaskStatus status;
     public Action<T> action;
 

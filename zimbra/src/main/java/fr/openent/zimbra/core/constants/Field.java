@@ -20,6 +20,7 @@ public class Field {
     public static final String SIZE = "size";
     public static final String MESSAGE = "message";
     public static final String OK = "ok";
+    public static final String KO = "ko";
     public static final String RESULT = "result";
     public static final String RESULTS = "results";
 
