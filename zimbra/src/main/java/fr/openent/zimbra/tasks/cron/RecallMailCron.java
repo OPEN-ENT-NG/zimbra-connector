@@ -1,8 +1,8 @@
-package fr.openent.zimbra.cron;
+package fr.openent.zimbra.tasks.cron;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.EventBusHelper;
-import fr.openent.zimbra.service.RecallMailService;
+import fr.openent.zimbra.tasks.service.RecallMailService;
 import fr.openent.zimbra.core.enums.QueueWorkerAction;
 import fr.openent.zimbra.worker.RecallMailWorker;
 import io.vertx.core.Handler;

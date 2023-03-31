@@ -1,19 +1,42 @@
 package fr.openent.zimbra.model.message;
 
+import fr.openent.zimbra.model.action.Action;
+import fr.openent.zimbra.model.task.RecallTask;
+
 public class RecallMail {
     private int recallId;
-    private String mailId;
+    private Message message;
+    private  String comment;
+    private Action<RecallTask> action;
 
-    public RecallMail(int recallId, String mailId) {
+    public RecallMail(int recallId, Message message) {
         this.recallId = recallId;
-        this.mailId = mailId;
+        this.message = message;
+    }
+
+    public RecallMail(int recallId, Message message, Action<RecallTask> action, String comment) {
+        this(recallId, message);
+        this.action = action;
+        this.comment = comment;
     }
 
     public int getRecallId() {
         return recallId;
     }
 
-    public String getMailId() {
-        return mailId;
+    public Message getMessage() {
+        return message;
+    }
+
+    public Action<RecallTask> getAction() {
+        return this.action;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setId(int recallId) {
+        this.recallId = recallId;
     }
 }

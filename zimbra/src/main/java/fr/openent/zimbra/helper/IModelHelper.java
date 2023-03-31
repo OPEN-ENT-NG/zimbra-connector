@@ -11,9 +11,8 @@ import io.vertx.core.logging.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +28,33 @@ public class IModelHelper {
 
     private IModelHelper() {
         throw new IllegalStateException("Utility class");
+    }
+
+    /**
+     * Convert a JsonArray containing JsonObject with model data to list of instances of this model.
+     * @param data          The JsonArray containing JsonObject with model data
+     * @param convertor     The convertor (usually a constructor) to convert JsonObject to model instance.
+     * @param <T>           Model class.
+     * @return              List of model instances if all elements can be converted
+     * @throws Exception    If conversion failed.
+     */
+    public static <T> List<T> toList(JsonArray data, Function<JsonObject, T> convertor) throws Exception {
+        List<T> elementList = new ArrayList<>();
+        Iterator<JsonObject> elementIterator = data.stream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast).iterator();
+
+        while (elementIterator.hasNext()) {
+            try {
+                elementList.add(convertor.apply(elementIterator.next()));
+            } catch (Exception e) {
+                String errMessage = String.format("[Zimbra@%s::toList]:  " +
+                                "error while fetching model: %s",
+                        JsonHelper.class.getSimpleName(), e.getMessage());
+                log.error(errMessage);
+                throw new Exception(e);
+            }
+        }
+
+        return elementList;
     }
 
     @SuppressWarnings("unchecked")

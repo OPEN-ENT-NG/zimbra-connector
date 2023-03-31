@@ -1,12 +1,14 @@
-package fr.openent.zimbra.service.data.sql_task_services;
+package fr.openent.zimbra.tasks.service.impl.data;
 
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.PromiseHelper;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.task.ICalTask;
-import fr.openent.zimbra.service.DbTaskService;
+import fr.openent.zimbra.model.task.RecallTask;
+import fr.openent.zimbra.tasks.service.DbTaskService;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -16,6 +18,8 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.sql.Sql;
 import org.entcore.common.sql.SqlResult;
+
+import java.util.List;
 
 public class SqlICalTaskService extends DbTaskService<ICalTask> {
     protected static final Logger log = LoggerFactory.getLogger(SqlICalTaskService.class);
@@ -29,7 +33,7 @@ public class SqlICalTaskService extends DbTaskService<ICalTask> {
     }
 
     @Override
-    public Future<JsonArray> retrieveTasksDataFromDB(TaskStatus status) {
+    protected Future<JsonArray> retrieveTasksDataFromDB(TaskStatus status) {
         Promise<JsonArray> promise = Promise.promise();
         String query = "SELECT ical_tasks.*, actions.user_id, actions.created_at, actions.type, actions.approved "
         + "FROM " + this.taskTable + " as ical_tasks "
@@ -67,7 +71,7 @@ public class SqlICalTaskService extends DbTaskService<ICalTask> {
                                 "an error has occurred while creating task: %s",
                         this.getClass().getSimpleName(), handler.left().getValue());
                 log.error(errMessage);
-                promise.fail("zimbra.error.queue.task");
+                promise.fail(ErrorEnum.ERROR_CREATING_TASKS.method());
             }
         }));
 
@@ -75,26 +79,8 @@ public class SqlICalTaskService extends DbTaskService<ICalTask> {
     }
 
     @Override
-    public Future<Void> editTaskStatus(ICalTask task, TaskStatus status) {
-        Promise<Void> promise = Promise.promise();
-        String query = "UPDATE " + this.taskTable + " SET status = ? " + "WHERE id = ?";
-
-        JsonArray values = new JsonArray();
-        values.add(status.method()).add(task.getId());
-
-        Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(handler -> {
-            if (handler.isLeft()) {
-                String errMessage = String.format("[Zimbra@%s::createTask]:  " +
-                                "an error has occurred while creating task: %s",
-                        this.getClass().getSimpleName(), handler.left().getValue());
-                log.error(errMessage);
-                promise.fail("zimbra.error.queue.task");
-            } else {
-                promise.complete();
-            }
-        }));
-
-        return promise.future();
+    protected Future<JsonArray> createTasksByBatch(Action<ICalTask> action, List<RecallTask> tasks, int batchSize) {
+        return null;
     }
 
 }

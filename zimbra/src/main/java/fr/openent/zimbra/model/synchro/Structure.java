@@ -19,16 +19,39 @@ package fr.openent.zimbra.model.synchro;
 
 import io.vertx.core.json.JsonObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Structure {
 
     public static final String UAI = "structure_uai";
     public static final String NAME = "structure_name";
     public static final String ID = "structure_id";
+    public List<String> ADMLS = new ArrayList<>();
 
     public Structure(JsonObject json) {
         uai = json.getString(UAI, "");
         name = json.getString(NAME, "");
         id = json.getString(ID, "");
+    }
+
+    public Structure(String id) {
+        this.id = id;
+    }
+
+    public Structure(String id, String name, String uai) {
+        this(id);
+        this.name = name;
+        this.uai = uai;
+    }
+
+    public Structure setADMLS(List<String> ADMLS) {
+        this.ADMLS = ADMLS;
+        return this;
+    }
+
+    public List<String> getADMLS() {
+        return this.ADMLS;
     }
 
     public String getUai() {

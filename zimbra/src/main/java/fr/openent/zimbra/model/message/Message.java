@@ -135,4 +135,12 @@ public class Message {
             }
         });
     }
+
+    public List<ZimbraEmail> getEmailAddresses() {
+        return emailAdresses;
+    }
+
+    public Map<String, Recipient> getUserMapping() {
+        return userMapping;
+    }
 }

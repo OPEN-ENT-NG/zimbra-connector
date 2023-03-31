@@ -18,13 +18,19 @@
 package fr.openent.zimbra.helper;
 
 import fr.openent.zimbra.Zimbra;
-import fr.openent.zimbra.service.*;
+import fr.openent.zimbra.service.DbMailService;
+import fr.openent.zimbra.service.DbMailServiceFactory;
+import fr.openent.zimbra.tasks.service.RecallMailService;
+import fr.openent.zimbra.service.StructureService;
 import fr.openent.zimbra.service.data.*;
-import fr.openent.zimbra.service.data.sql_task_services.SqlICalTaskService;
-import fr.openent.zimbra.service.data.sql_task_services.SqlRecallTaskService;
+import fr.openent.zimbra.tasks.service.impl.*;
 import fr.openent.zimbra.service.impl.*;
 import fr.openent.zimbra.service.messages.MobileThreadService;
 import fr.openent.zimbra.service.synchro.*;
+import fr.openent.zimbra.tasks.service.impl.data.SqlActionService;
+import fr.openent.zimbra.tasks.service.impl.data.SqlICalTaskService;
+import fr.openent.zimbra.tasks.service.impl.data.SqlRecallMailService;
+import fr.openent.zimbra.tasks.service.impl.data.SqlRecallTaskService;
 import fr.wseduc.webutils.email.EmailSender;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
@@ -65,12 +71,15 @@ public class ServiceManager {
     private final FrontPageService frontPageService;
     private final ReturnedMailService returnedMailService;
     private final RecallMailService recallMailService;
+    private final StructureService structureService;
 
     private SynchroUserService synchroUserService;
     private SynchroUserService synchroUserServiceApp;
     private final SynchroService synchroService;
     private SqlSynchroService sqlSynchroService;
     private SqlRecallTaskService sqlRecallTaskService;
+    private SqlActionService sqlActionService;
+    private SqlRecallMailService sqlRecallMailService;
     private final SynchroGroupService synchroGroupService;
     private final SynchroMailerService synchroMailerService;
     private SynchroAddressBookService synchroAddressBookService;
@@ -117,10 +126,11 @@ public class ServiceManager {
             this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
                     synchroAddressBookService, addressBookService, eb);
             this.sqlRecallTaskService = new SqlRecallTaskService(config.getDbSchema());
-            this.recallQueueService = new RecallQueueServiceImpl(config.getDbSchema(), this.sqlRecallTaskService);
             this.sqlICalTaskService = new SqlICalTaskService(config.getDbSchema());
-            this.icalQueueServiceImpl = new ICalQueueServiceImpl(config.getDbSchema(), this.sqlICalTaskService);
-
+            this.sqlActionService = new SqlActionService(config.getDbSchema());
+            this.sqlRecallMailService = new SqlRecallMailService(config.getDbSchema());
+            this.icalQueueServiceImpl = new ICalQueueServiceImpl(config.getDbSchema(), this.sqlICalTaskService, sqlActionService);
+            this.recallQueueService = new RecallQueueServiceImpl(config.getDbSchema(), this.sqlRecallTaskService, sqlActionService);
         }
 
         this.searchService = new SearchService(vertx);
@@ -130,17 +140,18 @@ public class ServiceManager {
         this.signatureService = new SignatureService(userService, soapService);
         this.messageService = new MessageService(soapService, folderService,
                 dbMailServiceApp, userService, synchroUserService);
+        this.recipientService = new RecipientService(messageService);
         if (rawConfig != null) this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig, webClient);
         this.notificationService = new NotificationService(pathPrefix, timelineHelper);
         this.communicationService = new CommunicationService();
         this.groupService = new GroupService(soapService, dbMailServiceApp, synchroUserService);
         this.expertModeService = new ExpertModeService();
-        this.recipientService = new RecipientService(messageService);
         this.mobileThreadService = new MobileThreadService(recipientService);
         this.redirectionService = new RedirectionService(eb, userService);
         this.frontPageService = new FrontPageService(folderService, userService);
         this.returnedMailService = new ReturnedMailService(new DbMailServiceFactory(vertx, sqlSynchroService).getDbMailService("postgres"), messageService, userService, notificationService, eb);
-        this.recallMailService = new RecallMailServiceImpl(new DbMailServiceFactory(vertx, sqlSynchroService).getDbMailService("postgres"), eb);
+        this.structureService = new StructureServiceImpl(neoService);
+        this.recallMailService = new RecallMailServiceImpl(sqlRecallMailService, neoService, recallQueueService, notificationService, structureService, recipientService);
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
@@ -209,6 +220,10 @@ public class ServiceManager {
         return userService;
     }
 
+    public SqlActionService getSqlActionService() {
+        return sqlActionService;
+    }
+
     public FolderService getFolderService() {
         return folderService;
     }
@@ -259,6 +274,10 @@ public class ServiceManager {
 
     public RecipientService getRecipientService() {
         return recipientService;
+    }
+
+    public StructureService getStructureService() {
+        return structureService;
     }
 
     public SynchroUserService getSynchroUserService() {

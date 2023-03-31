@@ -19,10 +19,7 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
-import fr.openent.zimbra.helper.ArrayHelper;
-import fr.openent.zimbra.helper.ConfigManager;
-import fr.openent.zimbra.helper.FutureHelper;
-import fr.openent.zimbra.helper.StringHelper;
+import fr.openent.zimbra.helper.*;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
@@ -429,6 +426,7 @@ public class MessageService {
             }
         }
     }
+
 
     public void translateMailFuture(String mail, Handler<AsyncResult<Recipient>> handler) {
         translateMail(mail, res -> {

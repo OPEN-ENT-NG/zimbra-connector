@@ -20,6 +20,7 @@ package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.JsonHelper;
+import fr.openent.zimbra.helper.PromiseHelper;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.openent.zimbra.model.constant.FrontConstants;
@@ -38,6 +39,7 @@ import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
@@ -537,6 +539,14 @@ public class UserService {
                 .put("groupIds", groupIds);
 
         eb.send(DIRECTORY_ADDRESS, action, handlerToAsyncHandler(validResultHandler(handler)));
+    }
+
+    public Future<JsonArray> getLocalAdministrators(String structure) {
+        Promise<JsonArray> promise = Promise.promise();
+
+        getLocalAdministrators(structure, PromiseHelper.handlerJsonArray(promise));
+
+        return promise.future();
     }
 
     public void getLocalAdministrators(String structure, Handler<Either<String, JsonArray>> handler) {
