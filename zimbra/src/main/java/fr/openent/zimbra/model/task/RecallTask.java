@@ -51,8 +51,4 @@ public class RecallTask extends Task<RecallTask> {
         return retry;
     }
 
-    @Override
-    public JsonObject toJson() {
-        return null;
-    }
 }
