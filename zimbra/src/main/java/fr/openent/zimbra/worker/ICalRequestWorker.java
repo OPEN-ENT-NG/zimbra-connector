@@ -12,7 +12,6 @@ import fr.openent.zimbra.service.CalendarService;
 import fr.openent.zimbra.tasks.service.QueueService;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
@@ -27,6 +26,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
 
     private ConfigManager configManager;
     public static final String CALENDAR_MODULE_ADDRESS = "net.atos.entng.calendar";
+    public static final String ZIMBRA_ACTION_ICS = "zimbra-platform-ics";
 
     private CalendarService calendarService;
     private QueueService<ICalTask> queueService;
@@ -86,51 +86,25 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
                 });
     }
 
-    private Future<Void> notifyFailToCalendarModule(String error) {
-        Promise<Void> promise = Promise.promise();
-
+    private Future<JsonObject> notifyFailToCalendarModule(String error) {
         JsonObject icalMessage = new JsonObject()
-                .put(Field.ACTION, "zimbra-platform-ics")
+                .put(Field.ACTION, ZIMBRA_ACTION_ICS)
                 .put(Field.STATUS, Field.KO)
-                .put(Field.RESULT, new JsonObject());
+                .put(Field.RESULT, new JsonObject().put(Field.ERROR, error));
 
-        EventBusHelper.requestJsonObject(eb, CALENDAR_MODULE_ADDRESS, icalMessage)
-                .onSuccess(res -> promise.complete())
-                .onFailure(err -> {
-                    String errMessage = String.format("[Zimbra@%s::notifyFailToCalendarModule]:  " +
-                                    "fail while sending error notification to calendar: %s",
-                            this.getClass().getSimpleName(), err.getMessage());
-                    promise.fail(ErrorEnum.ERROR_NOTIFY_CALENDAR.method());
-                    log.error(errMessage);
-                });
-
-        return promise.future();
+        return EventBusHelper.requestJsonObject(eb, CALENDAR_MODULE_ADDRESS, icalMessage);
     }
 
-    private Future<Void> sendICalToCalendarModule(String ical, ICalTask task) {
-        Promise<Void> promise = Promise.promise();
-
+    private Future<JsonObject> sendICalToCalendarModule(String ical, ICalTask task) {
         JsonObject icalMessage = new JsonObject()
-                .put(Field.ACTION, "zimbra-platform-ics")
+                .put(Field.ACTION, ZIMBRA_ACTION_ICS)
                 .put(Field.STATUS, Field.OK)
                 .put(Field.RESULT, new JsonObject()
                         .put(Field.ICS, ical)
                         .put(Field.PLATFORM, Field.ZIMBRAUC)
                         .put(Field.USERID, task.getAction().getUserId().toString()));
 
-        eb.request(CALENDAR_MODULE_ADDRESS, icalMessage, event -> {
-            if(event.failed()) {
-                String errMessage = String.format("[Zimbra@%s::sendICalToCalendarModule]:  " +
-                                "an error has occurred while sending ical: %s",
-                        this.getClass().getSimpleName(), event.cause().getMessage());
-                promise.fail("zimbra.ical.worker.eb.error");
-                log.error(errMessage);
-            } else {
-                promise.complete();
-            }
-        });
-
-        return promise.future();
+        return EventBusHelper.requestJsonObject(eb, CALENDAR_MODULE_ADDRESS, icalMessage);
     }
 
 

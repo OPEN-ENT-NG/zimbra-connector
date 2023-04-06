@@ -2,7 +2,6 @@ package fr.openent.zimbra.model.task;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.TaskStatus;
-import fr.openent.zimbra.model.IModel;
 import fr.openent.zimbra.model.action.Action;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
