@@ -1,6 +1,5 @@
 package fr.openent.zimbra.tasks.service;
 
-import com.sun.tools.javac.code.Attribute;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
 import fr.openent.zimbra.core.enums.ErrorEnum;
