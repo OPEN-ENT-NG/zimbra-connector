@@ -32,6 +32,7 @@ public abstract class DbTaskService<T extends Task<T>> {
 
     protected abstract Future<JsonArray> retrieveTasksDataFromDB(TaskStatus status);
     protected abstract Future<JsonObject> createTask(Action<T> action, T task);
+    protected abstract Future<Void> createLogsForTask(T task, String error);
 
     protected Future<JsonObject> editTaskStatus(T task, TaskStatus status) {
         Promise<JsonObject> promise = Promise.promise();

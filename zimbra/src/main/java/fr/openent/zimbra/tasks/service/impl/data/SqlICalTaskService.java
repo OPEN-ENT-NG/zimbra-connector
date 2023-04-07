@@ -79,6 +79,11 @@ public class SqlICalTaskService extends DbTaskService<ICalTask> {
     }
 
     @Override
+    protected Future<Void> createLogsForTask(ICalTask task, String error) {
+        return null;
+    }
+
+    @Override
     protected Future<JsonArray> createTasksByBatch(Action<ICalTask> action, List<RecallTask> tasks, int batchSize) {
         return null;
     }

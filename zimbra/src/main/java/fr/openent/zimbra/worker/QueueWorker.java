@@ -1,9 +1,11 @@
 package fr.openent.zimbra.worker;
 
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.QueueWorkerAction;
 import fr.openent.zimbra.core.enums.QueueWorkerStatus;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.helper.EventBusHelper;
 import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.task.Task;
 import fr.openent.zimbra.tasks.service.QueueService;
@@ -46,46 +48,55 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
     }
 
     @Override
-    public void handle(Message<JsonObject> event) {
-        QueueWorkerAction action = QueueWorkerAction.valueOf(event.body().getString(Field.ACTION));
-        int newMaxQueueSize = event.body().getInteger(Field.MAXQUEUESIZE, configManager.getZimbraRecallWorkerMaxQueue());
+    public void handle(Message<JsonObject> message) {
+        QueueWorkerAction action = QueueWorkerAction.valueOf(message.body().getString(Field.ACTION));
+        int newMaxQueueSize = message.body().getInteger(Field.MAXQUEUESIZE, configManager.getZimbraRecallWorkerMaxQueue());
 
         switch (action) {
             case REMOVE_TASK:
                 try {
-                    List<T> tasks = queueService.createTasksAndActionFromData(event.body().getJsonArray(Field.TASKS));
+                    List<T> tasks = queueService.createTasksAndActionFromData(message.body().getJsonArray(Field.TASKS));
                     removeTasks(tasks);
+                    message.reply(new JsonObject().put(Field.STATUS, Field.OK));
                 } catch (Exception e) {
                     String errMessage = String.format("[Zimbra@%s::handle]:  " +
                                     "an error has occurred while creating tasks: %s",
                             this.getClass().getSimpleName(), e.getMessage());
+                    EventBusHelper.eventBusError(errMessage, ErrorEnum.ERROR_CREATING_TASKS.method(), message);
                     log.error(errMessage);
                 }
                 break;
             case SYNC_QUEUE:
-                this.syncQueue();
+                this.syncQueue(message);
                 break;
             case CLEAR_QUEUE:
                 this.clearQueue();
+                message.reply(new JsonObject().put(Field.STATUS, Field.OK));
                 break;
             case START:
                 this.startQueue();
+                message.reply(new JsonObject().put(Field.STATUS, Field.OK));
                 break;
             case PAUSE:
                 this.pauseQueue();
+                message.reply(new JsonObject().put(Field.STATUS, Field.OK));
                 break;
             case SET_MAX_QUEUE_SIZE:
                 this.setMaxQueueSize(newMaxQueueSize);
+                message.reply(new JsonObject().put(Field.STATUS, Field.OK));
                 break;
             case GET_STATUS:
-                this.sendWorkerStatus(event);
+                this.sendWorkerStatus(message);
                 break;
             case GET_REMAINING_SIZE:
-                this.sendRemainingSize(event);
+                this.sendRemainingSize(message);
                 break;
             case UNKNOWN:
             default:
-                log.error("[ZimbraConnector@%s::handle] Unknown QueueWorkerAction: %s", this.getClass().getSimpleName(), action.getValue());
+                String errMessage = String.format("[ZimbraConnector@%s::handle] Unknown QueueWorkerAction: %s",
+                        this.getClass().getSimpleName(), action.getValue());
+                log.error(errMessage);
+                EventBusHelper.eventBusError(errMessage, ErrorEnum.ACTION_DOES_NOT_EXIST.method(), message);
                 break;
         }
     }
@@ -105,7 +116,7 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
         }
     }
 
-    public void addTask(T task) {
+    private void addTask(T task) {
         if (this.queue.size() + 1 > this.maxQueueSize) {
             log.error(String.format("[ZimbraConnector@%s:addTask] Queue is full", this.getClass().getSimpleName()));
             return;
@@ -121,14 +132,22 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
 
     public void clearQueue() { this.queue.clear(); }
 
-    public void syncQueue() {
+    public void syncQueue(Message<JsonObject> message) {
+        pauseQueue();
         queueService.getPendingTasks()
-                .onSuccess(this::addTasks)
+                .onSuccess(tasks -> {
+                    this.addTasks(tasks);
+                    message.reply(new JsonObject().put(Field.STATUS, Field.OK).put(Field.RESULT, new JsonObject()
+                            .put(Field.MESSAGE, Field.OK)));
+                    this.startQueue();
+                })
                 .onFailure(err -> {
                     String errMessage = String.format("[Zimbra@%s::syncQueue]:  " +
                                     "an error has occurred while creating task: %s",
                             this.getClass().getSimpleName(), err.getMessage());
+                    EventBusHelper.eventBusError(errMessage, ErrorEnum.TASKS_NOT_RETRIEVED.method(), message);
                     log.error(errMessage);
+                    startQueue();
                 });
     }
 
@@ -156,9 +175,7 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
     }
 
     public void removeTasks(List<T> tasks) {
-        for (T task : tasks) {
-            removeTask(task);
-        }
+        queue.removeAll(tasks);
     }
 
     public void removeTask(T task) {
