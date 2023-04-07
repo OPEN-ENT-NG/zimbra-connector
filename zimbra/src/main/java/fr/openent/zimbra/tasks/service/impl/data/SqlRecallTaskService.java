@@ -68,6 +68,11 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
         return promise.future();
     }
 
+    @Override
+    protected Future<Void> createLogsForTask(RecallTask task, String error) {
+        return null;
+    }
+
     /**
      * Create a transaction for a batch of task. Useful if you need to insert multiple batch of tasks in the db and
      * don't want to persist any if one of the batch fails.

@@ -21,6 +21,10 @@ public enum ErrorEnum {
     ERROR_RETRIEVING_ACTION("zimbra.error.retrieving.action"),
     ERROR_EDITING_TASK("zimbra.error.editing.task"),
     ERROR_UPDATING_TASK("zimbra.error.updating.task"),
+    ACTION_DOES_NOT_EXIST("action.does.not.exit"),
+    ERROR_NOTIFY_CALENDAR("fail.to.notify.calendar.module"),
+    USER_NOT_DEFINED("user.not.defined"),
+    ERROR_RETRIEVING_ICAL("error.retrieving.ical"),
     NO_MAIL_TO_RECALL("no.mail.to.recall");
 
     private final String errorEnum;

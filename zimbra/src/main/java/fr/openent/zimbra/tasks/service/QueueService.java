@@ -4,6 +4,7 @@ import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
 import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
+import fr.openent.zimbra.helper.FutureHelper;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.task.RecallTask;
 import fr.openent.zimbra.model.task.Task;
@@ -14,6 +15,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -48,22 +50,34 @@ public abstract class QueueService<T extends Task<T>> {
     }
 
     /**
+     * Used to create tasks depending on data retrieved from the db.
+     * @param action        Action linked to the task.
+     * @param taskData      Data about the specific task.
+     * @return              List of tasks instances.
+     * @throws Exception    If data does not match the model.
+     */
+    protected List<T> createTasksFromData(Action<T> action, JsonArray taskData) throws Exception {
+        throw new NotImplementedException();
+    }
+
+    /**
      * Insert a list of Task in the worker queue
      *
      * @param tasks List of Task to insert
      * @return
      */
-    public abstract Future<List<T>> insertTasksInQueue(List<T> tasks);
+    public Future<List<T>> insertTasksInQueue(List<T> tasks) {
+        throw new NotImplementedException();
+    }
+
+    protected abstract T createTaskFromData(JsonObject taskData, Action<T> action) throws Exception;
 
     protected Action<T> getActionById(int id) {
         return actionList.stream().filter(action -> action.getId() == id).findFirst().orElse(null);
     }
 
-
-
     public Future<T> createTask(Action<T> action, T task) {
         Promise<T> promise = Promise.promise();
-
         dbTaskService.createTask(action, task)
                 .onSuccess(taskData -> {
                     try {
@@ -86,15 +100,6 @@ public abstract class QueueService<T extends Task<T>> {
 
         return promise.future();
     }
-
-    /**
-     * Used to create tasks depending on data retrieved from the db.
-     * @param action        Action linked to the task.
-     * @param taskData      Data about the specific task.
-     * @return              List of tasks instances.
-     * @throws Exception    If data does not match the model.
-     */
-    protected abstract List<T> createTasksFromData(Action<T> action, JsonArray taskData) throws Exception;
 
     public Future<List<T>> createTasksByBatch(Action<T> action, List<RecallTask> tasks, int batchSize) {
         Promise<List<T>> promise = Promise.promise();
@@ -131,7 +136,42 @@ public abstract class QueueService<T extends Task<T>> {
         return promise.future();
     }
 
-    public abstract Future<List<T>> createTasks(Action<T> action, List<T> tasks);
+    public Future<List<T>> createTasks(Action<T> action, List<T> tasks) {
+        Promise<List<T>> promise = Promise.promise();
+        if (tasks.isEmpty())
+            return Future.failedFuture(ErrorEnum.ERROR_QUEUE_TASK.method());
+
+        List<Future<T>> futures = new ArrayList<>();
+        for (T task : tasks) {
+            futures.add(this.createTask(action, task));
+        }
+        FutureHelper.all(futures)
+                .onSuccess(res -> promise.complete(res.list()))
+                .onFailure(promise::fail);
+
+        return promise.future();
+    }
+
+    /**
+     * Set a new row of logs in the database with the detail of why task failed. Also, change the task status to failed
+     * @param task  The failed Task
+     * @return      Instance of task model with updated status.
+     */
+    public Future<T> logFailureOnTask(T task, String error) {
+        Promise<T> promise = Promise.promise();
+
+        dbTaskService.createLogsForTask(task, error)
+                .compose(res -> editTaskStatus(task, TaskStatus.ERROR))
+                .onSuccess(promise::complete)
+                .onFailure(err -> {
+                    String errMessage = String.format("[Zimbra@%s::logFailureOnTask]: error while saving logs: %s",
+                            this.getClass().getSimpleName(), err.getMessage());
+                    log.error(errMessage);
+                    promise.fail(ErrorEnum.ERROR_EDITING_TASK.method());
+                });
+
+        return promise.future();
+    }
 
     public Future<T> editTaskStatus(T task, TaskStatus status) {
         Promise<T> promise = Promise.promise();
@@ -164,8 +204,6 @@ public abstract class QueueService<T extends Task<T>> {
 
         return promise.future();
     }
-
-    protected abstract T createTaskFromData(JsonObject taskData, Action<T> action) throws Exception;
 
     /**
      * Retrieve all the pending tasks from DB.
@@ -234,6 +272,7 @@ public abstract class QueueService<T extends Task<T>> {
     }
 
     public Future<Action<T>> createAction(Action<T> action) {
+
         return createAction(action.getUserId(), action.getActionType(), action.getApproved());
     }
 
