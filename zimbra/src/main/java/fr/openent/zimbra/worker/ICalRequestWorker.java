@@ -9,6 +9,7 @@ import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.helper.StringHelper;
 import fr.openent.zimbra.model.task.ICalTask;
 import fr.openent.zimbra.service.CalendarService;
+import fr.openent.zimbra.tasks.helpers.CalendarEventBusHelper;
 import fr.openent.zimbra.tasks.service.QueueService;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -56,6 +57,13 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
         UserUtils.getUserInfos(this.eb, userId, user -> retrieveIcalAndNotifyCalendar(user, task));
     }
 
+    private JsonObject icalDataAsJson(String ical, ICalTask task) {
+        return new JsonObject()
+                .put(Field.ICS, ical)
+                .put(Field.PLATFORM, Field.ZIMBRAUC)
+                .put(Field.USERID, task.getAction().getUserId().toString());
+    }
+
     private void retrieveIcalAndNotifyCalendar(UserInfos user, ICalTask task) {
         calendarService.getICal(user)
                 .onSuccess(ical -> {
@@ -65,7 +73,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
                                         this.getClass().getSimpleName(), err.getMessage());
                                 log.error(errMessage);
                             });
-                    sendICalToCalendarModule(ical, task)
+                    notifyCalendarModule(CalendarEventBusHelper.createSuccedAnswerAndSetAction(ZIMBRA_ACTION_ICS, icalDataAsJson(ical, task)))
                             .onFailure(err -> {
                                 String errMessage = String.format("[Zimbra@%s::retrieveIcalAndNotifyCalendar]: error notify calendar: %s",
                                         this.getClass().getSimpleName(), err.getMessage());
@@ -77,7 +85,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
                             this.getClass().getSimpleName(), error.getMessage());
                     log.error(errMessage);
                     queueService.logFailureOnTask(task, ErrorEnum.ERROR_RETRIEVING_ICAL.method());
-                    notifyFailToCalendarModule(ErrorEnum.ERROR_NOTIFY_CALENDAR.method())
+                    notifyCalendarModule(CalendarEventBusHelper.generateFailureNotification(error.getMessage()))
                             .onFailure(err -> {
                                 String errorMessage = String.format("[Zimbra@%s::retrieveIcalAndNotifyCalendar]: error notify calendar: %s",
                                         this.getClass().getSimpleName(), err.getMessage());
@@ -86,25 +94,8 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
                 });
     }
 
-    private Future<JsonObject> notifyFailToCalendarModule(String error) {
-        JsonObject icalMessage = new JsonObject()
-                .put(Field.ACTION, ZIMBRA_ACTION_ICS)
-                .put(Field.STATUS, Field.KO)
-                .put(Field.RESULT, new JsonObject().put(Field.ERROR, error));
-
-        return EventBusHelper.requestJsonObject(eb, CALENDAR_MODULE_ADDRESS, icalMessage);
-    }
-
-    private Future<JsonObject> sendICalToCalendarModule(String ical, ICalTask task) {
-        JsonObject icalMessage = new JsonObject()
-                .put(Field.ACTION, ZIMBRA_ACTION_ICS)
-                .put(Field.STATUS, Field.OK)
-                .put(Field.RESULT, new JsonObject()
-                        .put(Field.ICS, ical)
-                        .put(Field.PLATFORM, Field.ZIMBRAUC)
-                        .put(Field.USERID, task.getAction().getUserId().toString()));
-
-        return EventBusHelper.requestJsonObject(eb, CALENDAR_MODULE_ADDRESS, icalMessage);
+    private Future<JsonObject> notifyCalendarModule(JsonObject message) {
+        return EventBusHelper.requestJsonObject(eb, CALENDAR_MODULE_ADDRESS, message);
     }
 
 
