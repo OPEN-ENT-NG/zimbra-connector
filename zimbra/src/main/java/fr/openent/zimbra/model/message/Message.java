@@ -1,5 +1,6 @@
 package fr.openent.zimbra.model.message;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.RecipientHelper;
 import fr.openent.zimbra.helper.ZimbraFlags;
 import fr.openent.zimbra.model.constant.FrontConstants;
@@ -88,6 +89,13 @@ public class Message {
         return fromZimbra(zimbraData, false);
     }
 
+    public Message(String id, String subject, String mailId, Long date) {
+        this.id = id;
+        this.subject = subject;
+        this.mailId = mailId;
+        this.date = date;
+    }
+
     public static Message fromZimbra(JsonObject zimbraData, boolean fromConv) throws IllegalArgumentException {
         Message message = new Message();
         message.id = zimbraData.getString(MSG_ID, "");
@@ -142,5 +150,12 @@ public class Message {
 
     public Map<String, Recipient> getUserMapping() {
         return userMapping;
+    }
+
+    public JsonObject toJson() {
+        return new JsonObject()
+                .put(Field.MAILID, mailId)
+                .put(Field.SUBJECT, subject)
+                .put(Field.MAIL_DATE, date);
     }
 }

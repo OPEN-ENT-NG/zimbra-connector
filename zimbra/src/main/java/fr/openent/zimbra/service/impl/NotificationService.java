@@ -22,7 +22,6 @@ import fr.openent.zimbra.model.MailAddress;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -121,6 +120,7 @@ public class NotificationService {
                 .put("user", user.getLastName() + " " + user.getFirstName())
                 .put("subject", subject)
                 .put("adminUri", "/admin/" + idStructure +"/management/zimbra")
+                .put("resourceUri", "/admin/" + idStructure +"/management/zimbra")
                 .put("pushNotif", new JsonObject().put("title", "push.notif.zimbra.delete.request").put("body", ""));
 
         timelineHelper.notifyTimeline(request, "messagerie.return-message",

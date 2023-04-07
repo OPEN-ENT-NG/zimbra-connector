@@ -16,13 +16,14 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.util.*;
 
 abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implements Handler<Message<JsonObject>> {
     protected final ConfigManager configManager = new ConfigManager(Vertx.currentContext().config());
     protected final ServiceManager serviceManager = ServiceManager.getServiceManager();
-    protected Logger log;
+    protected static Logger log = LoggerFactory.getLogger(QueueWorker.class);;
     protected boolean running = false;
     protected QueueWorkerStatus workerStatus = QueueWorkerStatus.NOT_STARTED;
 
@@ -102,7 +103,6 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
     }
     public void addTasks(List<T> tasks) {
         if (tasks == null || tasks.isEmpty()) {
-            log.error("[ZimbraConnector@ICalRequestWorker:addTasks] taskIds cannot be null or empty");
             return;
         }
         if (this.queue.size() + tasks.size() > this.maxQueueSize) {

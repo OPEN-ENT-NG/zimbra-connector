@@ -1,5 +1,6 @@
 package fr.openent.zimbra.model.soap;
 
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.model.constant.SoapConstants;
 import fr.openent.zimbra.model.message.Message;
 import io.vertx.core.AsyncResult;
@@ -62,6 +63,7 @@ public class SoapMessageHelper {
                                 "error while getting mail from zimbra: %s",
                         SoapMessageHelper.class.getSimpleName(), message.cause().getMessage());
                 log.error(errMessage);
+                promise.fail(ErrorEnum.ERROR_NO_SUCH_MESSAGE.method());
             }
         };
     }
