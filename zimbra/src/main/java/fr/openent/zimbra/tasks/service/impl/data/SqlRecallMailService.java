@@ -100,8 +100,6 @@ public class SqlRecallMailService extends DbRecallMail {
         return promise.future();
     }
 
-//    private Future<>
-
     private Future<JsonArray> retrieveRecallByStruct(String structureId) {
         Promise<JsonArray> promise = Promise.promise();
 

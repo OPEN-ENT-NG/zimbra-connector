@@ -405,7 +405,7 @@ public class ZimbraController extends BaseController {
                                                 "fail to create recall mail: %s",
                                         this.getClass().getSimpleName(), err.getMessage());
                                 log.error(errMessage);
-                                badRequest(request, err.getMessage());
+                                badRequest(request);
                             });
                 });
             });
@@ -418,7 +418,7 @@ public class ZimbraController extends BaseController {
         }
     }
 
-    @Put("/recall/accept")
+    @Put("/recall/:id/accept")
     @SecuredAction(value = "zimbra.recall.accept", type = ActionType.WORKFLOW)
     public void acceptRecall(HttpServerRequest request) {
         try {
@@ -430,7 +430,7 @@ public class ZimbraController extends BaseController {
                                         "fail to accept recall: %s",
                                 this.getClass().getSimpleName(), err.getMessage());
                         log.error(errMessage);
-                        badRequest(request, err.getMessage());
+                        badRequest(request);
                     });
         } catch (NumberFormatException e) {
             String errMessage = String.format("[Zimbra@%s::acceptRecall]:  " +
