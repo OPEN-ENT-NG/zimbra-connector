@@ -238,32 +238,31 @@ public class RecallMailServiceImpl implements RecallMailService {
     public Future<Void> deleteMessage (RecallMail recallMail, UserInfos user, String receiverEmail, String senderEmail) {
         Promise<Void> promise = Promise.promise();
 
-        messageService.retrieveMailFromZimbra(
-                new JsonObject()
-                        .put(Field.USER_MAIL, senderEmail)
-                        .put(Field.MID, recallMail.getMessage().getMailId().substring(1, recallMail.getMessage().getMailId().length() - 1)),
-                new JsonObject().put(Field.ID, user.getUserId()).put(Field.MAIL, receiverEmail),
-                mailId -> {
-                    if (mailId.isRight()) {
-                        messageService.deleteMessages(mailId.right().getValue(), user, false)
-                                .onSuccess(promise::complete)
-                                .onFailure(err -> {
-                                    String errMessage = String.format("[Zimbra@%s::deleteMessage]:  " +
-                                                    "error while deleting mail: %s",
-                                            this.getClass().getSimpleName(), err.getMessage());
-                                    log.error(errMessage);
-                                    promise.fail(ErrorEnum.ERROR_DELETING_MAIL.method());
-                                });
-                    } else {
-                        String errMessage = String.format("[Zimbra@%s::deleteMessage]:  " +
-                                        "error while retrieving mail id : %s",
-                                this.getClass().getSimpleName(), mailId.left().getValue());
-                        log.error(errMessage);
-                        promise.fail(ErrorEnum.ERROR_DELETING_MAIL.method());
-                    }
-                }
+        JsonObject returnedMailInfos = new JsonObject()
+                .put(Field.USER_MAIL, senderEmail)
+                //mid from zimbra comes like "<mid>", so we have to remove the "<" and ">"
+                .put(Field.MID, recallMail.getMessage().getMailId().substring(1, recallMail.getMessage().getMailId().length() - 1));
+        JsonObject userRecallInfos = new JsonObject().put(Field.ID, user.getUserId()).put(Field.MAIL, receiverEmail);
 
-        );
+        messageService.retrieveMailFromZimbra(returnedMailInfos, userRecallInfos)
+                .onSuccess(mail -> {
+                    messageService.deleteMessages(mail, user, false)
+                            .onSuccess(promise::complete)
+                            .onFailure(err -> {
+                                String errMessage = String.format("[Zimbra@%s::deleteMessage]:  " +
+                                                "error while deleting mail: %s",
+                                        this.getClass().getSimpleName(), err.getMessage());
+                                log.error(errMessage);
+                                promise.fail(ErrorEnum.ERROR_DELETING_MAIL.method());
+                            });
+                })
+                .onFailure(err -> {
+                    String errMessage = String.format("[Zimbra@%s::deleteMessage]:  " +
+                                    "error while retrieving mail id : %s",
+                            this.getClass().getSimpleName(), err.getMessage());
+                    log.error(errMessage);
+                    promise.fail(ErrorEnum.ERROR_DELETING_MAIL.method());
+                });
 
         return promise.future();
     }
@@ -293,14 +292,15 @@ public class RecallMailServiceImpl implements RecallMailService {
                 .onSuccess(correspondingRecall -> {
                     correspondingRecall.stream()
                             .filter(JsonObject.class::isInstance)
-                            .map(mail -> (JsonObject) mail)
+                            .map(JsonObject.class::cast)
                             .forEach(recallMessage -> {
                                 String recallId = recallMessage.getString(Field.LOCAL_MAIL_ID);
                                 String status = determineStatus(recallMessage);
                                 messageList
                                         .stream()
-                                        .filter(message -> message instanceof JsonObject && Objects.equals(((JsonObject) message).getString(Field.ID), recallId))
+                                        .filter(JsonObject.class::isInstance)
                                         .map(JsonObject.class::cast)
+                                        .filter(message -> message.getString(Field.ID).equals(recallId))
                                         .forEach(message -> message.put(Field.RETURNED, status));
                             });
                     promise.complete(messageList);

@@ -101,7 +101,7 @@ public class Field {
     public static final String MAIL = "mail";
     public static final String STRUCTURESID = "structuresId";
     public static final String RECALLMAILS = "recallMails";
-    public static final String STRUCTUREID = "structureId";
+    public static final String STRUCTUREID = "structureid";
 
     public static final String PLATFORM = "platform";
     public static final String ZIMBRAUC = "Zimbra";

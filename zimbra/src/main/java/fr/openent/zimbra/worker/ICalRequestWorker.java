@@ -71,7 +71,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
                                         this.getClass().getSimpleName(), err.getMessage());
                                 log.error(errMessage);
                             });
-                    notifyCalendarModule(CalendarEventBusHelper.createSuccedAnswerAndSetAction(ZIMBRA_ACTION_ICS, icalDataAsJson(ical, task)))
+                    notifyCalendarModule(CalendarEventBusHelper.createSucceedAnswerAndSetAction(ZIMBRA_ACTION_ICS, icalDataAsJson(ical, task)))
                             .onFailure(err -> {
                                 String errMessage = String.format("[Zimbra@%s::retrieveIcalAndNotifyCalendar]: error notify calendar: %s",
                                         this.getClass().getSimpleName(), err.getMessage());

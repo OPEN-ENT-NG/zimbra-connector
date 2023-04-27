@@ -422,7 +422,7 @@ public class ZimbraController extends BaseController {
     @SecuredAction(value = "zimbra.recall.accept", type = ActionType.WORKFLOW)
     public void acceptRecall(HttpServerRequest request) {
         try {
-            int recallId = Integer.parseInt(request.params().get(Field.ID));
+            int recallId = Integer.parseInt(request.getParam(Field.ID));
             recallMailService.acceptRecall(recallId)
                     .onSuccess(res -> renderJson(request, new JsonObject().put(Field.STATUS, Field.SUCCESS)))
                     .onFailure(err -> {
@@ -441,11 +441,11 @@ public class ZimbraController extends BaseController {
         }
     }
 
-    @Get("/recall/list")
+    @Get("/recall/structure/:structureid/list")
     @SecuredAction(value = "zimbra.recall.list", type = ActionType.WORKFLOW)
     public void listRecall(HttpServerRequest request) {
         try {
-            String structureId = request.params().get(Field.STRUCTUREID);
+            String structureId = request.getParam(Field.STRUCTUREID);
             recallMailService.getRecallMailsForOneStructure(structureId)
                     .onSuccess(mails -> renderJson(request, new JsonObject()
                             .put(Field.RECALLMAILS, new JsonArray(mails.stream().map(RecallMail::generateDataForFront).collect(Collectors.toList())))))

@@ -117,6 +117,42 @@ public class SqlRecallMailService extends DbRecallMail {
         return promise.future();
     }
 
+    private List<RecallMail> createRecallMailInstancesForStruct(JsonArray mailList) throws Exception {
+
+        return IModelHelper.toList(mailList, mailData -> {
+            long date;
+            Action<RecallTask> action = null;
+            try {
+                date = new SimpleDateFormat(DateUtils.DATE_FORMAT_SQL).parse(mailData.getString(Field.MAIL_DATE)).getTime();
+                action = new Action<>(new JsonObject(mailData.getString(Field.ACTION)));
+                action.addTasks(IModelHelper.toList(new JsonArray(mailData.getString(Field.TASKS)), taskData ->
+                                new RecallTask(taskData.getInteger(Field.ID),
+                                        TaskStatus.fromString(taskData.getString(Field.STATUS)),
+                                        null,
+                                        null,
+                                        null,
+                                        taskData.getString(Field.RECIPIENT_ADDRESS),
+                                        taskData.getInteger(Field.RETRY))
+                        )
+                );
+            } catch (Exception e) {
+                date = -1;
+            }
+
+            return new RecallMail(
+                    mailData.getInteger(Field.ID),
+                    new Message(
+                            null,
+                            mailData.getString(Field.OBJECT),
+                            mailData.getString(Field.MESSAGE_ID),
+                            date
+                    ),
+                    action,
+                    mailData.getString(Field.COMMENT)
+            );
+        });
+    }
+
     @Override
     public Future<List<RecallMail>> getRecallMailByStruct(String structureId) {
         Promise<List<RecallMail>> promise = Promise.promise();
@@ -124,37 +160,7 @@ public class SqlRecallMailService extends DbRecallMail {
         retrieveRecallByStruct(structureId)
                 .onSuccess(mailList -> {
                     try {
-                        promise.complete(IModelHelper.toList(mailList, mailData -> {
-                                long date;
-                                Action<RecallTask> action = null;
-                                try {
-                                    date = new SimpleDateFormat(DateUtils.DATE_FORMAT_SQL).parse(mailData.getString(Field.MAIL_DATE)).getTime();
-                                    action = new Action<>(new JsonObject(mailData.getString(Field.ACTION)));
-                                    action.addTasks(IModelHelper.toList(new JsonArray(mailData.getString(Field.TASKS)), taskData ->
-                                            new RecallTask(taskData.getInteger(Field.ID),
-                                                    TaskStatus.fromString(taskData.getString(Field.STATUS)),
-                                                    null,
-                                                    null,
-                                                    null,
-                                                    taskData.getString(Field.RECIPIENT_ADDRESS),
-                                                    taskData.getInteger(Field.RETRY))
-                                            )
-                                    );
-                                } catch (Exception e) {
-                                    date = -1;
-                                }
-                                return new RecallMail(
-                                        mailData.getInteger(Field.ID),
-                                        new Message(
-                                                null,
-                                                mailData.getString(Field.OBJECT),
-                                                mailData.getString(Field.MESSAGE_ID),
-                                                date
-                                                ),
-                                        action,
-                                        mailData.getString(Field.COMMENT)
-                                        );
-                        }));
+                        promise.complete(createRecallMailInstancesForStruct(mailList));
                     } catch (Exception e) {
                         promise.complete(new ArrayList<>());
                         String errMessage = String.format("[Zimbra@%s::getRecallMailByStruct]:  " +

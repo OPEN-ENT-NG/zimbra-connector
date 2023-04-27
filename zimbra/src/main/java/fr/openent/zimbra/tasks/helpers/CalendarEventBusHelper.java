@@ -16,7 +16,7 @@ public class CalendarEventBusHelper {
                 .put(Field.ERROR, error);
     }
 
-    public static JsonObject createSuccedAnswerAndSetAction(String action, JsonObject result) {
+    public static JsonObject createSucceedAnswerAndSetAction(String action, JsonObject result) {
         return generateSuccessNotification(result)
                 .put(Field.ACTION, action);
     }
