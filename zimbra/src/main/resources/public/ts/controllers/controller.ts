@@ -836,7 +836,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             $scope.lightbox.show = false;
             template.close("lightbox");
             var data: any = {id: id, comment: comment};
-            let response = await http.put("/zimbra/return", data);
+            let response = await http.put("/zimbra/recall", data);
             if(response.status == 200) {
                 $scope.refresh();
                 $scope.$apply();

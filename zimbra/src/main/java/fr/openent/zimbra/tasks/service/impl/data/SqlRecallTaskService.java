@@ -3,6 +3,7 @@ package fr.openent.zimbra.tasks.service.impl.data;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
+import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.PromiseHelper;
 import fr.openent.zimbra.helper.TransactionHelper;
 import fr.openent.zimbra.model.TransactionElement;
@@ -24,22 +25,26 @@ import java.util.List;
 public class SqlRecallTaskService extends DbTaskService<RecallTask> {
     private final String recallMailTable = schema + "." + "recall_mails";
     private final String taskTable = schema + "." + "recall_recipient_tasks";
+    private final String logTaskTable = schema + "." + "recall_task_logs";
     private static final Logger log = LoggerFactory.getLogger(SqlRecallTaskService.class);
+    private final int queueMaxSize;
 
-    public SqlRecallTaskService(String schema) {
+    public SqlRecallTaskService(String schema, int queueMaxSize) {
         super(schema);
+        this.queueMaxSize = queueMaxSize;
     }
 
     @Override
     protected Future<JsonArray> retrieveTasksDataFromDB(TaskStatus status) {
         Promise<JsonArray> promise = Promise.promise();
 
-        String query = "SELECT * " +
+        String query = "SELECT recall_tasks.*, to_json(actions.*) as action, to_json(recall_mails.*) as recall_mail FROM " +
                 this.taskTable + " as recall_tasks " +
-                "JOIN " + this.actionTable + " as actions" + " on actions.id = recall_tasks.action_id" +
+                "JOIN " + this.actionTable + " as actions" + " on actions.id = recall_tasks.action_id " +
                 "JOIN " + this.recallMailTable + " as recall_mails" + " on actions.id = recall_mails.action_id " +
-                "WHERE recall_tasks.status = ?;";
-        JsonArray params = new JsonArray().add(status.method());
+                "WHERE recall_tasks.status = ? AND actions.approved AND recall_tasks.retry < 5 " +
+                "GROUP BY recall_tasks.id, recall_tasks.recipient_address, recall_tasks.action_id, retry, status, recall_mail_id, receiver_id, actions.id, recall_mails.id LIMIT ?;";
+        JsonArray params = new JsonArray().add(status.method()).add(queueMaxSize);
 
         Sql.getInstance().prepared(query, params, SqlResult.validResultHandler(PromiseHelper.handlerJsonArray(promise)));
 
@@ -52,14 +57,15 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
 
         String query = "INSERT INTO " +
                 this.taskTable +
-                " (" + Field.ACTION_ID + "," + Field.STATUS + "," + Field.RECALL_MAIL_ID + "," + Field.RECEIVER_ID + "," + Field.RETRY + ") " +
+                " (" + Field.ACTION_ID + "," + Field.STATUS + "," + Field.RECIPIENT_ADDRESS + "," + Field.RECALL_MAIL_ID + "," + Field.RECEIVER_ID + "," + Field.RETRY + ") " +
                 "VALUES (?, ?, ?, ?, ?)" +
                 "RETURNING *";
 
         JsonArray values = new JsonArray();
         values
                 .add(action.getId())
-                .add(task.getStatus())
+                .add(task.getStatus().toString())
+                .add(task.getReceiverEmail())
                 .add(task.getRecallMessage().getRecallId())
                 .add(task.getReceiverId().toString())
                 .add(0);
@@ -70,7 +76,28 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
 
     @Override
     protected Future<Void> createLogsForTask(RecallTask task, String error) {
-        return null;
+        Promise<Void> promise = Promise.promise();
+
+        String query = "INSERT INTO " +
+                this.logTaskTable +
+                " VALUES (?, ?);";
+
+        JsonArray values = new JsonArray();
+        values.add(task.getId()).add(error);
+
+        Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(res -> {
+            if (res.isRight()) {
+                promise.complete();
+            } else {
+                String errMessage = String.format("[Zimbra@%s::createLogsForTask]:  " +
+                                "an error has occurred during create recall logs: %s",
+                        this.getClass().getSimpleName(), res.left().getValue());
+                log.error(errMessage);
+                promise.fail(ErrorEnum.ERROR_CREATING_LOGS.method());
+            }
+        }));
+
+        return promise.future();
     }
 
     /**
@@ -88,13 +115,19 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
                 .append("INSERT INTO ")
                 .append(this.taskTable)
                 .append(" (")
-                .append(Field.ACTION_ID).append(",").append(Field.STATUS).append(",").append(Field.RECALL_MAIL_ID).append(",").append(Field.RECEIVER_ID).append(",").append(Field.RETRY).append(") ")
+                .append(Field.ACTION_ID).append(",")
+                .append(Field.STATUS).append(",")
+                .append(Field.RECIPIENT_ADDRESS).append(",")
+                .append(Field.RECALL_MAIL_ID).append(",")
+                .append(Field.RECEIVER_ID).append(",")
+                .append(Field.RETRY).append(") ")
                 .append("VALUES ");
         tasks.forEach(task -> {
-            query.append("(?, ?, ?, ?, ?),");
+            query.append("(?, ?, ?, ?, ?, ?),");
             params
                     .add(action.getId())
-                    .add(task.getStatus())
+                    .add(task.getStatus().method())
+                    .add(task.getReceiverEmail())
                     .add(task.getRecallMessage().getRecallId())
                     .add(task.getReceiverId().toString())
                     .add(0);

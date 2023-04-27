@@ -35,7 +35,7 @@ public class SqlICalTaskService extends DbTaskService<ICalTask> {
     @Override
     protected Future<JsonArray> retrieveTasksDataFromDB(TaskStatus status) {
         Promise<JsonArray> promise = Promise.promise();
-        String query = "SELECT ical_tasks.*, actions.user_id, actions.created_at, actions.type, actions.approved "
+        String query = "SELECT ical_tasks.*, to_json(actions.*) as action "
         + "FROM " + this.taskTable + " as ical_tasks "
         + "join " + this.actionTable + " as actions on actions.id = ical_tasks.action_id "
         + "WHERE " + "ical_tasks.status = ? "

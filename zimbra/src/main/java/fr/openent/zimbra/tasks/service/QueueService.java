@@ -215,7 +215,8 @@ public abstract class QueueService<T extends Task<T>> {
         dbTaskService.retrieveTasksDataFromDB(TaskStatus.PENDING)
                 .onSuccess(taskData -> {
                     try {
-                        promise.complete(createTasksAndActionFromData(taskData));
+                        List<T> tasks = createTasksAndActionFromData(taskData);
+                        promise.complete(tasks);
                     } catch (Exception e) {
                         String errMessage = String.format("[Zimbra@%s::getPendingTasks]: fail fetching model from data: %s",
                                 this.getClass().getSimpleName(), e.getMessage());
@@ -308,7 +309,7 @@ public abstract class QueueService<T extends Task<T>> {
             Action<T> action;
             action = getActionById(taskData.getInteger(Field.ACTION_ID, null));
             if (action == null) {
-                action = new Action<>(taskData);
+                action = new Action<>(new JsonObject(taskData.getString(Field.ACTION)));
                 this.actionList.add(action);
             }
             T newTask = createTaskFromData(taskData, action);

@@ -1,29 +1,36 @@
 package fr.openent.zimbra.tasks.service.impl;
 
+import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
 import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
-import fr.openent.zimbra.helper.ConfigManager;
+import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.helper.MessageHelper;
+import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.message.Message;
 import fr.openent.zimbra.model.message.RecallMail;
 import fr.openent.zimbra.model.soap.SoapMessageHelper;
 import fr.openent.zimbra.model.task.RecallTask;
+import fr.openent.zimbra.service.impl.MessageService;
 import fr.openent.zimbra.service.impl.NotificationService;
 import fr.openent.zimbra.service.impl.RecipientService;
 import fr.openent.zimbra.tasks.service.DbRecallMail;
 import fr.openent.zimbra.tasks.service.RecallMailService;
 import fr.openent.zimbra.service.StructureService;
-import fr.openent.zimbra.service.data.Neo4jZimbraService;
+import fr.openent.zimbra.utils.DateUtils;
+import fr.wseduc.webutils.Either;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.lang3.NotImplementedException;
 import org.entcore.common.user.UserInfos;
 
-import java.util.List;
-import java.util.UUID;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static fr.openent.zimbra.model.constant.ZimbraConstants.ADDR_TYPE_FROM;
@@ -34,22 +41,45 @@ public class RecallMailServiceImpl implements RecallMailService {
     private final StructureService structureService;
     private final DbRecallMail dbMailService;
     private final RecipientService recipientService;
+    private final MessageService messageService;
 
     private static final int BATCH_SIZE = 100;
     private static final Logger log = LoggerFactory.getLogger(RecallMailServiceImpl.class);
 
-    public RecallMailServiceImpl(DbRecallMail dbMailService, Neo4jZimbraService neo4jZimbraService, RecallQueueServiceImpl recallQueueService,
+    public RecallMailServiceImpl(DbRecallMail dbMailService, MessageService messageService, RecallQueueServiceImpl recallQueueService,
                                  NotificationService notificationService, StructureService structureService, RecipientService recipientService) {
         this.dbMailService = dbMailService;
         this.recallQueueService = recallQueueService;
         this.notificationService = notificationService;
         this.structureService = structureService;
         this.recipientService = recipientService;
+        this.messageService = messageService;
     }
 
     public Future<List<RecallMail>> getRecallMails () {
         throw new NotImplementedException();
     }
+
+    @Override
+    public Future<Void> acceptRecall(int recallId) {
+        Promise<Void> promise = Promise.promise();
+
+        dbMailService.acceptRecall(recallId)
+                .onSuccess(v -> promise.complete())
+                .onFailure(err -> {
+                    String errMessage = String.format("[Zimbra@%s::acceptRecall]:  " +
+                                    "error while accepting recall: %s",
+                            this.getClass().getSimpleName(), err.getMessage());
+                    log.error(errMessage);
+                    promise.fail(ErrorEnum.FAIL_ACCEPT_RECALL.method());
+                });
+
+        return promise.future();
+    }
+
+    public Future<List<RecallMail>> getRecallMailsForOneStructure (String structureId) {
+        return dbMailService.getRecallMailByStruct(structureId);
+   }
 
     private Future<Message> fetchUserIdForRecalledMessage(Message message) {
         Promise<Message> promise = Promise.promise();
@@ -119,7 +149,12 @@ public class RecallMailServiceImpl implements RecallMailService {
                 .stream()
                 .filter(addr -> !addr.getAddrType().equals(ADDR_TYPE_FROM) && mail.getMessage().getUserMapping().containsKey(addr.getAddress()))
                 .map(addr -> new RecallTask(
-                        -1, TaskStatus.PENDING, mail.getAction(), mail, UUID.fromString(mail.getMessage().getUserMapping().get(addr.getAddress()).getUserId()), 0)
+                        -1,
+                        TaskStatus.PENDING,
+                        mail.getAction(),
+                        mail, UUID.fromString(mail.getMessage().getUserMapping().get(addr.getAddress()).getUserId()),
+                        addr.getAddress(),
+                        0)
                 )
                 .collect(Collectors.toList()
         );
@@ -200,7 +235,74 @@ public class RecallMailServiceImpl implements RecallMailService {
         throw new NotImplementedException();
     }
 
-    public Future<Void> deleteMessage (String recallMailId) {
-        return null;
+    public Future<Void> deleteMessage (RecallMail recallMail, UserInfos user, String receiverEmail, String senderEmail) {
+        Promise<Void> promise = Promise.promise();
+
+        JsonObject returnedMailInfos = new JsonObject()
+                .put(Field.USER_MAIL, senderEmail)
+                //mid from zimbra comes like "<mid>", so we have to remove the "<" and ">"
+                .put(Field.MID, recallMail.getMessage().getMailId().substring(1, recallMail.getMessage().getMailId().length() - 1));
+        JsonObject userRecallInfos = new JsonObject().put(Field.ID, user.getUserId()).put(Field.MAIL, receiverEmail);
+
+        messageService.retrieveMailFromZimbra(returnedMailInfos, userRecallInfos)
+                .compose(mail -> messageService.deleteMessages(mail, user, false))
+                .onSuccess(promise::complete)
+                .onFailure(err -> {
+                    String errMessage = String.format("[Zimbra@%s::deleteMessage]:  " +
+                                    "error while deleting mail: %s",
+                            this.getClass().getSimpleName(), err.getMessage());
+                    log.error(errMessage);
+                    promise.fail(ErrorEnum.ERROR_DELETING_MAIL.method());
+                });
+
+        return promise.future();
     }
+
+    private String determineStatus(JsonObject mailData) {
+        try {
+            if (!mailData.getBoolean(Field.APPROVED)) {
+                return Field.CAPITAL_WAITING;
+            } else if (mailData.getInteger(TaskStatus.PENDING.method()) > 0) {
+                return Field.CAPITAL_PROGRESS;
+            } else {
+                return Field.CAPITAL_REMOVED;
+            }
+        } catch (Exception e) {
+            String errMessage = String.format("[Zimbra@%s::determineStatus]:  " +
+                            "error while retrieving status from recall data : %s",
+                    this.getClass().getSimpleName(), e.getMessage());
+            log.error(errMessage);
+            return "";
+        }
+    }
+
+    @Override
+    public Future<JsonArray> renderRecallMails(UserInfos user, JsonArray messageList) {
+        Promise<JsonArray> promise = Promise.promise();
+        dbMailService.checkRecalledInMailList(user.getUserId(), messageList)
+                .onSuccess(correspondingRecall -> {
+                    correspondingRecall.stream()
+                            .filter(JsonObject.class::isInstance)
+                            .map(JsonObject.class::cast)
+                            .forEach(recallMessage -> {
+                                String recallId = recallMessage.getString(Field.LOCAL_MAIL_ID);
+                                String status = determineStatus(recallMessage);
+                                messageList
+                                        .stream()
+                                        .filter(JsonObject.class::isInstance)
+                                        .map(JsonObject.class::cast)
+                                        .filter(message -> message.getString(Field.ID).equals(recallId))
+                                        .forEach(message -> message.put(Field.RETURNED, status));
+                            });
+                    promise.complete(messageList);
+                })
+                .onFailure(err -> {
+                    String errMessage = String.format("[Zimbra@%s::determineStatus]:  " +
+                                    "error while retrieving status from recall data : %s",
+                            this.getClass().getSimpleName(), err.getMessage());
+                    log.error(errMessage);
+                    promise.fail(ErrorEnum.ERROR_RECALL_RETRIEVE.method());
+                });
+        return promise.future();
+       }
 }

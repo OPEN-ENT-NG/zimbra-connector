@@ -19,6 +19,7 @@ package fr.openent.zimbra.service.impl;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.helper.*;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
@@ -1165,6 +1166,24 @@ public class MessageService {
                 result.handle(new Either.Right<>(new JsonObject()));
             }
         });
+    }
+
+    public Future<List<String>> retrieveMailFromZimbra(JsonObject returnedMail, JsonObject toUserInfos) {
+        Promise<List<String>> promise = Promise.promise();
+
+        retrieveMailFromZimbra(returnedMail, toUserInfos, res -> {
+            if (res.isRight()) {
+                promise.complete(res.right().getValue());
+            } else {
+                String errMessage = String.format("[Zimbra@%s::retrieveMailFromZimbra]:  " +
+                                "error while retrieving mail from zimbra : %s",
+                        this.getClass().getSimpleName(), res.left().getValue());
+                log.error(errMessage);
+                promise.fail(ErrorEnum.ERROR_RETRIEVING_MAIL.method());
+            }
+        });
+
+        return promise.future();
     }
 
     /**

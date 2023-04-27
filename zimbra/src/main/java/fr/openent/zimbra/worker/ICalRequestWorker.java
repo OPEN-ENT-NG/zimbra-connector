@@ -10,7 +10,6 @@ import fr.openent.zimbra.helper.StringHelper;
 import fr.openent.zimbra.model.task.ICalTask;
 import fr.openent.zimbra.service.CalendarService;
 import fr.openent.zimbra.tasks.helpers.CalendarEventBusHelper;
-import fr.openent.zimbra.tasks.service.QueueService;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -30,7 +29,6 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
     public static final String ZIMBRA_ACTION_ICS = "zimbra-platform-ics";
 
     private CalendarService calendarService;
-    private QueueService<ICalTask> queueService;
 
     @Override
     public void start() throws Exception {
@@ -39,7 +37,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
         this.setMaxQueueSize(configManager.getZimbraICalWorkerMaxQueue());
         this.eb.localConsumer(this.getClass().getName(), this);
         this.calendarService = ServiceManager.getServiceManager().getCalendarService();
-        this.queueService = ServiceManager.getServiceManager().getICalQueueService();
+        this.queueService = serviceManager.getICalQueueService();
     }
 
     @Override
@@ -73,7 +71,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
                                         this.getClass().getSimpleName(), err.getMessage());
                                 log.error(errMessage);
                             });
-                    notifyCalendarModule(CalendarEventBusHelper.createSuccedAnswerAndSetAction(ZIMBRA_ACTION_ICS, icalDataAsJson(ical, task)))
+                    notifyCalendarModule(CalendarEventBusHelper.createSucceedAnswerAndSetAction(ZIMBRA_ACTION_ICS, icalDataAsJson(ical, task)))
                             .onFailure(err -> {
                                 String errMessage = String.format("[Zimbra@%s::retrieveIcalAndNotifyCalendar]: error notify calendar: %s",
                                         this.getClass().getSimpleName(), err.getMessage());

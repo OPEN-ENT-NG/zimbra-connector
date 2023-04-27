@@ -3,6 +3,7 @@ package fr.openent.zimbra.tasks.service;
 
 import fr.openent.zimbra.model.message.RecallMail;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonArray;
 import org.entcore.common.user.UserInfos;
 
 import java.util.List;
@@ -15,6 +16,14 @@ public interface RecallMailService {
      * @return
      */
     public Future<List<RecallMail>> getRecallMails ();
+
+    public Future<Void> acceptRecall(int recallId);
+
+    /**
+     * Get Recall mails for a specific structure
+     * @return
+     */
+    public Future<List<RecallMail>> getRecallMailsForOneStructure (String structureId);
 
     /**
      *
@@ -42,8 +51,10 @@ public interface RecallMailService {
 
     /**
      *
-     * @param recallMailId
+     * @param recallMail
      * @return
      */
-    public Future<Void> deleteMessage (String recallMailId);
+    public Future<Void> deleteMessage (RecallMail recallMail, UserInfos user, String receiverEmail, String senderEmail);
+
+    public Future<JsonArray> renderRecallMails(UserInfos user, JsonArray messageList);
 }
