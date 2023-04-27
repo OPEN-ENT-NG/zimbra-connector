@@ -15,6 +15,7 @@ public enum ErrorEnum {
     ERROR_QUEUE_TASK("zimbra.error.queue.task"),
     ERROR_TASK_RETRIEVE("zimbra.error.task.retrieve"),
     ERROR_RECALL_RETRIEVE("zimbra.error.retrieve.recalls"),
+    ERROR_ACTION_UPDATE("zimbra.error.update.action"),
     ERROR_FETCHING_TASK("zimbra.error.fetching.task"),
     ERROR_NO_SUCH_MESSAGE("zimbra.recall.no.such.message"),
     ERROR_FETCHING_ACTION("zimbra.error.fetching.action"),

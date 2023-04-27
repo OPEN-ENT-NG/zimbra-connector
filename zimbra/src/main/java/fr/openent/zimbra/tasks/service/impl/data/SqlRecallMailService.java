@@ -181,8 +181,8 @@ public class SqlRecallMailService extends DbRecallMail {
     }
 
     @Override
-    public Future<JsonObject> acceptRecall(int recallId) {
-        Promise<JsonObject> promise = Promise.promise();
+    public Future<Void> acceptRecall(int recallId) {
+        Promise<Void> promise = Promise.promise();
 
         String query = "UPDATE " + this.actionTable +
                 " SET approved = true " +
@@ -190,7 +190,17 @@ public class SqlRecallMailService extends DbRecallMail {
 
         JsonArray values = new JsonArray().add(recallId);
 
-        Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(PromiseHelper.handlerJsonObject(promise)));
+        Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(res -> {
+            if (res.isRight()) {
+                promise.complete();
+            } else {
+                String errMessage = String.format("[Zimbra@%s::acceptRecall]:  " +
+                                "error while updating recall acceptation in db: %s",
+                        this.getClass().getSimpleName(), res.left().getValue());
+                log.error(errMessage);
+                promise.fail(ErrorEnum.ERROR_ACTION_UPDATE.method());
+            }
+        }));
 
         return promise.future();
     }

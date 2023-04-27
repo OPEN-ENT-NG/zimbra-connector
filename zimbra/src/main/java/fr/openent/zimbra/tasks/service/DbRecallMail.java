@@ -24,7 +24,7 @@ public abstract class DbRecallMail {
      */
     public abstract Future<RecallMail> createRecallMail(RecallMail recallMail, UserInfos user);
     public abstract Future<List<RecallMail>> getRecallMailByStruct(String structureId);
-    public abstract Future<JsonObject> acceptRecall(int recallId);
+    public abstract Future<Void> acceptRecall(int recallId);
 
     public abstract Future<JsonArray> checkRecalledInMailList(String userId, JsonArray messageList);
 }

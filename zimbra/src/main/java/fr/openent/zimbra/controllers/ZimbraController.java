@@ -450,14 +450,14 @@ public class ZimbraController extends BaseController {
                     .onSuccess(mails -> renderJson(request, new JsonObject()
                             .put(Field.RECALLMAILS, new JsonArray(mails.stream().map(RecallMail::generateDataForFront).collect(Collectors.toList())))))
                     .onFailure(err -> {
-                        String errMessage = String.format("[Zimbra@%s::acceptRecall]:  " +
+                        String errMessage = String.format("[Zimbra@%s::listRecall]:  " +
                                         "fail to accept recall: %s",
                                 this.getClass().getSimpleName(), err.getMessage());
                         log.error(errMessage);
                         badRequest(request);
                     });
         } catch (NumberFormatException e) {
-            String errMessage = String.format("[Zimbra@%s::acceptRecall]:  " +
+            String errMessage = String.format("[Zimbra@%s::listRecall]:  " +
                             "fail to accept recall: %s",
                     this.getClass().getSimpleName(), e.getMessage());
             log.error(errMessage);

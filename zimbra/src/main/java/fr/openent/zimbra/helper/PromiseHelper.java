@@ -17,7 +17,7 @@ public class PromiseHelper {
         throw new IllegalStateException("Utility PromiseHelper class");
     }
 
-    public static Handler<Either<String, JsonObject>> handlerJsonObject(Promise<JsonObject> promise) {
+    public static <T> Handler<Either<String, T>> handlerJsonObject(Promise<T> promise) {
         return event -> {
             if (event.isRight()) {
                 promise.complete(event.right().getValue());
