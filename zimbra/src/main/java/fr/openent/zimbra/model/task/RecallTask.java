@@ -10,12 +10,14 @@ import java.util.UUID;
 
 public class RecallTask extends Task<RecallTask> {
     private final RecallMail recallMessage;
+    private String receiverEmail;
     private final UUID receiverId;
     private final int retry;
 
-    public RecallTask(long id, TaskStatus status, Action<RecallTask> action, RecallMail recallMessage, UUID receiverId, int retry) {
+    public RecallTask(long id, TaskStatus status, Action<RecallTask> action, RecallMail recallMessage, UUID receiverId, String receiverEmail, int retry) {
         super(id, status, action);
         this.recallMessage = recallMessage;
+        this.receiverEmail = receiverEmail;
         this.receiverId = receiverId;
         this.retry = retry;
     }
@@ -29,6 +31,7 @@ public class RecallTask extends Task<RecallTask> {
             this.id = dbData.getInteger(Field.ID, -1);
             this.receiverId = UUID.fromString(dbData.getString(Field.RECEIVER_ID));
             this.retry = dbData.getInteger(Field.RETRY);
+            this.receiverEmail = dbData.getString(Field.RECIPIENT_ADDRESS);
             this.recallMessage = recallMessage;
         } catch (Exception e) {
             throw new Exception(String.format("[Zimbra@%s::RecallTask] Bad field format", this.getClass().getSimpleName()));
@@ -51,4 +54,7 @@ public class RecallTask extends Task<RecallTask> {
         return retry;
     }
 
+    public String getReceiverEmail() {
+        return receiverEmail;
+    }
 }

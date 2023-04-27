@@ -32,14 +32,16 @@ public class RecallQueueServiceImpl extends QueueService<RecallTask> {
                 action,
                 null,
                 UUID.fromString(data.getString(Field.RECEIVER_ID)),
+                data.getString(Field.RECIPIENT_ADDRESS),
                 data.getInteger(Field.RETRY)));
     }
 
     protected RecallTask createTaskFromData(JsonObject taskData, Action<RecallTask> action) throws Exception {
-        Message message = Message.fromZimbra(new JsonObject().put(Field.MESSAGE_ID, taskData.getString(Field.MESSAGE_ID)));
+        JsonObject recallData = new JsonObject(taskData.getString(Field.RECALL_MAIL));
+        Message message = Message.fromZimbra(new JsonObject().put(Field.MID, recallData.getString(Field.MESSAGE_ID)));
         return new RecallTask(      taskData,
                                     action,
-                                    new RecallMail(taskData.getInteger(Field.RECALL_MAIL_ID), message)
+                                    new RecallMail(taskData.getInteger(Field.RECALL_MAIL_ID), message,recallData.getString(Field.USER_MAIL))
         );
     }
 

@@ -30,6 +30,7 @@ import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.model.constant.ModuleConstants;
+import fr.openent.zimbra.model.message.RecallMail;
 import fr.openent.zimbra.model.task.ICalTask;
 import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.security.WorkflowActionUtils;
@@ -73,6 +74,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static fr.openent.zimbra.model.constant.FrontConstants.MESSAGE_ID;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.ZIMBRA_MAIL;
@@ -416,7 +418,52 @@ public class ZimbraController extends BaseController {
         }
     }
 
+    @Put("/recall/:id/accept")
+    @SecuredAction(value = "zimbra.recall.accept", type = ActionType.WORKFLOW)
+    public void acceptRecall(HttpServerRequest request) {
+        try {
+            int recallId = Integer.parseInt(request.getParam(Field.ID));
+            recallMailService.acceptRecall(recallId)
+                    .onSuccess(res -> renderJson(request, new JsonObject().put(Field.STATUS, Field.SUCCESS)))
+                    .onFailure(err -> {
+                        String errMessage = String.format("[Zimbra@%s::acceptRecall]:  " +
+                                        "fail to accept recall: %s",
+                                this.getClass().getSimpleName(), err.getMessage());
+                        log.error(errMessage);
+                        badRequest(request);
+                    });
+        } catch (NumberFormatException e) {
+            String errMessage = String.format("[Zimbra@%s::acceptRecall]:  " +
+                            "fail to accept recall: %s",
+                    this.getClass().getSimpleName(), e.getMessage());
+            log.error(errMessage);
+            badRequest(request);
+        }
+    }
 
+    @Get("/recall/structure/:structureid/list")
+    @SecuredAction(value = "zimbra.recall.list", type = ActionType.WORKFLOW)
+    public void listRecall(HttpServerRequest request) {
+        try {
+            String structureId = request.getParam(Field.STRUCTUREID);
+            recallMailService.getRecallMailsForOneStructure(structureId)
+                    .onSuccess(mails -> renderJson(request, new JsonObject()
+                            .put(Field.RECALLMAILS, new JsonArray(mails.stream().map(RecallMail::generateDataForFront).collect(Collectors.toList())))))
+                    .onFailure(err -> {
+                        String errMessage = String.format("[Zimbra@%s::listRecall]:  " +
+                                        "fail to accept recall: %s",
+                                this.getClass().getSimpleName(), err.getMessage());
+                        log.error(errMessage);
+                        badRequest(request);
+                    });
+        } catch (NumberFormatException e) {
+            String errMessage = String.format("[Zimbra@%s::listRecall]:  " +
+                            "fail to accept recall: %s",
+                    this.getClass().getSimpleName(), e.getMessage());
+            log.error(errMessage);
+            badRequest(request);
+        }
+    }
 
     @Get("root-folder")
     @SecuredAction(value = "", type = ActionType.AUTHENTICATED)
@@ -470,7 +517,10 @@ public class ZimbraController extends BaseController {
                         if (!folder.equals("/Sent")) {
                             renderJson(request, event.right().getValue());
                         } else {
-//                            returnedMailService.renderReturnedMail(request, user, event);
+                            recallMailService.renderRecallMails(user, event.right().getValue())
+                                    .onSuccess(res -> renderJson(request, res))
+                                    .onFailure(err -> renderJson(request, event.right().getValue()));
+
                         }
                     } else {
                         log.error(String.format("[Zimbra@ZimbraController::listMessages] failed to listMessages: %s", event.left().getValue()));

@@ -125,7 +125,7 @@ public class ServiceManager {
             this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
             this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
                     synchroAddressBookService, addressBookService, eb);
-            this.sqlRecallTaskService = new SqlRecallTaskService(config.getDbSchema());
+            this.sqlRecallTaskService = new SqlRecallTaskService(config.getDbSchema(), config.getZimbraRecallWorkerMaxQueue());
             this.sqlICalTaskService = new SqlICalTaskService(config.getDbSchema());
             this.sqlActionService = new SqlActionService(config.getDbSchema());
             this.sqlRecallMailService = new SqlRecallMailService(config.getDbSchema());
@@ -151,7 +151,7 @@ public class ServiceManager {
         this.frontPageService = new FrontPageService(folderService, userService);
         this.returnedMailService = new ReturnedMailService(new DbMailServiceFactory(vertx, sqlSynchroService).getDbMailService("postgres"), messageService, userService, notificationService, eb);
         this.structureService = new StructureServiceImpl(neoService);
-        this.recallMailService = new RecallMailServiceImpl(sqlRecallMailService, neoService, recallQueueService, notificationService, structureService, recipientService);
+        this.recallMailService = new RecallMailServiceImpl(sqlRecallMailService, messageService, recallQueueService, notificationService, structureService, recipientService);
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);

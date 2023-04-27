@@ -7,22 +7,35 @@ public class Field {
         throw new IllegalStateException("Utility class");
     }
 
+
+    public static final String RECIPIENT_ADDRESS = "recipient_address";
     public static final String CONTENT_TYPE = "Content-Type";
     public static final String CONTENT_DISPOSITION = "Content-Disposition";
     public static final String COOKIE = "Cookie";
+    public static final String CAPITAL_WAITING = "WAITING";
     public static final String AUTH_TOKEN = "authToken";
     public static final String NAME = "name";
+    public static final String RETURNED = "returned";
     public static final String ERROR = "error";
+    public static final String CAPITAL_ERROR = "ERROR";
+    public static final String CAPITAL_REMOVED = "REMOVED";
+    public static final String CAPITAL_PROGRESS = "PROGRESS";
     public static final String STATUS = "status";
+    public static final String STATUT = "statut";
     public static final String SUCCESS = "success";
     public static final String ID = "id";
+    public static final String MID = "mid";
     public static final String IDS = "ids";
+    public static final String TOTAL = "total";
+    public static final String MAILID = "mailId";
+    public static final String SUBJECT = "subject";
     public static final String SIZE = "size";
     public static final String MESSAGE = "message";
     public static final String OK = "ok";
     public static final String KO = "ko";
     public static final String RESULT = "result";
     public static final String RESULTS = "results";
+    public static final String OBJECT = "object";
 
     public static final String APP = "zimbra";
     public static final String FALSE = "false";
@@ -66,6 +79,7 @@ public class Field {
     public static final String TASK_ID = "task_id";
     public static final String TASK_STATUS = "task_status";
     public static final String RECALL_MAIL_ID = "recall_mail_id";
+    public static final String RECALL_MAIL = "recall_mail";
     public static final String MAIL_DATE = "mail_date";
     public static final String RECEIVER_ID = "receiver_id";
     public static final String RECEIVERS_ID = "receivers_id";
@@ -73,6 +87,7 @@ public class Field {
     public static final String JSNS = "jsns";
     public static final String BODY_LOWER_CASE = "body";
     public static final String MESSAGE_ID = "message_id";
+    public static final String LOCAL_MAIL_ID = "local_mail_id";
     public static final String ZIMBRA = "zimbra";
     public static final String RECEIVERID = "receiverId";
     public static final String TASKS = "tasks";
@@ -83,8 +98,10 @@ public class Field {
     public static final String STRUCTURES = "structures";
     public static final String STRUCTURE = "structure";
     public static final String ADMLS = "admls";
+    public static final String MAIL = "mail";
     public static final String STRUCTURESID = "structuresId";
-    public static final String OBJECT = "object";
+    public static final String RECALLMAILS = "recallMails";
+    public static final String STRUCTUREID = "structureid";
 
     public static final String PLATFORM = "platform";
     public static final String ZIMBRAUC = "Zimbra";
