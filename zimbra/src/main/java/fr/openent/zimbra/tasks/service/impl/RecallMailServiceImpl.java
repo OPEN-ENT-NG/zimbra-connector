@@ -245,20 +245,11 @@ public class RecallMailServiceImpl implements RecallMailService {
         JsonObject userRecallInfos = new JsonObject().put(Field.ID, user.getUserId()).put(Field.MAIL, receiverEmail);
 
         messageService.retrieveMailFromZimbra(returnedMailInfos, userRecallInfos)
-                .onSuccess(mail -> {
-                    messageService.deleteMessages(mail, user, false)
-                            .onSuccess(promise::complete)
-                            .onFailure(err -> {
-                                String errMessage = String.format("[Zimbra@%s::deleteMessage]:  " +
-                                                "error while deleting mail: %s",
-                                        this.getClass().getSimpleName(), err.getMessage());
-                                log.error(errMessage);
-                                promise.fail(ErrorEnum.ERROR_DELETING_MAIL.method());
-                            });
-                })
+                .compose(mail -> messageService.deleteMessages(mail, user, false))
+                .onSuccess(promise::complete)
                 .onFailure(err -> {
                     String errMessage = String.format("[Zimbra@%s::deleteMessage]:  " +
-                                    "error while retrieving mail id : %s",
+                                    "error while deleting mail: %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
                     promise.fail(ErrorEnum.ERROR_DELETING_MAIL.method());

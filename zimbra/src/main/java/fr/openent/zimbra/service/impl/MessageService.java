@@ -1168,10 +1168,10 @@ public class MessageService {
         });
     }
 
-    public Future<List<String>> retrieveMailFromZimbra(JsonObject returnedMail, JsonObject to_user_infos) {
+    public Future<List<String>> retrieveMailFromZimbra(JsonObject returnedMail, JsonObject toUserInfos) {
         Promise<List<String>> promise = Promise.promise();
 
-        retrieveMailFromZimbra(returnedMail, to_user_infos, res -> {
+        retrieveMailFromZimbra(returnedMail, toUserInfos, res -> {
             if (res.isRight()) {
                 promise.complete(res.right().getValue());
             } else {
