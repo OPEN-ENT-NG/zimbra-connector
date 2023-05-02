@@ -77,6 +77,47 @@ public class RecallMailServiceImpl implements RecallMailService {
         return promise.future();
     }
 
+    @Override
+    public Future<Void> acceptMultipleRecall(List<Integer> recallIds) {
+        Promise<Void> promise = Promise.promise();
+
+        dbMailService.acceptMultipleRecall(recallIds)
+                .onSuccess(v -> promise.complete())
+                .onFailure(err -> {
+                    String errMessage = String.format("[Zimbra@%s::acceptMultipleRecall]:  " +
+                                    "error while accepting recalls: %s",
+                            this.getClass().getSimpleName(), err.getMessage());
+                    log.error(errMessage);
+                    promise.fail(ErrorEnum.FAIL_ACCEPT_RECALL.method());
+                });
+
+        return promise.future();
+    }
+
+    @Override
+    public Future<Void> deleteRecallMail(Integer recallId, UserInfos user) {
+        Promise<Void> promise = Promise.promise();
+
+        dbMailService.hasADMLDeleteRight(recallId, user)
+                .compose(hasRight -> {
+                    if (hasRight) {
+                        return dbMailService.deleteRecall(recallId);
+                    } else {
+                        return Future.failedFuture(ErrorEnum.ADML_NO_RIGHT_STRUCTURES.method());
+                    }
+                })
+                .onSuccess(promise::complete)
+                .onFailure(err -> {
+                    String errMessage = String.format("[Zimbra@%s::deleteRecallMail]:  " +
+                                    "error while deleting recall: %s",
+                            this.getClass().getSimpleName(), err.getMessage());
+                    log.error(errMessage);
+                    promise.fail(ErrorEnum.FAIL_DELETE_RECALL.method());
+                });
+
+        return promise.future();
+    }
+
     public Future<List<RecallMail>> getRecallMailsForOneStructure (String structureId) {
         return dbMailService.getRecallMailByStruct(structureId);
    }
@@ -132,7 +173,7 @@ public class RecallMailServiceImpl implements RecallMailService {
 
         recallQueueService.createAction(UUID.fromString(user.getUserId()), ActionType.RECALL, false)
                 .onSuccess(action -> {
-                    promise.complete(new RecallMail(-1, message, action, comment));
+                    promise.complete(new RecallMail(-1, message, action, comment, user.getUsername()));
                 })
                 .onFailure(err -> {
                     String errMessage = String.format("[Zimbra@%s::createRecallDataForQueue]:  " +

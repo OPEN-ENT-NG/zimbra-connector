@@ -19,7 +19,9 @@ package fr.openent.zimbra.security;
 
 public enum  WorkflowActions {
     EXPERT_ACCESS_RIGHT ("zimbra.expert"),
-    RECALL_RIGHT ("zimbra.recall.right");
+    RECALL_RIGHT ("zimbra.recall.right"),
+    RECALL_ACCEPT("zimbra.recall.accept"),
+    RECALL_ADMIN("zimbra.recall.admin");
 
     private final String actionName;
 

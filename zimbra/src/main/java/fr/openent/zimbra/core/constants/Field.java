@@ -43,6 +43,7 @@ public class Field {
     public static final String HTTPCLIENT = "httpClient";
     public static final String ZIMBRARESPONSE = "zimbraResponse";
     public static final String USERNAME = "username";
+    public static final String CAMEL_USERNAME = "userName";
     public static final String USER_NAME = "user_name";
     public static final String USER_MAIL = "user_mail";
     public static final String UNAUTHORIZED = "unauthorized";
@@ -70,6 +71,7 @@ public class Field {
 
     public static final String TYPE = "type";
     public static final String DATA = "data";
+    public static final String DATE = "date";
     public static final String ACTIONID = "actionId";
     public static final String ACTION_ID = "action_id";
     public static final String USER_ID = "user_id";
@@ -79,6 +81,7 @@ public class Field {
     public static final String TASK_ID = "task_id";
     public static final String TASK_STATUS = "task_status";
     public static final String RECALL_MAIL_ID = "recall_mail_id";
+    public static final String RECALLMAILID = "recallMailId";
     public static final String RECALL_MAIL = "recall_mail";
     public static final String MAIL_DATE = "mail_date";
     public static final String RECEIVER_ID = "receiver_id";

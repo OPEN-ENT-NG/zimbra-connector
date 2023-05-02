@@ -11,7 +11,7 @@ public class RecallFilter implements ResourcesProvider {
     @Override
     public void authorize(HttpServerRequest request, Binding binding, UserInfos user,
                           Handler<Boolean> handler) {
-        handler.handle(WorkflowActionUtils.hasRight(user, WorkflowActions.RECALL_RIGHT.toString()));
+        handler.handle(WorkflowActionUtils.hasRight(user, WorkflowActions.RECALL_ADMIN.toString()));
     }
 
 }

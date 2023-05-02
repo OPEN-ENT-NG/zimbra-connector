@@ -57,4 +57,9 @@ public interface RecallMailService {
     public Future<Void> deleteMessage (RecallMail recallMail, UserInfos user, String receiverEmail, String senderEmail);
 
     public Future<JsonArray> renderRecallMails(UserInfos user, JsonArray messageList);
+
+    Future<Void> acceptMultipleRecall(List<Integer> recallIds);
+
+    Future<Void> deleteRecallMail(Integer recallId, UserInfos user);
+
 }

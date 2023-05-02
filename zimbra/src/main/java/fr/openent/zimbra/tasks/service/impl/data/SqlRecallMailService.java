@@ -24,7 +24,7 @@ import org.entcore.common.sql.SqlResult;
 import org.entcore.common.user.UserInfos;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -148,7 +148,8 @@ public class SqlRecallMailService extends DbRecallMail {
                             date
                     ),
                     action,
-                    mailData.getString(Field.COMMENT)
+                    mailData.getString(Field.COMMENT),
+                    mailData.getString(Field.USER_NAME)
             );
         });
     }
@@ -162,7 +163,6 @@ public class SqlRecallMailService extends DbRecallMail {
                     try {
                         promise.complete(createRecallMailInstancesForStruct(mailList));
                     } catch (Exception e) {
-                        promise.complete(new ArrayList<>());
                         String errMessage = String.format("[Zimbra@%s::getRecallMailByStruct]:  " +
                                         "fail to fetch recall mail: %s",
                                 this.getClass().getSimpleName(), e.getMessage());
@@ -205,6 +205,30 @@ public class SqlRecallMailService extends DbRecallMail {
         return promise.future();
     }
 
+    public Future<Void> acceptMultipleRecall(List<Integer> recallIds) {
+        Promise<Void> promise = Promise.promise();
+
+        String query = "UPDATE " + this.actionTable +
+                " SET approved = true " +
+                "WHERE zimbra.actions.id IN (select action_id from " + this.recallMailTable + " where id IN " + Sql.listPrepared(recallIds) + ");";
+
+        JsonArray values = new JsonArray(recallIds);
+
+        Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(res -> {
+            if (res.isRight()) {
+                promise.complete();
+            } else {
+                String errMessage = String.format("[Zimbra@%s::acceptMultipleRecall]:  " +
+                                "error while updating recalls acceptation in db: %s",
+                        this.getClass().getSimpleName(), res.left().getValue());
+                log.error(errMessage);
+                promise.fail(ErrorEnum.ERROR_ACTION_UPDATE.method());
+            }
+        }));
+
+        return promise.future();
+    }
+
     @Override
     public Future<JsonArray> checkRecalledInMailList(String userId, JsonArray messageList) {
         Promise<JsonArray> promise = Promise.promise();
@@ -225,6 +249,70 @@ public class SqlRecallMailService extends DbRecallMail {
         JsonArray values = new JsonArray(messageIdList);
 
         Sql.getInstance().prepared(query, values, SqlResult.validResultHandler(PromiseHelper.handlerJsonArray(promise)));
+
+        return promise.future();
+    }
+
+    private Future<List<String>> getRecallStructures(Integer recallId) {
+        Promise<List<String>> promise = Promise.promise();
+
+        String query = "SELECT rm.structures FROM " + recallMailTable + " AS rm WHERE rm.id = ? LIMIT 1;";
+
+        JsonArray values = new JsonArray().add(recallId);
+
+        Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(list -> {
+            if (list.isRight()) {
+                List<String> structuresList = list.right().getValue().getJsonArray(Field.STRUCTURES, new JsonArray())
+                        .stream()
+                        .filter(String.class::isInstance)
+                        .map(String.class::cast).collect(Collectors.toList());
+                promise.complete(structuresList);
+            } else {
+                String errMessage = String.format("[Zimbra@%s::getRecallStructures]:  " +
+                                "error while retrieving recall structures: %s",
+                        this.getClass().getSimpleName(), list.left().getValue());
+                log.error(errMessage);
+                promise.fail(ErrorEnum.FAIL_LIST_STRUCTURES.method());
+            }
+        }));
+
+        return promise.future();
+    }
+
+    public Future<Boolean> hasADMLDeleteRight(Integer recallId, UserInfos user) {
+        Promise<Boolean> promise = Promise.promise();
+
+        getRecallStructures(recallId)
+                .onSuccess(list -> promise.complete(!Collections.disjoint(list, user.getStructures())))
+                .onFailure(err -> {
+                    String errMessage = String.format("[Zimbra@%s::hasADMLDeleteRight]:  " +
+                                    "error while retrieving recall structures: %s",
+                            this.getClass().getSimpleName(), err.getMessage());
+                    log.error(errMessage);
+                    promise.fail(ErrorEnum.ADML_NO_RIGHT_STRUCTURES.method());
+                });
+
+        return promise.future();
+    }
+
+    public Future<Void> deleteRecall(Integer recallId) {
+        Promise<Void> promise = Promise.promise();
+
+        String query = "DELETE FROM " + actionTable + " AS act WHERE act.id = (SELECT rm.action_id FROM " + recallMailTable + " AS rm WHERE rm.id = ?)";
+
+        JsonArray values = new JsonArray().add(recallId);
+
+        Sql.getInstance().prepared(query, values, SqlResult.validResultHandler(res -> {
+            if (res.isRight()) {
+                promise.complete();
+            } else {
+                String errMessage = String.format("[Zimbra@%s::hasADMLDeleteRight]:  " +
+                                "error while deleting recall: %s",
+                        this.getClass().getSimpleName(), res.left().getValue());
+                log.error(errMessage);
+                promise.fail(ErrorEnum.FAIL_DELETE_RECALL.method());
+            }
+        }));
 
         return promise.future();
     }
