@@ -38,7 +38,7 @@ CREATE TABLE zimbra.recall_recipient_tasks
     receiver_id    uuid,
     retry          smallint,
     recipient_address varchar,
-    CONSTRAINT mail_id_fkey FOREIGN KEY (recall_mail_id) REFERENCES zimbra.recall_mails (id)
+    CONSTRAINT mail_id_fkey FOREIGN KEY (recall_mail_id) REFERENCES zimbra.recall_mails (id) ON DELETE CASCADE
 ) INHERITS (zimbra.tasks);
 CREATE TABLE zimbra.ical_request_tasks
 (
@@ -51,7 +51,7 @@ CREATE TABLE zimbra.recall_task_logs
     recall_task_id bigint,
     logs    varchar,
     CONSTRAINT recall_task_logs_pkey PRIMARY KEY (id),
-    CONSTRAINT recall_task_id_fkey FOREIGN KEY (recall_task_id) REFERENCES zimbra.tasks(id)
+    CONSTRAINT recall_task_id_fkey FOREIGN KEY (recall_task_id) REFERENCES zimbra.tasks(id) ON DELETE CASCADE
 );
 CREATE TABLE zimbra.ical_task_logs
 (
@@ -59,5 +59,5 @@ CREATE TABLE zimbra.ical_task_logs
     ical_task_id bigint,
     logs    varchar,
     CONSTRAINT ical_task_logs_pkey PRIMARY KEY (id),
-    CONSTRAINT ical_task_id_fkey FOREIGN KEY (ical_task_id) REFERENCES zimbra.tasks(id)
+    CONSTRAINT ical_task_id_fkey FOREIGN KEY (ical_task_id) REFERENCES zimbra.tasks(id) ON DELETE CASCADE
 );

@@ -24,6 +24,7 @@ import org.entcore.common.sql.SqlResult;
 import org.entcore.common.user.UserInfos;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -262,11 +263,22 @@ public class SqlRecallMailService extends DbRecallMail {
 
         Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(list -> {
             if (list.isRight()) {
-                List<String> structuresList = list.right().getValue().getJsonArray(Field.STRUCTURES, new JsonArray())
-                        .stream()
-                        .filter(String.class::isInstance)
-                        .map(String.class::cast).collect(Collectors.toList());
-                promise.complete(structuresList);
+                List<String> structs;
+                try {
+                    structs = new JsonArray(list.right().getValue().getString(Field.STRUCTURES))
+                            .stream()
+                            .filter(JsonObject.class::isInstance)
+                            .map(JsonObject.class::cast)
+                            .map(struct -> struct.getString(Field.ID, "")).collect(Collectors.toList());
+
+                } catch (Exception e) {
+                    structs = new ArrayList<>();
+                    String errMessage = String.format("[Zimbra@%s::getRecallStructures]:  " +
+                                    "error while retrieving recall structures: %s",
+                            this.getClass().getSimpleName(), e.getMessage());
+                    log.error(errMessage);
+                }
+                promise.complete(structs);
             } else {
                 String errMessage = String.format("[Zimbra@%s::getRecallStructures]:  " +
                                 "error while retrieving recall structures: %s",
