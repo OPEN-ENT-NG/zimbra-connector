@@ -463,7 +463,7 @@ public class ZimbraController extends BaseController {
                             badRequest(request);
                         });
             } catch (NumberFormatException e) {
-                String errMessage = String.format("[Zimbra@%s::acceptRecall]:  " +
+                String errMessage = String.format("[Zimbra@%s::acceptRecalls]:  " +
                                 "fail to accept recall: %s",
                         this.getClass().getSimpleName(), e.getMessage());
                 log.error(errMessage);

@@ -318,7 +318,7 @@ public class SqlRecallMailService extends DbRecallMail {
             if (res.isRight()) {
                 promise.complete();
             } else {
-                String errMessage = String.format("[Zimbra@%s::hasADMLDeleteRight]:  " +
+                String errMessage = String.format("[Zimbra@%s::deleteRecall]:  " +
                                 "error while deleting recall: %s",
                         this.getClass().getSimpleName(), res.left().getValue());
                 log.error(errMessage);
