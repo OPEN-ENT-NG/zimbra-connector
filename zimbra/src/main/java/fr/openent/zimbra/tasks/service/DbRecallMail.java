@@ -25,6 +25,7 @@ public abstract class DbRecallMail {
     public abstract Future<Void> acceptRecall(int recallId);
     public abstract Future<Void> acceptMultipleRecall(List<Integer> recallIds);
     public abstract Future<JsonArray> checkRecalledInMailList(String userId, JsonArray messageList);
+    public abstract Future<Void> resetFailedTasks(List<Integer> recallIds);
 
     public abstract Future<Boolean> hasADMLDeleteRight(Integer recallId, UserInfos user);
     public abstract Future<Void> deleteRecall(Integer recallId);

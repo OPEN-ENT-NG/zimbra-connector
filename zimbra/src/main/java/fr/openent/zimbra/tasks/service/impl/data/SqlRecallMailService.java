@@ -254,6 +254,30 @@ public class SqlRecallMailService extends DbRecallMail {
         return promise.future();
     }
 
+    public Future<Void> resetFailedTasks(List<Integer> recallIds) {
+        Promise<Void> promise = Promise.promise();
+
+        String query = "UPDATE zimbra.recall_recipient_tasks AS rt SET retry = 0, status = '" + TaskStatus.PENDING.method() + "' " +
+                "WHERE action_id IN (select action_id FROM zimbra.recall_mails AS rm where rm.id in " + Sql.listPrepared(recallIds) + ") AND status = '" + TaskStatus.ERROR.method() + "';";
+
+        JsonArray values = new JsonArray(recallIds);
+
+        Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(list -> {
+            if (list.isRight()) {
+                promise.complete();
+            } else {
+                String errMessage = String.format("[Zimbra@%s::resetFailedTasks]:  " +
+                                "error while reseting recalls: %s",
+                        this.getClass().getSimpleName(), list.left().getValue());
+                log.error(errMessage);
+                promise.fail(ErrorEnum.FAIL_LIST_STRUCTURES.method());
+            }
+        }));
+
+        return promise.future();
+
+    }
+
     private Future<List<String>> getRecallStructures(Integer recallId) {
         Promise<List<String>> promise = Promise.promise();
 

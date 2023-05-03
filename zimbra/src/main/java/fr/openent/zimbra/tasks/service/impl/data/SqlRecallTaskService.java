@@ -79,7 +79,7 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
         Promise<Void> promise = Promise.promise();
 
         String query = "INSERT INTO " +
-                this.logTaskTable +
+                this.logTaskTable + " (recall_task_id, logs)" +
                 " VALUES (?, ?);";
 
         JsonArray values = new JsonArray();
@@ -158,6 +158,36 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
                     log.error(errMessage);
                     promise.fail(ErrorEnum.ERROR_CREATING_TASKS_TRANSACTION.method());
                 });
+
+        return promise.future();
+    }
+
+    @Override
+    protected Future<JsonObject> editTaskStatus(RecallTask task, TaskStatus status) {
+        Promise<JsonObject> promise = Promise.promise();
+
+        String query;
+        JsonArray values = new JsonArray();
+        if (status == TaskStatus.ERROR && task.getRetry() < 5) {
+            query = "UPDATE " + taskTable + " AS rt set retry = retry + 1" + (task.getRetry() == 4 ? ", status = '" + TaskStatus.ERROR.method() + "'" : "") +
+                    " WHERE rt.id = ? RETURNING " + Field.STATUS + ";";
+            values.add(task.getId());
+        } else {
+            query = "UPDATE " + this.taskTable + " SET status = ? " + "WHERE id = ? RETURNING " + Field.STATUS + ";";
+            values.add(status.method()).add(task.getId());
+        }
+
+        Sql.getInstance().prepared(query, values, SqlResult.validUniqueResultHandler(handler -> {
+            if (handler.isLeft()) {
+                String errMessage = String.format("[Zimbra@%s::editTaskStatus]:  " +
+                                "an error has occurred while updating task: %s",
+                        this.getClass().getSimpleName(), handler.left().getValue());
+                log.error(errMessage);
+                promise.fail(ErrorEnum.ERROR_QUEUE_TASK.method());
+            } else {
+                promise.complete(handler.right().getValue());
+            }
+        }));
 
         return promise.future();
     }

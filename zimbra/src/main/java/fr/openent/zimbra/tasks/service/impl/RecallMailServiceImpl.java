@@ -4,9 +4,7 @@ import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
 import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
-import fr.openent.zimbra.helper.IModelHelper;
 import fr.openent.zimbra.helper.MessageHelper;
-import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.message.Message;
 import fr.openent.zimbra.model.message.RecallMail;
 import fr.openent.zimbra.model.soap.SoapMessageHelper;
@@ -17,11 +15,8 @@ import fr.openent.zimbra.service.impl.RecipientService;
 import fr.openent.zimbra.tasks.service.DbRecallMail;
 import fr.openent.zimbra.tasks.service.RecallMailService;
 import fr.openent.zimbra.service.StructureService;
-import fr.openent.zimbra.utils.DateUtils;
-import fr.wseduc.webutils.Either;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -29,7 +24,6 @@ import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.lang3.NotImplementedException;
 import org.entcore.common.user.UserInfos;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,6 +76,7 @@ public class RecallMailServiceImpl implements RecallMailService {
         Promise<Void> promise = Promise.promise();
 
         dbMailService.acceptMultipleRecall(recallIds)
+                .compose(res -> dbMailService.resetFailedTasks(recallIds))
                 .onSuccess(v -> promise.complete())
                 .onFailure(err -> {
                     String errMessage = String.format("[Zimbra@%s::acceptMultipleRecall]:  " +
@@ -286,7 +281,13 @@ public class RecallMailServiceImpl implements RecallMailService {
         JsonObject userRecallInfos = new JsonObject().put(Field.ID, user.getUserId()).put(Field.MAIL, receiverEmail);
 
         messageService.retrieveMailFromZimbra(returnedMailInfos, userRecallInfos)
-                .compose(mail -> messageService.deleteMessages(mail, user, false))
+                .compose(mail -> {
+                    if (!mail.isEmpty()) {
+                        return messageService.deleteMessages(mail, user, false);
+                    } else {
+                        return Future.failedFuture(ErrorEnum.ERROR_RETRIEVING_MAIL.method());
+                    }
+                })
                 .onSuccess(promise::complete)
                 .onFailure(err -> {
                     String errMessage = String.format("[Zimbra@%s::deleteMessage]:  " +
