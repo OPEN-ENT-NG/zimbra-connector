@@ -75,6 +75,10 @@ public class RecallMailServiceImpl implements RecallMailService {
     public Future<Void> acceptMultipleRecall(List<Integer> recallIds) {
         Promise<Void> promise = Promise.promise();
 
+        if (recallIds.isEmpty()){
+            return Future.succeededFuture();
+        }
+
         dbMailService.acceptMultipleRecall(recallIds)
                 .compose(res -> dbMailService.resetFailedTasks(recallIds))
                 .onSuccess(v -> promise.complete())
