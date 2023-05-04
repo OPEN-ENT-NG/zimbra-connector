@@ -6,15 +6,12 @@ import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.task.RecallTask;
 import io.vertx.core.json.JsonObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class RecallMail {
     private int recallId;
     private Message message;
     private String comment;
     private String senderEmail;
+    private String senderUserName;
     private Action<RecallTask> action;
 
     public RecallMail(int recallId, Message message) {
@@ -27,10 +24,11 @@ public class RecallMail {
         this.senderEmail = senderEmail;
     }
 
-    public RecallMail(int recallId, Message message, Action<RecallTask> action, String comment) {
+    public RecallMail(int recallId, Message message, Action<RecallTask> action, String comment, String senderUserName) {
         this(recallId, message);
         this.action = action;
         this.comment = comment;
+        this.senderUserName = senderUserName;
     }
 
     public int getRecallId() {
@@ -53,23 +51,35 @@ public class RecallMail {
         this.recallId = recallId;
     }
 
+    public void setSenderUserName(String senderUserName) {
+        this.senderUserName = senderUserName;
+    }
+
     public String getSenderEmail() {
         return senderEmail;
     }
 
     public JsonObject generateDataForFront() {
         JsonObject messageJson = message != null ? message.toJson() : null;
+        JsonObject actionJson = new JsonObject();
         JsonObject tasks = new JsonObject();
         if (action != null) {
+
             tasks
                     .put(TaskStatus.FINISHED.method(), action.getTasks().stream().filter(task -> task.getStatus() == TaskStatus.FINISHED).count())
                     .put(TaskStatus.ERROR.method(), action.getTasks().stream().filter(task -> task.getStatus() == TaskStatus.ERROR).count())
                     .put(Field.TOTAL, action.getTasks().size());
+            actionJson
+                    .put(Field.APPROVED, action.getApproved())
+                    .put(Field.TASKS,tasks)
+                    .put(Field.USERID, action.getUserId().toString())
+                    .put(Field.DATE, action.getCreatedAt().getTime());
         }
         return new JsonObject()
-                .put(Field.RECALL_MAIL_ID, recallId)
+                .put(Field.RECALLMAILID, recallId)
+                .put(Field.CAMEL_USERNAME, senderUserName)
                 .put(Field.COMMENT, comment)
                 .put(Field.MESSAGE, messageJson)
-                .put(Field.ACTION, tasks);
+                .put(Field.ACTION, actionJson);
     }
 }

@@ -33,6 +33,7 @@ import fr.openent.zimbra.model.constant.ModuleConstants;
 import fr.openent.zimbra.model.message.RecallMail;
 import fr.openent.zimbra.model.task.ICalTask;
 import fr.openent.zimbra.security.ExpertAccess;
+import fr.openent.zimbra.security.RecallFilter;
 import fr.openent.zimbra.security.WorkflowActionUtils;
 import fr.openent.zimbra.security.WorkflowActions;
 import fr.openent.zimbra.tasks.service.RecallMailService;
@@ -50,6 +51,7 @@ import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.RequestUtils;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpServerRequest;
@@ -419,7 +421,7 @@ public class ZimbraController extends BaseController {
     }
 
     @Put("/recall/:id/accept")
-    @SecuredAction(value = "zimbra.recall.accept", type = ActionType.WORKFLOW)
+    @SecuredAction(value = "zimbra.recall.admin", type = ActionType.WORKFLOW)
     public void acceptRecall(HttpServerRequest request) {
         try {
             int recallId = Integer.parseInt(request.getParam(Field.ID));
@@ -441,8 +443,66 @@ public class ZimbraController extends BaseController {
         }
     }
 
+    @Put("/recall/accept/multiple")
+    @SecuredAction(value = "", type = ActionType.RESOURCE)
+    @ResourceFilter(RecallFilter.class)
+    public void acceptRecalls(HttpServerRequest request) {
+        bodyToJson(request, pathPrefix + "recallMailAcceptMultiple", body -> {
+            try {
+                List<Integer> recallIds = body.getJsonArray(Field.IDS).stream()
+                                        .filter(Integer.class::isInstance)
+                                        .map(Integer.class::cast)
+                                        .collect(Collectors.toList());
+                recallMailService.acceptMultipleRecall(recallIds)
+                        .onSuccess(res -> renderJson(request, new JsonObject().put(Field.STATUS, Field.SUCCESS)))
+                        .onFailure(err -> {
+                            String errMessage = String.format("[Zimbra@%s::acceptRecalls]:  " +
+                                            "fail to accept recalls: %s",
+                                    this.getClass().getSimpleName(), err.getMessage());
+                            log.error(errMessage);
+                            badRequest(request);
+                        });
+            } catch (NumberFormatException e) {
+                String errMessage = String.format("[Zimbra@%s::acceptRecalls]:  " +
+                                "fail to accept recall: %s",
+                        this.getClass().getSimpleName(), e.getMessage());
+                log.error(errMessage);
+                badRequest(request);
+            }
+        });
+
+    }
+
+    @Delete("/recall/:id/delete")
+    @SecuredAction(value = "", type = ActionType.RESOURCE)
+    @ResourceFilter(RecallFilter.class)
+    public void deleteRecall(HttpServerRequest request) {
+        try {
+            Integer recallId = Integer.valueOf(request.getParam(Field.ID));
+            UserUtils.getUserInfos(eb, request, user -> {
+                recallMailService.deleteRecallMail(recallId, user)
+                        .onSuccess(mails -> renderJson(request, new JsonObject().put(Field.STATUS, Field.SUCCESS)))
+                        .onFailure(err -> {
+                            String errMessage = String.format("[Zimbra@%s::deleteRecall]:  " +
+                                            "fail to delete recall: %s",
+                                    this.getClass().getSimpleName(), err.getMessage());
+                            log.error(errMessage);
+                            badRequest(request);
+                        });
+            });
+
+        } catch (Exception e) {
+            String errMessage = String.format("[Zimbra@%s::deleteRecall]:  " +
+                            "fail to delete recall: %s",
+                    this.getClass().getSimpleName(), e.getMessage());
+            log.error(errMessage);
+            badRequest(request);
+        }
+    }
+
     @Get("/recall/structure/:structureid/list")
-    @SecuredAction(value = "zimbra.recall.list", type = ActionType.WORKFLOW)
+    @SecuredAction(value = "", type = ActionType.RESOURCE)
+    @ResourceFilter(RecallFilter.class)
     public void listRecall(HttpServerRequest request) {
         try {
             String structureId = request.getParam(Field.STRUCTUREID);
