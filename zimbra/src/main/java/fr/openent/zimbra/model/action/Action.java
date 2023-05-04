@@ -45,7 +45,7 @@ public class Action<T extends Task<T>> {
         long id = actionData.getInteger(Field.ID);
         try {
             UUID userId = UUID.fromString(actionData.getString(Field.USER_ID));
-            Date created_at = DateUtils.parseDate(actionData.getString(Field.CREATED_AT), DateUtils.DATE_FORMAT_SQL);
+            Date created_at = DateUtils.parseDate(actionData.getString(Field.CREATED_AT), DateUtils.DATE_FORMAT_SQL_WHITHOUT_MILLI);
             ActionType actionType = ActionType.fromString(actionData.getString(Field.TYPE));
             boolean approved = actionData.getBoolean(Field.APPROVED);
             this.id = id;
