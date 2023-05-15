@@ -29,7 +29,7 @@
             </button>
             <button ng-click="toggleRecallView()"
                     ng-if="isSelectedRecallable() && zimbra.currentFolder.folderName === 'outbox'"
-                    workflow="zimbra.return">
+                    workflow="zimbra.recall">
                 <i18n>return</i18n>
             </button>
             <button ng-click="toggleUnreadSelection(false, zimbra.currentFolder)" ng-if="
