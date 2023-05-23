@@ -19,6 +19,7 @@ package fr.openent.zimbra.controllers;
 
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
+import fr.openent.zimbra.core.constants.RecallRights;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.filters.AccessibleDocFilter;
 import fr.openent.zimbra.filters.DevLevelFilter;
@@ -35,7 +36,6 @@ import fr.openent.zimbra.model.task.ICalTask;
 import fr.openent.zimbra.security.ExpertAccess;
 import fr.openent.zimbra.security.RecallFilter;
 import fr.openent.zimbra.security.WorkflowActionUtils;
-import fr.openent.zimbra.security.WorkflowActions;
 import fr.openent.zimbra.tasks.service.RecallMailService;
 import fr.openent.zimbra.service.data.SearchService;
 import fr.openent.zimbra.tasks.service.impl.ICalQueueServiceImpl;
@@ -136,6 +136,10 @@ public class ZimbraController extends BaseController {
         this.workspaceHelper = new WorkspaceHelper(eb,storage);
         this.icalQueueServiceImpl = serviceManager.getICalQueueService();
         this.sqlICalTaskService = serviceManager.getSqlICalTaskService();
+    }
+
+    @SecuredAction(RecallRights.ZIMBRA_RECALL_ADMIN)
+    public void initRecallAdminRight(final HttpServerRequest request) {
     }
 
     @Get("zimbra")
@@ -421,7 +425,8 @@ public class ZimbraController extends BaseController {
     }
 
     @Put("/recall/:id/accept")
-    @SecuredAction(value = "zimbra.recall.admin", type = ActionType.WORKFLOW)
+    @SecuredAction(value = "", type = ActionType.RESOURCE)
+    @ResourceFilter(RecallFilter.class)
     public void acceptRecall(HttpServerRequest request) {
         try {
             int recallId = Integer.parseInt(request.getParam(Field.ID));
@@ -1384,7 +1389,7 @@ public class ZimbraController extends BaseController {
                 String userId = body.getString(Field.USERID, null);
                 if (userId !=  null) {
                     UserUtils.getUserInfos(eb, userId, user -> {
-                        Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, WorkflowActions.EXPERT_ACCESS_RIGHT.toString());
+                        Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, RecallRights.ZIMBRA_RECALL_EXPERT);
                         if (Boolean.TRUE.equals(hasExpertRight)) {
                             Action<ICalTask> icalAction = new Action<>(UUID.fromString(userId), fr.openent.zimbra.core.enums.ActionType.ICAL, false);
 
