@@ -1389,7 +1389,7 @@ public class ZimbraController extends BaseController {
                 String userId = body.getString(Field.USERID, null);
                 if (userId !=  null) {
                     UserUtils.getUserInfos(eb, userId, user -> {
-                        Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, RecallRights.ZIMBRA_RECALL_EXPERT);
+                        Boolean hasExpertRight = WorkflowActionUtils.hasRight(user, RecallRights.ZIMBRA_EXPERT);
                         if (Boolean.TRUE.equals(hasExpertRight)) {
                             Action<ICalTask> icalAction = new Action<>(UUID.fromString(userId), fr.openent.zimbra.core.enums.ActionType.ICAL, false);
 

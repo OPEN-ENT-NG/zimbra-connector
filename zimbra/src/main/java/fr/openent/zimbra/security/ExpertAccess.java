@@ -31,7 +31,7 @@ public class ExpertAccess implements ResourcesProvider {
     public void authorize(HttpServerRequest request, Binding binding, UserInfos user,
                           Handler<Boolean> handler) {
 
-        if (WorkflowActionUtils.hasRight(user, RecallRights.ZIMBRA_RECALL_EXPERT)) {
+        if (WorkflowActionUtils.hasRight(user, RecallRights.ZIMBRA_EXPERT)) {
             handler.handle(true);
         } else {
             handler.handle(false);
