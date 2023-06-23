@@ -2,27 +2,34 @@ package fr.openent.zimbra.tasks.service.impl;
 
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ActionType;
+import fr.openent.zimbra.core.enums.AddressType;
 import fr.openent.zimbra.core.enums.ErrorEnum;
+import fr.openent.zimbra.core.enums.RecipientType;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.helper.MessageHelper;
 import fr.openent.zimbra.model.message.Message;
 import fr.openent.zimbra.model.message.RecallMail;
+import fr.openent.zimbra.model.message.Recipient;
+import fr.openent.zimbra.model.message.ZimbraEmail;
 import fr.openent.zimbra.model.soap.SoapMessageHelper;
 import fr.openent.zimbra.model.task.RecallTask;
 import fr.openent.zimbra.service.impl.MessageService;
 import fr.openent.zimbra.service.impl.NotificationService;
 import fr.openent.zimbra.service.impl.RecipientService;
+import fr.openent.zimbra.service.impl.UserService;
 import fr.openent.zimbra.tasks.service.DbRecallMail;
 import fr.openent.zimbra.tasks.service.RecallMailService;
 import fr.openent.zimbra.service.StructureService;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.lang3.NotImplementedException;
 import org.entcore.common.user.UserInfos;
+import org.entcore.common.user.UserUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,18 +43,22 @@ public class RecallMailServiceImpl implements RecallMailService {
     private final DbRecallMail dbMailService;
     private final RecipientService recipientService;
     private final MessageService messageService;
+    private final UserService userService; 
+    private final EventBus eb;
 
     private static final int BATCH_SIZE = 100;
     private static final Logger log = LoggerFactory.getLogger(RecallMailServiceImpl.class);
 
-    public RecallMailServiceImpl(DbRecallMail dbMailService, MessageService messageService, RecallQueueServiceImpl recallQueueService,
-                                 NotificationService notificationService, StructureService structureService, RecipientService recipientService) {
+    public RecallMailServiceImpl(EventBus eb, DbRecallMail dbMailService, MessageService messageService, RecallQueueServiceImpl recallQueueService,
+                                 NotificationService notificationService, StructureService structureService, RecipientService recipientService, UserService userService) {
         this.dbMailService = dbMailService;
         this.recallQueueService = recallQueueService;
         this.notificationService = notificationService;
         this.structureService = structureService;
         this.recipientService = recipientService;
         this.messageService = messageService;
+        this.userService = userService;
+        this.eb = eb;
     }
 
     public Future<List<RecallMail>> getRecallMails () {
@@ -123,8 +134,11 @@ public class RecallMailServiceImpl implements RecallMailService {
 
     private Future<Message> fetchUserIdForRecalledMessage(Message message) {
         Promise<Message> promise = Promise.promise();
-
         recipientService.getUserIdsFromEmails(message.getAllAddresses())
+                .compose(userMap -> {
+                    String senderMail = message.getEmailAddresses().stream().filter(mail -> mail.getAddrType().equals(ADDR_TYPE_FROM)).findFirst().get().getAddress();
+                    return handleGroups(userMap.get(senderMail).getUserId(), userMap);
+                })
                 .onSuccess(userMap -> {
                     message.setUserMapping(userMap);
                     promise.complete(message);
@@ -137,6 +151,45 @@ public class RecallMailServiceImpl implements RecallMailService {
                     promise.fail(ErrorEnum.ERROR_FETCHING_IDS.method());
                 });
 
+        return promise.future();
+    }
+
+    private Future<Map<String, Recipient>> handleGroups(String currentUserId, Map<String, Recipient> userMap) {
+        Promise<Map<String, Recipient>> promise = Promise.promise();
+        Set<String> groupIds = userMap
+                                                .entrySet()
+                                                .stream()
+                                                .filter(elem -> elem.getValue().getRecipientType().equals(RecipientType.GROUP))
+                                                .map(elem -> elem.getValue().getUserId())
+                                                .collect(Collectors.toSet());
+        Set<String> userIds = userMap.values().stream().map(elem -> elem.getUserId()).collect(Collectors.toSet());
+        UserUtils.getUserIdsForGroupIds(groupIds, currentUserId, eb, res -> {
+            if (res.succeeded()) {
+                Set<String> result = res.result().stream().filter(elem -> !userIds.contains(elem)).collect(Collectors.toSet());
+                userService.getMailAddresses(new JsonArray(result.stream().collect(Collectors.toList())), mailMapping -> {
+                    result
+                        .stream()
+                        .filter(elem -> mailMapping.containsKey(elem))
+                        .forEach(elem -> userMap.put(elem,
+                                                     new Recipient(
+                                                               mailMapping.getJsonObject(elem).getString(Field.EMAIL),
+                                                                elem,
+                                                                RecipientType.USER
+                                                                )));
+                    // promise.complete(userMap);
+                    promise.complete(userMap.entrySet()
+                                            .stream()
+                                            .filter(elem -> elem.getValue().getRecipientType().equals(RecipientType.USER))
+                                            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
+                });
+            } else {
+                String errMessage = String.format("[Zimbra@%s::handleGroups]:  " +
+                                    "Error fetching groups data",
+                            this.getClass().getSimpleName());
+                    log.error(errMessage);
+                    promise.fail(ErrorEnum.ERROR_FETCHING_IDS.method());
+            }
+        });
         return promise.future();
     }
 
@@ -185,15 +238,20 @@ public class RecallMailServiceImpl implements RecallMailService {
     }
 
     private List<RecallTask> createTasksFromRecallMail(RecallMail mail) {
-        return mail.getMessage().getEmailAddresses()
+        ZimbraEmail senderEmail = mail
+                                    .getMessage()
+                                    .getEmailAddresses()
+                                    .stream()
+                                    .filter(elem -> elem.getAddrType().equals(AddressType.F.method())).findFirst().orElse(null);
+        return mail.getMessage().getUserMapping().values()
                 .stream()
-                .filter(addr -> !addr.getAddrType().equals(ADDR_TYPE_FROM) && mail.getMessage().getUserMapping().containsKey(addr.getAddress()))
-                .map(addr -> new RecallTask(
+                .filter(addr -> !addr.getEmailAddress().equals(senderEmail != null ? senderEmail.getAddress() : ""))
+                .map(recipient -> new RecallTask(
                         -1,
                         TaskStatus.PENDING,
                         mail.getAction(),
-                        mail, UUID.fromString(mail.getMessage().getUserMapping().get(addr.getAddress()).getUserId()),
-                        addr.getAddress(),
+                        mail, recipient.getUserId(),
+                        recipient.getEmailAddress(),
                         0)
                 )
                 .collect(Collectors.toList()
@@ -275,21 +333,21 @@ public class RecallMailServiceImpl implements RecallMailService {
         throw new NotImplementedException();
     }
 
-    public Future<Void> deleteMessage (RecallMail recallMail, UserInfos user, String receiverEmail, String senderEmail) {
+    public Future<Void> deleteMessage (RecallMail recallMail, String userId, String receiverEmail, String senderEmail) {
         Promise<Void> promise = Promise.promise();
 
         JsonObject returnedMailInfos = new JsonObject()
                 .put(Field.USER_MAIL, senderEmail)
                 //mid from zimbra comes like "<mid>", so we have to remove the "<" and ">"
                 .put(Field.MID, recallMail.getMessage().getMailId().substring(1, recallMail.getMessage().getMailId().length() - 1));
-        JsonObject userRecallInfos = new JsonObject().put(Field.ID, user.getUserId()).put(Field.MAIL, receiverEmail);
+        JsonObject userRecallInfos = new JsonObject().put(Field.ID, userId).put(Field.MAIL, receiverEmail);
 
         messageService.retrieveMailFromZimbra(returnedMailInfos, userRecallInfos)
                 .compose(mail -> {
                     if (!mail.isEmpty()) {
-                        return messageService.deleteMessages(mail, user, false);
+                        return messageService.deleteMessages(mail, userId, false);
                     } else {
-                        return Future.failedFuture(ErrorEnum.ERROR_RETRIEVING_MAIL.method());
+                        return Future.succeededFuture();
                     }
                 })
                 .onSuccess(promise::complete)

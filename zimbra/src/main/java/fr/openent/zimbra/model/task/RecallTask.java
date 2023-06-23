@@ -6,15 +6,13 @@ import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.message.RecallMail;
 import io.vertx.core.json.JsonObject;
 
-import java.util.UUID;
-
 public class RecallTask extends Task<RecallTask> {
     private final RecallMail recallMessage;
     private String receiverEmail;
-    private final UUID receiverId;
+    private final String receiverId;
     private final int retry;
 
-    public RecallTask(long id, TaskStatus status, Action<RecallTask> action, RecallMail recallMessage, UUID receiverId, String receiverEmail, int retry) {
+    public RecallTask(long id, TaskStatus status, Action<RecallTask> action, RecallMail recallMessage, String receiverId, String receiverEmail, int retry) {
         super(id, status, action);
         this.recallMessage = recallMessage;
         this.receiverEmail = receiverEmail;
@@ -29,7 +27,7 @@ public class RecallTask extends Task<RecallTask> {
         }
         try {
             this.id = dbData.getInteger(Field.ID, -1);
-            this.receiverId = UUID.fromString(dbData.getString(Field.RECEIVER_ID));
+            this.receiverId = dbData.getString(Field.RECEIVER_ID);
             this.retry = dbData.getInteger(Field.RETRY);
             this.receiverEmail = dbData.getString(Field.RECIPIENT_ADDRESS);
             this.recallMessage = recallMessage;
@@ -46,7 +44,7 @@ public class RecallTask extends Task<RecallTask> {
         return recallMessage;
     }
 
-    public UUID getReceiverId() {
+    public String getReceiverId() {
         return receiverId;
     }
 

@@ -15,7 +15,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
-import java.util.UUID;
 
 public class RecallQueueServiceImpl extends QueueService<RecallTask> {
     public RecallQueueServiceImpl(String schema, DbTaskService<RecallTask> dbTaskService, DbActionService dbActionService) {
@@ -31,7 +30,7 @@ public class RecallQueueServiceImpl extends QueueService<RecallTask> {
                 TaskStatus.PENDING,
                 action,
                 null,
-                UUID.fromString(data.getString(Field.RECEIVER_ID)),
+                data.getString(Field.RECEIVER_ID),
                 data.getString(Field.RECIPIENT_ADDRESS),
                 data.getInteger(Field.RETRY)));
     }
@@ -41,7 +40,7 @@ public class RecallQueueServiceImpl extends QueueService<RecallTask> {
         Message message = Message.fromZimbra(new JsonObject().put(Field.MID, recallData.getString(Field.MESSAGE_ID)));
         return new RecallTask(      taskData,
                                     action,
-                                    new RecallMail(taskData.getInteger(Field.RECALL_MAIL_ID), message,recallData.getString(Field.USER_MAIL))
+                                    new RecallMail(taskData.getInteger(Field.RECALL_MAIL_ID), message, recallData.getString(Field.USER_MAIL))
         );
     }
 

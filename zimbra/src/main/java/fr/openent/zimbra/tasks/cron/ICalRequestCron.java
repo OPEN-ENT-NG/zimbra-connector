@@ -22,7 +22,6 @@ public class ICalRequestCron extends ControllerHelper implements Handler<Long> {
 
     @Override
     public void handle(Long event) {
-        log.info("[ZimbraConnector@ICalRequestCron] ICalRequestCron started");
         final JsonObject message = new JsonObject();
         message.put(Field.ACTION, QueueWorkerAction.SYNC_QUEUE);
         EventBusHelper.requestJsonObject(eb, ICalRequestWorker.class.getName(), message)

@@ -151,7 +151,7 @@ public class ServiceManager {
         this.frontPageService = new FrontPageService(folderService, userService);
         this.returnedMailService = new ReturnedMailService(new DbMailServiceFactory(vertx, sqlSynchroService).getDbMailService("postgres"), messageService, userService, notificationService, eb);
         this.structureService = new StructureServiceImpl(neoService);
-        this.recallMailService = new RecallMailServiceImpl(sqlRecallMailService, messageService, recallQueueService, notificationService, structureService, recipientService);
+        this.recallMailService = new RecallMailServiceImpl(eb, sqlRecallMailService, messageService, recallQueueService, notificationService, structureService, recipientService, userService);
 
         this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
         this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);

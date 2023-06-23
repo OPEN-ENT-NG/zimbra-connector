@@ -44,7 +44,16 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
         this.running = true;
         this.workerStatus = QueueWorkerStatus.RUNNING;
         while (this.running && !queue.isEmpty()) {
-            execute(this.queue.poll());
+            T task = this.queue.poll();
+            try {
+                execute(task);
+            } catch(Exception e) {
+                String errMessage = String.format("[Zimbra@%s::startQueue]:  " +
+                                    "an error has occurred while executing task: %s",
+                            this.getClass().getSimpleName(), e.getMessage());
+                    queueService.logFailureOnTask(task, errMessage);
+                    log.error(errMessage);
+            }
         }
     }
 
