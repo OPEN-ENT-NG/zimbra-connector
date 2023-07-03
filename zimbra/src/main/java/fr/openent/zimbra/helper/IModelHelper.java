@@ -48,7 +48,7 @@ public class IModelHelper {
             } catch (Exception e) {
                 String errMessage = String.format("[Zimbra@%s::toList]:  " +
                                 "error while fetching model: %s",
-                        JsonHelper.class.getSimpleName(), e.getMessage());
+                        IModelHelper.class.getSimpleName(), e.getMessage());
                 log.error(errMessage);
                 throw new Exception(e);
             }

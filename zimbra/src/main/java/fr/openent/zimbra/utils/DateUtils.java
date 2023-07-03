@@ -1,11 +1,8 @@
 package fr.openent.zimbra.utils;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 public final class DateUtils {
     public static final String DATE_FORMAT = "yyyy-MM-dd";
@@ -23,6 +20,8 @@ public final class DateUtils {
     private DateUtils()  {}
 
     public static Date parseDate(String dateToParse, String format) {
+        if (dateToParse == null || dateToParse.equals(""))
+            return null;
         try {
             SimpleDateFormat dateFormat = new SimpleDateFormat(format);
             return dateFormat.parse(dateToParse);

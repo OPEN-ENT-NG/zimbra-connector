@@ -252,6 +252,7 @@ public class RecallMailServiceImpl implements RecallMailService {
                 .map(recipient -> new RecallTask(
                         -1,
                         TaskStatus.PENDING,
+                        null,
                         mail.getAction(),
                         mail, recipient.getUserId(),
                         recipient.getEmailAddress(),

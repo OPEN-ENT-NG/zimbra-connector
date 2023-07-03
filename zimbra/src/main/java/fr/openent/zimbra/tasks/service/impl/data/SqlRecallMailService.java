@@ -1,7 +1,6 @@
 package fr.openent.zimbra.tasks.service.impl.data;
 
 import fr.openent.zimbra.core.constants.Field;
-import fr.openent.zimbra.core.enums.ActionStatus;
 import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.helper.IModelHelper;
@@ -129,6 +128,7 @@ public class SqlRecallMailService extends DbRecallMail {
                 action.addTasks(IModelHelper.toList(new JsonArray(mailData.getString(Field.TASKS)), taskData ->
                                 new RecallTask(taskData.getInteger(Field.ID),
                                         TaskStatus.fromString(taskData.getString(Field.STATUS)),
+                                        DateUtils.parseDate(taskData.getString(Field.LAST_UPDATE, ""), DateUtils.DATE_FORMAT_SQL_WITHOUT_MILLI),
                                         null,
                                         null,
                                         null,

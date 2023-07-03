@@ -11,6 +11,7 @@ import fr.openent.zimbra.model.task.RecallTask;
 import fr.openent.zimbra.tasks.service.DbActionService;
 import fr.openent.zimbra.tasks.service.DbTaskService;
 import fr.openent.zimbra.tasks.service.QueueService;
+import fr.openent.zimbra.utils.DateUtils;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -28,6 +29,7 @@ public class RecallQueueServiceImpl extends QueueService<RecallTask> {
         return IModelHelper.toList(taskData, data -> new RecallTask(
                 data.getInteger(Field.ID),
                 TaskStatus.PENDING,
+                DateUtils.parseDate(data.getString(Field.LAST_UPDATE), DateUtils.DATE_FORMAT_SQL_WITHOUT_MILLI),
                 action,
                 null,
                 data.getString(Field.RECEIVER_ID),

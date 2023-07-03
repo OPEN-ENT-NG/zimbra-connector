@@ -5,6 +5,7 @@ import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.model.action.Action;
 import fr.openent.zimbra.model.message.RecallMail;
 import io.vertx.core.json.JsonObject;
+import java.util.Date;
 
 public class RecallTask extends Task<RecallTask> {
     private final RecallMail recallMessage;
@@ -12,8 +13,8 @@ public class RecallTask extends Task<RecallTask> {
     private final String receiverId;
     private final int retry;
 
-    public RecallTask(long id, TaskStatus status, Action<RecallTask> action, RecallMail recallMessage, String receiverId, String receiverEmail, int retry) {
-        super(id, status, action);
+    public RecallTask(long id, TaskStatus status, Date lastUpdated, Action<RecallTask> action, RecallMail recallMessage, String receiverId, String receiverEmail, int retry) {
+        super(id, lastUpdated, status, action);
         this.recallMessage = recallMessage;
         this.receiverEmail = receiverEmail;
         this.receiverId = receiverId;

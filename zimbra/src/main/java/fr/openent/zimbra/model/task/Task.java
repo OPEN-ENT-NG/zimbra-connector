@@ -1,5 +1,7 @@
 package fr.openent.zimbra.model.task;
 
+import java.util.Date;
+
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.TaskStatus;
 import fr.openent.zimbra.model.action.Action;
@@ -11,6 +13,7 @@ public abstract class Task<T extends Task<T>> {
     protected long id;
     protected TaskStatus status;
     public Action<T> action;
+    public Date lastUpdated;
 
     public void setId(long id) {
         this.id = id;
@@ -44,10 +47,11 @@ public abstract class Task<T extends Task<T>> {
         this.action = action;
     }
 
-    public Task(long id, TaskStatus status, Action<T> action) {
+    public Task(long id, Date lastUpdated, TaskStatus status, Action<T> action) {
         this.id = id;
         this.status = status;
         this.action = action;
+        this.lastUpdated = lastUpdated;
     }
 
     public Task(JsonObject dbData, Action<T> action) throws Exception {
@@ -58,5 +62,9 @@ public abstract class Task<T extends Task<T>> {
         } catch (Exception e) {
             throw new Exception(String.format("[Zimbra@%s::Task] JSON does not match Task model", Task.class));
         }
+    }
+
+    public Date getLastUpdated() {
+        return this.lastUpdated;
     }
 }

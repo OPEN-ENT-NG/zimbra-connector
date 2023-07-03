@@ -19,6 +19,8 @@ public class Field {
     public static final String ERROR = "error";
     public static final String CAPITAL_ERROR = "ERROR";
     public static final String CAPITAL_REMOVED = "REMOVED";
+    public static final String LAST_UPDATE = "last_update";
+    public static final String CAMEL_LAST_UPDATE = "lastUpdate";
     public static final String CAPITAL_PROGRESS = "PROGRESS";
     public static final String STATUS = "status";
     public static final String STATUT = "statut";
