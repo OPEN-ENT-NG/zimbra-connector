@@ -136,7 +136,10 @@ public class RecallMailServiceImpl implements RecallMailService {
         Promise<Message> promise = Promise.promise();
         recipientService.getUserIdsFromEmails(message.getAllAddresses())
                 .compose(userMap -> {
-                    String senderMail = message.getEmailAddresses().stream().filter(mail -> mail.getAddrType().equals(ADDR_TYPE_FROM)).findFirst().get().getAddress();
+                    String senderMail = message.getEmailAddresses()
+                                                .stream()
+                                                .filter(mail -> mail.getAddrType().equals(ADDR_TYPE_FROM))
+                                                .findFirst().orElse(ZimbraEmail.fromZimbra(new JsonObject())).getAddress();
                     return handleGroups(userMap.get(senderMail).getUserId(), userMap);
                 })
                 .onSuccess(userMap -> {

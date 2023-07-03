@@ -1100,7 +1100,7 @@ public class MessageService {
      * Delete a batch of messages
      *
      * @param messageIDs        List of Message ID
-     * @param user              User infos
+     * @param userId            User id
      * @param trashConstraint   boolean constraint that the message should be in trash
      */
     private Future<Void> deleteBatchMessages(List<String> messageIDs, String userId, boolean trashConstraint) {
