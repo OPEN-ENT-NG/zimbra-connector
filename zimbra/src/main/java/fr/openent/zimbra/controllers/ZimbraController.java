@@ -852,7 +852,7 @@ public class ZimbraController extends BaseController {
                     return;
                 }
 
-                messageService.deleteMessages(messageIds, user, true)
+                messageService.deleteMessages(messageIds, user.getUserId(), true)
                         .onSuccess(res -> Renders.renderJson(request, new JsonObject(),200))
                         .onFailure(err -> {
                             JsonObject error = (new JsonObject()).put(Field.ERROR, err.getMessage());

@@ -24,7 +24,6 @@ public class RecallMailCron implements Handler<Long> {
 
     @Override
     public void handle(Long event) {
-        log.info("[ZimbraConnector@RecallCron] RecallCron started");
         final JsonObject message = new JsonObject();
         message.put(Field.ACTION, QueueWorkerAction.SYNC_QUEUE);
         EventBusHelper.requestJsonObject(eb, RecallMailWorker.RECALL_MAIL_HANDLER_ADDRESS, message)

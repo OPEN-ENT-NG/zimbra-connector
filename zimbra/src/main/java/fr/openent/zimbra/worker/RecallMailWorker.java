@@ -24,30 +24,22 @@ public class RecallMailWorker extends QueueWorker<RecallTask> {
     }
 
     public void execute(RecallTask task) {
-        UserUtils.getUserInfos(eb, task.getReceiverId().toString(), user -> {
-            if (user != null) {
-                recallMailService.deleteMessage(task.getRecallMessage(), user, task.getReceiverEmail(), task.getRecallMessage().getSenderEmail())
-                        .compose(isDeleted -> queueService.editTaskStatus(task, TaskStatus.FINISHED))
-                        .onFailure(err -> {
-                            queueService.logFailureOnTask(task, ErrorEnum.ERROR_UPDATING_TASK.method())
-                                    .onFailure(error -> {
-                                        String errMessage = String.format("[Zimbra@%s::execute]:  " +
-                                                        "an error has occurred while updating task status: %s",
-                                                this.getClass().getSimpleName(), error.getMessage());
-                                        log.error(errMessage);
-                                    });
-                            String errMessage = String.format("[Zimbra@%s::execute]:  " +
-                                            "an error has occurred while executing recall task: %s",
-                                    this.getClass().getSimpleName(), err.getMessage());
-                            log.error(errMessage);
-                        });
-            } else {
-                String errMessage = String.format("[Zimbra@%s::execute]:  " +
-                                "an error has occurred while fetching user",
-                        this.getClass().getSimpleName());
-                log.error(errMessage);
-            }
-
-        });
+        recallMailService
+                .deleteMessage(task.getRecallMessage(), task.getReceiverId(), task.getReceiverEmail(),
+                        task.getRecallMessage().getSenderEmail())
+                .compose(isDeleted -> queueService.editTaskStatus(task, TaskStatus.FINISHED))
+                .onFailure(err -> {
+                    queueService.logFailureOnTask(task, ErrorEnum.ERROR_UPDATING_TASK.method())
+                            .onFailure(error -> {
+                                String errMessage = String.format("[Zimbra@%s::execute]:  " +
+                                        "an error has occurred while updating task status: %s",
+                                        this.getClass().getSimpleName(), error.getMessage());
+                                log.error(errMessage);
+                            });
+                    String errMessage = String.format("[Zimbra@%s::execute]:  " +
+                            "an error has occurred while executing recall task: %s",
+                            this.getClass().getSimpleName(), err.getMessage());
+                    log.error(errMessage);
+                });
     }
 }

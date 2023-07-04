@@ -312,9 +312,17 @@ public abstract class QueueService<T extends Task<T>> {
                 action = new Action<>(new JsonObject(taskData.getString(Field.ACTION)));
                 this.actionList.add(action);
             }
-            T newTask = createTaskFromData(taskData, action);
-            action.addTask(newTask);
-            taskList.add(newTask);
+            try {
+                T newTask = createTaskFromData(taskData, action);
+                action.addTask(newTask);
+                taskList.add(newTask);
+            } catch(Exception e) {
+                String errMessage = String.format("[Zimbra@%s::createTasksAndActionFromData]:  " +
+                                        "an error has occured while creating tasks: %s",
+                                this.getClass().getSimpleName(), e.getMessage());
+                log.error(errMessage);
+            }
+            
         }
         return taskList;
     }

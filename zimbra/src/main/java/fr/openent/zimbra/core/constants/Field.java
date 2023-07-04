@@ -90,6 +90,7 @@ public class Field {
     public static final String JSNS = "jsns";
     public static final String BODY_LOWER_CASE = "body";
     public static final String MESSAGE_ID = "message_id";
+    public static final String EMAIL = "email";
     public static final String LOCAL_MAIL_ID = "local_mail_id";
     public static final String ZIMBRA = "zimbra";
     public static final String RECEIVERID = "receiverId";

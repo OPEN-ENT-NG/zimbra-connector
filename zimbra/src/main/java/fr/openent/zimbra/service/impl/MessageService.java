@@ -20,6 +20,7 @@ package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ErrorEnum;
+import fr.openent.zimbra.core.enums.RecipientType;
 import fr.openent.zimbra.helper.*;
 import fr.openent.zimbra.model.MailAddress;
 import fr.openent.zimbra.model.ZimbraUser;
@@ -382,9 +383,12 @@ public class MessageService {
             zimbraMails.remove(0);
             translateMaillistToUidlist(frontMsg, zimbraMails, addressMap, isReported, handler);
         } else {
-            Handler<String> translatedUuidHandler = userUuid -> {
-                if (userUuid == null) {
+            Handler<Recipient> translatedUuidHandler = recipient -> {
+                String userUuid;
+                if (recipient.getRecipientType() == RecipientType.UNKNOWN || recipient.getUserId() == null) {
                     userUuid = zimbraMail;
+                } else {
+                    userUuid = recipient.getUserId();
                 }
                 addressMap.put(zimbraMail, userUuid);
                 switch (type) {
@@ -421,7 +425,7 @@ public class MessageService {
             };
 
             if (addressMap.containsKey(zimbraMail)) {
-                translatedUuidHandler.handle(addressMap.get(zimbraMail));
+                translatedUuidHandler.handle(new Recipient(zimbraMail, addressMap.get(zimbraMail), RecipientType.USER));
             } else {
                 translateMail(zimbraMail, translatedUuidHandler);
             }
@@ -431,13 +435,7 @@ public class MessageService {
 
     public void translateMailFuture(String mail, Handler<AsyncResult<Recipient>> handler) {
         translateMail(mail, res -> {
-            Recipient recipient;
-            if (res == null) {
-                recipient = new Recipient(mail, mail);
-            } else {
-                recipient = new Recipient(mail, res);
-            }
-            handler.handle(Future.succeededFuture(recipient));
+            handler.handle(Future.succeededFuture(res));
         });
     }
 
@@ -449,28 +447,30 @@ public class MessageService {
      * @param mail    Zimbra mail
      * @param handler result handler
      */
-    private void translateMail(String mail, Handler<String> handler) {
+    private void translateMail(String mail, Handler<Recipient> handler) {
         try {
             String domain = mail.split("@")[1];
             if (!Zimbra.domain.equals(domain)) {
-                handler.handle(null);
+                handler.handle(new Recipient(mail, mail, RecipientType.UNKNOWN));
                 return;
             }
         } catch (Exception e) {
-            handler.handle(null);
+            handler.handle(new Recipient(mail, mail, RecipientType.UNKNOWN));
             return;
         }
         dbMailService.getNeoIdFromMail(mail, sqlResponse -> {
             if (sqlResponse.isLeft() || sqlResponse.right().getValue().isEmpty()) {
                 log.debug("no user in database for address : " + mail);
-                handler.handle(groupService.getGroupId(mail));
+                handler.handle(new Recipient(mail, groupService.getGroupId(mail), RecipientType.GROUP));
             } else {
                 JsonArray results = sqlResponse.right().getValue();
                 if (results.size() > 1) {
                     log.warn("More than one user id for address : " + mail);
                 }
-                String uuid = results.getJsonObject(0).getString(DbMailService.NEO4J_UID);
-                handler.handle(uuid);
+                JsonObject resultData = results.getJsonObject(0);
+                String uuid = resultData.getString(DbMailService.NEO4J_UID);
+                RecipientType recipientType = RecipientType.fromString(resultData.getString(Field.TYPE));
+                handler.handle(new Recipient(mail, uuid, recipientType));
             }
         });
     }
@@ -1080,13 +1080,13 @@ public class MessageService {
      * @param user              User infos
      * @param trashConstraint   boolean constraint that the message should be in trash
      */
-    public Future<Void> deleteMessages(List<String> messageIDs, UserInfos user, boolean trashConstraint) {
+    public Future<Void> deleteMessages(List<String> messageIDs, String userId, boolean trashConstraint) {
         Promise<Void> promise = Promise.promise();
         List<Future<Void>> futures = new ArrayList<>();
 
         List<List<String>> batchMessageIds = ArrayHelper.split(messageIDs, BATCH_SIZE);
         for (List<String> ids : batchMessageIds) {
-            futures.add(this.deleteBatchMessages(ids, user, trashConstraint));
+            futures.add(this.deleteBatchMessages(ids, userId, trashConstraint));
         }
 
         FutureHelper.all(futures)
@@ -1100,10 +1100,10 @@ public class MessageService {
      * Delete a batch of messages
      *
      * @param messageIDs        List of Message ID
-     * @param user              User infos
+     * @param userId            User id
      * @param trashConstraint   boolean constraint that the message should be in trash
      */
-    private Future<Void> deleteBatchMessages(List<String> messageIDs, UserInfos user, boolean trashConstraint) {
+    private Future<Void> deleteBatchMessages(List<String> messageIDs, String userId, boolean trashConstraint) {
         Promise<Void> promise = Promise.promise();
 
         JsonObject actionReq = new JsonObject()
@@ -1120,10 +1120,10 @@ public class MessageService {
                         .put(SoapConstants.ACTION, actionReq)
                         .put(SoapConstants.REQ_NAMESPACE, SoapConstants.NAMESPACE_MAIL));
 
-        soapService.callUserSoapAPI(convActionRequest, user, response -> {
-            if (response.isLeft()) {
-                log.error(String.format("[Zimbra@MessageService::deleteBatchMessages] failed to callUserSoapAPI: %s", response.left().getValue()));
-                promise.fail(response.left().getValue());
+        soapService.callUserSoapAPI(convActionRequest, userId, response -> {
+            if (response.failed()) {
+                log.error(String.format("[Zimbra@MessageService::deleteBatchMessages] failed to callUserSoapAPI: %s", response.cause().getMessage()));
+                promise.fail(response.cause().getMessage());
             } else {
                 promise.complete();
             }
@@ -1202,12 +1202,11 @@ public class MessageService {
         user.checkIfExists(userResponse -> {
             if (userResponse.failed()) {
                 log.error("[Zimbra] retrieveMailFromZimbra : Error while checking if user exists in Zimbra :" + userResponse.cause().getMessage());
-                result.handle(new Either.Right<>(new ArrayList<>()));
+                result.handle(new Either.Left<>(ErrorEnum.USER_NOT_DEFINED.method()));
             } else {
                 if (user.existsInZimbra()) {
                     // Etape 3 : On recherche en fonction de l'objet, de l'expéditeur, de la date et de la boite de réception le mail à supprimer
                     String query = "* NOT in:\"" + "Sent" + "\"" + " AND from:\"" + from_mail + "\"" + " AND msgid:\"" + msgid + "\"";
-                    log.info(query);
                     SoapSearchHelper.searchAllMailedConv(to_user_id, 0, query, event -> {
                         if (event.succeeded()) {
                             if (event.result().size() > 0) {
@@ -1254,6 +1253,7 @@ public class MessageService {
                 }
             } else {
                 log.error("[Zimbra] reccursiveSearch : Error while searching mails : " + event.cause().getMessage());
+                result.handle(new Either.Left<>(event.cause().getMessage()));
             }
         });
     }
