@@ -18,6 +18,7 @@
 package fr.openent.zimbra.security;
 
 
+import fr.openent.zimbra.core.constants.RecallRights;
 import fr.wseduc.webutils.http.Binding;
 import org.entcore.common.http.filter.ResourcesProvider;
 import org.entcore.common.user.UserInfos;
@@ -30,7 +31,7 @@ public class ExpertAccess implements ResourcesProvider {
     public void authorize(HttpServerRequest request, Binding binding, UserInfos user,
                           Handler<Boolean> handler) {
 
-        if (WorkflowActionUtils.hasRight(user, WorkflowActions.EXPERT_ACCESS_RIGHT.toString())) {
+        if (WorkflowActionUtils.hasRight(user, RecallRights.ZIMBRA_EXPERT)) {
             handler.handle(true);
         } else {
             handler.handle(false);
