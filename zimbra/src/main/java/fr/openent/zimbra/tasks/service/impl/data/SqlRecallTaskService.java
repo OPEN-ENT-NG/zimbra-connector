@@ -3,7 +3,6 @@ package fr.openent.zimbra.tasks.service.impl.data;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.core.enums.ErrorEnum;
 import fr.openent.zimbra.core.enums.TaskStatus;
-import fr.openent.zimbra.helper.ConfigManager;
 import fr.openent.zimbra.helper.PromiseHelper;
 import fr.openent.zimbra.helper.TransactionHelper;
 import fr.openent.zimbra.model.TransactionElement;
@@ -42,8 +41,8 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
                 this.taskTable + " as recall_tasks " +
                 "JOIN " + this.actionTable + " as actions" + " on actions.id = recall_tasks.action_id " +
                 "JOIN " + this.recallMailTable + " as recall_mails" + " on actions.id = recall_mails.action_id " +
-                "WHERE recall_tasks.status = ? AND actions.approved AND recall_tasks.retry < 5 " +
-                "GROUP BY recall_tasks.id, recall_tasks.recipient_address, recall_tasks.action_id, retry, status, recall_mail_id, receiver_id, actions.id, recall_mails.id LIMIT ?;";
+                "WHERE recall_tasks.status = ? AND actions.approved AND recall_tasks.retry < 5 LIMIT ?;";
+
         JsonArray params = new JsonArray().add(status.method()).add(queueMaxSize);
 
         Sql.getInstance().prepared(query, params, SqlResult.validResultHandler(PromiseHelper.handlerJsonArray(promise)));
@@ -169,11 +168,11 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
         String query;
         JsonArray values = new JsonArray();
         if (status == TaskStatus.ERROR && task.getRetry() < 5) {
-            query = "UPDATE " + taskTable + " AS rt set retry = retry + 1" + (task.getRetry() == 4 ? ", status = '" + TaskStatus.ERROR.method() + "'" : "") +
+            query = "UPDATE " + taskTable + " AS rt set retry = retry + 1, last_update = now()" + (task.getRetry() == 4 ? ", status = '" + TaskStatus.ERROR.method() + "'" : "") +
                     " WHERE rt.id = ? RETURNING " + Field.STATUS + ";";
             values.add(task.getId());
         } else {
-            query = "UPDATE " + this.taskTable + " SET status = ? " + "WHERE id = ? RETURNING " + Field.STATUS + ";";
+            query = "UPDATE " + this.taskTable + " SET status = ?, last_update = now() " + "WHERE id = ? RETURNING " + Field.STATUS + ";";
             values.add(status.method()).add(task.getId());
         }
 

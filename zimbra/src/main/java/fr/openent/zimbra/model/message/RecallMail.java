@@ -65,10 +65,16 @@ public class RecallMail {
         JsonObject tasks = new JsonObject();
         if (action != null) {
 
+            RecallTask dateMax = action.getTasks().stream()
+                                            .filter(task -> task.getLastUpdated() != null)
+                                            .max((task1, task2) -> task1.getLastUpdated().compareTo(task2.lastUpdated))
+                                            .orElse(null);
+            
             tasks
                     .put(TaskStatus.FINISHED.method(), action.getTasks().stream().filter(task -> task.getStatus() == TaskStatus.FINISHED).count())
                     .put(TaskStatus.ERROR.method(), action.getTasks().stream().filter(task -> task.getStatus() == TaskStatus.ERROR).count())
-                    .put(Field.TOTAL, action.getTasks().size());
+                    .put(Field.TOTAL, action.getTasks().size())
+                    .put(Field.CAMEL_LAST_UPDATE, dateMax != null ? dateMax.getLastUpdated().getTime() : -1);
             actionJson
                     .put(Field.APPROVED, action.getApproved())
                     .put(Field.TASKS,tasks)

@@ -1,0 +1,1 @@
+ALTER TABLE zimbra.tasks ADD COLUMN last_update TIMESTAMP WITHOUT TIME ZONE;
