@@ -287,12 +287,14 @@ public class RecallMailServiceImpl implements RecallMailService {
      */
     private Future<RecallMail> notifyADMLForRecall(RecallMail mail, UserInfos user) {
         Promise<RecallMail> promise = Promise.promise();
-
         structureService.getStructuresAndAdmls(user.getStructures())
                 .onSuccess(structs -> {
-                    structs.forEach(structure ->
-                                notificationService.sendReturnMailNotification(user, mail.getMessage().getSubject(), structure.getId(), structure.getADMLS(), null)
-                            );
+                    Set<String> alreadyNotified = new HashSet<>();
+                    structs.forEach(structure -> {
+                        List<String> sendingList = structure.getADMLS().stream().filter(e -> !alreadyNotified.contains(e)).collect(Collectors.toList());
+                        alreadyNotified.addAll(structure.getADMLS());
+                        notificationService.sendReturnMailNotification(user, mail.getMessage().getSubject(), structure.getId(), sendingList, null);
+                    });
                     promise.complete(mail);
                 })
                 .onFailure(err -> {
