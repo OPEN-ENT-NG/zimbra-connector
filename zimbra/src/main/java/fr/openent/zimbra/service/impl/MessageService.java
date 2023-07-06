@@ -156,7 +156,7 @@ public class MessageService {
                 .onSuccess(usernames -> {
                     displayNames.forEach(displayName -> {
                         String username = usernames.get(displayName.getString(0));
-                        displayName.set(1, username);
+                        displayName.set(1, username == null ? displayName.getString(1) : username);
                     });
                     promise.complete();
                 })
