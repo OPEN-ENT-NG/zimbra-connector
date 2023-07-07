@@ -41,7 +41,7 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
     }
 
     @Override
-    public void execute(ICalTask task) {
+    public Future<Void> execute(ICalTask task) {
         String userId = task.getAction().getUserId().toString();
 
         if (StringHelper.isNullOrEmpty(userId)) {
@@ -49,10 +49,11 @@ public class ICalRequestWorker extends QueueWorker<ICalTask> implements Handler<
             queueService.logFailureOnTask(task, ErrorEnum.USER_NOT_DEFINED.method())
                     .onFailure(err -> log.error(String.format("[Zimbra@%s::execute]: failed to create log in db: %s", this.getClass().getSimpleName(), err.getMessage())));
             log.error(errMessage);
-            return;
+            return Future.failedFuture(ErrorEnum.ERROR_EXECUTING_TASK.method());
         }
 
         UserUtils.getUserInfos(this.eb, userId, user -> retrieveIcalAndNotifyCalendar(user, task));
+        return Future.succeededFuture();
     }
 
     private JsonObject icalDataAsJson(String ical, ICalTask task) {

@@ -20,9 +20,11 @@ public enum ErrorEnum {
     ERROR_NO_SUCH_MESSAGE("zimbra.recall.no.such.message"),
     ERROR_FETCHING_ACTION("zimbra.error.fetching.action"),
     ERROR_FETCHING_STRUCTURE("zimbra.error.fetching.structures"),
+    ERROR_EXECUTING_TASK("zimbra.error.executing.task"),
     FAIL_ACCEPT_RECALL("fail.acept.recall"),
     ADML_NO_RIGHT_STRUCTURES("adml.no.rights.on.structs"),
     FAIL_DELETE_RECALL("fail.delete.recall"),
+    FAIL_DELETE_MAIL("fail.delete.mail"),
     FAIL_LIST_STRUCTURES("fail.list.structures"),
     ERROR_FETCHING_ADML("zimbra.error.fetching.adml"),
     ERROR_RETRIEVING_ACTION("zimbra.error.retrieving.action"),
@@ -35,7 +37,8 @@ public enum ErrorEnum {
     USER_NOT_DEFINED("user.not.defined"),
     ERROR_RETRIEVING_ICAL("error.retrieving.ical"),
     ERROR_CREATING_LOGS("error.creating.logs"),
-    NO_MAIL_TO_RECALL("no.mail.to.recall");
+    NO_MAIL_TO_RECALL("no.mail.to.recall"),
+    MAIL_NOT_FOUND("mail.not.found");
 
     private final String errorEnum;
 
