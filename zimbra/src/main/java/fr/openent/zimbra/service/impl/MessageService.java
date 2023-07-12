@@ -1125,7 +1125,13 @@ public class MessageService {
                 log.error(String.format("[Zimbra@MessageService::deleteBatchMessages] failed to callUserSoapAPI: %s", response.cause().getMessage()));
                 promise.fail(response.cause().getMessage());
             } else {
-                promise.complete();
+                    Boolean success = response.result().getBoolean(Field.SUCCESS, false);
+                if (success) {
+                    promise.complete();
+                } else {
+                    promise.fail(ErrorEnum.FAIL_DELETE_MAIL.method());
+                }
+                
             }
         });
 
@@ -1194,7 +1200,6 @@ public class MessageService {
      * @param result        result handler
      */
     public void retrieveMailFromZimbra(JsonObject returnedMail, JsonObject to_user_infos, Handler<Either<String, List<String>>> result) {
-        String from_mail = returnedMail.getString("user_mail");
         String msgid = returnedMail.getString("mid");
 
         String to_user_id = to_user_infos.getString(Field.ID);
@@ -1205,8 +1210,7 @@ public class MessageService {
                 result.handle(new Either.Left<>(ErrorEnum.USER_NOT_DEFINED.method()));
             } else {
                 if (user.existsInZimbra()) {
-                    // Etape 3 : On recherche en fonction de l'objet, de l'expéditeur, de la date et de la boite de réception le mail à supprimer
-                    String query = "* NOT in:\"" + "Sent" + "\"" + " AND from:\"" + from_mail + "\"" + " AND msgid:\"" + msgid + "\"";
+                    String query = "* msgid:\"" + msgid + "\"";
                     SoapSearchHelper.searchAllMailedConv(to_user_id, 0, query, event -> {
                         if (event.succeeded()) {
                             if (event.result().size() > 0) {

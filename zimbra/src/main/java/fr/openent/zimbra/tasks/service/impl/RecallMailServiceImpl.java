@@ -353,7 +353,7 @@ public class RecallMailServiceImpl implements RecallMailService {
                     if (!mail.isEmpty()) {
                         return messageService.deleteMessages(mail, userId, false);
                     } else {
-                        return Future.succeededFuture();
+                        return Future.failedFuture(ErrorEnum.MAIL_NOT_FOUND.method());
                     }
                 })
                 .onSuccess(promise::complete)
@@ -362,7 +362,8 @@ public class RecallMailServiceImpl implements RecallMailService {
                                     "error while deleting mail: %s",
                             this.getClass().getSimpleName(), err.getMessage());
                     log.error(errMessage);
-                    promise.fail(ErrorEnum.ERROR_DELETING_MAIL.method());
+                    ErrorEnum error = err.getMessage().equals(ErrorEnum.MAIL_NOT_FOUND.method()) ? ErrorEnum.MAIL_NOT_FOUND : ErrorEnum.ERROR_RETRIEVING_MAIL;
+                    promise.fail(error.method());
                 });
 
         return promise.future();

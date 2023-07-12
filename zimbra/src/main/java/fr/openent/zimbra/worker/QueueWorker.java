@@ -10,7 +10,9 @@ import fr.openent.zimbra.helper.ServiceManager;
 import fr.openent.zimbra.model.task.Task;
 import fr.openent.zimbra.tasks.service.QueueService;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
@@ -33,7 +35,7 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
     protected Queue<T> queue = new LinkedList<>();
     protected int maxQueueSize = 1000;
 
-    protected abstract void execute(T task);
+    protected abstract Future<Void> execute(T task);
 
     @Override
     public void start() throws Exception {
@@ -43,16 +45,24 @@ abstract class QueueWorker<T extends Task<T>> extends AbstractVerticle implement
     public void startQueue() {
         this.running = true;
         this.workerStatus = QueueWorkerStatus.RUNNING;
+        Future<Void> previousFuture = Future.succeededFuture();
         while (this.running && !queue.isEmpty()) {
             T task = this.queue.poll();
             try {
-                execute(task);
-            } catch(Exception e) {
+                previousFuture = previousFuture
+                        .compose(res -> {
+                            Promise<Void> waitingPromise = Promise.promise();
+                            execute(task)
+                                .onComplete(execRes -> waitingPromise.complete());
+                            return waitingPromise.future();
+                        });
+            } catch (Exception e) {
+                previousFuture = Future.succeededFuture();
                 String errMessage = String.format("[Zimbra@%s::startQueue]:  " +
-                                    "an error has occurred while executing task: %s",
-                            this.getClass().getSimpleName(), e.getMessage());
-                    queueService.logFailureOnTask(task, errMessage);
-                    log.error(errMessage);
+                        "an error has occurred while executing task: %s",
+                        this.getClass().getSimpleName(), e.getMessage());
+                queueService.logFailureOnTask(task, errMessage);
+                log.error(errMessage);
             }
         }
     }
