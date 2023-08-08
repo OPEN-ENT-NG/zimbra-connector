@@ -722,7 +722,7 @@ public class ZimbraController extends BaseController {
     @SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
     public void getMessage(final HttpServerRequest request) {
         final String id = request.params().get(MESSAGE_ID);
-        final String setReadValue = request.params().get(Field.SETREAD);
+        final String setReadValue = request.params().get(Field.READ);
         final Boolean setRead = setReadValue != null ? Boolean.parseBoolean(setReadValue) : null;
         if (id == null || id.trim().isEmpty()) {
             badRequest(request);

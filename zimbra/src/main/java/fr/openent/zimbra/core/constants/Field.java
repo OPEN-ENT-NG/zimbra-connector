@@ -26,6 +26,7 @@ public class Field {
     public static final String STATUT = "statut";
     public static final String SUCCESS = "success";
     public static final String SETREAD = "setRead";
+    public static final String READ = "read";
     public static final String ID = "id";
     public static final String MID = "mid";
     public static final String IDS = "ids";
