@@ -398,7 +398,7 @@ public class AttachmentService {
      */
     public void removeAttachment(String messageId, String attachmentId, UserInfos user,
                                  Handler<Either<String, JsonObject>> result) {
-        messageService.getMessage(messageId, user, response -> {
+        messageService.getMessage(messageId, user, null, response -> {
             if (response.isLeft()) {
                 result.handle(new Either.Left<>(response.left().getValue()));
             } else {
@@ -430,7 +430,7 @@ public class AttachmentService {
 
     public void forwardAttachments(String origMessageId, String finalMessageid, UserInfos user,
                                    Handler<Either<String, JsonObject>> handler) {
-        messageService.getMessage(origMessageId, user, response -> {
+        messageService.getMessage(origMessageId, user, null, response -> {
             if (response.isLeft()) {
                 handler.handle(new Either.Left<>(response.left().getValue()));
             } else {
@@ -462,7 +462,7 @@ public class AttachmentService {
      */
     private void updateDraft(String messageId, String uploadAttchId, UserInfos user, JsonArray forwardedAtts,
                             Handler<Either<String, JsonObject>> result) {
-        messageService.getMessage(messageId, user, response -> {
+        messageService.getMessage(messageId, user, null, response -> {
             if (response.isLeft()) {
                 result.handle(new Either.Left<>(response.left().getValue()));
             } else {

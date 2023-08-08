@@ -722,13 +722,15 @@ public class ZimbraController extends BaseController {
     @SecuredAction(value = "zimbra.message", type = ActionType.AUTHENTICATED)
     public void getMessage(final HttpServerRequest request) {
         final String id = request.params().get(MESSAGE_ID);
+        final String setReadValue = request.params().get(Field.SETREAD);
+        final Boolean setRead = setReadValue != null ? Boolean.parseBoolean(setReadValue) : null;
         if (id == null || id.trim().isEmpty()) {
             badRequest(request);
             return;
         }
         getUserInfos(eb, request, user -> {
             if (user != null) {
-                messageService.getMessage(id, user, defaultResponseHandler(request));
+                messageService.getMessage(id, user, setRead, defaultResponseHandler(request));
             } else {
                 unauthorized(request);
             }

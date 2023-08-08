@@ -494,10 +494,10 @@ public class MessageService {
      * @param user      User infos
      * @param handler   Final handler
      */
-    public void getMessage(String messageId, UserInfos user, Handler<Either<String, JsonObject>> handler) {
+    public void getMessage(String messageId, UserInfos user, Boolean setRead, Handler<Either<String, JsonObject>> handler) {
         JsonObject messageReq = new JsonObject()
                 .put("html", 1)
-                .put("read", Zimbra.appConfig.isActionBlocked(ConfigManager.UPDATE_ACTION) ? 0 : 1)
+                .put("read", setRead != null ? setRead : Zimbra.appConfig.isActionBlocked(ConfigManager.UPDATE_ACTION) ? 0 : 1)
                 .put("needExp", 1)
                 .put("neuter", 0)
                 .put(Field.ID, messageId);

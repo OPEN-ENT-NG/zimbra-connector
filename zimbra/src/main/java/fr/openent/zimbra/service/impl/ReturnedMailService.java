@@ -52,7 +52,7 @@ public class ReturnedMailService {
         String messagesId = body.getString(MESSAGE_ID);
         String comment = body.getString(ZIMBRA_COMMENT);
         // Etape 1 : récupérer le message à supprimer
-        messageService.getMessage(messagesId, user, getMail -> {
+        messageService.getMessage(messagesId, user, null, getMail -> {
             if (getMail.isRight()) {
                 JsonObject mail = getMail.right().getValue();
                 if (!Objects.equals(mail.getString(MAIL_FROM), user.getUserId())) {
