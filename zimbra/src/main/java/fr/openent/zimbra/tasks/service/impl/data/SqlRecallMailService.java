@@ -245,9 +245,9 @@ public class SqlRecallMailService extends DbRecallMail {
                 "count(rt) AS total FROM " + this.recallMailTable + " AS rm " +
                 "INNER JOIN " + this.actionTable + " AS act on act.id = rm.action_id " +
                 "INNER JOIN " + this.recallTaskTable + " AS rt on rt.action_id = act.id " +
-                "WHERE rm.local_mail_id in " + Sql.listPrepared(messageIdList) + " GROUP BY rm.id, act.approved;";
+                "WHERE rm.local_mail_id in " + Sql.listPrepared(messageIdList) + " AND act.user_id = ? GROUP BY rm.id, act.approved;";
 
-        JsonArray values = new JsonArray(messageIdList);
+        JsonArray values = new JsonArray(messageIdList).add(userId);
 
         Sql.getInstance().prepared(query, values, SqlResult.validResultHandler(PromiseHelper.handlerJsonArray(promise)));
 
