@@ -23,7 +23,6 @@
         <h5>
             <i18n>mail.return.libelle</i18n>
         </h5>
-
         <article>
             <div class="flex-row align-center">
                 <div class="states"  ng-hide="showRightSide()">
@@ -41,7 +40,8 @@
                 </div>
             </div>
         </article>
-        <span ng-show="containsExternal(mailToRecall.to)">&#9888; <i18n>zimbra.external.user</i18n></span>
+        <div class="info vertical-spacing-twice"><i18n>mail.return.suppression.warning</i18n></div>
+        <div class="warning vertical-spacing-twice" ng-show="containsExternal(mailToRecall.to)">&#9888; <i18n>zimbra.external.user</i18n></div>
     </div>
 
     <div class="vertical-spacing-twice horizontal-margin-twice">
