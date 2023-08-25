@@ -24,6 +24,7 @@ module.exports = {
         "cobertura"
     ],
     "moduleNameMapper": {
+        '^axios$': require.resolve('axios'),
         "^@zimbra(.*)$": "<rootDir>/zimbra/src/main/resources/ts$1"
     }
 };
