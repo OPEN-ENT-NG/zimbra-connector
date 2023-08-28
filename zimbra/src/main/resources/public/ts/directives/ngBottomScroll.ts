@@ -24,6 +24,8 @@ export const ngBottomScroll = ng.directive('ngBottomScroll',  () => {
             element.bind('scroll', function () {
                 if (MyElement.scrollTop + MyElement.offsetHeight >= MyElement.scrollHeight - 1) {
                     scope.$apply(attrs.ngBottomScroll)
+                    const adjustment = MyElement.offsetHeight / 10; //When scrolling to the bottom, scroll up a 10% of the visible height to prevent to trigger the event again
+                    MyElement.scrollTop -= adjustment;
                 }
             })
         }
