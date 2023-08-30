@@ -138,3 +138,19 @@ Explanation of the previous parameters :
     "zimbra-recall-cron"            : "${zimbraRecallCron}"             , update frequency for recall queue
     "zimbra-ical-worker-max-queue"  : "${zimbraICalWorkerMaxQueue}"     , max queue size for ical request worker
     "zimbra-recall-worker-max-queue": "${$zimbraRecallWorkerMaxQueue}"  , max queue size for recall request worker
+
+
+## API Zimbra Notif
+
+Create a connector to enable zimbra to communicate with zimbra-connector to send notifications once the operation is complete.
+![](docs/img.png)
+### Configuration
+<pre>
+id: NOTIFS_ZIMBRA_API
+URL: ${host}/apizimbra/notification
+clientID: NOTIFS_ZIMBRA_API
+Scope: fr.openent.apizimbra.controller.ApiController|sendNotification
+Code Secret: Tk9USU2Tx1pjTUJSQToq
+</pre>
+
+The username and password will be "notifent_user" et "notifent_password".
