@@ -15,7 +15,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-.zimbra {
+.zimbra-module {
+
+  .disabled-link{
+    pointer-events: none;
+    cursor: default;
+    opacity: 0.5;
+  }
+
   .info {
     margin-top: 55px;
   }
@@ -388,4 +395,5 @@
     display: list-item !important;
     font-size: 13px !important;
   }
+
 }

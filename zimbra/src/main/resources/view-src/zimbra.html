@@ -51,7 +51,7 @@
   <script src="/zimbra/public/dist/application.js?v=@@VERSION" type="text/javascript"></script>
   <link rel="stylesheet" href="/zimbra/public/css/conversation.css?v=@@VERSION">
 </head>
-<body ng-controller="ZimbraController" class="zimbra">
+<body ng-controller="ZimbraController" class="zimbra-module">
 <portal>
     <div ng-class="{info: quotaMessage.percent < 100, warning: quotaMessage.percent >= 100}" ng-init="initQuotaMessage()" ng-show="quotaMessage.active">
         <span ng-if="quotaMessage.percent < 100"><i18n>zimbra.quota.info.message</i18n></span>

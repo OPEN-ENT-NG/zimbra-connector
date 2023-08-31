@@ -250,7 +250,7 @@ export class Draft extends SystemFolder {
             get: `/zimbra/list?folder=${encodeURIComponent(path)}`
         });
 
-        this.folderName = "draft";
+        this.folderName = "drafts";
         this.nbUnread = unread;
         this.count = count;
         this.folders = folders;
