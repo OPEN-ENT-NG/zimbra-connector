@@ -510,7 +510,7 @@ export class Mail implements Selectable {
                     this.attachments = this.attachments.concat(attachmentWaiting);
                     this.newAttachments = null;
                 })
-                .catch((e: AxiosError) => {
+                .catch((e: AxiosError<any>) => {
                     // remove attachment
                     this.attachments = this.attachments.filter((attachment: Attachment) => {
                         return attachment.filename !== attachmentToUpload.filename || attachment.id;
@@ -532,7 +532,7 @@ export class Mail implements Selectable {
             .then(() => {
                 notify.info("zimbra.attachment.download.workspace.success");
             })
-            .catch((e : AxiosError) => {
+            .catch((e : AxiosError<any>) => {
                 sendNotificationErrorZimbra(e.response.data.error);
             });
     }

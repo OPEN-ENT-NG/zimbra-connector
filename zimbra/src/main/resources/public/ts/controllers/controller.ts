@@ -832,6 +832,12 @@ export let zimbraController = ng.controller("ZimbraController", [
             }, 10);
         };
 
+        $scope.showSubFolderIfCurrent = (folder: UserFolder, obj: { template: string }) => {
+            if(folder.id == Zimbra.instance.currentFolder.id) {
+                $scope.moveToFolderClick(folder, obj)
+            }
+        }
+
         $scope.recallMail = async (id: string, comment: string) => {
             $scope.lightbox.show = false;
             template.close("lightbox");
