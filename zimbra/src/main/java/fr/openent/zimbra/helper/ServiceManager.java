@@ -99,6 +99,8 @@ public class ServiceManager {
 
     private CalendarServiceImpl calendarService;
 
+    private HttpService httpService;
+
     private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix, ConfigManager config) {
         this.vertx = vertx;
         JsonObject rawConfig = config != null ? config.getRawConfig() : null;
@@ -138,8 +140,9 @@ public class ServiceManager {
         this.neoService = new Neo4jZimbraService();
         this.folderService = new FolderService(soapService);
         this.signatureService = new SignatureService(userService, soapService);
+        this.httpService = new HttpService(vertx);
         this.messageService = new MessageService(soapService, folderService,
-                dbMailServiceApp, userService, synchroUserService);
+                dbMailServiceApp, userService, synchroUserService, httpService);
         this.recipientService = new RecipientService(messageService);
         if (rawConfig != null) this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig, webClient);
         this.notificationService = new NotificationService(pathPrefix, timelineHelper);

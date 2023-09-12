@@ -51,7 +51,9 @@ import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.RequestUtils;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpServerRequest;
@@ -66,6 +68,7 @@ import org.entcore.common.cache.CacheScope;
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
+import org.entcore.common.http.response.DefaultResponseHandler;
 import org.entcore.common.storage.Storage;
 import org.entcore.common.storage.StorageFactory;
 import org.entcore.common.user.UserUtils;
@@ -730,7 +733,13 @@ public class ZimbraController extends BaseController {
         }
         getUserInfos(eb, request, user -> {
             if (user != null) {
-                messageService.getMessage(id, user, setRead, defaultResponseHandler(request));
+                messageService.getMessage(id,user,setRead)
+                        .onSuccess(message -> messageService.renderHtmlContent(message, user)
+                                .onComplete(event -> Renders.renderJson(request, event.result())))
+                        .onFailure(error -> {
+                            log.error(String.format("[Zimbra@ZimbraController::getMessage] Couldn't get message: %s", error.getMessage()));
+                            renderError(request);
+                        });
             } else {
                 unauthorized(request);
             }
