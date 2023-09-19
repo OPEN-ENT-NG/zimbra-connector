@@ -16,23 +16,31 @@
  */
 
 import { ng, _ } from "entcore";
-export const ngBottomScroll = ng.directive('ngBottomScroll',  () => {
+
+export const ngBottomScroll = ng.directive('ngBottomScroll', function () {
     return {
         restrict: 'A',
         link: function (scope, element, attrs) {
-            let MyElement = element[0];
-            element.bind('scroll', function () {
-                if (MyElement.scrollTop + MyElement.offsetHeight >= MyElement.scrollHeight - 1) {
-                    scope.$apply(attrs.ngBottomScroll)
-                    let previousScrollHeight = MyElement.scrollHeight;
-                    setTimeout( () => {
-                        if (MyElement.scrollHeight > previousScrollHeight) {
-                            const adjustment = MyElement.offsetHeight / 10; //When scrolling to the bottom, scroll up a 10% of the visible height to prevent to trigger the event again
-                            MyElement.scrollTop -= adjustment;
-                        }
-                    }, 10);
+            let currentScrollHeight = 0;
+
+            const checkScrollPosition = async () => {
+                let MyElement = element[0];
+                let latestHeightBottom = 50;
+                let scrollHeight = MyElement.scrollHeight;
+                let scrollPos = Math.floor(MyElement.offsetHeight + MyElement.scrollTop);
+                let isBottom = scrollHeight - latestHeightBottom < scrollPos;
+                if (isBottom && currentScrollHeight < scrollHeight) {
+                    let oldScrollTop = MyElement.scrollTop;
+                    await scope.$eval(attrs.ngBottomScroll);
+                    currentScrollHeight = scrollHeight;
+                    if(Math.floor(MyElement.offsetHeight + MyElement.scrollTop) ==  MyElement.scrollHeight){// if adding element did not scroll up then we do it
+                        MyElement.scrollTop = oldScrollTop;
+                    }
                 }
-            })
+            };
+
+            element.bind('scroll', checkScrollPosition);
         }
-    }
+    };
 });
+

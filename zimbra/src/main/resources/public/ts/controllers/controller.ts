@@ -49,7 +49,8 @@ export let zimbraController = ng.controller("ZimbraController", [
     "$sanitize",
     "model",
     "route",
-    function($location, $scope, $timeout, $compile, $sanitize, model, route) {
+    "$q",
+    function($location, $scope, $timeout, $compile, $sanitize, model, route, $q) {
         $scope.state = {
             selectAll: false,
             filterUnread: false,
@@ -333,15 +334,19 @@ export let zimbraController = ng.controller("ZimbraController", [
         };
 
         $scope.nextPage = async () => {
+            const deferred = $q.defer();
             if (template.containers['right-side'].indexOf("right-side.html") > 0 && !$scope.messagesLoading) {
                 $scope.messagesLoading = true;
-                try {
-                    await Zimbra.instance.currentFolder.nextPage($scope.state.selectAll);
-                } catch (err) {
-                    notify.error(lang.translate("zimbra.message.loading"));
-                }
+                Zimbra.instance.currentFolder.nextPage($scope.state.selectAll)
+                    .then(() => {
+                        deferred.resolve();
+                    })
+                    .catch(() => {
+                        notify.error(lang.translate("zimbra.message.loading"));
+                    });
                 $scope.messagesLoading = false;
                 $scope.$apply();
+                return deferred.promise;
             }
         };
 
