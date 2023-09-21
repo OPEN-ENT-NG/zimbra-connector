@@ -146,12 +146,15 @@
       }
     }
   }
-  @media screen and (max-width: $tablette) {
-    .mail-body {
+  .mail-body {
+    @media screen and (max-width: $hight-pc) {
       blockquote {
         margin-inline-start: 10px !important;
         margin-inline-end: 0px !important;
       }
+    }
+    div {
+      max-width: 100%;
     }
   }
   @media screen and (max-height: $small-pc) {
