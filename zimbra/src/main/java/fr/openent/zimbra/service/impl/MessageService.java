@@ -32,10 +32,12 @@ import fr.openent.zimbra.model.message.Recipient;
 import fr.openent.zimbra.model.soap.SoapMessageHelper;
 import fr.openent.zimbra.model.soap.SoapSearchHelper;
 import fr.openent.zimbra.service.DbMailService;
+import fr.openent.zimbra.service.data.HttpService;
 import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.synchro.SynchroUserService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.*;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -46,6 +48,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static fr.openent.zimbra.model.constant.FrontConstants.*;
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
@@ -60,17 +63,20 @@ public class MessageService {
     private final UserService userService;
     private final GroupService groupService;
 
+    private final HttpService httpService;
+
     private static final Logger log = LoggerFactory.getLogger(MessageService.class);
 
     private final int BATCH_SIZE = 100;
 
     public MessageService(SoapZimbraService soapService, FolderService folderService,
-                          DbMailService dbMailService, UserService userService, SynchroUserService synchroUserService) {
+                          DbMailService dbMailService, UserService userService, SynchroUserService synchroUserService, HttpService httpService) {
         this.soapService = soapService;
         this.folderService = folderService;
         this.dbMailService = dbMailService;
         this.userService = userService;
         this.groupService = new GroupService(soapService, dbMailService, synchroUserService);
+        this.httpService = httpService;
     }
 
     /**
@@ -111,7 +117,7 @@ public class MessageService {
             if (searchResult.isLeft()) {
                 result.handle(new Either.Left<>(searchResult.left().getValue()));
             } else {
-                processListMessages(searchResult.right().getValue(), result);
+                processListMessages(searchResult.right().getValue(), user, result);
             }
         });
     }
@@ -122,7 +128,7 @@ public class MessageService {
      * @param zimbraResponse Response from Zimbra API
      * @param result         result handler
      */
-    private void processListMessages(JsonObject zimbraResponse,
+    private void processListMessages(JsonObject zimbraResponse, UserInfos user,
                                      Handler<Either<String, JsonArray>> result) {
         JsonArray zimbraMessages;
         try {
@@ -245,8 +251,7 @@ public class MessageService {
      * @param addressMap     mapping of user email addresses and neo ids
      * @param result         final handler
      */
-    private void processSearchResult(JsonArray zimbraMessages, JsonArray frontMessages, Map<String, String> addressMap,
-                                     Handler<Either<String, JsonArray>> result) {
+    private void processSearchResult(JsonArray zimbraMessages, JsonArray frontMessages, Map<String, String> addressMap, Handler<Either<String, JsonArray>> result) {
         if (zimbraMessages.isEmpty()) {
             this.addDisplayNames(frontMessages)
                     .onSuccess(res -> result.handle(new Either.Right<>(frontMessages)))
@@ -315,6 +320,7 @@ public class MessageService {
         msgFront.put("bcc", new JsonArray());
         msgFront.put("displayNames", new JsonArray());
         msgFront.put("attachments", new JsonArray());
+
 
 
         JsonArray zimbraMails = msgZimbra.getJsonArray(MSG_EMAILS);
@@ -515,6 +521,18 @@ public class MessageService {
                 processGetMessage(response.right().getValue(), handler);
             }
         });
+    }
+
+    public Future<JsonObject> getMessage(String messageId, UserInfos user, Boolean setRead) {
+        Promise<JsonObject> promise = Promise.promise();
+        getMessage(messageId, user, setRead, event -> {
+            if (event.isLeft()){
+                promise.fail(event.left().getValue());
+                return;
+            }
+            promise.complete(event.right().getValue());
+        });
+        return promise.future();
     }
 
     /**
@@ -907,7 +925,7 @@ public class MessageService {
      * @param zimbraResponse Zimbra API response
      * @param handler        final handler
      */
-    void processSaveDraftFull(JsonObject zimbraResponse, Handler<Either<String, JsonObject>> handler) {
+    void processSaveDraftFull(JsonObject zimbraResponse,  Handler<Either<String, JsonObject>> handler) {
         JsonObject msgDraftedContent = zimbraResponse
                 .getJsonObject("Body")
                 .getJsonObject("SaveDraftResponse")
@@ -1077,7 +1095,6 @@ public class MessageService {
      * Delete list of message Ids from trash
      *
      * @param messageIDs        List of Message ID
-     * @param user              User infos
      * @param trashConstraint   boolean constraint that the message should be in trash
      */
     public Future<Void> deleteMessages(List<String> messageIDs, String userId, boolean trashConstraint) {
@@ -1356,4 +1373,45 @@ public class MessageService {
 
         return promise.future();
     }
+
+    public Future<JsonObject> renderHtmlContent (JsonObject message, UserInfos user){
+        Promise<JsonObject> promise = Promise.promise();
+
+            List<String> cids = CidHelper.getMessageCids(message);
+            Map<String, String> mapCidToImageUrl = CidHelper.mapCidToImageUrl(message.getString(FrontConstants.MESSAGE_ID), cids);
+            soapService.getUserAuthToken(user)
+                    .compose(authToken -> fetchAllImagesBuffer(mapCidToImageUrl, authToken))
+                    .compose(mapCidImageBuffer -> {
+                        Map<String,String> mapCidToBase64 = CidHelper.mapCidToBase64(mapCidImageBuffer);
+                        JsonObject messageReplaced = CidHelper.replaceCidByBase64(message, mapCidToBase64);
+                        return Future.succeededFuture(messageReplaced);
+                    })
+                    .onSuccess(promise::complete)
+                    .onFailure(err -> promise.complete(message));
+        return promise.future();
+    }
+
+
+    private Future<Map<String, Buffer>> fetchAllImagesBuffer(Map<String, String> mapCidToImageUrl, String authToken) {
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(Field.COOKIE, "ZM_AUTH_TOKEN=" + authToken);
+
+        List<Future<AbstractMap.SimpleEntry<String, Buffer>>> futures = new ArrayList<>();
+
+
+        mapCidToImageUrl.forEach((cid, url) ->
+                futures.add(httpService.get(url, headers)
+                        .map(buffer -> new AbstractMap.SimpleEntry<>(cid, buffer))) //Pairing cid with buffer
+        );
+
+        return FutureHelper.all(futures)
+                .map(compositeFuture -> futures.stream()
+                        .collect(Collectors.toMap(
+                                future -> future.result().getKey(),
+                                future -> future.result().getValue()
+                        ))
+                );
+    }
 }
+
+

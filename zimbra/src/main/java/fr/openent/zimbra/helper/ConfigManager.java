@@ -17,12 +17,22 @@
 
 package fr.openent.zimbra.helper;
 
+import fr.openent.zimbra.Zimbra;
+import fr.openent.zimbra.model.DocumentConfiguration;
 import fr.openent.zimbra.model.SlackConfiguration;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+import static fr.openent.zimbra.model.constant.FrontConstants.MESSAGE_BODY;
 
 @SuppressWarnings("WeakerAccess")
 public class ConfigManager {
@@ -97,6 +107,8 @@ public class ConfigManager {
     private CircuitBreakerOptions circuitBreakerOptions;
 
     private SlackConfiguration slackConfiguration;
+
+    private final DocumentConfiguration zimbraDocumentConfig;
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -175,6 +187,7 @@ public class ConfigManager {
         this.circuitBreakerOptions = new CircuitBreakerOptions(config.getJsonObject("circuit-breaker", new JsonObject()));
         JsonObject slackConfig = config.getJsonObject("slack", new JsonObject());
         this.slackConfiguration = new SlackConfiguration(slackConfig.getString("api-uri", ""), slackConfig.getString("api-token", ""), slackConfig.getString("channel", ""), slackConfig.getString("bot-username", ""), config.getString("host", ""));
+        this.zimbraDocumentConfig = new DocumentConfiguration(config.getJsonObject("zimbra-document-config", new JsonObject()));
         initPublicConfig();
     }
 
@@ -242,5 +255,21 @@ public class ConfigManager {
         }
         return newpwd;
     }
+
+    public DocumentConfiguration getZimbraDocumentConfig() {
+        return zimbraDocumentConfig;
+    }
+
+    public Pattern getCidPattern() {
+        try {
+            return Pattern.compile(zimbraDocumentConfig.getCidPattern());
+        }
+        catch (PatternSyntaxException pse) {
+            String errMessage = "[Zimbra@ConfidManager::getCidPattern] Failed to compile cid pattern from config";
+            log.error(errMessage + " : " + pse.getMessage());
+            throw new RuntimeException(pse);
+        }
+    }
+
 
 }

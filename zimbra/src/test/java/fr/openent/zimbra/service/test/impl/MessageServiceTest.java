@@ -39,7 +39,7 @@ public class MessageServiceTest {
     public void setUp() {
         this.userService = Mockito.mock(UserService.class);
         PowerMockito.spy(MessageService.class);
-        this.messageService = PowerMockito.spy(new MessageService(null, null, null, userService, null));
+        this.messageService = PowerMockito.spy(new MessageService(null, null, null, userService, null, null));
     }
 
     @Test

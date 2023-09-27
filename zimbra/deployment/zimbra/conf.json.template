@@ -57,6 +57,10 @@
       "api-token": "$zimbraSlackApiToken",
       "channel": "$zimbraSlackChannel",
       "bot-username": "$zimbraSlackBotUsername"
+    },
+    "zimbra-document-config": {
+        "cid-patern": "$zimbraCidPattern",
+        "document-download-endpoint" : "$zimbraDocumentEndpoint"
     }
   }
 }
