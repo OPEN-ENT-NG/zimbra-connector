@@ -54,7 +54,7 @@ public abstract class QueueService<T extends Task<T>> {
      * @throws Exception    If data does not match the model.
      */
     protected List<T> createTasksFromData(Action<T> action, JsonArray taskData) throws Exception {
-        throw new NotImplementedException();
+        throw new NotImplementedException("An exception not implemented occured");
     }
 
     /**
@@ -64,7 +64,7 @@ public abstract class QueueService<T extends Task<T>> {
      * @return
      */
     public Future<List<T>> insertTasksInQueue(List<T> tasks) {
-        throw new NotImplementedException();
+        throw new NotImplementedException("An exception not implemented occured");
     }
 
     protected abstract T createTaskFromData(JsonObject taskData, Action<T> action) throws Exception;
