@@ -50,7 +50,7 @@ public class RedirectionService {
             JsonObject params = new JsonObject().put("action", "get.userlist").put("application", "zimbra")
                     .put("userIds", new JsonArray().add(userid));
 
-            eb.send("userbook.preferences", params, (Handler<AsyncResult<Message<JsonObject>>>) res -> {
+            eb.request("userbook.preferences", params, (Handler<AsyncResult<Message<JsonObject>>>) res -> {
                 if (res.failed() || res.result().body().getString(Field.STATUS, Field.ERROR).equals(Field.ERROR)) {
                     handler.handle(false);
                 } else {

@@ -538,7 +538,8 @@ public class UserService {
                 .put("userIds", userIds)
                 .put("groupIds", groupIds);
 
-        eb.send(DIRECTORY_ADDRESS, action, handlerToAsyncHandler(validResultHandler(handler)));
+
+        eb.request(DIRECTORY_ADDRESS, action, handlerToAsyncHandler(validResultHandler(handler)));
     }
 
     public Future<JsonArray> getLocalAdministrators(String structure) {
@@ -553,7 +554,7 @@ public class UserService {
         JsonObject action = new JsonObject()
                 .put("action", "list-adml")
                 .put("structureId", structure);
-        eb.send(DIRECTORY_ADDRESS, action, new Handler<AsyncResult<Message<JsonArray>>>() {
+        eb.request(DIRECTORY_ADDRESS, action, new Handler<AsyncResult<Message<JsonArray>>>() {
             @Override
             public void handle(AsyncResult<Message<JsonArray>> res) {
                 handler.handle(new Either.Right<>(res.result().body()));

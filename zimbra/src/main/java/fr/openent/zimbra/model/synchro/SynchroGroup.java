@@ -31,6 +31,7 @@ import fr.openent.zimbra.service.DbMailService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -62,15 +63,16 @@ class SynchroGroup extends Group {
 
     /**
      * Synchronize Group in zimbra :
-     *   - Get data from Neo
-     *   - Create group in zimbra if it does not exists
-     *   - Else update it
+     * - Get data from Neo
+     * - Create group in zimbra if it does not exists
+     * - Else update it
+     *
      * @param handler final handler. Contains zimbra data for updated group if successful
      */
     @SuppressWarnings("WeakerAccess")
     public void synchronize(Handler<AsyncResult<JsonObject>> handler) {
-        fetchDataFromNeo( res -> {
-            if(res.failed()) {
+        fetchDataFromNeo(res -> {
+            if (res.failed()) {
                 handler.handle(Future.failedFuture(res.cause()));
             } else {
                 createOrUpdate(handler);
@@ -88,13 +90,13 @@ class SynchroGroup extends Group {
 
     private void checkIfExists(Handler<AsyncResult<String>> handler) {
         getZimbraInfos(result -> {
-            if(result.succeeded()) {
+            if (result.succeeded()) {
                 getGroupIdFromZimbraResponse(result.result(), handler);
             } else {
                 String errorStr = result.cause().getMessage();
                 try {
                     SoapError error = new SoapError(errorStr);
-                    if(ZimbraErrors.ERROR_NOSUCHDLIST.equals(error.getCode())) {
+                    if (ZimbraErrors.ERROR_NOSUCHDLIST.equals(error.getCode())) {
                         handler.handle(Future.succeededFuture(EMPTY_VALUE));
                     } else {
                         handler.handle(Future.failedFuture(errorStr));
@@ -114,11 +116,11 @@ class SynchroGroup extends Group {
                     .getJsonObject(BODY)
                     .getJsonObject(GET_DISTRIBUTIONLIST_RESPONSE)
                     .getJsonArray(ZimbraConstants.DISTRIBUTION_LIST);
-            if(dlList.size() > 1) {
+            if (dlList.size() > 1) {
                 log.error("More than one distribution list with name " + getId());
             }
             zimbraID = dlList.getJsonObject(0).getString(ZimbraConstants.DLIST_ID, "");
-            if(zimbraID.isEmpty()) {
+            if (zimbraID.isEmpty()) {
                 handler.handle(Future.succeededFuture(EMPTY_VALUE));
             } else {
                 handler.handle(Future.succeededFuture(zimbraID));
@@ -131,22 +133,26 @@ class SynchroGroup extends Group {
 
 
     private void createOrUpdate(Handler<AsyncResult<JsonObject>> handler) {
-        Future<JsonObject> startFuture = AsyncHelper.getJsonObjectFinalFuture(handler);
+        Promise<JsonObject> startPromise = AsyncHelper.getJsonObjectFinalPromise(handler);
 
-        Future<String> chechedExistence = Future.future();
-        checkIfExists(chechedExistence.completer());
+        Promise<String> chechedExistence = Promise.promise();
+        checkIfExists(chechedExistence);
 
-        chechedExistence.compose( res -> {
-            Future<JsonObject> zimbraUpdated = Future.future();
-            if(!res.isEmpty()) {
-                updateInZimbra(zimbraUpdated.completer());
-            } else {
-                createInZimbra(zimbraUpdated.completer());
-            }
-            return zimbraUpdated;
-        }).compose( updatedRes ->
-            dbMailService.updateGroup(getId(), ddlAddress.toString(), startFuture.completer())
-        , startFuture);
+        chechedExistence.future().compose(res -> {
+                    Promise<JsonObject> zimbraUpdated = Promise.promise();
+                    if (!res.isEmpty()) {
+                        updateInZimbra(zimbraUpdated);
+                    } else {
+                        createInZimbra(zimbraUpdated);
+                    }
+                    return zimbraUpdated.future();
+                }).compose(updatedRes -> {
+                    // Wrap the updateGroup call with a Promise
+                    Promise<JsonObject> groupUpdated = Promise.promise();
+                    dbMailService.updateGroup(getId(), ddlAddress.toString(), groupUpdated);
+                    return groupUpdated.future();
+                })
+                .onComplete(startPromise);
     }
 
 
@@ -169,15 +175,15 @@ class SynchroGroup extends Group {
 
         String memberUrl = String.format(MEMBER_URL_TPL, getId());
 
-        JsonArray result =  new JsonArray()
+        JsonArray result = new JsonArray()
                 .add(new JsonObject()
                         .put(ATTR_NAME, ZimbraConstants.DLIST_DISPLAYNAME)
                         .put(ATTR_VALUE, displayName))
                 .add(new JsonObject()
                         .put(ATTR_NAME, ZimbraConstants.DLIST_MEMBER_URL)
                         .put(ATTR_VALUE, memberUrl));
-        if(isCreation) {
-                result.add(new JsonObject()
+        if (isCreation) {
+            result.add(new JsonObject()
                     .put(ATTR_NAME, ZimbraConstants.DLIST_IS_ACL_GROUP)
                     .put(ATTR_VALUE, FALSE_VALUE));
         }

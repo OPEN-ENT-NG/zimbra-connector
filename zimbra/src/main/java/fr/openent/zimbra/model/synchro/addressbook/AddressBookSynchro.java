@@ -7,10 +7,7 @@ import fr.openent.zimbra.model.synchro.Structure;
 import fr.openent.zimbra.model.synchro.addressbook.contacts.*;
 import fr.openent.zimbra.service.data.Neo4jAddrbookService;
 import fr.wseduc.webutils.I18n;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
+import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -77,14 +74,14 @@ public class AddressBookSynchro {
 
 
     protected void load(Handler<AsyncResult<AddressBookSynchro>> handler) {
-        Future<AddressBookSynchro> users = Future.future();
-        Future<AddressBookSynchro> groups = Future.future();
+        Promise<AddressBookSynchro> users = Promise.promise();
+        Promise<AddressBookSynchro> groups = Promise.promise();
         neo4jAddrbookService.getAllUsersFromStructure(uai, res ->  {
             if(res.failed()) {
                 log.error("Error in getAllUsersFromStructure during loading the Adress Book",res.cause());
                 users.fail(res.cause());
             } else {
-                processUsers(res.result(), users.completer());
+                processUsers(res.result(), users);
             }
         });
         neo4jAddrbookService.getAllGroupsFromStructure(uai, res ->  {
@@ -92,10 +89,10 @@ public class AddressBookSynchro {
                 log.error("Error in getAllGroupsFromStructure during loading the Adress Book",res.cause());
                 groups.fail(res.cause());
             } else {
-                processGroups(res.result(), groups.completer());
+                processGroups(res.result(), groups);
             }
         });
-        CompositeFuture.all(users,groups).setHandler(compositeResult -> {
+        Future.all(users.future(),groups.future()).onComplete(compositeResult -> {
             if(compositeResult.failed()) {
                 handler.handle(Future.failedFuture(compositeResult.cause()));
             } else {

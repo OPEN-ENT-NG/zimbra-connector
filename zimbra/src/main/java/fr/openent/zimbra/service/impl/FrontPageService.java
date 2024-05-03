@@ -20,16 +20,16 @@ public class FrontPageService {
 
     public void getFrontPageInfos(UserInfos user, Handler<AsyncResult<JsonObject>> handler) {
 
-        Future<JsonObject> userFuture = Future.future();
-        Future<SoapFolder> foldersFuture = Future.future();
+        Promise<JsonObject> userFuture = Promise.promise();
+        Promise<SoapFolder> foldersFuture = Promise.promise();
 
-        CompositeFuture.all(userFuture, foldersFuture).setHandler(res -> {
+        Future.all(userFuture.future(), foldersFuture.future()).onComplete(res -> {
             if (res.failed()) {
                 handler.handle(Future.failedFuture(res.cause()));
             } else {
-                JsonObject zUserInfo = userFuture.result();
+                JsonObject zUserInfo = userFuture.future().result();
                 zUserInfo.put(FrontConstants.FRONT_PAGE_FOLDERS,
-                        foldersFuture.result().getJsonSubfolders().toString().replaceAll("['|\\\\]", "\\\\$0"));
+                        foldersFuture.future().result().getJsonSubfolders().toString().replaceAll("['|\\\\]", "\\\\$0"));
                 zUserInfo.put(FrontConstants.CONFIG_SAVE_DRAFT_AUTO_TIME, appConfig.getsaveDraftAutoTime());
                 zUserInfo.put(FrontConstants.CONFIG_SEND_TIMEOUT, appConfig.getSendTimeout());
                 handler.handle(Future.succeededFuture(zUserInfo));

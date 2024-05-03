@@ -163,7 +163,7 @@ public class NeoDbMailService extends DbMailService {
 
     private void updateUsersByFeeder(JsonArray users, Handler<Either<String, JsonObject>> handler) {
 
-        List<Future> futureList = new ArrayList<>();
+        List<Future<?>> futureList = new ArrayList<>();
 
         for(Object obj : users) {
             if(!(obj instanceof JsonObject)) continue;
@@ -177,16 +177,16 @@ public class NeoDbMailService extends DbMailService {
                         .put("action", "manual-update-user")
                         .put("userId", userId)
                         .put("data", new JsonObject().put("emailInternal", email));
-                Future<Message<JsonObject>> future = Future.future();
-                futureList.add(future);
-                eb.send(FEEDER_BUSURL, action, future.completer());
+                Promise<Message<JsonObject>> promise = Promise.promise();
+                futureList.add(promise.future());
+                eb.request(FEEDER_BUSURL, action, promise);
             }
         }
 
         if(futureList.isEmpty()) {
             handler.handle(new Either.Left<>("Incorrect data, can't update users"));
         } else {
-            CompositeFuture.join(futureList).setHandler( res -> {
+            Future.join(futureList).onComplete( res -> {
                 if(res.succeeded()) {
                     handler.handle(new Either.Right<>(new JsonObject()));
                 } else {
@@ -214,7 +214,7 @@ public class NeoDbMailService extends DbMailService {
                 .put("action", "manual-update-email-group")
                 .put("groupId", groupId)
                 .put("email", groupAddr);
-        eb.send(FEEDER_BUSURL, action, (Handler<AsyncResult<Message<JsonObject>>>) res -> {
+        eb.request(FEEDER_BUSURL, action, (Handler<AsyncResult<Message<JsonObject>>>) res -> {
             if (res.failed()) {
                 handler.handle(Future.failedFuture(res.cause()));
             } else {

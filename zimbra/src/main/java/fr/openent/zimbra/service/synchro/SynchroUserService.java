@@ -32,6 +32,7 @@ import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -79,28 +80,32 @@ public class SynchroUserService {
      * @param handler synchronization result
      */
     void syncUserFromBase(Handler<AsyncResult<JsonObject>> handler) {
-        Future<JsonObject> startFuture = AsyncHelper.getJsonObjectFinalFuture(handler);
-        Future<JsonObject> fetchedUser = Future.future();
+        Promise<JsonObject> startPromise = AsyncHelper.getJsonObjectFinalPromise(handler);
+        Promise<JsonObject> fetchedUser = Promise.promise();
 
         log.info("Fetching user to sync");
-        sqlSynchroService.fetchUserToSynchronize(fetchedUser.completer());
-        fetchedUser.compose(bddRes -> {
-            if(bddRes.isEmpty()) {
-                startFuture.complete(new JsonObject().put(EMPTY_BDD, true));
+        sqlSynchroService.fetchUserToSynchronize(fetchedUser);
+        fetchedUser.future().compose(bddRes -> {
+            if (bddRes.isEmpty()) {
+                return Future.succeededFuture(new JsonObject().put(EMPTY_BDD, true));
             } else {
                 int idRow = bddRes.getInteger(SqlSynchroService.USER_IDROW);
                 String idUser = bddRes.getString(SqlSynchroService.USER_IDUSER);
-                String sync_action = bddRes.getString(SqlSynchroService.USER_SYNCACTION);
+                String syncAction = bddRes.getString(SqlSynchroService.USER_SYNCACTION);
                 log.info("Syncing user " + idUser);
+
                 try {
                     SynchroUser user = new SynchroUser(idUser);
-                    user.synchronize(idRow, sync_action, startFuture.completer());
+                    Promise<JsonObject> syncPromise = Promise.promise();
+                    user.synchronize(idRow, syncAction, syncPromise);
+
+                    return syncPromise.future();
                 } catch (IllegalArgumentException e) {
-                    log.info("Filed sync for user " + idUser);
-                    startFuture.fail(e);
+                    log.info("Failed to sync user " + idUser);
+                    return Future.failedFuture(e);
                 }
             }
-        }, startFuture);
+        }).onComplete(startPromise);
     }
 
     /**
