@@ -8,7 +8,6 @@
 .yardopts
 bin
 build
-target
 out
 *.iml
 *.ipr
@@ -34,3 +33,6 @@ node_modules
 package-lock.json
 /src/main/resources/public/css/
 /yarn.lock
+.env
+target
+dependency-reduced-pom.xml

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+MVN_OPTS="-Duser.home=/var/maven"
+
 if [ ! -e node_modules ]
 then
   mkdir node_modules
@@ -19,7 +21,7 @@ case `uname -s` in
 esac
 
 clean () {
-  docker-compose run --rm -u "$USER_UID:$GROUP_GID" gradle gradle clean
+  docker-compose run --rm maven mvn $MVN_OPTS clean
 }
 
 buildNode () {
@@ -40,8 +42,8 @@ buildCss() {
     docker-compose run --rm -u "$USER_UID:$GROUP_GID" node sh -c "yarn run build:sass"
 }
 
-buildGradle () {
-  docker-compose run --rm -u "$USER_UID:$GROUP_GID" gradle gradle shadowJar install publishToMavenLocal
+install() {
+    docker-compose run --rm maven mvn $MVN_OPTS install -DskipTests
 }
 
 testNode () {
@@ -68,24 +70,29 @@ testNodeDev () {
   esac
 }
 
-testGradle() {
-  docker-compose run --rm -u "$USER_UID:$GROUP_GID" gradle gradle test --no-build-cache --rerun-tasks
+test() {
+  docker-compose run --rm maven mvn $MVN_OPTS test
 }
 
-publish () {
-  if [ -e "?/.gradle" ] && [ ! -e "?/.gradle/gradle.properties" ]
-  then
-    echo "odeUsername=$NEXUS_ODE_USERNAME" > "?/.gradle/gradle.properties"
-    echo "odePassword=$NEXUS_ODE_PASSWORD" >> "?/.gradle/gradle.properties"
-    echo "sonatypeUsername=$NEXUS_SONATYPE_USERNAME" >> "?/.gradle/gradle.properties"
-    echo "sonatypePassword=$NEXUS_SONATYPE_PASSWORD" >> "?/.gradle/gradle.properties"
-  fi
-  docker-compose run --rm -u "$USER_UID:$GROUP_GID" gradle gradle publish
+publish() {
+  version=`docker compose run --rm maven mvn $MVN_OPTS help:evaluate -Dexpression=project.version -q -DforceStdout`
+  level=`echo $version | cut -d'-' -f3`
+  case "$level" in
+    *SNAPSHOT)
+      export nexusRepository='snapshots'
+      ;;
+    *)
+      export nexusRepository='releases'
+      ;;
+  esac
+  docker compose run --rm maven mvn -DrepositoryId=ode-$nexusRepository -DskiptTests -Dmaven.test.skip=true --settings /var/maven/.m2/settings.xml deploy
 }
-
 for param in "$@"
 do
   case $param in
+    init)
+      init
+      ;;
     clean)
       clean
       ;;
@@ -98,17 +105,17 @@ do
     buildCss)
       buildCss
       ;;
-    buildGradle)
-      buildGradle
+    buildMaven)
+      install
       ;;
     install)
-      buildNode && buildGradle
+      buildNode && install
       ;;
     publish)
       publish
       ;;
     test)
-      testNode ; testGradle
+      testNode ; test
       ;;
     testNode)
       testNode
@@ -116,8 +123,8 @@ do
     testNodeDev)
       testNodeDev
       ;;
-    testGradle)
-      testGradle
+    testMaven)
+      test
       ;;
     *)
       echo "Invalid argument : $param"
