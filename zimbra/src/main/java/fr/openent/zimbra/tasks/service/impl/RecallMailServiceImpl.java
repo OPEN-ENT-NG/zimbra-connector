@@ -62,7 +62,7 @@ public class RecallMailServiceImpl implements RecallMailService {
     }
 
     public Future<List<RecallMail>> getRecallMails () {
-        throw new NotImplementedException();
+        throw new NotImplementedException("An exception not implemented occured");
     }
 
     @Override
@@ -329,14 +329,14 @@ public class RecallMailServiceImpl implements RecallMailService {
     }
 
     public Future<RecallMail> updateRecallMail (String recallMailId, String comment, String status) {
-        throw new NotImplementedException();
+        throw new NotImplementedException("An exception not implemented occured");
     }
 
     public Future<List<UUID>> getUsers (String recallMailId) {
         // todo: get recall_mail from db
         // todo: call zimbra to retrieve user ids
         // todo: return user ids
-        throw new NotImplementedException();
+        throw new NotImplementedException("An exception not implemented occured");
     }
 
     public Future<Void> deleteMessage (RecallMail recallMail, String userId, String receiverEmail, String senderEmail) {
