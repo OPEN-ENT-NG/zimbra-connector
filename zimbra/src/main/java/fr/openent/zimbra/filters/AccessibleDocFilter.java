@@ -1,8 +1,8 @@
 package fr.openent.zimbra.filters;
 
 import com.mongodb.DBObject;
-import com.mongodb.QueryBuilder;
 
+import com.mongodb.client.model.Filters;
 import static org.entcore.common.mongodb.MongoDbResult.validActionResultHandler;
 
 import fr.wseduc.mongodb.MongoDb;
@@ -12,6 +12,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.bson.conversions.Bson;
 import org.entcore.common.http.filter.ResourcesProvider;
 import org.entcore.common.user.UserInfos;
 
@@ -34,21 +35,24 @@ public class AccessibleDocFilter implements ResourcesProvider {
     @Override
     public void authorize(HttpServerRequest request, Binding binding, UserInfos user, Handler<Boolean> handler) {
 
-        QueryBuilder builder = new QueryBuilder();
         String id = request.params().get("idAttachment");
 
-        List<DBObject> groups = new ArrayList<>();
-        groups.add(QueryBuilder.start("userId").is(user.getUserId()).get());
-        for (String gpId : user.getGroupsIds()) {
-            groups.add(QueryBuilder.start("groupId").is(gpId).get());
-        }
-        DBObject subQuery = new QueryBuilder().or(groups.toArray(new DBObject[groups.size()])).get();
-        builder.and(QueryBuilder.start("_id").is(id).get())
-                .and(new QueryBuilder().or(
-                        QueryBuilder.start("owner").is(user.getUserId()).get(),
-                        QueryBuilder.start("shared").elemMatch(subQuery).get()).get());
+        Bson subQuery = Filters.or(
+                Filters.eq("userId", user.getUserId()),
+                Filters.or(user.getGroupsIds().stream()
+                        .map(groupId -> Filters.eq("groupId", groupId))
+                        .toArray(Bson[]::new))
+        );
 
-        mongo.count("documents", MongoQueryBuilder.build(builder), validActionResultHandler(result -> {
+        Bson query = Filters.and(
+                Filters.eq("_id", id),
+                Filters.or(
+                        Filters.eq("owner", user.getUserId()),
+                        Filters.elemMatch("shared", subQuery)
+                )
+        );
+
+        mongo.count("documents", MongoQueryBuilder.build(query), validActionResultHandler(result -> {
             if (result.isLeft()) {
                 log.error("An error has occured while finding targeted document: ", result.left().getValue());
                 handler.handle(false);

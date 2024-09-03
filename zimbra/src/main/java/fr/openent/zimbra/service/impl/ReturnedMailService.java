@@ -3,7 +3,6 @@ package fr.openent.zimbra.service.impl;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.core.constants.Field;
 import fr.openent.zimbra.helper.JsonHelper;
-import fr.openent.zimbra.model.constant.FrontConstants;
 import fr.openent.zimbra.service.DbMailService;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.CompositeFuture;
@@ -21,7 +20,7 @@ import org.entcore.common.user.UserUtils;
 
 import java.util.*;
 
-import static fr.openent.zimbra.helper.FutureHelper.handlerJsonObject;
+import static fr.openent.zimbra.helper.PromiseHelper.handlerJsonObject;
 import static fr.openent.zimbra.model.constant.FrontConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
 import static fr.wseduc.webutils.http.Renders.renderJson;

@@ -32,6 +32,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.*;
+import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -67,8 +68,8 @@ public class AttachmentService {
     private final Queue<HttpClient> httpClientPool;
     private final WebClient client;
 
-    public AttachmentService( SoapZimbraService soapService, MessageService messageService,
-                              Vertx vertx, JsonObject config, WebClient webClient) {
+    public AttachmentService(SoapZimbraService soapService, MessageService messageService,
+                             Vertx vertx, JsonObject config, WebClient webClient) {
         String zimbraUri = config.getString("zimbra-uri", "");
         this.zimbraUrlAttachment = zimbraUri + "/service/home/~/?auth=co";
         this.zimbraUrlUpload = zimbraUri + "/service/upload?fmt=extended,raw";
@@ -83,15 +84,15 @@ public class AttachmentService {
      * Get attachment to computer from Zimbra
      * dump zimbra request content in the response made to the Front
      *
-     * @param messageId        Id of the message that has the attachment
-     * @param attachmentPartId Id of the part where the attachment is
-     * @param user             User infos
-     * @param inline           Must the part be sent inline ?
+     * @param messageId         Id of the message that has the attachment
+     * @param attachmentPartId  Id of the part where the attachment is
+     * @param user              User infos
+     * @param inline            Must the part be sent inline ?
      * @param httpServerRequest httpServerRequest where the file must be sent
-     * @param handler          final handler, only use in case of error
+     * @param handler           final handler, only use in case of error
      */
     public void getAttachmentToComputer(String messageId, String attachmentPartId, UserInfos user, Boolean inline,
-                                        HttpServerRequest httpServerRequest, Handler<Either<String,JsonObject>> handler) {
+                                        HttpServerRequest httpServerRequest, Handler<Either<String, JsonObject>> handler) {
         getAttachment(messageId, attachmentPartId, user, inline)
                 .compose(zimbraResponse -> uploadToComputer(httpServerRequest, zimbraResponse))
                 .onFailure(err -> {
@@ -103,16 +104,17 @@ public class AttachmentService {
     /**
      * Get attachment to workspace from Zimbra
      * dump zimbra request content in the response made to the Front
-     * @param messageId Id of the message that has the attachment
+     *
+     * @param messageId        Id of the message that has the attachment
      * @param attachmentPartId Id of the part where the attachment is
-     * @param user User infos
-     * @param inline Must the part be sent inline
-     * @param storage storage
-     * @param workspaceHelper workspaceHelper
-     * @param handler final handler, only use in case of error
+     * @param user             User infos
+     * @param inline           Must the part be sent inline
+     * @param storage          storage
+     * @param workspaceHelper  workspaceHelper
+     * @param handler          final handler, only use in case of error
      */
     public void getAttachmentToWorkspace(String messageId, String attachmentPartId, UserInfos user, Boolean inline, Storage storage,
-                                                      WorkspaceHelper workspaceHelper, Handler<Either<String,JsonObject>> handler) {
+                                         WorkspaceHelper workspaceHelper, Handler<Either<String, JsonObject>> handler) {
         getAttachment(messageId, attachmentPartId, user, inline)
                 .compose(zimbraResponse -> uploadToWorkspace(user, storage, workspaceHelper, zimbraResponse))
                 .onSuccess(res -> handler.handle(new Either.Right<>(new JsonObject())))
@@ -127,10 +129,11 @@ public class AttachmentService {
      * 1- get auth token
      * 2- create request to get attachment from Zimbra
      * 3- dump zimbra request content in the response made to the Front
-     * @param messageId Id of the message that has the attachment
+     *
+     * @param messageId        Id of the message that has the attachment
      * @param attachmentPartId Id of the part where the attachment is
-     * @param user User infos
-     * @param inline Must the part be sent inline ?
+     * @param user             User infos
+     * @param inline           Must the part be sent inline ?
      */
     public Future<HttpClientResponse> getAttachment(String messageId, String attachmentPartId, UserInfos user, Boolean inline) {
         Promise<HttpClientResponse> promise = Promise.promise();
@@ -139,7 +142,7 @@ public class AttachmentService {
                 + attachmentPartId + "&disp=" + disp;
 
         soapService.getUserAuthToken(user, authTokenResponse -> {
-            if(authTokenResponse.isLeft()) {
+            if (authTokenResponse.isLeft()) {
                 String messageToFormat = "Zimbra@getAttachment : getUserAuthToken failure : " + authTokenResponse.left().getValue();
                 PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), authTokenResponse, promise);
             } else {
@@ -152,14 +155,20 @@ public class AttachmentService {
                     String messageToFormat = "Zimbra@getAttachment : Null httpClient, can't upload attachment";
                     PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), new Exception(messageToFormat), promise);
                 } else {
-                    HttpClientRequest zimbraRequest = httpClient.getAbs(urlAttachment, promise::complete);
-                    zimbraRequest.exceptionHandler(err -> {
-                        String messageToFormat = "Zimbra@getAttachment : Error when getting attachment : " + err.getMessage();
-                        PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), err, promise);
-                    });
-                    zimbraRequest.setChunked(true)
-                            .putHeader(Field.COOKIE, "ZM_AUTH_TOKEN=" + authToken);
-                    zimbraRequest.end();
+                    httpClient.request(
+                                    new RequestOptions()
+                                            .setAbsoluteURI(urlAttachment)
+                                            .setHeaders(new HeadersMultiMap().add(Field.COOKIE, "ZM_AUTH_TOKEN=" + authToken)))
+                            .flatMap(req -> {
+                                req.setChunked(Boolean.TRUE);
+                                return req.send();
+                            })
+                            .onSuccess(promise::complete)
+                            .onFailure(err -> {
+                                String messageToFormat = "Zimbra@getAttachment : Error when getting attachment : " + err.getMessage();
+                                PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), err, promise);
+                            });
+
                 }
             }
         });
@@ -170,8 +179,8 @@ public class AttachmentService {
     private Future<Void> uploadToWorkspace(UserInfos user, Storage storage, WorkspaceHelper workspaceHelper, HttpClientResponse zimbraResponse) {
         Promise<Void> promise = Promise.promise();
         try {
-            String contentDisposition = zimbraResponse.getHeader(Field.CONTENT_DISPOSITION).replace("*=UTF-8''","=");
-            String fileName = contentDisposition.substring(contentDisposition.indexOf("filename=") + 9).replaceAll("\"","");
+            String contentDisposition = zimbraResponse.getHeader(Field.CONTENT_DISPOSITION).replace("*=UTF-8''", "=");
+            String fileName = contentDisposition.substring(contentDisposition.indexOf("filename=") + 9).replaceAll("\"", "");
             String contentType = zimbraResponse.getHeader(Field.CONTENT_TYPE);
             contentType = contentType.substring(0, contentType.indexOf(";"));
             fileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8.name());
@@ -195,6 +204,7 @@ public class AttachmentService {
         }
         return promise.future();
     }
+
     private Future<JsonObject> processWriteBuffer(Storage storage, ReadStream<Buffer> zimbraResponse,
                                                   String finalContentType, String finalFileName) {
         Promise<JsonObject> promise = Promise.promise();
@@ -240,39 +250,40 @@ public class AttachmentService {
     /**
      * Dump one request into another.
      * Used to transfer attachment from Zimbra to Front, or Front to Zimbra
-     * @param httpClient HttpClient used for pump, can be closed afterwards
      *
-     * @param inRequest Request containing the data
+     * @param httpClient HttpClient used for pump, can be closed afterwards
+     * @param inRequest  Request containing the data
      * @param outRequest Request that must be filled
      */
     private Future<Void> pumpRequests(HttpClient httpClient, ReadStream<Buffer> inRequest, WriteStream<Buffer> outRequest) {
         Promise<Void> promise = Promise.promise();
         Pump pump = Pump.pump(inRequest, outRequest);
-            outRequest.exceptionHandler( event -> {
-                String messageToFormat = "Zimbra@pumpRequests Error in outRequest : " + event.getMessage();
-                PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), event, promise);
-            });
-            inRequest.exceptionHandler( event -> {
-                String messageToFormat = "Zimbra@pumpRequests Error in inRequest : " + event.getMessage();
-                PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), event, promise);
-            });
-            inRequest.endHandler(event -> {
-                outRequest.end();
-                httpClientPool.add(httpClient);
-                promise.complete();
-            });
-            pump.start();
+        outRequest.exceptionHandler(event -> {
+            String messageToFormat = "Zimbra@pumpRequests Error in outRequest : " + event.getMessage();
+            PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), event, promise);
+        });
+        inRequest.exceptionHandler(event -> {
+            String messageToFormat = "Zimbra@pumpRequests Error in inRequest : " + event.getMessage();
+            PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), event, promise);
+        });
+        inRequest.endHandler(event -> {
+            outRequest.end();
+            httpClientPool.add(httpClient);
+            promise.complete();
+        });
+        pump.start();
         return promise.future();
     }
 
     /**
      * Pump data from frontRequest to Zimbra, then update existing draft with attachment.
      * Send back new draft content to front
+     *
      * @param messageId Message Id
-     * @param user User Infos
-     * @param buffer Attachment as a stream
-     * @param document Document as a JsonObject
-     * @param handler Final handler
+     * @param user      User Infos
+     * @param buffer    Attachment as a stream
+     * @param document  Document as a JsonObject
+     * @param handler   Final handler
      */
     public void addAttachment(String messageId,
                               UserInfos user,
@@ -280,7 +291,7 @@ public class AttachmentService {
                               JsonObject document,
                               Handler<Either<String, JsonObject>> handler) {
         soapService.getUserAuthToken(user, authTokenResponse -> {
-            if(authTokenResponse.isLeft()) {
+            if (authTokenResponse.isLeft()) {
                 handler.handle(authTokenResponse);
                 return;
             }
@@ -292,23 +303,23 @@ public class AttachmentService {
                 e.printStackTrace();
             }
             this.client.postAbs(zimbraUrlUpload)
-                    .putHeader(Field.COOKIE,"ZM_AUTH_TOKEN=" + authToken)
+                    .putHeader(Field.COOKIE, "ZM_AUTH_TOKEN=" + authToken)
                     .putHeader(Field.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                     .putHeader(Field.CONTENT_TYPE, document.getJsonObject("metadata").getString(Field.CONTENT_TYPE))
                     .sendStream(buffer, ar -> {
-                        if(ar.failed()){
+                        if (ar.failed()) {
                             log.error("An error has occured while fetching the attachment");
                         } else {
                             HttpResponse<Buffer> response = ar.result();
                             if (response.statusCode() == 200) {
-                                    if (!(Pattern.compile("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$")).matcher(response.bodyAsString()).find()) {
-                                        JsonObject res = new JsonObject()
-                                                .put("code", Field.MAIL_INVALID_REQUEST);
-                                        handler.handle(new Either.Left<>(res.encode()));
-                                        return;
-                                    }
-                                    String aid = response.bodyAsString().replaceAll("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$", "$1");
-                                    updateDraft(messageId, aid, user, null, handler);
+                                if (!(Pattern.compile("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$")).matcher(response.bodyAsString()).find()) {
+                                    JsonObject res = new JsonObject()
+                                            .put("code", Field.MAIL_INVALID_REQUEST);
+                                    handler.handle(new Either.Left<>(res.encode()));
+                                    return;
+                                }
+                                String aid = response.bodyAsString().replaceAll("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$", "$1");
+                                updateDraft(messageId, aid, user, null, handler);
                             } else {
                                 handler.handle(new Either.Left<>(response.statusMessage()));
                             }
@@ -321,17 +332,18 @@ public class AttachmentService {
      * Add attachment to a mail.
      * Pump data from frontRequest to Zimbra, then update existing draft with attachment.
      * Send back new draft content to front
-     * @param messageId Message Id
-     * @param user User Infos
+     *
+     * @param messageId    Message Id
+     * @param user         User Infos
      * @param requestFront Request from front with attachment data
-     * @param handler Final handler
+     * @param handler      Final handler
      */
     public void addAttachmentBuffer(String messageId,
-                              UserInfos user,
-                              HttpServerRequest requestFront,
-                              Handler<Either<String, JsonObject>> handler) {
+                                    UserInfos user,
+                                    HttpServerRequest requestFront,
+                                    Handler<Either<String, JsonObject>> handler) {
         soapService.getUserAuthToken(user, authTokenResponse -> {
-            if(authTokenResponse.isLeft()) {
+            if (authTokenResponse.isLeft()) {
                 handler.handle(authTokenResponse);
                 return;
             }
@@ -340,44 +352,49 @@ public class AttachmentService {
 
             requestFront.resume();
             String cdHeader = Utils.getOrElse(requestFront.getHeader(Field.CONTENT_DISPOSITION), "attachment");
-            HttpClientRequest requestZimbra;
-            requestZimbra = httpClient.postAbs(zimbraUrlUpload, response -> {
-                if(response.statusCode() == 200) {
-                    response.bodyHandler( body -> {
-                        if (!(Pattern.compile("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$")).matcher(body.toString()).find()) {
-                            if (body.toString().matches("^413.*\n$")) {
-                                JsonObject res = new JsonObject()
-                                        .put("code", Field.MAIL_ATTACHMENT_TOO_BIG)
-                                        .put("maxFileSize", Zimbra.appConfig.getZimbraFileUploadMaxSize());
-                                handler.handle(new Either.Left<>(res.encode()));
-                                return;
-                            }
-                            JsonObject res = new JsonObject()
-                                    .put("code", Field.MAIL_INVALID_REQUEST);
-                            handler.handle(new Either.Left<>(res.encode()));
-                            return;
-                        }
 
-                        String aid = body.toString().replaceAll("^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$", "$1");
-                        updateDraft(messageId, aid, user, null, handler);
-                    });
-                } else {
-                    handler.handle(new Either.Left<>(response.statusMessage()));
-                }
-            });
-            requestZimbra.exceptionHandler( err -> {
-                log.error("Error when uploading attachment : ", err);
-                handler.handle(new Either.Left<>("Error when uploading attachment"));
-            });
-            requestZimbra.setChunked(true)
+            RequestOptions requestOptions = new RequestOptions()
+                    .setAbsoluteURI(zimbraUrlUpload)
+                    .setMethod(HttpMethod.POST)
+                    .setHeaders(new HeadersMultiMap())
                     .putHeader(Field.CONTENT_DISPOSITION, cdHeader)
-                    .putHeader(Field.COOKIE,"ZM_AUTH_TOKEN=" + authToken);
+                    .putHeader(Field.COOKIE, "ZM_AUTH_TOKEN=" + authToken);
 
-            pumpRequests(httpClient, requestFront, requestZimbra)
-                    .onFailure(error -> {
-                        String messageToFormat = "Zimbra@addAttachmentBuffer Error in pumpRequest : " + error.getMessage();
-                        log.error(messageToFormat);
-                        handler.handle(new Either.Left<>(messageToFormat));
+            httpClient.request(requestOptions)
+                    .flatMap(requestZimbra -> {
+                        requestZimbra.setChunked(Boolean.TRUE);
+                        return pumpRequests(httpClient, requestFront, requestZimbra)
+                                .compose(v -> requestZimbra.send());
+                    })
+                    .onSuccess(res -> {
+                        if (res.statusCode() == 200) {
+                            res.body().onComplete(bufferAsyncResult -> {
+                                if (bufferAsyncResult.succeeded()) {
+                                    String body = bufferAsyncResult.result().toString();
+                                    String aidRegex = "^.*\"aid\"\\s*:\\s*\"([^\"]*)\".*\n$";
+                                    String sizeRegex = "^413.*\n$";
+                                    if (!Pattern.compile(aidRegex).matcher(body).find()) {
+                                        JsonObject responseJson = new JsonObject();
+                                        if (body.matches(sizeRegex)) {
+                                            responseJson.put("code", Field.MAIL_ATTACHMENT_TOO_BIG)
+                                                    .put("maxFileSize", Zimbra.appConfig.getZimbraFileUploadMaxSize());
+                                        } else {
+                                            responseJson.put("code", Field.MAIL_INVALID_REQUEST);
+                                        }
+                                        handler.handle(new Either.Left<>(responseJson.encode()));
+                                        return;
+                                    }
+                                    String aid = body.replaceAll(aidRegex, "$1");
+                                    updateDraft(messageId, aid, user, null, handler);
+                                } else {
+                                    handler.handle(new Either.Left<>(bufferAsyncResult.cause().getMessage()));
+                                }
+                            });
+                        }
+                    })
+                    .onFailure(err -> {
+                        log.error("Error when uploading attachment : ", err);
+                        handler.handle(new Either.Left<>("Error when uploading attachment"));
                     });
         });
 
@@ -391,10 +408,11 @@ public class AttachmentService {
      * Remove an attachment from an existing draft or message
      * Get existing message, remove attachment from list
      * Then save draft again
-     * @param messageId Message Id
+     *
+     * @param messageId    Message Id
      * @param attachmentId Part Id of the attachment
-     * @param user User Infos
-     * @param result final handler
+     * @param user         User Infos
+     * @param result       final handler
      */
     public void removeAttachment(String messageId, String attachmentId, UserInfos user,
                                  Handler<Either<String, JsonObject>> result) {
@@ -406,12 +424,12 @@ public class AttachmentService {
                 JsonArray attachsOrig = msgOrig.getJsonArray("attachments", new JsonArray());
                 int i = 0;
                 while (i < attachsOrig.size()) {
-                    if(attachmentId.equals(attachsOrig.getJsonObject(i).getString(Field.ID))) {
+                    if (attachmentId.equals(attachsOrig.getJsonObject(i).getString(Field.ID))) {
                         break;
                     }
                     i++;
                 }
-                if(i < attachsOrig.size()) {
+                if (i < attachsOrig.size()) {
                     attachsOrig.remove(i);
                 }
                 messageService.transformMessageFrontToZimbra(msgOrig, messageId, mailContent -> {
@@ -438,9 +456,9 @@ public class AttachmentService {
                 JsonArray attachsOrig = msgOrig.getJsonArray("attachments", new JsonArray());
                 JsonArray newAttachs = new JsonArray();
                 for (Object o : attachsOrig) {
-                    if(!(o instanceof JsonObject)) continue;
+                    if (!(o instanceof JsonObject)) continue;
                     String idOrig = ((JsonObject) o).getString(Field.ID, "");
-                    if(!idOrig.isEmpty()) {
+                    if (!idOrig.isEmpty()) {
                         JsonObject attchNew = new JsonObject();
                         attchNew.put(MULTIPART_PART_ID, idOrig);
                         attchNew.put(MULTIPART_MSG_ID, origMessageId);
@@ -455,13 +473,14 @@ public class AttachmentService {
 
     /**
      * Update Draft with new attachments
-     * @param messageId Message Id
+     *
+     * @param messageId     Message Id
      * @param uploadAttchId New attachment upload Id
-     * @param user User Infos
-     * @param result result handler
+     * @param user          User Infos
+     * @param result        result handler
      */
     private void updateDraft(String messageId, String uploadAttchId, UserInfos user, JsonArray forwardedAtts,
-                            Handler<Either<String, JsonObject>> result) {
+                             Handler<Either<String, JsonObject>> result) {
         messageService.getMessage(messageId, user, null, response -> {
             if (response.isLeft()) {
                 result.handle(new Either.Left<>(response.left().getValue()));
@@ -471,11 +490,11 @@ public class AttachmentService {
                 messageService.transformMessageFrontToZimbra(msgOrig, messageId, mailContent -> {
                     mailContent.put(MSG_ID, messageId);
                     JsonObject attachs = mailContent.getJsonObject(MSG_NEW_ATTACHMENTS, new JsonObject());
-                    if(uploadAttchId != null) {
+                    if (uploadAttchId != null) {
                         attachs.put(MSG_NEW_UPLOAD_ID, uploadAttchId);
                         mailContent.put(MSG_NEW_ATTACHMENTS, attachs);
                     }
-                    if(forwardedAtts != null) {
+                    if (forwardedAtts != null) {
                         attachs.put(MSG_MULTIPART, forwardedAtts);
                         mailContent.put(MSG_NEW_ATTACHMENTS, attachs);
                     }
@@ -494,7 +513,7 @@ public class AttachmentService {
     public void getDocument(EventBus eb, String idImage, Handler<Either<String, JsonObject>> handler) {
         JsonObject action = new JsonObject().put("action", "getDocument").put(Field.ID, idImage);
         String WORKSPACE_BUS_ADDRESS = "org.entcore.workspace";
-        eb.send(WORKSPACE_BUS_ADDRESS, action, handlerToAsyncHandler(message -> {
+        eb.request(WORKSPACE_BUS_ADDRESS, action, handlerToAsyncHandler(message -> {
             JsonObject body = message.body();
             if (!"ok".equals(body.getString(Field.STATUS))) {
                 handler.handle(new Either.Left<>("[AttachmentService@getImage] An error occured: inexistant document id"));

@@ -42,7 +42,7 @@ public class SynchroTask implements Handler<Long> {
     @Override
     public void handle(Long event) {
         log.info("Zimbra cron started : " + action);
-        eb.send(SYNCHRO_BUSADDR,
+        eb.request(SYNCHRO_BUSADDR,
                 new JsonObject().put(BUS_ACTION, action),
                 res -> {
                     if(res.succeeded()) {
