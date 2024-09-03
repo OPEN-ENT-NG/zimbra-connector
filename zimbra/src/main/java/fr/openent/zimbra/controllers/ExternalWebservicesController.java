@@ -195,13 +195,13 @@ public class ExternalWebservicesController extends BaseController {
                     JsonObject message = new JsonObject().put("subject",subject)
                             .put("body",body)
                             .put("to",new JsonArray().add(to));
-                    eb.send("org.entcore.conversation",
+                    eb.request("org.entcore.conversation",
                             new JsonObject().put("action", "send")
                                     .put("userId", userid).put("message",message),
                             res -> renderJson(request, (JsonObject)res.result().body()));
                     return;
                 case "getmail":
-                    eb.send("fr.openent.zimbra",
+                    eb.request("fr.openent.zimbra",
                             new JsonObject().put("action", "getMailUser")
                                     .put("idList", new JsonArray().add(userid)),
                             res -> renderJson(request, (JsonObject)res.result().body()));

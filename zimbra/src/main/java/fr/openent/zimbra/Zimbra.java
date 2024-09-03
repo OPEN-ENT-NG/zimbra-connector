@@ -32,6 +32,7 @@ import fr.openent.zimbra.worker.ICalRequestWorker;
 import fr.openent.zimbra.worker.RecallMailWorker;
 import fr.wseduc.cron.CronTrigger;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Promise;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.BaseServer;
@@ -53,8 +54,8 @@ public class Zimbra extends BaseServer {
     private static Logger log = LoggerFactory.getLogger(Zimbra.class);
 
     @Override
-    public void start() throws Exception {
-        super.start();
+    public void start(Promise<Void> startPromise) throws Exception {
+        super.start(startPromise);
 
         appConfig = new ConfigManager(config);
         zimbraSchema = config.getString("db-schema");
@@ -99,5 +100,8 @@ public class Zimbra extends BaseServer {
         } catch (ParseException e) {
             log.warn("Mailer Cron deactivated");
         }
+
+        startPromise.tryComplete();
+        startPromise.tryFail("[Zimbra@Zimbra::start] Fail to start Zimbra");
     }
 }

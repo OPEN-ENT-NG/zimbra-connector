@@ -17,16 +17,20 @@ public class PromiseHelper {
         throw new IllegalStateException("Utility PromiseHelper class");
     }
 
-    public static <T> Handler<Either<String, T>> handlerJsonObject(Promise<T> promise) {
+    public static <T> Handler<Either<String, T>> handlerJsonObject(Promise<T> promise, String errorMessage) {
         return event -> {
             if (event.isRight()) {
                 promise.complete(event.right().getValue());
             } else {
                 String message = "[Zimbra - handlerJsonObject] Failure : " + event.left().getValue();
-                LOGGER.error(message, event.left().getValue());
+                LOGGER.error(String.format("%s %s", (errorMessage != null ? errorMessage : ""), event.left().getValue()));
                 promise.fail(event.left().getValue());
             }
         };
+    }
+
+    public static <T> Handler<Either<String, T>> handlerJsonObject(Promise<T> promise) {
+        return PromiseHelper.handlerJsonObject(promise, null);
     }
 
     public static Handler<Either<String, JsonArray>> handlerJsonArray(Promise<JsonArray> promise) {

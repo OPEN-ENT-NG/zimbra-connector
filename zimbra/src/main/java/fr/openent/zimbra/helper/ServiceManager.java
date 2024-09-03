@@ -112,8 +112,7 @@ public class ServiceManager {
         }
 
         String redisConfig = (String) vertx.sharedData().getLocalMap("server").get("redisConfig");
-        CacheService cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient()) : null;
-
+        CacheService cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient().getClient()) : null;
         this.webClient = WebClient.create(vertx, HttpClientHelper.getWebClientOptions());
 
         if (config != null) {

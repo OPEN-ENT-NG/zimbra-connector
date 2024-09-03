@@ -6,6 +6,9 @@ import fr.openent.zimbra.model.SlackConfiguration;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.RequestOptions;
+import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
@@ -31,13 +34,20 @@ public class SlackService {
                 + "&channel=" + encodeParam(this.config.channel()) + "&text=" + encodeParam(message)
                 + "&username=" + encodeParam(this.config.botUsername())
                 + "&pretty=1";
-        final HttpClientRequest notification = httpClient.postAbs(address, response -> {
-            if (response.statusCode() != 200) {
-                LOGGER.error("An error occurred when notify slack");
-            }
-        }).putHeader(Field.CONTENT_TYPE, "application/json");
+        RequestOptions requestOptions = new RequestOptions()
+                .setAbsoluteURI(address)
+                .setMethod(HttpMethod.POST)
+                .setHeaders(new HeadersMultiMap())
+                .putHeader(Field.CONTENT_TYPE, "application/json");
 
-        notification.end();
+        httpClient.request(requestOptions)
+                .flatMap(HttpClientRequest::send)
+                .onSuccess(response -> {
+                    if (response.statusCode() != 200) {
+                        LOGGER.error("An error occurred when notify slack");
+                    }
+                })
+                .onFailure(err -> LOGGER.error("An error occurred when sending slack message", err));
     }
 
     private String encodeParam(String param) {

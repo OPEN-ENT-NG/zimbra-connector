@@ -31,6 +31,7 @@ import fr.openent.zimbra.service.data.SqlSynchroService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -65,20 +66,18 @@ public class SynchroUser extends EntUser {
     public void synchronize(int idRow, String sync_action, Handler<AsyncResult<JsonObject>> handler) {
         this.idRowBdd = idRow;
         this.sync_action = sync_action;
-        Future<JsonObject> updateDbFuture = Future.future();
-        updateDbFuture.setHandler(result ->
+        Promise<JsonObject> updateDbPromise = Promise.promise();
+        updateDbPromise.future().onComplete(result ->
             updateDatabase(result, handler)
         );
 
-        Future<Void> updatedFromNeo = Future.future();
-        fetchDataFromNeo(updatedFromNeo.completer());
-        updatedFromNeo.compose( v -> {
-            Future<String> updatedFromZimbra = Future.future();
-            getZimbraId(updatedFromZimbra.completer());
-            return updatedFromZimbra;
-        }).compose( zimbraId ->
-            updateZimbra(zimbraId, updateDbFuture.completer())
-        , updateDbFuture);
+        Promise<Void> updatedFromNeo = Promise.promise();
+        fetchDataFromNeo(updatedFromNeo);
+        updatedFromNeo.future().compose( v -> {
+            Promise<String> updatedFromZimbra = Promise.promise();
+            getZimbraId(updatedFromZimbra);
+            return updatedFromZimbra.future();
+        }).compose(this::updateZimbra);
     }
 
     @Override
@@ -134,6 +133,12 @@ public class SynchroUser extends EntUser {
                 handler.handle(Future.failedFuture("Unknown sync_action : " + sync_action));
                 log.error("Unknown sync_action : " + sync_action);
         }
+    }
+
+    private Future<JsonObject> updateZimbra(String zimbraId) {
+        Promise<JsonObject> promise = Promise.promise();
+        updateZimbra(zimbraId, promise);
+        return promise.future();
     }
 
     private void syncGroupsAsync() {

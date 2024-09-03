@@ -25,10 +25,7 @@ import fr.openent.zimbra.model.constant.SynchroConstants;
 import fr.openent.zimbra.model.synchro.DatabaseSynchro;
 import fr.openent.zimbra.service.data.SqlSynchroService;
 import fr.wseduc.webutils.email.EmailSender;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -72,21 +69,20 @@ public class SynchroMailerService {
     }
 
     private void startMailingForSyncList(List<String> syncIdList, Handler<AsyncResult<JsonObject>> handler) {
-        List<Future> allSyncProcessed = new ArrayList<>();
+        List<Future<?>> allSyncProcessed = new ArrayList<>();
         for(String syncId : syncIdList) {
             sqlSynchroService.getSynchroInfos(syncId, dbres -> {
-                Future<JsonObject> syncEnded;
+                Promise<JsonObject> syncEnded = Promise.promise();
                 if(dbres.failed()) {
-                    syncEnded = Future.failedFuture(dbres.cause());
+                    syncEnded.fail(dbres.cause());
                     log.error("Error when getting synchro " + syncId + " error : " + dbres.cause());
                 } else  {
-                    syncEnded = Future.future();
-                    processDatabaseSynchroResult(dbres.result(), syncEnded.completer());
+                    processDatabaseSynchroResult(dbres.result(), syncEnded);
                 }
-                allSyncProcessed.add(syncEnded);
+                allSyncProcessed.add(syncEnded.future());
             });
         }
-        CompositeFuture.join(allSyncProcessed).setHandler( res -> {
+        Future.join(allSyncProcessed).onComplete( res -> {
             if(res.succeeded()) {
                 handler.handle(Future.succeededFuture(new JsonObject()));
             } else {

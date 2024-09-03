@@ -21,6 +21,7 @@ import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -63,10 +64,10 @@ public class AsyncHelper {
         return res -> handler.handle(eitherToVoidAsync(res));
     }
 
-    public static Future<JsonObject> getJsonObjectFinalFuture(Handler<AsyncResult<JsonObject>> handler) {
-        Future<JsonObject> startFuture = Future.future();
-        startFuture.setHandler(handler);
-        return startFuture;
+    public static Promise<JsonObject> getJsonObjectFinalPromise(Handler<AsyncResult<JsonObject>> handler) {
+        Promise<JsonObject> promise = Promise.promise();
+        promise.future().onComplete(handler);
+        return promise;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -107,42 +108,54 @@ public class AsyncHelper {
         };
     }
 
-    public static <T> void processListSynchronously(List<T> origList, AsyncHandler<T> strHandler,
-                                         Handler<AsyncResult<T>> finalHandler) {
-        if(origList.isEmpty()) {
-            finalHandler.handle(Future.failedFuture("Empty list"));
-            return;
-        }
-        Future<T> init = Future.future();
-        strHandler.handle(origList.get(0), init.completer());
-        Future<T> current = init;
-        for(T obj : origList.subList(1, origList.size())) {
-            current = current.compose(v -> {
-                Future<T> next = Future.future();
-                strHandler.handle(obj, next.completer());
-                return next;
-            });
+    public static <T> Future<T> processListSynchronously(List<T> origList, AsyncHandler<T> strHandler) {
+        // Create a promise to return as a Future
+        Promise<T> finalPromise = Promise.promise();
 
+        if (origList.isEmpty()) {
+            finalPromise.fail("Empty list");
+            return finalPromise.future();
         }
-        current.setHandler(finalHandler);
+
+        // Initialize the first future in the chain
+        Promise<T> initPromise = Promise.promise();
+        strHandler.handle(origList.get(0), initPromise);
+
+        Future<T> current = initPromise.future();
+
+        // Chain each subsequent item with compose
+        for (T obj : origList.subList(1, origList.size())) {
+            current = current.compose(v -> {
+                Promise<T> nextPromise = Promise.promise();
+                strHandler.handle(obj, nextPromise);
+                return nextPromise.future();
+            });
+        }
+
+        // Complete the final promise when all are done
+        current.onComplete(finalPromise);
+
+        return finalPromise.future();
     }
 
-    public static <T> Handler<Either<String,T>> getEitherFromFuture(Future<T> future) {
+
+    public static <T> Handler<Either<String,T>> getEitherFromPromise(Promise<T> promise) {
         return evt -> {
-            if (evt.isLeft()) future.fail(evt.left().getValue());
-            else future.complete(evt.right().getValue());
+            if (evt.isLeft()) promise.fail(evt.left().getValue());
+            else promise.complete(evt.right().getValue());
         };
     }
 
-    public static <T> Future<T> getFutureFromEither(Handler<Either<String, T>> either) {
-        Future<T> future = Future.future();
-        future.setHandler(evt -> {
-            if(evt.failed()) {
+
+    public static <T> Promise<T> getPromiseFromEither(Handler<Either<String, T>> either){
+        Promise<T> promise = Promise.promise();
+        promise.future().onComplete(evt -> {
+            if (evt.failed()) {
                 either.handle(new Either.Left<>(evt.cause().getMessage()));
             } else {
                 either.handle(new Either.Right<>(evt.result()));
             }
         });
-        return future;
+        return promise;
     }
 }

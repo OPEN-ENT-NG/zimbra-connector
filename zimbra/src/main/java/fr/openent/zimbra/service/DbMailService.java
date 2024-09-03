@@ -21,6 +21,7 @@ import fr.openent.zimbra.model.Group;
 import fr.openent.zimbra.model.ZimbraUser;
 import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;

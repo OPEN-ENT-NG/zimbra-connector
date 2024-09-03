@@ -48,15 +48,15 @@ public class RecipientService {
             if(zimbraMap.containsKey(email)) {
                 resultMap.put(email, zimbraMap.get(email));
             } else {
-                Future<Recipient> emailResolved = Future.future();
+                Promise<Recipient> emailResolved = Promise.promise();
                 messageService.translateMailFuture(email, emailResolved);
-                toSearch.add(emailResolved);
+                toSearch.add(emailResolved.future());
             }
         });
         if(toSearch.isEmpty()) {
             handler.handle(Future.succeededFuture(resultMap));
         } else {
-            CompositeFuture.join(toSearch).setHandler(compo -> {
+            CompositeFuture.join(toSearch).onComplete(compo -> {
                 AsyncContainer<Boolean> atLeastOne = new AsyncContainer<>();
                 atLeastOne.setValue(false);
                 toSearch.forEach(future -> {

@@ -50,6 +50,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static fr.openent.zimbra.helper.PromiseHelper.handlerJsonObject;
 import static fr.openent.zimbra.model.constant.FrontConstants.*;
 import static fr.openent.zimbra.model.constant.SoapConstants.*;
 import static fr.openent.zimbra.model.constant.ZimbraConstants.*;
@@ -1367,7 +1368,7 @@ public class MessageService {
                         .put(SoapConstants.MESSAGE_ID, messageId)
                         .put(SoapConstants.REQ_NAMESPACE, SoapConstants.NAMESPACE_MAIL));
 
-        soapService.callUserSoapAPI(convActionRequest, user, FutureHelper.handlerJsonObject(promise,
+        soapService.callUserSoapAPI(convActionRequest, user, handlerJsonObject(promise,
                 String.format("[Zimbra@%s::sendDeliveryReport]: %s",
                         FutureHelper.class.getSimpleName(), "Failed to send delivery report.")));
 

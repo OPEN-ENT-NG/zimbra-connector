@@ -20,10 +20,7 @@ package fr.openent.zimbra.model.synchro.addressbook;
 import fr.openent.zimbra.Zimbra;
 import fr.openent.zimbra.model.soap.model.SoapContactFolder;
 import fr.openent.zimbra.model.soap.model.SoapFolder;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
+import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -83,14 +80,14 @@ class AddressBookZimbraSynchro {
 
     private void syncSubFolders(String path, Map<String,AddressBookFolder> subFolders,
                                 Handler<AsyncResult<JsonObject>> handler) {
-        List<Future> folderFutures = new ArrayList<>();
+        List<Future<?>> folderFutures = new ArrayList<>();
         subFolders.forEach( (name, folder) -> {
             String subFolderPath = path + "/" + name;
-            Future<JsonObject> folderFuture = Future.future();
-            folderFutures.add(folderFuture);
-            syncFolder(subFolderPath, folder, folderFuture.completer());
+            Promise<JsonObject> folderPromise = Promise.promise();
+            folderFutures.add(folderPromise.future());
+            syncFolder(subFolderPath, folder, folderPromise);
         });
-        CompositeFuture.all(folderFutures).setHandler( res -> {
+        Future.all(folderFutures).onComplete( res -> {
             if(res.failed()) {
                 handler.handle(Future.failedFuture(res.cause()));
             } else {

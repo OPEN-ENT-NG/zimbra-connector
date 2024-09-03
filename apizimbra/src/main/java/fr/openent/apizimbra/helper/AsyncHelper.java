@@ -21,6 +21,7 @@ import fr.wseduc.webutils.Either;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -64,10 +65,12 @@ public class AsyncHelper {
     }
 
     public static Future<JsonObject> getJsonObjectFinalFuture(Handler<AsyncResult<JsonObject>> handler) {
-        Future<JsonObject> startFuture = Future.future();
-        startFuture.setHandler(handler);
-        return startFuture;
+        Promise<JsonObject> startPromise = Promise.promise();
+        startPromise.future().onComplete(handler);
+        return startPromise.future();
     }
+
+
 
     @SuppressWarnings("WeakerAccess")
     public static AsyncResult<Void> eitherToVoidAsync(Either<String,JsonObject> either) {
@@ -113,17 +116,17 @@ public class AsyncHelper {
             finalHandler.handle(Future.failedFuture("Empty list"));
             return;
         }
-        Future<T> init = Future.future();
-        strHandler.handle(origList.get(0), init.completer());
-        Future<T> current = init;
+        Promise<T> init = Promise.promise();
+        strHandler.handle(origList.get(0), init);
+        Future<T> current = init.future();
         for(T obj : origList.subList(1, origList.size())) {
             current = current.compose(v -> {
-                Future<T> next = Future.future();
-                strHandler.handle(obj, next.completer());
-                return next;
+                Promise<T> next = Promise.promise();
+                strHandler.handle(obj, next);
+                return next.future();
             });
 
         }
-        current.setHandler(finalHandler);
+        current.onComplete(finalHandler);
     }
 }

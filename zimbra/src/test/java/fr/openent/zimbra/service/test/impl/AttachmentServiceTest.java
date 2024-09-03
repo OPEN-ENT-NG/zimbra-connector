@@ -8,13 +8,11 @@ import fr.openent.zimbra.service.data.SoapZimbraService;
 import fr.openent.zimbra.service.impl.AttachmentService;
 import fr.openent.zimbra.service.impl.MessageService;
 import fr.wseduc.webutils.Either;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -48,7 +46,11 @@ public class AttachmentServiceTest {
         this.vertx = Mockito.spy(Vertx.vertx());
         this.soapZimbraService = mock(SoapZimbraService.class);
         this.messageService = mock(MessageService.class);
-        this.attachmentService = new AttachmentService(soapZimbraService, messageService, Vertx.vertx(), new JsonObject(), null);
+
+        JsonObject config = new JsonObject()
+                .put("zimbra-uri", "https://zimbra-dev.support-ent.fr");
+
+        this.attachmentService = new AttachmentService(soapZimbraService, messageService, Vertx.vertx(), config, null);
 
         this.httpClient = Mockito.mock(HttpClient.class);
         mockStatic(HttpClientHelper.class);
@@ -73,20 +75,27 @@ public class AttachmentServiceTest {
         Buffer buffer = mock(Buffer.class);
         Mockito.when(buffer.toString()).thenReturn("413,null\n");
 
+
+
         Mockito.doAnswer(invocation -> {
             Handler<Either<String, JsonObject>> response = invocation.getArgument(1);
             response.handle(new Either.Right<>(new JsonObject().put(Field.AUTH_TOKEN, "token")));
             return null;
         }).when(soapZimbraService).getUserAuthToken(Mockito.any(), Mockito.any());
 
+
         Mockito.doReturn(200).when(httpClientResponse).statusCode();
+        Mockito.when(httpClient.request(Mockito.any(RequestOptions.class)))
+                .thenReturn(Future.succeededFuture(httpClientRequest));
+
+        Mockito.doReturn(httpClientRequest).when(httpClientRequest).setChunked(true);
+        Mockito.doReturn(httpClientRequest).when(httpClientRequest).putHeader(Mockito.anyString(), Mockito.anyString());
+
         Mockito.doAnswer(invocation -> {
-            Handler<HttpClientResponse> response = invocation.getArgument(1);
-            response.handle(httpClientResponse);
+            Handler<Buffer> bodyHandler = invocation.getArgument(0);
+            bodyHandler.handle(buffer);
             return httpClientRequest;
-        }).when(httpClient).postAbs(Mockito.anyString(), Mockito.any());
-        Mockito.doAnswer(invocation -> httpClientRequest).when(httpClientRequest).setChunked(true);
-        Mockito.doAnswer(invocation -> httpClientRequest).when(httpClientRequest).putHeader(Mockito.anyString(), Mockito.anyString());
+        }).when(httpClientRequest).send();
 
         Mockito.doAnswer(invocation -> {
             Handler<Buffer> bodyHandler = invocation.getArgument(0);
@@ -122,14 +131,16 @@ public class AttachmentServiceTest {
             return null;
         }).when(soapZimbraService).getUserAuthToken(Mockito.any(), Mockito.any());
 
+        RequestOptions requestOptions = new RequestOptions()
+                .setAbsoluteURI("http://example.com")
+                .setMethod(io.vertx.core.http.HttpMethod.POST);
+
         Mockito.doReturn(200).when(httpClientResponse).statusCode();
-        Mockito.doAnswer(invocation -> {
-            Handler<HttpClientResponse> response = invocation.getArgument(1);
-            response.handle(httpClientResponse);
-            return httpClientRequest;
-        }).when(httpClient).postAbs(Mockito.anyString(), Mockito.any());
-        Mockito.doAnswer(invocation -> httpClientRequest).when(httpClientRequest).setChunked(true);
-        Mockito.doAnswer(invocation -> httpClientRequest).when(httpClientRequest).putHeader(Mockito.anyString(), Mockito.anyString());
+        Mockito.when(httpClient.request(Mockito.eq(requestOptions)))
+                .thenReturn(Future.succeededFuture(httpClientRequest));
+
+        Mockito.doReturn(httpClientRequest).when(httpClientRequest).setChunked(true);
+        Mockito.doReturn(httpClientRequest).when(httpClientRequest).putHeader(Mockito.anyString(), Mockito.anyString());
 
         Mockito.doAnswer(invocation -> {
             Handler<Buffer> bodyHandler = invocation.getArgument(0);
