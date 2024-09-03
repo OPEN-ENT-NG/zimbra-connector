@@ -27,7 +27,7 @@
     "@types/core-js": "0.9.42",
     "@types/es6-promise": "^3.3.0",
     "awesome-typescript-loader": "3.2.1",
-    "axios": "0.27.2",
+    "axios": "1.6.0",
     "core-js": "2.4.1",
     "entcore": "4.7.7",
     "entcore-toolkit": "^1.0.1",
