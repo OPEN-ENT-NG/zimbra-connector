@@ -20,4 +20,3 @@ pipeline {
     }
 }
 
-#!/usr/bin/env groovy

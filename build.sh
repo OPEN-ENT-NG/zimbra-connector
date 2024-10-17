@@ -20,6 +20,11 @@ case `uname -s` in
     fi
 esac
 
+init() {
+  me=`id -u`:`id -g`
+  echo "DEFAULT_DOCKER_USER=$me" > .env
+}
+
 clean () {
   docker-compose run --rm maven mvn $MVN_OPTS clean
 }
