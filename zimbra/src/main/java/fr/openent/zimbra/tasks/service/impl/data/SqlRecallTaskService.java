@@ -142,7 +142,7 @@ public class SqlRecallTaskService extends DbTaskService<RecallTask> {
         Promise<JsonArray> promise = Promise.promise();
         List<TransactionElement> tasksTransactions = new ArrayList<>();
 
-        for (int i = 0; i < batchSize; i += batchSize) {
+        for (int i = 0; i < tasks.size(); i += batchSize) {
             tasksTransactions.add(createTransactionForTasks(action, tasks.subList(i, Math.min(i + batchSize, tasks.size()))));
         }
 
