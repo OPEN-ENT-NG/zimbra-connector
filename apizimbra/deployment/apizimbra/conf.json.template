@@ -1,5 +1,5 @@
     {
-      "name": "fr.openent~apizimbra~3.0-b2school-SNAPSHOT",
+      "name": "fr.openent~apizimbra~${zimbraVersion}",
       "config": {
         "main" : "fr.openent.apizimbra.ApiZimbra",
         "port" : 8201,

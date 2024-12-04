@@ -1,5 +1,5 @@
 {
-  "name": "fr.openent~zimbra~3.0-b2school-SNAPSHOT",
+  "name": "fr.openent~zimbra~${zimbraVersion}",
   "config": {
     "main" : "fr.openent.zimbra.Zimbra",
     "port" : 8104,

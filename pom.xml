@@ -12,7 +12,7 @@
 
     <groupId>fr.openent</groupId>
     <artifactId>zimbra-connector</artifactId>
-    <version>3.0-b2school-SNAPSHOT</version>
+    <version>3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <scm>
@@ -42,7 +42,7 @@
         <reflectionsVersion>0.10.2</reflectionsVersion>
         <mockitoVersion>[2.0,3.0)</mockitoVersion>
         <apacheTextVersion>1.6</apacheTextVersion>
-        <entCoreVersion>5.0-b2school-SNAPSHOT</entCoreVersion>
+        <entCoreVersion>6.0-SNAPSHOT</entCoreVersion>
     </properties>
 
     <dependencies>
