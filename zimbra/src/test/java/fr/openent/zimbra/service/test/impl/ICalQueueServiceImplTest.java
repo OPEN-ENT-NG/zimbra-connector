@@ -14,7 +14,9 @@ import fr.openent.zimbra.tasks.service.impl.data.SqlICalTaskService;
 import fr.openent.zimbra.tasks.service.impl.ICalQueueServiceImpl;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -94,7 +96,7 @@ public class ICalQueueServiceImplTest {
             async.complete();
 
             return Future.succeededFuture();
-        }).when(this.sql).prepared(Mockito.any(), Mockito.any(), Mockito.any());
+        }).when(this.sql).prepared(Mockito.any(), Mockito.any(), (Handler<Message<JsonObject>>) Mockito.any());
 
         queueServiceImpl.createAction(UUID.fromString(user.getUserId()), actionType, approved);
         async.awaitSuccess(10000);
@@ -125,7 +127,7 @@ public class ICalQueueServiceImplTest {
             async.complete();
 
             return Future.succeededFuture();
-        }).when(this.sql).prepared(Mockito.any(), Mockito.any(), Mockito.any());
+        }).when(this.sql).prepared(Mockito.any(), Mockito.any(), (Handler<Message<JsonObject>>) Mockito.any());
 
         queueServiceImpl.createTask(action, task);
         async.awaitSuccess(10000);
