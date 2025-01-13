@@ -257,21 +257,17 @@ public class AttachmentService {
      */
     private Future<Void> pumpRequests(HttpClient httpClient, ReadStream<Buffer> inRequest, WriteStream<Buffer> outRequest) {
         Promise<Void> promise = Promise.promise();
-        Pump pump = Pump.pump(inRequest, outRequest);
-        outRequest.exceptionHandler(event -> {
-            String messageToFormat = "Zimbra@pumpRequests Error in outRequest : " + event.getMessage();
-            PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), event, promise);
-        });
-        inRequest.exceptionHandler(event -> {
-            String messageToFormat = "Zimbra@pumpRequests Error in inRequest : " + event.getMessage();
-            PromiseHelper.reject(log, messageToFormat, AttachmentService.class.getSimpleName(), event, promise);
-        });
-        inRequest.endHandler(event -> {
-            outRequest.end();
-            httpClientPool.add(httpClient);
-            promise.complete();
-        });
-        pump.start();
+
+        inRequest.pipeTo(outRequest)
+            .onSuccess(v -> {
+                httpClientPool.add(httpClient);
+                promise.complete();
+            })
+            .onFailure(err -> {
+                log.error("[Zimbra@AttachmentService::pumpRequests] Error  : " + err.getMessage());
+                promise.fail(err.getMessage());
+            });
+
         return promise.future();
     }
 
@@ -350,7 +346,6 @@ public class AttachmentService {
             String authToken = authTokenResponse.right().getValue().getString(Field.AUTH_TOKEN);
             HttpClient httpClient = HttpClientHelper.createHttpClient(vertx);
 
-            requestFront.resume();
             String cdHeader = Utils.getOrElse(requestFront.getHeader(Field.CONTENT_DISPOSITION), "attachment");
 
             RequestOptions requestOptions = new RequestOptions()
