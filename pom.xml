@@ -35,7 +35,7 @@
     </modules>
 
     <properties>
-        <revision>3.0.2</revision>
+        <revision>3.0-SNAPSHOT</revision>
         <vertxCronTimerVersion>3.0-SNAPSHOT</vertxCronTimerVersion>
         <toolsVersion>2.0.0-final</toolsVersion>
         <junitVersion>5.1.0</junitVersion>
