@@ -67,17 +67,28 @@ public class SynchroUser extends EntUser {
         this.idRowBdd = idRow;
         this.sync_action = sync_action;
         Promise<JsonObject> updateDbPromise = Promise.promise();
-        updateDbPromise.future().onComplete(result ->
-            updateDatabase(result, handler)
-        );
+        updateDbPromise.future().onComplete(result -> updateDatabase(result, handler));
 
         Promise<Void> updatedFromNeo = Promise.promise();
         fetchDataFromNeo(updatedFromNeo);
-        updatedFromNeo.future().compose( v -> {
-            Promise<String> updatedFromZimbra = Promise.promise();
-            getZimbraId(updatedFromZimbra);
-            return updatedFromZimbra.future();
-        }).compose(this::updateZimbra);
+        updatedFromNeo.future()
+                .compose(v -> {
+                    Promise<String> updatedFromZimbra = Promise.promise();
+                    getZimbraId(updatedFromZimbra);
+                    return updatedFromZimbra.future();
+                })
+                .compose(zimbraId -> {
+                    Promise<JsonObject> zimbraUpdatePromise = Promise.promise();
+                    updateZimbra(zimbraId, zimbraUpdatePromise);
+                    return zimbraUpdatePromise.future();
+                })
+                .onComplete(asyncResult -> {
+                    if (asyncResult.succeeded()) {
+                        updateDbPromise.complete(asyncResult.result());
+                    } else {
+                        updateDbPromise.fail(asyncResult.cause());
+                    }
+                });
     }
 
     @Override
