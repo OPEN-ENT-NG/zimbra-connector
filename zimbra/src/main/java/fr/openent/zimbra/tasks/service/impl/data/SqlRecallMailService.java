@@ -234,10 +234,16 @@ public class SqlRecallMailService extends DbRecallMail {
     public Future<JsonArray> checkRecalledInMailList(String userId, JsonArray messageList) {
         Promise<JsonArray> promise = Promise.promise();
 
-        List<String> messageIdList = messageList  .stream()
+        List<String> messageIdList = messageList.stream()
                 .filter(JsonObject.class::isInstance)
                 .map(mail -> (JsonObject) mail)
                 .map(mail -> mail.getString(Field.ID)).collect(Collectors.toList());
+
+        if (messageIdList.isEmpty()) {
+            log.info("[Zimbra@RecallMailServiceImpl::checkRecalledInMailList] messageList is empty after filtering");
+            promise.complete(new JsonArray());
+            return promise.future();
+        }
 
         String query = "SELECT rm.*, act.approved," +
                 "count(rt.status) filter ( WHERE status = '" + TaskStatus.FINISHED.method() + "') AS finished," +

@@ -43,13 +43,14 @@ public class SynchroTask implements Handler<Long> {
     public void handle(Long event) {
         log.info("Zimbra cron started : " + action);
         eb.request(SYNCHRO_BUSADDR,
-                new JsonObject().put(BUS_ACTION, action),
-                res -> {
-                    if(res.succeeded()) {
-                        log.info("Cron launch successful with action " + action);
-                    } else {
-                        log.error("Cron launch failed with action " + action);
-                    }
-                });
+            new JsonObject().put(BUS_ACTION, action),
+            res -> {
+                if(res.succeeded()) {
+                    log.info("Cron launch successful for action " + action);
+                } else {
+                    String errorMessage = String.format("Cron launch failed for action %s with error : %s", action, res.cause().getMessage());
+                    log.error("[Zimbra@SynchroTask::handle] " + errorMessage);
+                }
+            });
     }
 }
