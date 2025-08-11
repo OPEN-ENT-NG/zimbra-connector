@@ -1,5 +1,5 @@
 # About Zimbra Connector
-* Licence : [AGPL v3](http://www.gnu.org/licenses/agpl.txt) - Copyright CGI
+* Licence : [AGPL v3](http://www.gnu.org/licenses/agpl.txt) - Copyright Région Ile de France, CGI
 * Développer(s) : CGI
 * Financer(s) : Région Ile de France, CGI
 * Description : Module to connect to Zimbra.
