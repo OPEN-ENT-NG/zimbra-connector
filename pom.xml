@@ -35,15 +35,15 @@
     </modules>
 
     <properties>
-        <revision>3.0-SNAPSHOT</revision>
-        <vertxCronTimerVersion>3.0-SNAPSHOT</vertxCronTimerVersion>
+        <revision>3.0.9</revision>
+        <vertxCronTimerVersion>3.0.0</vertxCronTimerVersion>
         <toolsVersion>2.0.0-final</toolsVersion>
         <junitVersion>5.1.0</junitVersion>
         <powerMockVersion>2.0.2</powerMockVersion>
         <reflectionsVersion>0.10.2</reflectionsVersion>
         <mockitoVersion>[2.0,3.0)</mockitoVersion>
         <apacheTextVersion>1.6</apacheTextVersion>
-        <entCoreVersion>6.7-SNAPSHOT</entCoreVersion>
+        <entCoreVersion>6.8.1</entCoreVersion>
     </properties>
 
     <dependencies>
