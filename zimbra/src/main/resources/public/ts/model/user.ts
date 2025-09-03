@@ -44,21 +44,6 @@ export class User implements Selectable {
         );
     }
 
-    async findData(): Promise<boolean> {
-        let that = this;
-        const response = await http.get("/userbook/api/person?id=" + this.id);
-        const userData = response.data;
-        if (!userData.result[0])
-            // If group
-            return true;
-        // If deleted ??
-        Mix.extend(this, {
-            id: that.id,
-            displayName: userData.result[0].displayName
-        });
-
-        return true;
-    }
     async findMe(): Promise<boolean> {
         let {data} = await http.get("/userbook/api/person");
         if (data && data.result[0])

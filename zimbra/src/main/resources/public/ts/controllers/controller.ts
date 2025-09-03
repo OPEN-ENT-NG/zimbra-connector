@@ -172,7 +172,6 @@ export let zimbraController = ng.controller("ZimbraController", [
 
         const initUserTo = async (userId:string):Promise<void> => {
             const user = new User(userId);
-            await user.findData();
             if(_.isString(userId)){
                 if(user.displayName){
                     $scope.addUser(user);
@@ -180,7 +179,6 @@ export let zimbraController = ng.controller("ZimbraController", [
             }else if(userId !== undefined) {
                 for(let i = 0; i < userId.length; i++){
                     let user = new User(userId[i]);
-                    await user.findData();
                     $scope.addUser(user);
                 }
             }
@@ -414,6 +412,7 @@ export let zimbraController = ng.controller("ZimbraController", [
             } catch (e) {
                 template.open("page", "errors/e404");
             }
+            $scope.$apply();
         };
         $scope.search = async (text: string) => {
             if (text.trim().length > 2) {
