@@ -32,12 +32,15 @@ import fr.openent.zimbra.worker.ICalRequestWorker;
 import fr.openent.zimbra.worker.RecallMailWorker;
 import fr.wseduc.cron.CronTrigger;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.entcore.common.http.BaseServer;
 
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class Zimbra extends BaseServer {
@@ -55,29 +58,37 @@ public class Zimbra extends BaseServer {
 
     @Override
     public void start(Promise<Void> startPromise) throws Exception {
-        super.start(startPromise);
-
+      final Promise<Void> promise = Promise.promise();
+      super.start(promise);
+      promise.future().compose(e -> this.initZimbra()).onComplete(startPromise);
+    }
+    public Future<Void> initZimbra() {
+        final List<Future<?>> initFutures = new ArrayList<>();
         appConfig = new ConfigManager(config);
         zimbraSchema = config.getString("db-schema");
         Zimbra.domain = appConfig.getZimbraDomain();
         Zimbra.synchroLang = appConfig.getSynchroLang();
-        addController(new ZimbraController());
-        addController(new ZimbraMobileController());
-        addController(new SynchroController());
-        addController(new ExternalWebservicesController());
-        addController(new ZimbraAdminController());
+        initFutures.add(addController(new ZimbraController()));
+        initFutures.add(addController(new ZimbraMobileController()));
+        initFutures.add(addController(new SynchroController()));
+        initFutures.add(addController(new ExternalWebservicesController()));
+        initFutures.add(addController(new ZimbraAdminController()));
         addFilter(new RequestErrorFilter());
-        ServiceManager serviceManager = ServiceManager.init(vertx, vertx.eventBus(), "");
-        this.returnedMailService = serviceManager.getReturnedMailService();
+        final Future<ServiceManager> future = ServiceManager.init(vertx, vertx.eventBus(), "")
+          .compose(serviceManager -> {
+            this.returnedMailService = serviceManager.getReturnedMailService();
 
-        this.recallMailService = serviceManager.getRecallMailService();
+            this.recallMailService = serviceManager.getRecallMailService();
+            return Future.succeededFuture();
+          });
+        initFutures.add(future);
 
         // Repository Events
         setRepositoryEvents(new ZimbraRepositoryEvents());
 
         // Workers
-        vertx.deployVerticle(RecallMailWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config));
-        vertx.deployVerticle(ICalRequestWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config));
+        initFutures.add(vertx.deployVerticle(RecallMailWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config)));
+        initFutures.add(vertx.deployVerticle(ICalRequestWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config)));
 
         try {
             SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
@@ -100,8 +111,6 @@ public class Zimbra extends BaseServer {
         } catch (ParseException e) {
             log.warn("Mailer Cron deactivated");
         }
-
-        startPromise.tryComplete();
-        startPromise.tryFail("[Zimbra@Zimbra::start] Fail to start Zimbra");
+        return Future.all(initFutures).mapEmpty();
     }
 }
