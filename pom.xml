@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.edifice</groupId>
         <artifactId>app-parent</artifactId>
-        <version>1.0.1</version>
+        <version>1.1-zookeeper-SNAPSHOT</version>
     </parent>
 
     <groupId>fr.openent</groupId>
@@ -35,7 +35,7 @@
     </modules>
 
     <properties>
-        <revision>3.0-SNAPSHOT</revision>
+        <revision>3.0-zookeeper-SNAPSHOT</revision>
         <vertxCronTimerVersion>3.0-SNAPSHOT</vertxCronTimerVersion>
         <toolsVersion>2.0.0-final</toolsVersion>
         <junitVersion>5.1.0</junitVersion>
@@ -43,7 +43,7 @@
         <reflectionsVersion>0.10.2</reflectionsVersion>
         <mockitoVersion>[2.0,3.0)</mockitoVersion>
         <apacheTextVersion>1.6</apacheTextVersion>
-        <entCoreVersion>6.11-SNAPSHOT</entCoreVersion>
+        <entCoreVersion>6.10-zookeeper-SNAPSHOT</entCoreVersion>
     </properties>
 
     <dependencies>
@@ -132,12 +132,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.gatling.highcharts</groupId>
-            <artifactId>gatling-charts-highcharts</artifactId>
-            <version>2.2.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
             <version>${reflectionsVersion}</version>
@@ -148,6 +142,14 @@
             <artifactId>testtools</artifactId>
             <version>${toolsVersion}</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>mod-mongo-persistor</artifactId>
+            <version>4.1-zookeeper-SNAPSHOT</version>
+            <scope>runtime</scope>
+            <classifier>fat</classifier>
         </dependency>
     </dependencies>
 

@@ -36,3 +36,4 @@ package-lock.json
 .env
 target
 dependency-reduced-pom.xml
+.flattened-pom.xml
