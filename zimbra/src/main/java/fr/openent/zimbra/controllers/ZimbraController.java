@@ -52,8 +52,6 @@ import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.RequestUtils;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpServerRequest;
@@ -68,7 +66,6 @@ import org.entcore.common.cache.CacheScope;
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.http.filter.ResourceFilter;
-import org.entcore.common.http.response.DefaultResponseHandler;
 import org.entcore.common.storage.Storage;
 import org.entcore.common.storage.StorageFactory;
 import org.entcore.common.user.UserUtils;
@@ -114,31 +111,36 @@ public class ZimbraController extends BaseController {
     private static final Logger log = LoggerFactory.getLogger(ZimbraController.class);
 
     @Override
-    public void init(Vertx vertx, JsonObject config, RouteMatcher rm,
+    public Future<Void> initAsync(Vertx vertx, JsonObject config, RouteMatcher rm,
                      Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
         super.init(vertx, config, rm, securedActions);
 
         eventStore = EventStoreFactory.getFactory().getEventStore(Zimbra.class.getSimpleName());
-        storage = new StorageFactory(vertx, config).getStorage();
-
-
-        ServiceManager serviceManager = ServiceManager.init(vertx, eb, pathPrefix);
-
-        this.appConfig = Zimbra.appConfig;
-        this.searchService = serviceManager.getSearchService();
-        this.userService = serviceManager.getUserService();
-        this.folderService = serviceManager.getFolderService();
-        this.signatureService = serviceManager.getSignatureService();
-        this.messageService = serviceManager.getMessageService();
-        this.attachmentService = serviceManager.getAttachmentService();
-        this.expertModeService = serviceManager.getExpertModeService();
-        this.redirectionService = serviceManager.getRedirectionService();
-        this.frontPageService = serviceManager.getFrontPageService();
-        this.addressBookService = serviceManager.getAddressBookService();
-        this.recallMailService = serviceManager.getRecallMailService();
-        this.workspaceHelper = new WorkspaceHelper(eb,storage);
-        this.icalQueueServiceImpl = serviceManager.getICalQueueService();
-        this.sqlICalTaskService = serviceManager.getSqlICalTaskService();
+        return StorageFactory.build(vertx, config)
+          .map(StorageFactory::getStorage)
+          .compose(s -> {
+            this.storage = s;
+            return Future.succeededFuture();
+          })
+          .flatMap(e -> ServiceManager.init(vertx, eb, pathPrefix))
+          .compose(serviceManager -> {
+            this.appConfig = Zimbra.appConfig;
+            this.searchService = serviceManager.getSearchService();
+            this.userService = serviceManager.getUserService();
+            this.folderService = serviceManager.getFolderService();
+            this.signatureService = serviceManager.getSignatureService();
+            this.messageService = serviceManager.getMessageService();
+            this.attachmentService = serviceManager.getAttachmentService();
+            this.expertModeService = serviceManager.getExpertModeService();
+            this.redirectionService = serviceManager.getRedirectionService();
+            this.frontPageService = serviceManager.getFrontPageService();
+            this.addressBookService = serviceManager.getAddressBookService();
+            this.recallMailService = serviceManager.getRecallMailService();
+            this.workspaceHelper = new WorkspaceHelper(eb,storage);
+            this.icalQueueServiceImpl = serviceManager.getICalQueueService();
+            this.sqlICalTaskService = serviceManager.getSqlICalTaskService();
+            return Future.succeededFuture();
+        }).mapEmpty();
     }
 
     @SecuredAction(RecallRights.ZIMBRA_RECALL_ADMIN)

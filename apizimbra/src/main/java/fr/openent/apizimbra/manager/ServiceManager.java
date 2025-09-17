@@ -51,7 +51,7 @@ public class ServiceManager {
         String pathPrefix = appConfig.getPathPrefix();
 
         timelineHelper = new TimelineHelper(vertx, eb, rawConfig);
-        EmailFactory emailFactory = new EmailFactory(vertx, rawConfig);
+        EmailFactory emailFactory = EmailFactory.getInstance();
         emailSender = emailFactory.getSender();
 
         initDbMailService(appConfig);

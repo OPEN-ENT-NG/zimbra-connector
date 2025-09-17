@@ -19,6 +19,7 @@ package fr.openent.apizimbra;
 
 import fr.openent.apizimbra.controller.ApiController;
 import fr.openent.apizimbra.manager.ConfigManager;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import org.entcore.common.http.BaseServer;
 
@@ -29,13 +30,16 @@ public class ApiZimbra extends BaseServer {
 
 	@Override
 	public void start(Promise<Void> startPromise) throws Exception {
-		super.start(startPromise);
-
+    final Promise<Void> promise = Promise.promise();
+    super.start(promise);
+    promise.future()
+      .compose(e -> this.initApiZimbra())
+      .onComplete(startPromise);
+  }
+  public Future<Void> initApiZimbra() {
 		appConfig = new ConfigManager(config);
 		addController(new ApiController());
-
-		startPromise.tryComplete();
-		startPromise.tryFail("[ApiZimbra@ApiZimbra::start] Fail to start ApiZimbra");
+    return Future.succeededFuture();
 	}
 
 }

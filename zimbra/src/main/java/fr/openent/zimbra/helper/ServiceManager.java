@@ -31,7 +31,10 @@ import fr.openent.zimbra.tasks.service.impl.data.SqlActionService;
 import fr.openent.zimbra.tasks.service.impl.data.SqlICalTaskService;
 import fr.openent.zimbra.tasks.service.impl.data.SqlRecallMailService;
 import fr.openent.zimbra.tasks.service.impl.data.SqlRecallTaskService;
+import fr.wseduc.webutils.collections.SharedDataHelper;
 import fr.wseduc.webutils.email.EmailSender;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
@@ -53,40 +56,40 @@ public class ServiceManager {
 
     private SoapZimbraService soapService;
     private UserService userService;
-    private final FolderService folderService;
+    private FolderService folderService;
     private AttachmentService attachmentService;
-    private final MessageService messageService;
-    private final SignatureService signatureService;
+    private MessageService messageService;
+    private SignatureService signatureService;
     private DbMailService dbMailServiceSync;
     private DbMailService dbMailServiceApp;
-    private final SearchService searchService;
-    private final NotificationService notificationService;
-    private final CommunicationService communicationService;
-    private final GroupService groupService;
-    private final Neo4jZimbraService neoService;
-    private final ExpertModeService expertModeService;
-    private final MobileThreadService mobileThreadService;
-    private final RecipientService recipientService;
-    private final RedirectionService redirectionService;
-    private final FrontPageService frontPageService;
-    private final ReturnedMailService returnedMailService;
-    private final RecallMailService recallMailService;
-    private final StructureService structureService;
+    private SearchService searchService;
+    private NotificationService notificationService;
+    private CommunicationService communicationService;
+    private GroupService groupService;
+    private Neo4jZimbraService neoService;
+    private ExpertModeService expertModeService;
+    private MobileThreadService mobileThreadService;
+    private RecipientService recipientService;
+    private RedirectionService redirectionService;
+    private FrontPageService frontPageService;
+    private ReturnedMailService returnedMailService;
+    private RecallMailService recallMailService;
+    private StructureService structureService;
 
     private SynchroUserService synchroUserService;
     private SynchroUserService synchroUserServiceApp;
-    private final SynchroService synchroService;
+    private SynchroService synchroService;
     private SqlSynchroService sqlSynchroService;
     private SqlRecallTaskService sqlRecallTaskService;
     private SqlActionService sqlActionService;
     private SqlRecallMailService sqlRecallMailService;
-    private final SynchroGroupService synchroGroupService;
-    private final SynchroMailerService synchroMailerService;
+    private SynchroGroupService synchroGroupService;
+    private SynchroMailerService synchroMailerService;
     private SynchroAddressBookService synchroAddressBookService;
-    private final Neo4jAddrbookService neo4jAddrbookService;
-    private final WebClient webClient;
+    private Neo4jAddrbookService neo4jAddrbookService;
+    private WebClient webClient;
 
-    private final SynchroLauncher synchroLauncher;
+    private SynchroLauncher synchroLauncher;
 
     private AddressBookService addressBookService;
 
@@ -101,69 +104,76 @@ public class ServiceManager {
 
     private HttpService httpService;
 
-    private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix, ConfigManager config) {
+    private ServiceManager(Vertx vertx, EventBus eb, String pathPrefix,
+                           ConfigManager config,
+                           final Promise<Void> promise) {
         this.vertx = vertx;
         JsonObject rawConfig = config != null ? config.getRawConfig() : null;
 
         if (rawConfig != null) {
             timelineHelper = new TimelineHelper(vertx, eb, rawConfig);
-            EmailFactory emailFactory = new EmailFactory(vertx, rawConfig);
+            EmailFactory emailFactory = EmailFactory.getInstance();
             emailSender = emailFactory.getSender();
         }
 
-        String redisConfig = (String) vertx.sharedData().getLocalMap("server").get("redisConfig");
-        CacheService cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient().getClient()) : null;
-        this.webClient = WebClient.create(vertx, HttpClientHelper.getWebClientOptions());
+        SharedDataHelper.getInstance().<String, String>getMulti("server", "redisConfig")
+          .compose(data -> {
+            final String redisConfig = data.get("redisConfig");
+            CacheService cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient().getClient()) : null;
+            this.webClient = WebClient.create(vertx, HttpClientHelper.getWebClientOptions());
 
-        if (config != null) {
-            SlackService slackService = new SlackService(vertx, config.getSlackConfiguration());
-            this.sqlSynchroService = new SqlSynchroService(config.getDbSchema());
-            initDbMailService(config);
-            this.soapService = new SoapZimbraService(vertx, cacheService, slackService, config.getCircuitBreakerOptions());
-            this.sqlAddressBookService = new SqlAddressBookService(config.getDbSchema());
-            this.addressBookService = new AddressBookService(sqlAddressBookService);
-            this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
-            this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
-            this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
-                    synchroAddressBookService, addressBookService, eb);
-            this.sqlRecallTaskService = new SqlRecallTaskService(config.getDbSchema(), config.getZimbraRecallWorkerMaxQueue());
-            this.sqlICalTaskService = new SqlICalTaskService(config.getDbSchema());
-            this.sqlActionService = new SqlActionService(config.getDbSchema());
-            this.sqlRecallMailService = new SqlRecallMailService(config.getDbSchema());
-            this.icalQueueServiceImpl = new ICalQueueServiceImpl(config.getDbSchema(), this.sqlICalTaskService, sqlActionService);
-            this.recallQueueService = new RecallQueueServiceImpl(config.getDbSchema(), this.sqlRecallTaskService, sqlActionService);
-        }
+            if (config != null) {
+              SlackService slackService = new SlackService(vertx, config.getSlackConfiguration());
+              this.sqlSynchroService = new SqlSynchroService(config.getDbSchema());
+              initDbMailService(config);
+              this.soapService = new SoapZimbraService(vertx, cacheService, slackService, config.getCircuitBreakerOptions());
+              this.sqlAddressBookService = new SqlAddressBookService(config.getDbSchema());
+              this.addressBookService = new AddressBookService(sqlAddressBookService);
+              this.synchroUserService = new SynchroUserService(dbMailServiceSync, sqlSynchroService);
+              this.synchroAddressBookService = new SynchroAddressBookService(sqlSynchroService);
+              this.userService = new UserService(soapService, synchroUserService, dbMailServiceApp,
+                synchroAddressBookService, addressBookService, eb);
+              this.sqlRecallTaskService = new SqlRecallTaskService(config.getDbSchema(), config.getZimbraRecallWorkerMaxQueue());
+              this.sqlICalTaskService = new SqlICalTaskService(config.getDbSchema());
+              this.sqlActionService = new SqlActionService(config.getDbSchema());
+              this.sqlRecallMailService = new SqlRecallMailService(config.getDbSchema());
+              this.icalQueueServiceImpl = new ICalQueueServiceImpl(config.getDbSchema(), this.sqlICalTaskService, sqlActionService);
+              this.recallQueueService = new RecallQueueServiceImpl(config.getDbSchema(), this.sqlRecallTaskService, sqlActionService);
+            }
 
-        this.searchService = new SearchService(vertx);
+            this.searchService = new SearchService(vertx);
 
-        this.neoService = new Neo4jZimbraService();
-        this.folderService = new FolderService(soapService);
-        this.signatureService = new SignatureService(userService, soapService);
-        this.httpService = new HttpService(vertx);
-        this.messageService = new MessageService(soapService, folderService,
-                dbMailServiceApp, userService, synchroUserService, httpService);
-        this.recipientService = new RecipientService(messageService);
-        if (rawConfig != null) this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig, webClient);
-        this.notificationService = new NotificationService(pathPrefix, timelineHelper);
-        this.communicationService = new CommunicationService();
-        this.groupService = new GroupService(soapService, dbMailServiceApp, synchroUserService);
-        this.expertModeService = new ExpertModeService();
-        this.mobileThreadService = new MobileThreadService(recipientService);
-        this.redirectionService = new RedirectionService(eb, userService);
-        this.frontPageService = new FrontPageService(folderService, userService);
-        this.returnedMailService = new ReturnedMailService(new DbMailServiceFactory(vertx, sqlSynchroService).getDbMailService("postgres"), messageService, userService, notificationService, eb);
-        this.structureService = new StructureServiceImpl(neoService);
-        this.recallMailService = new RecallMailServiceImpl(eb, sqlRecallMailService, messageService, recallQueueService, notificationService, structureService, recipientService, userService);
+            this.neoService = new Neo4jZimbraService();
+            this.folderService = new FolderService(soapService);
+            this.signatureService = new SignatureService(userService, soapService);
+            this.httpService = new HttpService(vertx);
+            this.messageService = new MessageService(soapService, folderService,
+              dbMailServiceApp, userService, synchroUserService, httpService);
+            this.recipientService = new RecipientService(messageService);
+            if (rawConfig != null) this.attachmentService = new AttachmentService(soapService, messageService, vertx, rawConfig, webClient);
+            this.notificationService = new NotificationService(pathPrefix, timelineHelper);
+            this.communicationService = new CommunicationService();
+            this.groupService = new GroupService(soapService, dbMailServiceApp, synchroUserService);
+            this.expertModeService = new ExpertModeService();
+            this.mobileThreadService = new MobileThreadService(recipientService);
+            this.redirectionService = new RedirectionService(eb, userService);
+            this.frontPageService = new FrontPageService(folderService, userService);
+            this.returnedMailService = new ReturnedMailService(new DbMailServiceFactory(vertx, sqlSynchroService).getDbMailService("postgres"), messageService, userService, notificationService, eb);
+            this.structureService = new StructureServiceImpl(neoService);
+            this.recallMailService = new RecallMailServiceImpl(eb, sqlRecallMailService, messageService, recallQueueService, notificationService, structureService, recipientService, userService);
 
-        this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
-        this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
-        this.synchroGroupService = new SynchroGroupService(soapService, synchroUserService);
-        this.synchroMailerService = new SynchroMailerService(sqlSynchroService);
-        this.neo4jAddrbookService = new Neo4jAddrbookService();
-        this.calendarService = new CalendarServiceImpl(soapService);
+            this.synchroLauncher = new SynchroLauncher(synchroUserService, sqlSynchroService);
+            this.synchroService = new SynchroService(sqlSynchroService, synchroLauncher);
+            this.synchroGroupService = new SynchroGroupService(soapService, synchroUserService);
+            this.synchroMailerService = new SynchroMailerService(sqlSynchroService);
+            this.neo4jAddrbookService = new Neo4jAddrbookService();
+            this.calendarService = new CalendarServiceImpl(soapService);
 
-        if(config != null) soapService.setServices(userService, synchroUserService);
-        if(synchroUserService != null) synchroUserService.setUserService(userService);
+            if(config != null) soapService.setServices(userService, synchroUserService);
+            if(synchroUserService != null) synchroUserService.setUserService(userService);
+            return Future.<Void>succeededFuture();
+          })
+          .onComplete(promise);
     }
 
     private void initDbMailService(ConfigManager appConfig) {
@@ -176,15 +186,20 @@ public class ServiceManager {
         }
     }
 
-    public static ServiceManager init(Vertx vertx, EventBus eb, String pathPrefix) {
+    public static Future<ServiceManager> init(Vertx vertx, EventBus eb, String pathPrefix) {
         return init(vertx, eb, pathPrefix, Zimbra.appConfig);
     }
 
-    public static ServiceManager init(Vertx vertx, EventBus eb, String pathPrefix, ConfigManager config) {
+    public static Future<ServiceManager> init(Vertx vertx, EventBus eb, String pathPrefix, ConfigManager config) {
+        final Future<ServiceManager> future;
         if (serviceManager == null) {
-            serviceManager = new ServiceManager(vertx, eb, pathPrefix, config);
+            final Promise<Void> promise = Promise.promise();
+            serviceManager = new ServiceManager(vertx, eb, pathPrefix, config, promise);
+            future = promise.future().map(e -> serviceManager);
+        } else {
+          future = Future.succeededFuture(serviceManager);
         }
-        return serviceManager;
+        return future;
     }
 
     public static ServiceManager getServiceManager() {
