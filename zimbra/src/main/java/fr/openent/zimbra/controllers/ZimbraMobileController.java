@@ -14,6 +14,7 @@ import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.request.RequestUtils;
 import fr.wseduc.webutils.security.SecuredAction;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
@@ -34,11 +35,12 @@ public class ZimbraMobileController extends BaseController {
     private MobileThreadService mobileThreadService;
 
     @Override
-    public void init(Vertx vertx, JsonObject config, RouteMatcher rm,
-                     Map<String, SecuredAction> securedActions) {
+    public Future<Void> initAsync(Vertx vertx, JsonObject config, RouteMatcher rm,
+                            Map<String, SecuredAction> securedActions) {
         super.init(vertx, config, rm, securedActions);
-        ServiceManager serviceManager = ServiceManager.init(vertx, eb, pathPrefix);
-        this.mobileThreadService = serviceManager.getMobileThreadService();
+        return ServiceManager.init(vertx, eb, pathPrefix)
+          .map(e -> this.mobileThreadService = e.getMobileThreadService())
+          .mapEmpty();
     }
 
     /**

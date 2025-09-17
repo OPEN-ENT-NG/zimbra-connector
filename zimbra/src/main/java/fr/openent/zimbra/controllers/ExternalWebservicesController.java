@@ -35,6 +35,7 @@ import fr.wseduc.rs.Put;
 import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.http.BaseController;
 import fr.wseduc.webutils.request.RequestUtils;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
@@ -63,18 +64,21 @@ public class ExternalWebservicesController extends BaseController {
     private static final Logger log = LoggerFactory.getLogger(ExternalWebservicesController.class);
 
     @Override
-    public void init(Vertx vertx, JsonObject config, RouteMatcher rm,
-                     Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
+    public Future<Void> initAsync(Vertx vertx, JsonObject config, RouteMatcher rm,
+                                  Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
         super.init(vertx, config, rm, securedActions);
 
-        ServiceManager serviceManager = ServiceManager.init(vertx, eb, pathPrefix);
-        synchroUserService = serviceManager.getSynchroUserService();
-        notificationService = serviceManager.getNotificationService();
-        communicationService = serviceManager.getCommunicationService();
-        userService = serviceManager.getUserService();
-        sqlSynchroService = serviceManager.getSqlSynchroService();
-        sqlAddressBookService = serviceManager.getSqlAddressBookService();
-        synchroAddressBookService = serviceManager.getSynchroAddressBookService();
+        return ServiceManager.init(vertx, eb, pathPrefix)
+          .compose(serviceManager -> {
+            synchroUserService = serviceManager.getSynchroUserService();
+            notificationService = serviceManager.getNotificationService();
+            communicationService = serviceManager.getCommunicationService();
+            userService = serviceManager.getUserService();
+            sqlSynchroService = serviceManager.getSqlSynchroService();
+            sqlAddressBookService = serviceManager.getSqlAddressBookService();
+            synchroAddressBookService = serviceManager.getSynchroAddressBookService();
+            return Future.succeededFuture();
+          }).mapEmpty();
     }
 
 
