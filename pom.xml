@@ -43,7 +43,7 @@
         <reflectionsVersion>0.10.2</reflectionsVersion>
         <mockitoVersion>[2.0,3.0)</mockitoVersion>
         <apacheTextVersion>1.6</apacheTextVersion>
-        <entCoreVersion>6.8-SNAPSHOT</entCoreVersion>
+        <entCoreVersion>6.9-SNAPSHOT</entCoreVersion>
     </properties>
 
     <dependencies>
