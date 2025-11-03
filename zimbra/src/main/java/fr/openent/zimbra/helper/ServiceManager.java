@@ -116,7 +116,7 @@ public class ServiceManager {
             emailSender = emailFactory.getSender();
         }
 
-        SharedDataHelper.getInstance().<String, String>getMulti("server", "redisConfig")
+        SharedDataHelper.getInstance().<String, String>getLocalMulti("server", "redisConfig")
           .compose(data -> {
             final String redisConfig = data.get("redisConfig");
             CacheService cacheService = redisConfig != null ? new RedisCacheService(Redis.getClient().getClient()) : null;
