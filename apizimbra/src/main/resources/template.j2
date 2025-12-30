@@ -1,0 +1,55 @@
+{
+  "name": "fr.openent~apizimbra",
+  "config": {
+    "main" : "fr.openent.apizimbra.ApiZimbra",
+    "port" : 8201,
+    "app-name" : "API Messagerie",
+    "app-address" : "/apizimbra",
+    "app-icon" : "Zimbra-large",
+    "host": "https://{{ host }}",
+    "ssl" : true,
+    "auto-redeploy": false,
+    "userbook-host": "https://{{ host }}",
+    "integration-mode": "{{ integration_mode|default('HTTP') }}",
+    "app-registry.port" : 8012,
+    "mode" : "prod",
+    "sql": true,
+    "db-schema": "zimbra",
+    "app-synctype" : "neo4j",
+    "zimbra-uri" : "{{ zimbraUri }}",
+    "preauth-key" : "{{ zimbraPreauthKey }}",
+    "zimbra-domain" : "{{ zimbraDomain }}",
+    "zimbra-synchro-lang" : "{{ zimbraLang }}",
+    "zimbra-admin-uri" : "{{ zimbraAdminUri }}",
+    "admin-account" : "{{ zimbraAdminAccount }}",
+    "admin-password" : "{{ zimbraAdminPassword }}",
+    "max-recipients" : {{ zimbraMaxRecipients }},
+    {% if zimbraDisableCron is defined and zimbraDisableCron %}
+    	"zimbra-synchro-cron" : "0 5/10 * * * ? 2099",
+    	"zimbra-mailer-cron" : "0 0/10 * * * ? 2099",
+    {% elif inventory_hostname_short is defined and inventory_hostname_short == 'jobs' %}
+      "zimbra-synchro-cron" : "0 5/10 * * * ? *",
+      "zimbra-mailer-cron" : "0 0/10 * * * ? *",
+    {% else %}
+      "zimbra-synchro-cron" : "0 5/10 * * * ? 2099",
+      "zimbra-mailer-cron" : "0 0/10 * * * ? 2099",
+    {% endif %}
+    "http-client-max-pool-size" : {{ zimbraMaxPoolSize | default('50') }},
+    "address-book-account" : "{{ zimbraAddressBookAccount }}",
+    "shared-folder-name" : "-- Carnets Adresses ENT --",
+    "abook-sync-ttl-minutes": {{ zimbraSyncTTL | default('1440') }},
+    "force-expert-mode" : {{ zimbraModeExpert | default('false') }},
+    "force-synchro-adressbook" : {{ zimbraForceSynchroAdressbook | default('false') }},
+    "structure-abook-sync-delay" : "{{ zimbraStructureAbookSyncDelay | default('1 days') }}",
+    "purge-emailed-contacts" : {{ zimbraPurgeEmailedContacts | default('false') }},
+    "save-draft-auto-time" : {{ zimbraSaveDraftAutoTime | default('60000') }},
+    "enable-addressbook-synchro" : {{ zimbraAdressBookSynchro | default('true') }},
+    "filter-profile-sync-ab" : "{{ zimbraFilterProfileSyncAb | default('') }}",
+    "circuit-breaker": {
+      "maxFailures": 50,
+      "timeout": -1
+    },
+    "entcore.port" : 8009,
+    "mail-config":{"imaps":{"server":"{{ zimbraMailConfigSrv }}","port":993,"ssl":"SSL/TLS","auth":"{{ zimbraMailConfigAuthMsg }}"},"smtps":{"server":"{{ zimbraMailConfigSrv }}","port":587,"ssl":"STARTTLS","auth":"{{ zimbraMailConfigAuthMsg }}"}}
+  }
+}
