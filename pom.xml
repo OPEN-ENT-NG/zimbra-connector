@@ -44,6 +44,7 @@
         <mockitoVersion>[2.0,3.0)</mockitoVersion>
         <apacheTextVersion>1.6</apacheTextVersion>
         <entCoreVersion>6.13.0</entCoreVersion>
+        <modMongoVersion>4.1.0</modMongoVersion>
     </properties>
 
     <dependencies>
