@@ -90,11 +90,17 @@ public class Zimbra extends BaseServer {
         initFutures.add(vertx.deployVerticle(RecallMailWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config)));
         initFutures.add(vertx.deployVerticle(ICalRequestWorker.class.getName(), new DeploymentOptions().setWorker(true).setConfig(config)));
 
+        // CRON
+        SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
+        RecallMailCron recallMailCron = new RecallMailCron(recallMailService, vertx.eventBus());
+        ICalRequestCron iCalRequestCron = new ICalRequestCron(vertx.eventBus());
+        SynchroTask syncMailerTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_MAILINGSYNCHRO);
+        // Enable CRON tasks to be triggered via API
+        addController(new TaskController(syncLauncherTask, recallMailCron, iCalRequestCron, syncMailerTask));
+        // Schedule CRON tasks from cron expressions
         try {
-            SynchroTask syncLauncherTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_STARTSYNCHRO);
             new CronTrigger(vertx, appConfig.getSynchroCronDate()).schedule(syncLauncherTask);
-            new CronTrigger(vertx, appConfig.getZimbraICalCron()).schedule(new ICalRequestCron(vertx.eventBus()));
-            RecallMailCron recallMailCron = new RecallMailCron(recallMailService, vertx.eventBus());
+            new CronTrigger(vertx, appConfig.getZimbraICalCron()).schedule(iCalRequestCron);
             new CronTrigger(vertx, appConfig.getZimbraRecallCron()).schedule(recallMailCron);
             log.info("Cron launched with date : " + appConfig.getSynchroCronDate());
             returnedMailService.deleteMailsProgress(event -> {
@@ -106,7 +112,6 @@ public class Zimbra extends BaseServer {
             log.fatal(e);
         }
         try {
-            SynchroTask syncMailerTask = new SynchroTask(vertx.eventBus(), BusConstants.ACTION_MAILINGSYNCHRO);
             new CronTrigger(vertx, appConfig.getMailerCron()).schedule(syncMailerTask);
         } catch (ParseException e) {
             log.warn("Mailer Cron deactivated");
