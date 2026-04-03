@@ -39,23 +39,9 @@
         </dependency>
         <dependency>
             <groupId>org.entcore</groupId>
-            <artifactId>common</artifactId>
-            <version>${entCoreVersion}</version>
-            <classifier>fat</classifier>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.entcore</groupId>
             <artifactId>tests</artifactId>
             <version>${entCoreVersion}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>fr.wseduc</groupId>
-            <artifactId>mod-postgresql</artifactId>
-            <version>2.0-zookeeper-separation-SNAPSHOT</version>
-            <scope>runtime</scope>
-            <classifier>fat</classifier>
         </dependency>
     </dependencies>
 </project>

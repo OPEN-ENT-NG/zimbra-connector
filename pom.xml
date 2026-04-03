@@ -42,6 +42,7 @@
     <modMongoVersion>4.1-separation-SNAPSHOT</modMongoVersion>
     <modJsonSchemaValidatorVersion>2.1-SNAPSHOT</modJsonSchemaValidatorVersion>
     <entCoreLibsVersion>6.14-separation-SNAPSHOT</entCoreLibsVersion>
+    <modPostgresVersion>2.1-separation-SNAPSHOT</modPostgresVersion>
   </properties>
   <dependencies>
     <dependency>
@@ -164,6 +165,13 @@
       <groupId>com.opendigitaleducation</groupId>
       <artifactId>mod-json-schema-validator</artifactId>
       <version>${modJsonSchemaValidatorVersion}</version>
+      <scope>runtime</scope>
+      <classifier>fat</classifier>
+    </dependency>
+    <dependency>
+      <groupId>fr.wseduc</groupId>
+      <artifactId>mod-postgresql</artifactId>
+      <version>${modPostgresVersion}</version>
       <scope>runtime</scope>
       <classifier>fat</classifier>
     </dependency>
