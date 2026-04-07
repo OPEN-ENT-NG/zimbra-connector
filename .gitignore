@@ -36,4 +36,5 @@ package-lock.json
 .env
 target
 dependency-reduced-pom.xml
+edifice
 .flattened-pom.xml
