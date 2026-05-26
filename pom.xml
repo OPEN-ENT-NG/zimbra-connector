@@ -30,7 +30,7 @@
     <module>apizimbra</module>
   </modules>
   <properties>
-    <revision>3.1-separation-SNAPSHOT</revision>
+    <revision>3.1-SNAPSHOT</revision>
     <vertxCronTimerVersion>3.0-SNAPSHOT</vertxCronTimerVersion>
     <toolsVersion>2.0.0-final</toolsVersion>
     <junitVersion>5.1.0</junitVersion>
@@ -38,11 +38,11 @@
     <reflectionsVersion>0.10.2</reflectionsVersion>
     <mockitoVersion>[2.0,3.0)</mockitoVersion>
     <apacheTextVersion>1.6</apacheTextVersion>
-    <entCoreVersion>6.14-separation-SNAPSHOT</entCoreVersion>
-    <modMongoVersion>4.1-separation-SNAPSHOT</modMongoVersion>
+    <entCoreVersion>6.14-SNAPSHOT</entCoreVersion>
+    <modMongoVersion>4.1-SNAPSHOT</modMongoVersion>
     <modJsonSchemaValidatorVersion>2.1-SNAPSHOT</modJsonSchemaValidatorVersion>
     <entCoreLibsVersion>6.14-separation-SNAPSHOT</entCoreLibsVersion>
-    <modPostgresVersion>2.1-separation-SNAPSHOT</modPostgresVersion>
+    <modPostgresVersion>2.1-SNAPSHOT</modPostgresVersion>
   </properties>
   <dependencies>
     <dependency>
