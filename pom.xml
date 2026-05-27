@@ -41,7 +41,7 @@
     <entCoreVersion>6.14-SNAPSHOT</entCoreVersion>
     <modMongoVersion>4.1-SNAPSHOT</modMongoVersion>
     <modJsonSchemaValidatorVersion>2.1-SNAPSHOT</modJsonSchemaValidatorVersion>
-    <entCoreLibsVersion>6.14-separation-SNAPSHOT</entCoreLibsVersion>
+    <entCoreLibsVersion>6.14-SNAPSHOT</entCoreLibsVersion>
     <modPostgresVersion>2.1-SNAPSHOT</modPostgresVersion>
   </properties>
   <dependencies>
