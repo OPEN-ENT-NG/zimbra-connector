@@ -30,19 +30,19 @@
     <module>apizimbra</module>
   </modules>
   <properties>
-    <revision>3.2.0</revision>
-    <vertxCronTimerVersion>3.0.0</vertxCronTimerVersion>
+    <revision>3.2-SNAPSHOT</revision>
+    <vertxCronTimerVersion>3.0-SNAPSHOT</vertxCronTimerVersion>
     <toolsVersion>2.0.0-final</toolsVersion>
     <junitVersion>5.1.0</junitVersion>
     <powerMockVersion>2.0.2</powerMockVersion>
     <reflectionsVersion>0.10.2</reflectionsVersion>
     <mockitoVersion>[2.0,3.0)</mockitoVersion>
     <apacheTextVersion>1.6</apacheTextVersion>
-    <entCoreVersion>6.15.0</entCoreVersion>
-    <modMongoVersion>4.2.0</modMongoVersion>
-    <modJsonSchemaValidatorVersion>2.2.0</modJsonSchemaValidatorVersion>
-    <entCoreLibsVersion>6.15.0</entCoreLibsVersion>
-    <modPostgresVersion>2.2.0</modPostgresVersion>
+    <entCoreVersion>6.15-SNAPSHOT</entCoreVersion>
+    <modMongoVersion>4.2-SNAPSHOT</modMongoVersion>
+    <modJsonSchemaValidatorVersion>2.2-SNAPSHOT</modJsonSchemaValidatorVersion>
+    <entCoreLibsVersion>6.15-SNAPSHOT</entCoreLibsVersion>
+    <modPostgresVersion>2.2-SNAPSHOT</modPostgresVersion>
   </properties>
   <dependencies>
     <dependency>
