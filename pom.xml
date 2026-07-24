@@ -38,10 +38,10 @@
     <reflectionsVersion>0.10.2</reflectionsVersion>
     <mockitoVersion>[2.0,3.0)</mockitoVersion>
     <apacheTextVersion>1.6</apacheTextVersion>
-    <entCoreVersion>6.15-SNAPSHOT</entCoreVersion>
+    <entCoreVersion>6.16-develop-enabling-SNAPSHOT</entCoreVersion>
     <modMongoVersion>4.2-SNAPSHOT</modMongoVersion>
     <modJsonSchemaValidatorVersion>2.2-SNAPSHOT</modJsonSchemaValidatorVersion>
-    <entCoreLibsVersion>6.15-SNAPSHOT</entCoreLibsVersion>
+    <entCoreLibsVersion>6.16-SNAPSHOT</entCoreLibsVersion>
     <modPostgresVersion>2.2-SNAPSHOT</modPostgresVersion>
   </properties>
   <dependencies>
