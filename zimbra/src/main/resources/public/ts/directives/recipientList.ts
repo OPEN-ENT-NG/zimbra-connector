@@ -17,7 +17,7 @@
 
 import { ng, _, model } from "entcore";
 import {User } from "../model";
-import http from 'axios';
+import { http } from 'entcore-toolkit';
 
 
 /**

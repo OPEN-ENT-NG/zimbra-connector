@@ -201,7 +201,7 @@ export class Trash extends SystemFolder {
     async removeMails() {
         const response = await http.delete(
             "/zimbra/delete",
-            { data: { id: this.mails.selection.selected.map(mail => mail.id) } },
+            { data: { id: this.mails.selection.selected.map(mail => mail.id) } } as any,
         );
         this.mails.removeSelection();
     }

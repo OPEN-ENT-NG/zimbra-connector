@@ -1,37 +1,37 @@
 import {ng} from 'entcore';
-import http, {AxiosPromise} from 'axios';
+import { http, HttpPromise } from 'entcore-toolkit';
 import {Attachment, Mail} from "../model";
 
 export interface IAttachmentService {
-    deleteAttachment(attachment : Attachment, mail : Mail): AxiosPromise;
-    downloadAttachmentInWorkspace(attachment : Attachment, mail : Mail): AxiosPromise;
-    postAttachmentFromWorkspace(attachment : Attachment, mail : Mail): AxiosPromise;
-    postAttachmentFromComputer(attachment : Attachment, mail : Mail): AxiosPromise;
+    deleteAttachment(attachment : Attachment, mail : Mail): HttpPromise;
+    downloadAttachmentInWorkspace(attachment : Attachment, mail : Mail): HttpPromise;
+    postAttachmentFromWorkspace(attachment : Attachment, mail : Mail): HttpPromise;
+    postAttachmentFromComputer(attachment : Attachment, mail : Mail): HttpPromise;
 }
 
 export const attachmentService: IAttachmentService = {
     /**
      * Delete Attachment
      */
-    deleteAttachment: (attachment : Attachment, mail : Mail): AxiosPromise =>
+    deleteAttachment: (attachment : Attachment, mail : Mail): HttpPromise =>
         http.delete(`message/${mail.id}/attachment/${attachment.id}`),
 
     /**
      * download Attachment in workspace
      */
-    downloadAttachmentInWorkspace: (attachment : Attachment, mail : Mail): AxiosPromise =>
+    downloadAttachmentInWorkspace: (attachment : Attachment, mail : Mail): HttpPromise =>
         http.get(`message/${mail.id}/attachment/${attachment.id}/workspace`),
 
     /**
      * post Attachment from workspace
      */
-    postAttachmentFromWorkspace: (attachment : Attachment, mail : Mail): AxiosPromise =>
-        http.post(`message/${mail.id}/upload/${attachment.id}`),
+    postAttachmentFromWorkspace: (attachment : Attachment, mail : Mail): HttpPromise =>
+        http.post(`message/${mail.id}/upload/${attachment.id}`, {}),
 
     /**
      * post Attachment from computer
      */
-    postAttachmentFromComputer: (attachment : Attachment, mail : Mail): AxiosPromise =>
+    postAttachmentFromComputer: (attachment : Attachment, mail : Mail): HttpPromise =>
         http.post(
             `message/${mail.id}/attachment`,
             attachment.file,

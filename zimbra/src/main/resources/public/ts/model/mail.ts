@@ -29,12 +29,11 @@ import {User} from "./user";
 import {Zimbra} from "./zimbra";
 import {SystemFolder, UserFolder, Folder} from "./folder";
 
-import {Mix, Eventer, Selection, Selectable} from "entcore-toolkit";
+import {Mix, Eventer, Selection, Selectable, HttpError, HttpResponse} from "entcore-toolkit";
 
 import http from './http';
 
 import {MAIL, SERVICE, QUOTA} from "./constantes";
-import {AxiosError, AxiosResponse} from "axios";
 import {attachmentService} from "../services";
 
 export enum AttachmentUploadStatus {
@@ -448,7 +447,7 @@ export class Mail implements Selectable {
             Zimbra.instance.currentFolder.mails.refresh();
             Zimbra.instance.folders["trash"].mails.refresh();
         } else {
-            await http.delete("/zimbra/delete", { data: { id: [this.id]} });
+            await http.delete("/zimbra/delete", { data: { id: [this.id]} } as any);
             Zimbra.instance.folders["trash"].mails.refresh();
         }
     }
@@ -478,14 +477,14 @@ export class Mail implements Selectable {
     }
 
     async postAttachments(attachmentToUpload: Attachment, workspace: boolean): Promise<void> {
-            let post : Promise<AxiosResponse>;
+            let post : Promise<HttpResponse>;
             if (workspace) {
                 post = attachmentService.postAttachmentFromWorkspace(attachmentToUpload, this);
             } else {
                 post = attachmentService.postAttachmentFromComputer(attachmentToUpload, this);
             }
             const promise: Promise<void> = post
-                .then((response: AxiosResponse) => {
+                .then((response: HttpResponse) => {
                     const attachmentWaiting : Attachment[] =
                         this.attachments.filter((attachment: Attachment) =>
                             attachment.uploadStatus && attachment.uploadStatus == AttachmentUploadStatus.LOADING && attachment != attachmentToUpload);
@@ -497,7 +496,7 @@ export class Mail implements Selectable {
                     this.attachments = this.attachments.concat(attachmentWaiting);
                     this.newAttachments = null;
                 })
-                .catch((e: AxiosError<any>) => {
+                .catch((e: HttpError<any>) => {
                     // remove attachment
                     this.attachments = this.attachments.filter((attachment: Attachment) => {
                         return attachment.filename !== attachmentToUpload.filename || attachment.id;
@@ -519,7 +518,7 @@ export class Mail implements Selectable {
             .then(() => {
                 notify.info("zimbra.attachment.download.workspace.success");
             })
-            .catch((e : AxiosError<any>) => {
+            .catch((e : HttpError<any>) => {
                 sendNotificationErrorZimbra(e.response.data.error);
             });
     }
