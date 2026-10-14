@@ -30,7 +30,7 @@
     "axios": "0.27.2",
     "core-js": "2.4.1",
     "entcore": "dev",
-    "entcore-toolkit": "^1.0.1",
+    "entcore-toolkit": "dev",
     "gulp": "3.9.1",
     "gulp-clean": "^0.3.2",
     "merge2": "^1.1.0",
